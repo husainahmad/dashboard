@@ -153,11 +153,13 @@ public class AsyncRestClientMenuService implements Serializable {
                 });
     }
 
-    public void getDetailSkuTierPriceAsync(AsyncRestCallback<List<SkuTierPriceDto>> callback, List<Integer> skuIds) {
+    public void getDetailSkuTierPriceAsync(AsyncRestCallback<List<SkuTierPriceDto>> callback,
+                                           List<Integer> skuIds, Integer tierId) {
         RequestHeadersSpec<?> spec = WebClient.create(urlSKUTierPrice).get()
                 .uri(uriBuilder -> uriBuilder
                         .queryParam("skuIds", skuIds.stream().map(String::valueOf)
                                 .collect(Collectors.joining(",")))
+                        .queryParam("tierId", tierId)
                         .build())
                 ;
 

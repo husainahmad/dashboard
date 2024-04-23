@@ -2,8 +2,10 @@ package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
+import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.dto.ProductDto;
 import com.harmoni.menu.dashboard.dto.SkuDto;
+import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
@@ -14,6 +16,7 @@ import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.editor.Editor;
@@ -52,8 +55,10 @@ public class ProductListView extends VerticalLayout {
     private final RestClientMenuService restClientMenuService;
 
     private final TextField filterText = new TextField();
+    private final ComboBox<TierDto> tierDtoComboBox = new ComboBox<>();
     private ProductForm productForm;
     private ProductDialogEdit productDialogEdit;
+    private TierDto tierDto;
     private UI ui;
 
     public ProductListView(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
@@ -120,11 +125,12 @@ public class ProductListView extends VerticalLayout {
                    skuIds.add(productTreeItemChild.getSkuId());
                    productTreeItems.add(productTreeItemChild);
                    productTreeItemChild.setPrice(0.0);
+                   productTreeItemChild.setTierName("");
                });
                log.debug("skuids {}", skuIds);
                log.debug("productTreeItems {}", productTreeItems);
 
-               fetchPriceBySku(skuIds, productTreeItems);
+               fetchPriceBySku(skuIds, productTreeItems, this.tierDto.getId());
            });
 
         });
@@ -155,11 +161,18 @@ public class ProductListView extends VerticalLayout {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
+        tierDtoComboBox.setItemLabelGenerator(TierDto::getName);
+        tierDtoComboBox.addValueChangeListener(valueChangeEvent -> {
+            if (valueChangeEvent.isFromClient()) {
+                tierDto = valueChangeEvent.getValue();
+                fetchProducts();
+            }
+        });
         Button addBrandButton = new Button("Add Product");
         addBrandButton.addClickListener(buttonClickEvent -> {
             addProduct();
         });
-        HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
+        HorizontalLayout toolbar = new HorizontalLayout(tierDtoComboBox, filterText, addBrandButton);
         toolbar.addClassName("toolbar");
         return toolbar;
     }
@@ -187,7 +200,7 @@ public class ProductListView extends VerticalLayout {
                 showErrorDialog(message);
             }
         });
-        fetchProducts();
+        fetchTier();
     }
 
     private void addProduct() {
@@ -216,6 +229,19 @@ public class ProductListView extends VerticalLayout {
         ui.access(()-> {
             add(dialog);
             dialog.open();
+        });
+    }
+
+    private void fetchTier() {
+        asyncRestClientOrganizationService.getAllTierAsync(result -> {
+            ui.access(()-> {
+                tierDtoComboBox.setItems(result);
+                if (!ObjectUtils.isEmpty(result)) {
+                    tierDtoComboBox.setValue(result.getLast());
+                    tierDto = result.getLast();
+                }
+            });
+            fetchProducts();
         });
     }
 
@@ -258,7 +284,8 @@ public class ProductListView extends VerticalLayout {
         return productTreeItems;
     }
 
-    private void fetchPriceBySku(List<Integer> skuIds, List<ProductTreeItem> productTreeItems) {
+    private void fetchPriceBySku(List<Integer> skuIds,
+                                 List<ProductTreeItem> productTreeItems, Integer tierId) {
         asyncRestClientMenuService.getDetailSkuTierPriceAsync(result -> {
             result.forEach(skuTierPriceDto -> {
                 ProductTreeItem productTreeItem = productTreeItems.stream()
@@ -271,6 +298,6 @@ public class ProductListView extends VerticalLayout {
                     productTreeItem.setTierName(skuTierPriceDto.getTierDto().getName());
                 }
             });
-        }, skuIds);
+        }, skuIds, tierId);
     }
 }

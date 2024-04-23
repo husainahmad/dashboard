@@ -162,6 +162,6 @@ public class ProductDialogEdit extends Dialog {
             result.forEach(skuTierPriceDto -> {
                 log.debug("{}", skuTierPriceDto);
             });
-        }, skuIds);
+        }, skuIds, 1);
     }
 }
