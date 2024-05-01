@@ -61,7 +61,7 @@ public class StoreForm extends FormLayout  {
         brandBox.addValueChangeListener(changeEvent -> {
             if (changeEvent.isFromClient()) {
                 tierBox.setItems(new ArrayList<TierDto>());
-                fetchDetailTierByBrand(changeEvent.getValue().getId().longValue());
+                fetchDetailTierByBrand(changeEvent.getValue().getId());
             }
         });
         tierBox.setItemLabelGenerator(TierDto::getName);
@@ -139,7 +139,7 @@ public class StoreForm extends FormLayout  {
         if (!ObjectUtils.isEmpty(this.storeDto) &&
                 !ObjectUtils.isEmpty(this.storeDto.getBrandId())) {
             fetchDetailBrands(storeDto.getBrandId().longValue());
-            fetchDetailTierByBrand(storeDto.getBrandId().longValue());
+            fetchDetailTierByBrand(storeDto.getBrandId());
         }
 
         binder.readBean(storeDto);
@@ -163,7 +163,7 @@ public class StoreForm extends FormLayout  {
         }, id);
     }
 
-    private void fetchDetailTierByBrand(Long id) {
+    private void fetchDetailTierByBrand(Integer id) {
         asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> {
             ui.access(()-> tierBox.setItems(result));
 

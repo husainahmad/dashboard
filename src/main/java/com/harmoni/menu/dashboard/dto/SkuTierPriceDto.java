@@ -15,7 +15,7 @@ public class SkuTierPriceDto {
     private Integer tierId;
     @JsonProperty("tier")
     private TierDto tierDto;
-    private BigDecimal price;
+    private Double price;
     private Date createdAt;
     private Date updatedAt;
 

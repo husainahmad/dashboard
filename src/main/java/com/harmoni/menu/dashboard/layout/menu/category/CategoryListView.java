@@ -151,6 +151,7 @@ public class CategoryListView extends VerticalLayout {
             ui.access(()-> {
                 categoryDtoGrid.setItems(result);
             });
-        });
+        }, 1);
+        //TODO
     }
 }

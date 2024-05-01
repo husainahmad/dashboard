@@ -131,7 +131,8 @@ public class ProductForm extends FormLayout  {
             ui.access(()->{
                 categoryBox.setItems(result);
             });
-        });
+        }, 1);
+        //TODO
     }
 
     private void fetchDetailCategory(Long id) {

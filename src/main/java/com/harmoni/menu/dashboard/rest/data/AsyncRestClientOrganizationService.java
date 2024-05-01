@@ -34,6 +34,9 @@ public class AsyncRestClientOrganizationService implements Serializable {
     @Value("${menu.url.tier}")
     private String urlTier;
 
+    @Value("${menu.url.tier.brand}")
+    private String urlTierBrand;
+
     @Value("${menu.url.store}")
     private String urlStore;
 
@@ -154,7 +157,8 @@ public class AsyncRestClientOrganizationService implements Serializable {
     }
 
     public void getAllTierAsync(AsyncRestCallback<List<TierDto>> callback) {
-        RequestHeadersSpec<?> spec = WebClient.create().get().uri(urlTier);
+        RequestHeadersSpec<?> spec = WebClient.create()
+                .get().uri(urlTier);
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -173,7 +177,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
         });
     }
 
-    public void getAllTierByBrandAsync(AsyncRestCallback<List<TierDto>> callback, Long id) {
+    public void getAllTierByBrandAsync(AsyncRestCallback<List<TierDto>> callback, Integer id) {
         RequestHeadersSpec<?> spec = WebClient.create().get()
                 .uri("%s/brand/%d".formatted(urlTier, id));
 

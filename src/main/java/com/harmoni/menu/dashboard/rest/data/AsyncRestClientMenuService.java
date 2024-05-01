@@ -30,16 +30,20 @@ public class AsyncRestClientMenuService implements Serializable {
     @Value("${menu.url.category}")
     private String urlCategory;
 
+    @Value("${menu.url.category.brand}")
+    private String urlCategoryBrand;
+
     @Value("${menu.url.product}")
     private String urlProduct;
+
+    @Value("${menu.url.product.category}")
+    private String urlProductCategory;
 
     @Value("${menu.url.sku}")
     private String urlSKU;
 
     @Value("${menu.url.product.sku}")
     private String urlProductSKU;
-
-
 
     @Value("${menu.url.skutierprice}")
     private String urlSKUTierPrice;
@@ -55,8 +59,9 @@ public class AsyncRestClientMenuService implements Serializable {
         void operationFinished(T result);
     }
 
-    public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback) {
-        RequestHeadersSpec<?> spec = WebClient.create().get().uri(urlCategory);
+    public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback, Integer brandId) {
+        RequestHeadersSpec<?> spec = WebClient.create()
+                  .get().uri("%s/%d".formatted(urlCategoryBrand, brandId));
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -74,9 +79,9 @@ public class AsyncRestClientMenuService implements Serializable {
         });
     }
 
-    public void getAllProductAsync(AsyncRestCallback<List<ProductDto>> callback) {
-        RequestHeadersSpec<?> spec = WebClient.create().get().uri(urlProduct);
-
+    public void getAllProductAsync(AsyncRestCallback<List<ProductDto>> callback, Integer categoryId) {
+        RequestHeadersSpec<?> spec = WebClient.create()
+        .get().uri("%s/%d".formatted(urlProductCategory, categoryId));
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
                         clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
@@ -91,6 +96,26 @@ public class AsyncRestClientMenuService implements Serializable {
 
             callback.operationFinished(productDtos);
         });
+    }
+
+    public void getAllProductCategoryBrandAsync(AsyncRestCallback<List<ProductDto>> callback,
+                                                Integer categoryId, Integer brandId) {
+        RequestHeadersSpec<?> spec = WebClient.create()
+                .get().uri("%s/%d/%d".formatted(urlProductCategory, categoryId, brandId));
+        spec.retrieve()
+                .onStatus(HttpStatus.BAD_REQUEST::equals,
+                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
+                                .map(BusinessBadRequestException::new))
+                .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals,
+                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
+                                .map(BusinessServerRequestException::new))
+                .toEntity(RestAPIResponse.class).subscribe(result -> {
+                    final List<ProductDto> productDtos = objectMapper.convertValue(Objects.requireNonNull(result.getBody()).getData(),
+                            new TypeReference<>() {
+                            });
+
+                    callback.operationFinished(productDtos);
+                });
     }
 
     public void getAllSkuAsync(AsyncRestCallback<List<SkuDto>> callback) {
