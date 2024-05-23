@@ -118,18 +118,14 @@ public class TierForm extends FormLayout  {
     }
 
     private void fetchBrands() {
-        asyncRestClientOrganizationService.getAllBrandAsync(result -> {
-            ui.access(()->{
-                brandBox.setItems(result);
-            });
-        });
+        asyncRestClientOrganizationService.getAllBrandAsync(result -> ui.access(()->{
+            brandBox.setItems(result);
+        }));
     }
 
     private void fetchDetailBrands(Long id) {
         asyncRestClientOrganizationService.getDetailBrandAsync(result -> {
-            ui.access(()->{
-                brandBox.setValue(result);
-            });
+            ui.access(()-> brandBox.setValue(result));
         }, id);
     }
 

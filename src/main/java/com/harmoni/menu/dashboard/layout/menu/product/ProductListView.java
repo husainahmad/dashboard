@@ -124,11 +124,9 @@ public class ProductListView extends VerticalLayout {
             return button;
         });
 
-        productDtoGrid.addCollapseListener(event -> {
-            event.getItems().forEach(productTreeItem -> {
-                log.debug("item collapse {}", productTreeItem);
-            });
-        });
+        productDtoGrid.addCollapseListener(event -> event.getItems().forEach(productTreeItem -> {
+            log.debug("item collapse {}", productTreeItem);
+        }));
 
         productDtoGrid.addExpandListener(event -> {
             if (event.isFromClient()) {
@@ -173,7 +171,7 @@ public class ProductListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         brandDtoComboBox.setLabel("Brand");
-        brandDtoComboBox.setItems(new ArrayList<BrandDto>());
+        brandDtoComboBox.setItems(new ArrayList<>());
         brandDtoComboBox.setItemLabelGenerator(BrandDto::getName);
         brandDtoComboBox.addValueChangeListener(valueChangeEvent -> {
             if (valueChangeEvent.isFromClient()) {

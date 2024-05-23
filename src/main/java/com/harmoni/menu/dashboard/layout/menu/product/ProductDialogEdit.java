@@ -82,7 +82,12 @@ public class ProductDialogEdit extends Dialog {
         add(dialogLayout);
 
         Button saveButton = createSaveButton(this);
-        Button cancelButton = new Button("Cancel", e -> this.close());
+        Button cancelButton = new Button("Cancel", new ComponentEventListener<ClickEvent<Button>>() {
+            @Override
+            public void onComponentEvent(ClickEvent<Button> e) {
+                ProductDialogEdit.this.close();
+            }
+        });
         getFooter().add(cancelButton);
         getFooter().add(saveButton);
 
@@ -140,7 +145,7 @@ public class ProductDialogEdit extends Dialog {
     }
 
     private void setDataProvider(List<SkuDto> skuDtos) {
-        ListDataProvider<SkuDto> dataProvider = new ListDataProvider<SkuDto>(skuDtos);
+        ListDataProvider<SkuDto> dataProvider = new ListDataProvider<>(skuDtos);
         this.skuDtoVirtualList.setDataProvider(dataProvider);
         this.skuDtoVirtualList.setRenderer(new ComponentRenderer<>(this::skusRender));
     }
@@ -181,16 +186,14 @@ public class ProductDialogEdit extends Dialog {
             }
 
             List<ProductSkuFormDto> skuFormDtos = new ArrayList<>();
-            binders.forEach(productBeanBinder -> {
-                skuFormDtos.add(ProductSkuFormDto.builder()
-                        .id(productBeanBinder.getBean().getSkuId())
-                        .name(productBeanBinder.getBean().getSkuName())
-                        .tierPrice(ProductSkuTierPriceFormDto.builder()
-                                .id(productBeanBinder.getBean().getTierId())
-                                .price(productBeanBinder.getBean().getPrice())
-                                .build())
-                        .build());
-            });
+            binders.forEach(productBeanBinder -> skuFormDtos.add(ProductSkuFormDto.builder()
+                    .id(productBeanBinder.getBean().getSkuId())
+                    .name(productBeanBinder.getBean().getSkuName())
+                    .tierPrice(ProductSkuTierPriceFormDto.builder()
+                            .id(productBeanBinder.getBean().getTierId())
+                            .price(productBeanBinder.getBean().getPrice())
+                            .build())
+                    .build()));
 
             final ProductFormDto productFormDto = ProductFormDto.builder()
                     .id(this.productTreeItem.getProductId())
@@ -314,22 +317,19 @@ public class ProductDialogEdit extends Dialog {
         for (SkuDto skuDto : skus) {
             skuIds.add(skuDto.getId());
         }
-        asyncRestClientMenuService.getDetailSkuTierPriceAsync(result -> {
-            result.forEach(skuTierPriceDto -> {
-                for (Binder<ProductBinderBean> productBinder : binders) {
+        asyncRestClientMenuService.getDetailSkuTierPriceAsync(result -> result.forEach(skuTierPriceDto -> {
+            for (Binder<ProductBinderBean> productBinder : binders) {
 
-                    if (productBinder.getBean().getSkuId().equals(skuTierPriceDto.getSkuId())) {
-                        productBinder.getFields().forEach(hasValue -> {
-                            if (hasValue instanceof NumberField numberField) {
-                                ui.access(() -> {
-                                    numberField.setValue(skuTierPriceDto.getPrice());
-                                });
-                            }
-                        });
-                    }
+                if (productBinder.getBean().getSkuId().equals(skuTierPriceDto.getSkuId())) {
+                    productBinder.getFields().forEach(hasValue -> {
+                        if (hasValue instanceof NumberField numberField) {
+                            ui.access(() -> {
+                                numberField.setValue(skuTierPriceDto.getPrice());
+                            });
+                        }
+                    });
                 }
-            });
-
-        }, skuIds, tierDto.getId());
+            }
+        }), skuIds, tierDto.getId());
     }
 }
