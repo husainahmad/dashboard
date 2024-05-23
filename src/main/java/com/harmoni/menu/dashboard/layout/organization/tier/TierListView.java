@@ -143,10 +143,10 @@ public class TierListView extends VerticalLayout {
     }
 
     private void fetchTier() {
-        asyncRestClientOrganizationService.getAllTierAsync(result -> {
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> {
             ui.access(()-> {
                 tierDtoGrid.setItems(result);
             });
-        });
+        }, 1);
     }
 }

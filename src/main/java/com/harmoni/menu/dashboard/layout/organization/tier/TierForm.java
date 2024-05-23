@@ -145,9 +145,6 @@ public class TierForm extends FormLayout  {
         updateButton.addClickShortcut(Key.ENTER);
 
         closeButton.addClickShortcut(Key.ESCAPE);
-
-//        updateButton.addClickListener(new BrandUpdateEventListener(this, restClientService));
-
         saveButton.addClickListener(
                 new TierSaveEventListener(this, restClientOrganizationService));
         closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));

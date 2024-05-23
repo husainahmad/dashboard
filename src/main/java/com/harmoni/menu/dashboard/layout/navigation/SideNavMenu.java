@@ -22,7 +22,6 @@ public class SideNavMenu extends Div {
         sideNavMenu.setCollapsible(true);
         sideNavMenu.addItem(new SideNavItem("Category", CategoryListView.class));
         sideNavMenu.addItem(new SideNavItem("Product", ProductListView.class));
-        sideNavMenu.addItem(new SideNavItem("SKU", SkuListView.class));
 
         SideNav sideNavAdmin = new SideNav();
         sideNavAdmin.setLabel("Admin");
