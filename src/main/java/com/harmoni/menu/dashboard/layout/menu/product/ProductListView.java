@@ -202,9 +202,7 @@ public class ProductListView extends VerticalLayout {
             }
         });
         Button addBrandButton = new Button("Add Product");
-        addBrandButton.addClickListener(buttonClickEvent -> {
-            addProduct();
-        });
+        addBrandButton.addClickListener(buttonClickEvent -> addProduct());
         HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, categoryDtoComboBox,
                 tierDtoComboBox, filterText, addBrandButton);
         toolbar.addClassName("toolbar");
@@ -354,44 +352,38 @@ public class ProductListView extends VerticalLayout {
                 productDtoTreeData.addItems(productTreeItem, getSkus(productDto));
             });
 
-            ui.access(()-> {
-                productDtoGrid.setTreeData(productDtoTreeData);
-            });
+            ui.access(()-> productDtoGrid.setTreeData(productDtoTreeData));
 
         }, categoryId, brandId);
     }
 
     public List<ProductTreeItem> getSkus(ProductDto productDto) {
         List<ProductTreeItem> productTreeItems = new ArrayList<>();
-        productDto.getSkuDtos().forEach(skuDto -> {
-            productTreeItems.add(ProductTreeItem.builder()
-                            .id("%s|%d".formatted(ProductItemType.SKU, skuDto.getId()))
-                            .name(skuDto.getName())
-                            .productItemType(ProductItemType.SKU)
-                            .productId(productDto.getId())
-                            .skuId(skuDto.getId())
-                            .categoryName("")
-                            .price(0.0)
-                    .build());
-        });
+        productDto.getSkuDtos().forEach(skuDto -> productTreeItems.add(ProductTreeItem.builder()
+                        .id("%s|%d".formatted(ProductItemType.SKU, skuDto.getId()))
+                        .name(skuDto.getName())
+                        .productItemType(ProductItemType.SKU)
+                        .productId(productDto.getId())
+                        .skuId(skuDto.getId())
+                        .categoryName("")
+                        .price(0.0)
+                .build()));
         return productTreeItems;
     }
 
     private void fetchPriceBySku(List<Integer> skuIds,
                                  List<ProductTreeItem> productTreeItems, Integer tierId) {
-        asyncRestClientMenuService.getDetailSkuTierPriceAsync(result -> {
-            result.forEach(skuTierPriceDto -> {
-                ProductTreeItem productTreeItem = productTreeItems.stream()
-                        .filter(productItem -> skuTierPriceDto.getSkuId().equals(productItem.getSkuId()))
-                        .findAny()
-                        .orElse(null);
-                log.debug("{}", productTreeItem);
-                if (!ObjectUtils.isEmpty(productTreeItem)) {
-                    productTreeItem.setPrice(skuTierPriceDto.getPrice());
-                    productTreeItem.setTierName(skuTierPriceDto.getTierDto().getName());
-                }
-            });
-        }, skuIds, tierId);
+        asyncRestClientMenuService.getDetailSkuTierPriceAsync(result -> result.forEach(skuTierPriceDto -> {
+            ProductTreeItem productTreeItem = productTreeItems.stream()
+                    .filter(productItem -> skuTierPriceDto.getSkuId().equals(productItem.getSkuId()))
+                    .findAny()
+                    .orElse(null);
+            log.debug("{}", productTreeItem);
+            if (!ObjectUtils.isEmpty(productTreeItem)) {
+                productTreeItem.setPrice(skuTierPriceDto.getPrice());
+                productTreeItem.setTierName(skuTierPriceDto.getTierDto().getName());
+            }
+        }), skuIds, tierId);
     }
 
     private Integer getCategoryId() {

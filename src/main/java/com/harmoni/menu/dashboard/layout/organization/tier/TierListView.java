@@ -129,9 +129,7 @@ public class TierListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addChainButton = new Button("Add Tier");
-        addChainButton.addClickListener(buttonClickEvent -> {
-            addTier();
-        });
+        addChainButton.addClickListener(e -> addTier());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -143,10 +141,8 @@ public class TierListView extends VerticalLayout {
     }
 
     private void fetchTier() {
-        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> {
-            ui.access(()-> {
-                tierDtoGrid.setItems(result);
-            });
-        }, 1);
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> ui.access(()-> {
+            tierDtoGrid.setItems(result);
+        }), 1);
     }
 }

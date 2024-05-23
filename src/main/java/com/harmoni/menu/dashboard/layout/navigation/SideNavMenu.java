@@ -1,7 +1,6 @@
 package com.harmoni.menu.dashboard.layout.navigation;
 
 import com.harmoni.menu.dashboard.layout.menu.product.ProductListView;
-import com.harmoni.menu.dashboard.layout.menu.sku.SkuListView;
 import com.harmoni.menu.dashboard.layout.organization.brand.BrandListView;
 import com.harmoni.menu.dashboard.layout.menu.category.CategoryListView;
 import com.harmoni.menu.dashboard.layout.organization.chain.ChainListView;

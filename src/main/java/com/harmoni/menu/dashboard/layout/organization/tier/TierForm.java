@@ -81,9 +81,7 @@ public class TierForm extends FormLayout  {
     }
 
     public void hideForm() {
-        ui.access(()->{
-            this.setVisible(false);
-        });
+        ui.access(()-> this.setVisible(false));
     }
 
     @Override
