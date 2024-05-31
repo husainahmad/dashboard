@@ -1,6 +1,5 @@
 package com.harmoni.menu.dashboard.exception;
 
-import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import org.slf4j.Logger;

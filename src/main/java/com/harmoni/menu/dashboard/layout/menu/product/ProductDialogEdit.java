@@ -26,6 +26,7 @@ import com.vaadin.flow.data.binder.BinderValidationStatus;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.ErrorHandlerUtil;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -190,11 +191,13 @@ public class ProductDialogEdit extends Dialog {
 
         final BeanValidationBinder<ProductBinderBean> binder = getBinder(skuId);
 
-        binder.forField(skuNameField).withValidator(value -> value.length() > 2,
+        binder.forField(skuNameField)
+                .withValidator(value -> value.length() > 2,
                         "Name must contain at least three characters")
                 .bind(ProductBinderBean::getSkuName, ProductBinderBean::setSkuName);
 
-        final ProductBinderBean productBinderBean = !ObjectUtils.isEmpty(binder.getBean()) ? binder.getBean() : ProductBinderBean.builder()
+        final ProductBinderBean productBinderBean = !ObjectUtils.isEmpty(binder.getBean()) ? binder.getBean()
+                                                    : ProductBinderBean.builder()
                 .skuId(skuId)
                 .skuName(skuNameField.getValue())
                 .tierId(this.tierDto.getId())
