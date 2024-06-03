@@ -11,10 +11,8 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 
 public class ChainSaveEventListener implements ComponentEventListener<ClickEvent<Button>> {
-
     private final ChainForm chainForm;
     private final RestClientOrganizationService restClientOrganizationService;
-
     public ChainSaveEventListener(ChainForm chainForm, RestClientOrganizationService restClientOrganizationService) {
         this.chainForm = chainForm;
         this.restClientOrganizationService = restClientOrganizationService;
@@ -29,7 +27,6 @@ public class ChainSaveEventListener implements ComponentEventListener<ClickEvent
         restClientOrganizationService.createChain(chainDto)
                 .subscribe(this::accept);
     }
-
     private void accept(RestAPIResponse restAPIResponse) {
         Broadcaster.broadcast(BroadcastMessage.CATEGORY_INSERT_SUCCESS);
     }

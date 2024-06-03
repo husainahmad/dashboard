@@ -42,6 +42,10 @@ public class RestClientMenuService implements Serializable {
 
     @Value("${menu.url.product.bulk}")
     private String urlProductBulk;
+
+    @Value("${menu.url.sku}")
+    private String urlSku;
+
     public Mono<RestAPIResponse> createCategory(CategoryDto categoryDto) {
 
         WebClient webClient = WebClient.builder().build();
@@ -52,8 +56,9 @@ public class RestClientMenuService implements Serializable {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(categoryDto), CategoryDto.class)
                 .retrieve()
-                .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
+                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
+                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
+                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                 .bodyToMono(RestAPIResponse.class);
 
     }
@@ -65,6 +70,7 @@ public class RestClientMenuService implements Serializable {
                         .uri("%s/%d".formatted(urlCategoryBrand, brandId))
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .retrieve()
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                         .bodyToMono(RestAPIResponse.class);
@@ -77,6 +83,7 @@ public class RestClientMenuService implements Serializable {
                         .uri("%s/brand/%d".formatted(urlTier, brandId))
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .retrieve()
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                         .bodyToMono(RestAPIResponse.class);
@@ -88,6 +95,7 @@ public class RestClientMenuService implements Serializable {
                 .uri(urlBrand)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .retrieve();
+        retrieve.onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent);
         retrieve.onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest);
         retrieve.onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError);
         return retrieve.bodyToMono(RestAPIResponse.class);
@@ -103,8 +111,25 @@ public class RestClientMenuService implements Serializable {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(productFormDto), ProductFormDto.class)
                 .retrieve()
-                .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
+                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
+                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
+                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
+                .bodyToMono(RestAPIResponse.class);
+
+    }
+
+    public Mono<RestAPIResponse> deleteSku(SkuDto skuDto) {
+
+        WebClient webClient = WebClient.builder().build();
+
+        return
+            webClient.delete()
+                .uri("%s/%d".formatted(urlSku, skuDto.getId()))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .retrieve()
+                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
+                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
+                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                 .bodyToMono(RestAPIResponse.class);
 
     }
@@ -113,6 +138,14 @@ public class RestClientMenuService implements Serializable {
         return clientResponse.bodyToMono(RestAPIResponse.class)
                 .handle(((restAPIResponse, throwableSynchronousSink) -> {
                     log.error("BAD_REQUEST Server Response {}", restAPIResponse.getHttpStatus());
+                    throwableSynchronousSink.error(new BusinessBadRequestException(restAPIResponse));
+                }));
+    }
+
+    private Mono<? extends Throwable> handleNoContent(ClientResponse clientResponse) {
+        return clientResponse.bodyToMono(RestAPIResponse.class)
+                .handle(((restAPIResponse, throwableSynchronousSink) -> {
+                    log.error("NO_CONTENT Server Response {}", restAPIResponse.getHttpStatus());
                     throwableSynchronousSink.error(new BusinessBadRequestException(restAPIResponse));
                 }));
     }

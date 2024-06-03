@@ -23,7 +23,7 @@ public class BrandUpdateEventListener implements ComponentEventListener<ClickEve
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         if (this.brandForm.getBinder().validate().hasErrors()) {
             return;
-        };
+        }
         BrandDto brandDto = this.brandForm.getBrandDto();
         brandDto.setName(this.brandForm.getBrandNameField().getValue());
         restClientOrganizationService.updateBrand(brandDto)

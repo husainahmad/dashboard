@@ -19,7 +19,6 @@ public class CategorySaveEventListener implements ComponentEventListener<ClickEv
 
     private final static Logger log = LoggerFactory.getLogger(CategorySaveEventListener.class);
     private final CategoryForm categoryForm;
-
     private final RestClientMenuService restClientMenuService;
 
     public CategorySaveEventListener(CategoryForm categoryForm, RestClientMenuService restClientMenuService) {

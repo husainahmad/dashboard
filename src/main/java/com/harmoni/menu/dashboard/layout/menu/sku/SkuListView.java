@@ -91,6 +91,9 @@ public class SkuListView extends VerticalLayout {
 //            if (message.equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
 //                fetchProducts();
 //            }
+            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.NO_CONTENT.value())))) {
+                showErrorDialog(message);
+            }
             if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.BAD_REQUEST.value())))) {
                 showErrorDialog(message);
             }

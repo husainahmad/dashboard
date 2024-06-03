@@ -10,10 +10,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.notification.Notification;
 
 public class ChainUpdateEventListener implements ComponentEventListener<ClickEvent<Button>> {
-
     private final ChainForm chainForm;
     private final RestClientOrganizationService restClientOrganizationService;
-
     public ChainUpdateEventListener(ChainForm chainForm, RestClientOrganizationService restClientOrganizationService) {
         this.chainForm = chainForm;
         this.restClientOrganizationService = restClientOrganizationService;
@@ -30,7 +28,6 @@ public class ChainUpdateEventListener implements ComponentEventListener<ClickEve
         restClientOrganizationService.updateChain(chainDto)
                 .subscribe(this::accept);
     }
-
     private void accept(RestAPIResponse restAPIResponse) {
         this.chainForm.getUi().access(()->{
             Notification notification = new Notification("Chain updated..", 3000, Notification.Position.MIDDLE);

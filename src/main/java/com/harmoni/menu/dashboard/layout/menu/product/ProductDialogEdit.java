@@ -1,7 +1,6 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.harmoni.menu.dashboard.dto.*;
-import com.harmoni.menu.dashboard.layout.enums.ProductItemAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
@@ -9,6 +8,7 @@ import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
@@ -26,7 +26,6 @@ import com.vaadin.flow.data.binder.BinderValidationStatus;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.ErrorHandlerUtil;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,8 +57,10 @@ public class ProductDialogEdit extends Dialog {
     private final VirtualList<SkuDto> skuDtoVirtualList;
     private final TierDto tierDto;
     private final List<CategoryDto> categoryDtos;
-    private List<Binder<ProductBinderBean>> binders;
+    private final List<Binder<ProductBinderBean>> binders;
     private int newSkuTempId = -1;
+    private final ConfirmDialog confirmDialog = new ConfirmDialog();
+
     public ProductDialogEdit(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
                              @Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                              @Autowired RestClientMenuService restClientMenuService,
@@ -334,9 +335,8 @@ public class ProductDialogEdit extends Dialog {
             if (!ObjectUtils.isEmpty(this.productTreeItem.getSkus())) {
                 this.productTreeItem.getSkus().forEach(skuDto -> {
                     if (skuDto.getId().equals(binder.getBean().getSkuId())) {
-                        this.productTreeItem.getSkus().remove(skuDto);
-                        binders.remove(binder);
-                        setDataProvider(this.productTreeItem.getSkus());
+                        confirmDialog.removeAll();
+                        setConfirmDialogDelete(skuDto, binder);
                     }
                 });
             }
@@ -356,5 +356,31 @@ public class ProductDialogEdit extends Dialog {
                 });
             }
         }
+    }
+
+    private void setConfirmDialogDelete(SkuDto skuDto, BeanValidationBinder<ProductBinderBean> binder) {
+        if (skuDto.getId()>0) {
+            confirmDialog.setHeader("Confirm to remove SKU");
+            confirmDialog.setText("Do you want to remove the SKU %s?".formatted(skuDto.getName()));
+            confirmDialog.setCancelable(true);
+            confirmDialog.addConfirmListener(confirmEvent -> callRemoveAPI(skuDto, binder));
+            confirmDialog.open();
+        } else {
+            removeSkuFromListDisplay(skuDto, binder);
+        }
+    }
+
+    private void callRemoveAPI(SkuDto skuDto, BeanValidationBinder<ProductBinderBean> binder) {
+        restClientMenuService.deleteSku(skuDto).subscribe(restAPIResponse -> {
+            if (restAPIResponse.getHttpStatus() == HttpStatus.ACCEPTED.value()) {
+                removeSkuFromListDisplay(skuDto, binder);
+            }
+        });
+    }
+
+    private void removeSkuFromListDisplay(SkuDto skuDto, BeanValidationBinder<ProductBinderBean> binder) {
+        this.productTreeItem.getSkus().remove(skuDto);
+        binders.remove(binder);
+        setDataProvider(this.productTreeItem.getSkus());
     }
 }
