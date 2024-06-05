@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.organization.chain;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.ChainDto;
@@ -7,6 +8,7 @@ import com.harmoni.menu.dashboard.event.chain.ChainSaveEventListener;
 import com.harmoni.menu.dashboard.event.chain.ChainUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -18,8 +20,11 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 
 @Route("chain-form")
+@Slf4j
 public class ChainForm extends FormLayout  {
     Registration broadcasterRegistration;
     @Getter
@@ -47,11 +52,7 @@ public class ChainForm extends FormLayout  {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         this.ui = attachEvent.getUI();
-        broadcasterRegistration = Broadcaster.register(message -> {
-            if (message.equals(BroadcastMessage.CHAIN_INSERT_SUCCESS)) {
-                showNotification("Chain created..");
-            }
-        });
+        broadcasterRegistration = Broadcaster.register(this::receiptBroadcast);
     }
 
     private void showNotification(String text) {
@@ -115,5 +116,18 @@ public class ChainForm extends FormLayout  {
                 closeButton.setVisible(true);
             }
         }
+    }
+
+    private void receiptBroadcast(String message) {
+        try {
+            BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
+            if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
+                    && broadcastMessage.getType().equals(BroadcastMessage.CHAIN_INSERT_SUCCESS)) {
+                showNotification("Chain created..");
+            }
+        } catch (JsonProcessingException e) {
+            log.error("Broadcast Handler Error", e);
+        }
+
     }
 }

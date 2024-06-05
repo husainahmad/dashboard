@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.event.tier;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.TierDto;
@@ -7,6 +8,7 @@ import com.harmoni.menu.dashboard.exception.BrandHandleException;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -35,6 +37,12 @@ public class TierSaveEventListener implements ComponentEventListener<ClickEvent<
     }
 
     private void accept(RestAPIResponse restAPIResponse) {
-        Broadcaster.broadcast(BroadcastMessage.TIER_INSERT_SUCCESS);
+        try {
+            Broadcaster.broadcast(ObjectUtil.objectToJsonString(BroadcastMessage.builder()
+                    .type(BroadcastMessage.TIER_INSERT_SUCCESS)
+                    .data(restAPIResponse).build()));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

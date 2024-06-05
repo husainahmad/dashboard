@@ -1,14 +1,17 @@
 package com.harmoni.menu.dashboard.layout.menu.category;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.event.category.CategorySaveEventListener;
+import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -22,10 +25,12 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ObjectUtils;
 
 @Route("category-form")
+@Slf4j
 public class CategoryForm extends FormLayout  {
     Registration broadcasterRegistration;
     @Getter
@@ -71,9 +76,22 @@ public class CategoryForm extends FormLayout  {
     protected void onAttach(AttachEvent attachEvent) {
         this.ui = attachEvent.getUI();
         broadcasterRegistration = Broadcaster.register(message -> {
-            if (message.equals(BroadcastMessage.CATEGORY_INSERT_SUCCESS)) {
-                showNotification("Category created..");
-                hideForm();
+            try {
+                BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.CATEGORY_INSERT_SUCCESS)) {
+                        showNotification("Category created..");
+                        hideForm();
+                    }
+                    if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
+                        showErrorDialog(message);
+                    }
+                    if (broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
+                        showErrorDialog(message);
+                    }
+                }
+            } catch (JsonProcessingException e) {
+                log.error("Broadcast Handler Error", e);
             }
         });
         fetchBrands();
@@ -84,6 +102,14 @@ public class CategoryForm extends FormLayout  {
             Notification notification = new Notification(text, 3000,
                     Notification.Position.MIDDLE);
             notification.open();
+        });
+    }
+
+    private void showErrorDialog(String message) {
+        DialogClosing dialog = new DialogClosing(message);
+        ui.access(()-> {
+            add(dialog);
+            dialog.open();
         });
     }
 

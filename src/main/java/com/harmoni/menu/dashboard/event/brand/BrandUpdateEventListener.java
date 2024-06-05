@@ -9,12 +9,13 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.notification.Notification;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class BrandUpdateEventListener implements ComponentEventListener<ClickEvent<Button>> {
 
     private final BrandForm brandForm;
     private final RestClientOrganizationService restClientOrganizationService;
-
     public BrandUpdateEventListener(BrandForm brandForm, RestClientOrganizationService restClientOrganizationService) {
         this.brandForm = brandForm;
         this.restClientOrganizationService = restClientOrganizationService;

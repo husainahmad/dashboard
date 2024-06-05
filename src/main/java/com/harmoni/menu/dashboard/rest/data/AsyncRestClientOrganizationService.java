@@ -8,6 +8,7 @@ import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.exception.BusinessServerRequestException;
 import com.vaadin.flow.component.UI;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,9 +22,8 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
+@Slf4j
 public class AsyncRestClientOrganizationService implements Serializable {
-
-    private final static Logger log = LoggerFactory.getLogger(AsyncRestClientOrganizationService.class);
 
     @Value("${menu.url.chain}")
     private String urlChain;

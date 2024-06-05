@@ -5,6 +5,7 @@ import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,9 +19,8 @@ import reactor.core.publisher.Mono;
 import java.io.Serializable;
 
 @Service
+@Slf4j
 public class RestClientOrganizationService implements Serializable {
-
-    private final static Logger log = LoggerFactory.getLogger(RestClientOrganizationService.class);
 
     @Value("${menu.url.chain}")
     private String urlChain;
