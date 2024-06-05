@@ -87,20 +87,6 @@ public class SkuListView extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         ui = attachEvent.getUI();
-        broadcasterRegistration = Broadcaster.register(message -> {
-//            if (message.equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
-//                fetchProducts();
-//            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.NO_CONTENT.value())))) {
-                showErrorDialog(message);
-            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.BAD_REQUEST.value())))) {
-                showErrorDialog(message);
-            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value())))) {
-                showErrorDialog(message);
-            }
-        });
         fetchSkus();
     }
 

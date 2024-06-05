@@ -130,6 +130,7 @@ public class CategoryListView extends VerticalLayout {
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         broadcasterRegistration.remove();
+        broadcasterRegistration = null;
     }
 
     private void addCategory() {

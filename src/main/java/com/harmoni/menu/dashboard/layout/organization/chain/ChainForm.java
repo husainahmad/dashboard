@@ -55,6 +55,12 @@ public class ChainForm extends FormLayout  {
         broadcasterRegistration = Broadcaster.register(this::receiptBroadcast);
     }
 
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        broadcasterRegistration.remove();
+        broadcasterRegistration = null;
+    }
+
     private void showNotification(String text) {
         ui.access(()->{
             Notification notification = new Notification(text, 3000, Notification.Position.MIDDLE);
