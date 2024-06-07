@@ -27,6 +27,7 @@ import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,8 +39,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Route("product-dialog-edit")
+@Slf4j
 public class ProductDialogEdit extends Dialog {
-    private final static Logger log = LoggerFactory.getLogger(ProductListView.class);
 
     @Getter
     private TextField productNameField;
@@ -372,7 +373,7 @@ public class ProductDialogEdit extends Dialog {
 
     private void callRemoveAPI(SkuDto skuDto, BeanValidationBinder<ProductBinderBean> binder) {
         restClientMenuService.deleteSku(skuDto).subscribe(restAPIResponse -> {
-            if (restAPIResponse.getHttpStatus() == HttpStatus.ACCEPTED.value()) {
+            if (restAPIResponse.getHttpStatus() == HttpStatus.NO_CONTENT.value()) {
                 removeSkuFromListDisplay(skuDto, binder);
             }
         });
