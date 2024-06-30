@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
@@ -112,12 +113,8 @@ public class CategoryListView extends VerticalLayout {
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
                     if (broadcastMessage.getType().equals(BroadcastMessage.CATEGORY_INSERT_SUCCESS)) {
                         fetchCategories();
-                    }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
-                        showErrorDialog(message);
-                    }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
-                        showErrorDialog(message);
+                    } else {
+                        UiUtil.showErrorDialog(ui, this, message);
                     }
                 }
             } catch (JsonProcessingException e) {
@@ -168,6 +165,5 @@ public class CategoryListView extends VerticalLayout {
                 categoryDtoGrid.setItems(result);
             });
         }, 1);
-        //TODO
     }
 }

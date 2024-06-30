@@ -12,8 +12,6 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class BrandSaveEventListener implements ComponentEventListener<ClickEvent<Button>> {
@@ -29,7 +27,7 @@ public class BrandSaveEventListener implements ComponentEventListener<ClickEvent
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         if (this.brandForm.getBinder().validate().hasErrors()) {
             return;
-        };
+        }
 
         BrandDto brandDto = this.brandForm.getBrandDto();
         brandDto.setName(this.brandForm.getBrandNameField().getValue());
@@ -45,7 +43,7 @@ public class BrandSaveEventListener implements ComponentEventListener<ClickEvent
                     .type(BroadcastMessage.BRAND_INSERT_SUCCESS)
                     .data(restAPIResponse).build()));
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 

@@ -1,8 +1,13 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
-import com.harmoni.menu.dashboard.dto.*;
+import com.harmoni.menu.dashboard.layout.component.SkuComponentRender;
+import com.harmoni.menu.dashboard.dto.BrandDto;
+import com.harmoni.menu.dashboard.dto.CategoryDto;
+import com.harmoni.menu.dashboard.dto.SkuDto;
+import com.harmoni.menu.dashboard.dto.TierDto;
+import com.harmoni.menu.dashboard.event.product.ProductUpdateEventListener;
+import com.harmoni.menu.dashboard.layout.menu.product.binder.ProductBinderBean;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
@@ -17,26 +22,18 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
-import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.virtuallist.VirtualList;
-import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.binder.BinderValidationStatus;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Route("product-dialog-edit")
 @Slf4j
@@ -47,29 +44,28 @@ public class ProductDialogEdit extends Dialog {
     @Getter
     ComboBox<CategoryDto> categoryBox;
     private final AsyncRestClientMenuService asyncRestClientMenuService;
-    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
+    @Getter
     private UI ui;
-
     private final TabSheet tabSheet = new TabSheet();
-
+    @Getter
     private final ProductTreeItem productTreeItem;
-    private final List<SkuDto> skuDtos = new ArrayList<>();
     private final VirtualList<SkuDto> skuDtoVirtualList;
+    @Getter
     private final TierDto tierDto;
     private final List<CategoryDto> categoryDtos;
+    @Getter
     private final List<Binder<ProductBinderBean>> binders;
     private int newSkuTempId = -1;
+    @Getter
     private final ConfirmDialog confirmDialog = new ConfirmDialog();
 
     public ProductDialogEdit(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
-                             @Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                              @Autowired RestClientMenuService restClientMenuService,
                              ProductTreeItem productTreeItem, BrandDto brandDto, TierDto tierDto,
                              List<CategoryDto> categoryDtos) {
 
         this.asyncRestClientMenuService = asyncRestClientMenuService;
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientMenuService = restClientMenuService;
         this.productTreeItem = productTreeItem;
         this.skuDtoVirtualList = new VirtualList<>();
@@ -96,9 +92,6 @@ public class ProductDialogEdit extends Dialog {
     private VerticalLayout createDialogLayout() {
         tabSheet.add("Product", productLayout());
         tabSheet.add("SKU", skuLayout());
-        tabSheet.addSelectedChangeListener(selectedChangeEvent -> {
-
-        });
         return new VerticalLayout(tabSheet);
     }
 
@@ -109,8 +102,6 @@ public class ProductDialogEdit extends Dialog {
 
         categoryBox = new ComboBox<>("Category");
         categoryBox.setItemLabelGenerator(CategoryDto::getName);
-        categoryBox.addValueChangeListener(valueChangeEvent -> {
-        });
         productDiv.add(setDialogLayout(productNameField, categoryBox));
         return productDiv;
     }
@@ -134,7 +125,7 @@ public class ProductDialogEdit extends Dialog {
         return new HorizontalLayout(FlexComponent.Alignment.STRETCH, new Text("SKU name"), buttonAdd);
     }
 
-    private void setDataProvider(List<SkuDto> skuDtos) {
+    public void setDataProvider(List<SkuDto> skuDtos) {
         ListDataProvider<SkuDto> dataProvider = new ListDataProvider<>(skuDtos);
         this.skuDtoVirtualList.setDataProvider(dataProvider);
         this.skuDtoVirtualList.setRenderer(new ComponentRenderer<>(this::skusRender));
@@ -156,7 +147,7 @@ public class ProductDialogEdit extends Dialog {
     }
 
     private Button createSaveButton(Dialog dialog) {
-        Button saveButton = new Button("Update", this::onButtonUpdateEvent);
+        Button saveButton = new Button("Update", new ProductUpdateEventListener(this, restClientMenuService));
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         return saveButton;
     }
@@ -171,154 +162,8 @@ public class ProductDialogEdit extends Dialog {
     }
 
     private Component skusRender(SkuDto skuDto) {
-
-        final TextField nameField = new TextField();
-        nameField.setValue(ObjectUtils.isEmpty(skuDto.getName()) ? "" : skuDto.getName());
-
-        final VerticalLayout verticalLayout = new VerticalLayout();
-        verticalLayout.setPadding(false);
-
-        final HorizontalLayout layout = new HorizontalLayout(nameField, verticalLayout);
-        layout.setPadding(false);
-
-        fetchPriceBySku(ObjectUtils.isEmpty(skuDto.getId()) ? -1 : skuDto.getId(), verticalLayout, nameField);
-
-        layout.setFlexGrow(2);
-        return layout;
-    }
-
-    private void fetchPriceBySku(Integer skuId, VerticalLayout verticalLayout, TextField skuNameField) {
-
-        HorizontalLayout horizontalLayout = new HorizontalLayout();
-
-        final BeanValidationBinder<ProductBinderBean> binder = getBinder(skuId);
-
-        binder.forField(skuNameField)
-                .withValidator(value -> value.length() > 2,
-                        "Name must contain at least three characters")
-                .bind(ProductBinderBean::getSkuName, ProductBinderBean::setSkuName);
-
-        final ProductBinderBean productBinderBean = !ObjectUtils.isEmpty(binder.getBean()) ? binder.getBean()
-                                                    : ProductBinderBean.builder()
-                .skuId(skuId)
-                .skuName(skuNameField.getValue())
-                .tierId(this.tierDto.getId())
-                .price(0.0)
-                .build();
-
-        final TextField text = new TextField();
-        text.setValue(tierDto.getName());
-        text.setEnabled(false);
-
-        final NumberField priceField = new NumberField();
-
-        binder.forField(priceField)
-                .bind(ProductBinderBean::getPrice, ProductBinderBean::setPrice);
-
-        binder.setBean(productBinderBean);
-
-        Button buttonDelete = getButtonDelete(binder);
-
-        horizontalLayout.add(text, priceField, buttonDelete);
-
-        ui.access(() -> {
-            verticalLayout.add(horizontalLayout);
-        });
-
-        if (skuId.equals(productTreeItem.getSkus().getLast().getId())) {
-            fetchPrice(this.productTreeItem.getSkus());
-        }
-    }
-
-    private BeanValidationBinder<ProductBinderBean> getBinder(Integer skuId) {
-        BeanValidationBinder<ProductBinderBean> binder = new BeanValidationBinder<>(
-                ProductBinderBean.class);
-
-        AtomicBoolean isAlready = new AtomicBoolean(false);
-
-        binders.forEach(productBinderBeanBinder -> {
-            if (productBinderBeanBinder.getBean().getSkuId().equals(skuId)) {
-                binder.setBean(productBinderBeanBinder.getBean());
-                isAlready.set(true);
-            }
-        });
-
-        if (!isAlready.get()) {
-            binders.add(binder);
-        }
-
-        return binder;
-    }
-
-    private void fetchPrice(List<SkuDto> skus) {
-        List<Integer> skuIds = new ArrayList<>();
-        for (SkuDto skuDto : skus) {
-            skuIds.add(skuDto.getId());
-        }
-        asyncRestClientMenuService.getDetailSkuTierPriceAsync(result -> {
-            for (SkuTierPriceDto skuTierPriceDto : result) {
-                accept(skuTierPriceDto, this.binders, this.ui);
-            }
-        }, skuIds, tierDto.getId());
-    }
-
-    private void onButtonUpdateEvent(ClickEvent<Button> e) {
-        boolean[] isAllValid = new boolean[binders.size()];
-
-        int i = 0;
-        for (Binder<ProductBinderBean> productBinderBeanBinder : binders) {
-            BinderValidationStatus<ProductBinderBean> binderBeanBinderValidationStatus =
-                    productBinderBeanBinder.validate();
-            if (binderBeanBinderValidationStatus.isOk() && isSkuNameEqualsTo(productBinderBeanBinder, i, binders)) {
-                isAllValid[i] = true;
-            }
-            i++;
-        }
-
-        for (i = 0; i < isAllValid.length; i++) {
-            if (!isAllValid[i]) {
-                return;
-            }
-        }
-
-        List<ProductSkuFormDto> skuFormDtos = new ArrayList<>();
-        binders.forEach(productBeanBinder -> skuFormDtos.add(ProductSkuFormDto.builder()
-                .id(productBeanBinder.getBean().getSkuId())
-                .name(productBeanBinder.getBean().getSkuName())
-                .tierPrice(ProductSkuTierPriceFormDto.builder()
-                        .id(productBeanBinder.getBean().getTierId())
-                        .price(productBeanBinder.getBean().getPrice())
-                        .build())
-                .build()));
-
-        final ProductFormDto productFormDto = ProductFormDto.builder()
-                .id(this.productTreeItem.getProductId())
-                .name(productNameField.getValue())
-                .categoryId(categoryBox.getValue().getId())
-                .skus(skuFormDtos)
-                .build();
-
-        restClientMenuService.saveProductBulk(productFormDto).subscribe(restAPIResponse -> {
-            if (restAPIResponse.getHttpStatus() == HttpStatus.OK.value()) {
-                ui.access(this::close);
-            }
-        });
-
-    }
-
-    private boolean isSkuNameEqualsTo(Binder<ProductBinderBean> productBinderBean, int index,
-                                      List<Binder<ProductBinderBean>> currentBinder) {
-        int i = 0;
-        for (Binder<ProductBinderBean> productBinderBeanBinder : currentBinder) {
-
-            if (!ObjectUtils.isEmpty(productBinderBeanBinder.getBean())
-                    && productBinderBeanBinder.getBean().getSkuName().equals(productBinderBean.getBean().getSkuName())
-                    && i!=index) {
-                return false;
-            }
-            i++;
-        }
-        return true;
+        return new SkuComponentRender(skuDto, this,
+                this.asyncRestClientMenuService, this.restClientMenuService);
     }
 
     private void onButtonAddSkuEvent(ClickEvent<Button> buttonClickEvent) {
@@ -329,59 +174,5 @@ public class ProductDialogEdit extends Dialog {
             setDataProvider(this.productTreeItem.getSkus());
             newSkuTempId--;
         }
-    }
-
-    private Button getButtonDelete(BeanValidationBinder<ProductBinderBean> binder) {
-        return new Button(new Icon(VaadinIcon.MINUS), buttonClickEvent -> {
-            if (!ObjectUtils.isEmpty(this.productTreeItem.getSkus())) {
-                this.productTreeItem.getSkus().forEach(skuDto -> {
-                    if (skuDto.getId().equals(binder.getBean().getSkuId())) {
-                        confirmDialog.removeAll();
-                        setConfirmDialogDelete(skuDto, binder);
-                    }
-                });
-            }
-        });
-    }
-
-    private void accept(SkuTierPriceDto skuTierPriceDto, List<Binder<ProductBinderBean>> currentBinder, UI currentUi) {
-        for (Binder<ProductBinderBean> productBinder : currentBinder) {
-
-            if (productBinder.getBean().getSkuId().equals(skuTierPriceDto.getSkuId())) {
-                productBinder.getFields().forEach(hasValue -> {
-                    if (hasValue instanceof NumberField numberField) {
-                        currentUi.access(() -> {
-                            numberField.setValue(skuTierPriceDto.getPrice());
-                        });
-                    }
-                });
-            }
-        }
-    }
-
-    private void setConfirmDialogDelete(SkuDto skuDto, BeanValidationBinder<ProductBinderBean> binder) {
-        if (skuDto.getId()>0) {
-            confirmDialog.setHeader("Confirm to remove SKU");
-            confirmDialog.setText("Do you want to remove the SKU %s?".formatted(skuDto.getName()));
-            confirmDialog.setCancelable(true);
-            confirmDialog.addConfirmListener(confirmEvent -> callRemoveAPI(skuDto, binder));
-            confirmDialog.open();
-        } else {
-            removeSkuFromListDisplay(skuDto, binder);
-        }
-    }
-
-    private void callRemoveAPI(SkuDto skuDto, BeanValidationBinder<ProductBinderBean> binder) {
-        restClientMenuService.deleteSku(skuDto).subscribe(restAPIResponse -> {
-            if (restAPIResponse.getHttpStatus() == HttpStatus.NO_CONTENT.value()) {
-                removeSkuFromListDisplay(skuDto, binder);
-            }
-        });
-    }
-
-    private void removeSkuFromListDisplay(SkuDto skuDto, BeanValidationBinder<ProductBinderBean> binder) {
-        this.productTreeItem.getSkus().remove(skuDto);
-        binders.remove(binder);
-        setDataProvider(this.productTreeItem.getSkus());
     }
 }

@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -66,12 +67,8 @@ public class ChainListView extends VerticalLayout  {
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
                     if (broadcastMessage.getType().equals(BroadcastMessage.CHAIN_INSERT_SUCCESS)) {
                         fetchChains();
-                    }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
-                        showErrorDialog(message);
-                    }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
-                        showErrorDialog(message);
+                    } else {
+                        UiUtil.showErrorDialog(ui, this, message);
                     }
                 }
             } catch (JsonProcessingException e) {

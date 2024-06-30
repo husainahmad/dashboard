@@ -4,10 +4,12 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.exception.BusinessServerRequestException;
 import com.vaadin.flow.component.UI;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,27 +23,12 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
+@RequiredArgsConstructor
 @Service
 @Slf4j
 public class AsyncRestClientOrganizationService implements Serializable {
 
-    @Value("${menu.url.chain}")
-    private String urlChain;
-
-    @Value("${menu.url.brand}")
-    private String urlBrand;
-
-    @Value("${menu.url.tier}")
-    private String urlTier;
-
-    @Value("${menu.url.tier.brand}")
-    private String urlTierBrand;
-
-    @Value("${menu.url.store}")
-    private String urlStore;
-
-    @Value("${menu.url.category}")
-    private String urlCategory;
+    private final MenuProperties menuProperties;
 
     private UI ui;
 
@@ -54,7 +41,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
     }
 
     public void getAllChainAsync(AsyncRestCallback<List<ChainDto>> callback) {
-        RequestHeadersSpec<?> spec = WebClient.create().get().uri(urlChain);
+        RequestHeadersSpec<?> spec = WebClient.create().get().uri(menuProperties.getUrl().getChain());
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -75,7 +62,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
 
     public void getDetailChainAsync(AsyncRestCallback<ChainDto> callback, Long id) {
         RequestHeadersSpec<?> spec = WebClient.create().get()
-                .uri("%s/%d".formatted(urlChain, id));
+                .uri("%s/%d".formatted(menuProperties.getUrl().getChain(), id));
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -95,7 +82,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
     }
 
     public void getAllBrandAsync(AsyncRestCallback<List<BrandDto>> callback) {
-        RequestHeadersSpec<?> spec = WebClient.create().get().uri(urlBrand);
+        RequestHeadersSpec<?> spec = WebClient.create().get().uri(menuProperties.getUrl().getBrand());
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -116,7 +103,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
 
     public void getDetailBrandAsync(AsyncRestCallback<BrandDto> callback, Long id) {
         RequestHeadersSpec<?> spec = WebClient.create().get()
-                .uri("%s/%d".formatted(urlBrand, id));
+                .uri("%s/%d".formatted(menuProperties.getUrl().getBrand(), id));
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -137,7 +124,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
 
     public void getDetailTierAsync(AsyncRestCallback<TierDto> callback, Long id) {
         RequestHeadersSpec<?> spec = WebClient.create().get()
-                .uri("%s/%d".formatted(urlTier, id));
+                .uri("%s/%d".formatted(menuProperties.getUrl().getTier(), id));
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -158,7 +145,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
 
     public void getAllTierAsync(AsyncRestCallback<List<TierDto>> callback) {
         RequestHeadersSpec<?> spec = WebClient.create()
-                .get().uri(urlTier);
+                .get().uri(menuProperties.getUrl().getTier());
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -179,7 +166,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
 
     public void getAllTierByBrandAsync(AsyncRestCallback<List<TierDto>> callback, Integer id) {
         RequestHeadersSpec<?> spec = WebClient.create().get()
-                .uri("%s/brand/%d".formatted(urlTier, id));
+                .uri("%s/brand/%d".formatted(menuProperties.getUrl().getTier(), id));
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -199,7 +186,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
     }
 
     public void getAllStoreAsync(AsyncRestCallback<List<StoreDto>> callback) {
-        RequestHeadersSpec<?> spec = WebClient.create().get().uri(urlStore);
+        RequestHeadersSpec<?> spec = WebClient.create().get().uri(menuProperties.getUrl().getStore());
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -219,7 +206,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
     }
 
     public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback) {
-        RequestHeadersSpec<?> spec = WebClient.create().get().uri(urlCategory);
+        RequestHeadersSpec<?> spec = WebClient.create().get().uri(menuProperties.getUrl().getCategory());
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,

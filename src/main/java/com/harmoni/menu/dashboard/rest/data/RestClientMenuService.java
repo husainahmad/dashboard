@@ -1,15 +1,11 @@
 package com.harmoni.menu.dashboard.rest.data;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductFormDto;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,27 +16,12 @@ import reactor.core.publisher.Mono;
 
 import java.io.Serializable;
 
+@RequiredArgsConstructor
 @Service
 @Slf4j
 public class RestClientMenuService implements Serializable {
 
-    @Value("${menu.url.category}")
-    private String urlCategory;
-
-    @Value("${menu.url.category.brand}")
-    private String urlCategoryBrand;
-
-    @Value("${menu.url.tier}")
-    private String urlTier;
-
-    @Value("${menu.url.brand}")
-    private String urlBrand;
-
-    @Value("${menu.url.product.bulk}")
-    private String urlProductBulk;
-
-    @Value("${menu.url.sku}")
-    private String urlSku;
+    private final MenuProperties urlMenuProperties;
 
     public Mono<RestAPIResponse> createCategory(CategoryDto categoryDto) {
 
@@ -48,7 +29,7 @@ public class RestClientMenuService implements Serializable {
 
         return
                 webClient.post()
-                .uri(urlCategory)
+                .uri(urlMenuProperties.getUrl().getCategory())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(categoryDto), CategoryDto.class)
                 .retrieve()
@@ -63,7 +44,7 @@ public class RestClientMenuService implements Serializable {
         WebClient webClient = WebClient.builder().build();
         return
                 webClient.get()
-                        .uri("%s/%d".formatted(urlCategoryBrand, brandId))
+                        .uri("%s/%d".formatted(urlMenuProperties.getUrl().getCategory(), brandId))
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
@@ -76,7 +57,7 @@ public class RestClientMenuService implements Serializable {
         WebClient webClient = WebClient.builder().build();
         return
                 webClient.get()
-                        .uri("%s/brand/%d".formatted(urlTier, brandId))
+                        .uri("%s/brand/%d".formatted(urlMenuProperties.getUrl().getTier(), brandId))
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
@@ -88,7 +69,7 @@ public class RestClientMenuService implements Serializable {
     public Mono<RestAPIResponse> getAllBrand() {
         WebClient webClient = WebClient.builder().build();
         WebClient.ResponseSpec retrieve = webClient.get()
-                .uri(urlBrand)
+                .uri(urlMenuProperties.getUrl().getBrand())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .retrieve();
         retrieve.onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent);
@@ -103,7 +84,7 @@ public class RestClientMenuService implements Serializable {
 
         return
             webClient.put()
-                .uri(urlProductBulk.formatted(productFormDto.getId()))
+                .uri(urlMenuProperties.getUrl().getProducts().getBulk().formatted(productFormDto.getId()))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(productFormDto), ProductFormDto.class)
                 .retrieve()
@@ -120,7 +101,7 @@ public class RestClientMenuService implements Serializable {
 
         return
             webClient.delete()
-                .uri("%s/%d".formatted(urlSku, skuDto.getId()))
+                .uri("%s/%d".formatted(urlMenuProperties.getUrl().getSku(), skuDto.getId()))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .retrieve()
                     .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)

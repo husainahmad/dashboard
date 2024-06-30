@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.exception.BusinessServerRequestException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,33 +25,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 @Slf4j
 public class AsyncRestClientMenuService implements Serializable {
 
-    @Value("${menu.url.category}")
-    private String urlCategory;
-
-    @Value("${menu.url.category.brand}")
-    private String urlCategoryBrand;
-
-    @Value("${menu.url.product}")
-    private String urlProduct;
-
-    @Value("${menu.url.product.category}")
-    private String urlProductCategory;
-
-    @Value("${menu.url.sku}")
-    private String urlSKU;
-
-    @Value("${menu.url.product.sku}")
-    private String urlProductSKU;
-
-    @Value("${menu.url.skutierprice}")
-    private String urlSKUTierPrice;
-
-    @Value("${menu.url}")
-    private String urlMenu;
+    private final MenuProperties menuProperties;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -61,7 +42,7 @@ public class AsyncRestClientMenuService implements Serializable {
 
     public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback, Integer brandId) {
         RequestHeadersSpec<?> spec = WebClient.create()
-                  .get().uri("%s/%d".formatted(urlCategoryBrand, brandId));
+                  .get().uri("%s/%d".formatted(menuProperties.getUrl().getCategories().getBrand(), brandId));
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -81,7 +62,7 @@ public class AsyncRestClientMenuService implements Serializable {
 
     public void getAllProductAsync(AsyncRestCallback<List<ProductDto>> callback, Integer categoryId) {
         RequestHeadersSpec<?> spec = WebClient.create()
-        .get().uri("%s/%d".formatted(urlProductCategory, categoryId));
+        .get().uri("%s/%d".formatted(menuProperties.getUrl().getProducts().getCategory(), categoryId));
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
                         clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
@@ -101,7 +82,7 @@ public class AsyncRestClientMenuService implements Serializable {
     public void getAllProductCategoryBrandAsync(AsyncRestCallback<List<ProductDto>> callback,
                                                 Integer categoryId, Integer brandId) {
         RequestHeadersSpec<?> spec = WebClient.create()
-                .get().uri("%s/%d/%d".formatted(urlProductCategory, categoryId, brandId));
+                .get().uri("%s/%d/%d".formatted(menuProperties.getUrl().getProducts().getCategory(), categoryId, brandId));
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
                         clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
@@ -119,7 +100,7 @@ public class AsyncRestClientMenuService implements Serializable {
     }
 
     public void getAllSkuAsync(AsyncRestCallback<List<SkuDto>> callback) {
-        RequestHeadersSpec<?> spec = WebClient.create().get().uri(urlSKU);
+        RequestHeadersSpec<?> spec = WebClient.create().get().uri(menuProperties.getUrl().getSku());
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -139,7 +120,7 @@ public class AsyncRestClientMenuService implements Serializable {
 
     public void getAllSkuByProductAsync(AsyncRestCallback<List<SkuDto>> callback, Integer productId) {
         RequestHeadersSpec<?> spec = WebClient.create()
-                                    .get().uri("%s/%d/sku".formatted(urlProductSKU, productId));
+                                    .get().uri("%s/%d/sku".formatted(menuProperties.getUrl().getProducts().getSku(), productId));
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -159,7 +140,7 @@ public class AsyncRestClientMenuService implements Serializable {
 
     public void getDetailCategoryAsync(AsyncRestCallback<CategoryDto> callback, Long id) {
         RequestHeadersSpec<?> spec = WebClient.create().get()
-                .uri("%s/%d".formatted(urlCategory, id));
+                .uri("%s/%d".formatted(menuProperties.getUrl().getCategory(), id));
 
             spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -180,7 +161,7 @@ public class AsyncRestClientMenuService implements Serializable {
 
     public void getDetailSkuTierPriceAsync(AsyncRestCallback<List<SkuTierPriceDto>> callback,
                                            List<Integer> skuIds, Integer tierId) {
-        RequestHeadersSpec<?> spec = WebClient.create(urlSKUTierPrice).get()
+        RequestHeadersSpec<?> spec = WebClient.create(menuProperties.getUrl().getSkutierprice()).get()
                 .uri(uriBuilder -> uriBuilder
                         .queryParam("skuIds", skuIds.stream().map(String::valueOf)
                                 .collect(Collectors.joining(",")))

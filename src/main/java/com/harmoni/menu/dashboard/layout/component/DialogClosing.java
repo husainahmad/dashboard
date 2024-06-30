@@ -9,7 +9,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 public class DialogClosing extends Dialog {
 
-    private String text;
+    private final String text;
     public DialogClosing(String text) {
         this.text = text;
         getElement().setAttribute("arial-label", "System failed");

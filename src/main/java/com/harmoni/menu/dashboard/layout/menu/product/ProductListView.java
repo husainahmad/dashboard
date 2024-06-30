@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,9 +15,11 @@ import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
@@ -33,14 +36,12 @@ import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.spring.annotation.UIScope;
+import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -107,7 +108,6 @@ public class ProductListView extends VerticalLayout {
             button.addClickListener(buttonClickEvent -> {
                 if (buttonClickEvent.isFromClient()) {
                     ProductDialogEdit productDialogEdit = new ProductDialogEdit(this.asyncRestClientMenuService,
-                            this.asyncRestClientOrganizationService,
                             this.restClientMenuService,
                             button.getProductTreeItem(),
                             this.brandDtoComboBox.getValue(),
@@ -221,14 +221,17 @@ public class ProductListView extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         ui = attachEvent.getUI();
         broadcasterRegistration = Broadcaster.register(message -> {
-            if (message.equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
-                fetchProducts(getCategoryId(), brandDto.getId());
-            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.BAD_REQUEST.value())))) {
-                showErrorDialog(message);
-            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value())))) {
-                showErrorDialog(message);
+            try {
+                BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
+                        fetchBrands();
+                    } else {
+                        UiUtil.showErrorDialog(ui, this, message);
+                    }
+                }
+            } catch (JsonProcessingException e) {
+                log.error("Broadcast Handler Error", e);
             }
         });
 

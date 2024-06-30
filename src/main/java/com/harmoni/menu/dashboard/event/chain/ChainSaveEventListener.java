@@ -35,7 +35,7 @@ public class ChainSaveEventListener implements ComponentEventListener<ClickEvent
                     .type(BroadcastMessage.CATEGORY_INSERT_SUCCESS)
                     .data(restAPIResponse).build()));
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 }

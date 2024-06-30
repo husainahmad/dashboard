@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.TierDto;
-import com.harmoni.menu.dashboard.exception.BrandHandleException;
+import com.harmoni.menu.dashboard.exception.BrandHandler;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
@@ -32,7 +32,7 @@ public class TierSaveEventListener implements ComponentEventListener<ClickEvent<
         tierDto.setName(this.tierForm.getTierNameField().getValue());
         tierDto .setBrandId(this.tierForm.getBrandBox().getValue().getId());
         restClientOrganizationService.createTier(tierDto)
-                .doOnError(error -> new BrandHandleException(this.tierForm.getUi(), "Error while inserting Brand"))
+                .doOnError(error -> new BrandHandler(this.tierForm.getUi(), "Error while inserting Brand ".concat(error.getMessage())))
                 .subscribe(this::accept);
     }
 
@@ -42,7 +42,7 @@ public class TierSaveEventListener implements ComponentEventListener<ClickEvent<
                     .type(BroadcastMessage.TIER_INSERT_SUCCESS)
                     .data(restAPIResponse).build()));
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 }

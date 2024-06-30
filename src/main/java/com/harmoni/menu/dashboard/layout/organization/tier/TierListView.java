@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -67,12 +68,8 @@ public class TierListView extends VerticalLayout {
                 if (org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage) && org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
                     if (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS)) {
                         fetchTier();
-                    }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
-                        showErrorDialog(message);
-                    }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
-                        showErrorDialog(message);
+                    } else {
+                        UiUtil.showErrorDialog(ui, this, message);
                     }
                 }
             } catch (JsonProcessingException e) {

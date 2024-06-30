@@ -7,10 +7,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
-public class Broadcaster {
+public final class Broadcaster {
     static Executor executor = Executors.newSingleThreadExecutor();
 
     static LinkedList<Consumer<String>> listeners = new LinkedList<>();
+
+    private Broadcaster() {
+    }
 
     public static synchronized Registration register(
             Consumer<String> listener) {

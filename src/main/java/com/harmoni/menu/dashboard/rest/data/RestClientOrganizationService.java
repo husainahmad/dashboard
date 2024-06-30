@@ -1,10 +1,12 @@
 package com.harmoni.menu.dashboard.rest.data;
 
+import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,21 +20,12 @@ import reactor.core.publisher.Mono;
 
 import java.io.Serializable;
 
+@RequiredArgsConstructor
 @Service
 @Slf4j
 public class RestClientOrganizationService implements Serializable {
 
-    @Value("${menu.url.chain}")
-    private String urlChain;
-
-    @Value("${menu.url.brand}")
-    private String urlBrand;
-
-    @Value("${menu.url.tier}")
-    private String urlTier;
-
-    @Value("${menu.url.store}")
-    private String urlStore;
+    private final MenuProperties menuProperties;
 
     public Mono<RestAPIResponse> createChain(ChainDto chainDto) {
 
@@ -40,7 +33,7 @@ public class RestClientOrganizationService implements Serializable {
 
         return
                 webClient.post()
-                .uri(urlChain)
+                .uri(menuProperties.getUrl().getChain())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(chainDto), ChainDto.class)
                 .retrieve()
@@ -68,7 +61,7 @@ public class RestClientOrganizationService implements Serializable {
 
         return
                 webClient.put()
-                .uri("%s/%d".formatted(urlChain, chainDto.getId()))
+                .uri("%s/%d".formatted(menuProperties.getUrl().getChain(), chainDto.getId()))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(chainDto), ChainDto.class)
                 .retrieve()
@@ -96,7 +89,7 @@ public class RestClientOrganizationService implements Serializable {
 
         return
                 webClient.post()
-                .uri(urlBrand)
+                .uri(menuProperties.getUrl().getBrand())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(brandDto), BrandDto.class)
                 .retrieve()
@@ -124,7 +117,7 @@ public class RestClientOrganizationService implements Serializable {
 
         return
                 webClient.put()
-                .uri("%s/%d".formatted(urlChain, brandDto.getId()))
+                .uri("%s/%d".formatted(menuProperties.getUrl().getChain(), brandDto.getId()))
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(brandDto), BrandDto.class)
                 .retrieve()
@@ -152,7 +145,7 @@ public class RestClientOrganizationService implements Serializable {
 
         return
                 webClient.post()
-                .uri(urlTier)
+                .uri(menuProperties.getUrl().getTier())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(tierDto), TierDto.class)
                 .retrieve()
@@ -179,7 +172,7 @@ public class RestClientOrganizationService implements Serializable {
 
         return
                 webClient.post()
-                .uri(urlStore)
+                .uri(menuProperties.getUrl().getStore())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Mono.just(storeDto), StoreDto.class)
                 .retrieve()
