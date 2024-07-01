@@ -1,7 +1,6 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.harmoni.menu.dashboard.layout.component.SkuComponentRender;
-import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.dto.SkuDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
@@ -49,11 +48,11 @@ public class ProductDialogEdit extends Dialog {
     private UI ui;
     private final TabSheet tabSheet = new TabSheet();
     @Getter
-    private final ProductTreeItem productTreeItem;
+    private final transient ProductTreeItem productTreeItem;
     private final VirtualList<SkuDto> skuDtoVirtualList;
     @Getter
-    private final TierDto tierDto;
-    private final List<CategoryDto> categoryDtos;
+    private final transient TierDto tierDto;
+    private final transient List<CategoryDto> categoryDtos;
     @Getter
     private final List<Binder<ProductBinderBean>> binders;
     private int newSkuTempId = -1;
@@ -62,7 +61,7 @@ public class ProductDialogEdit extends Dialog {
 
     public ProductDialogEdit(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
                              @Autowired RestClientMenuService restClientMenuService,
-                             ProductTreeItem productTreeItem, BrandDto brandDto, TierDto tierDto,
+                             ProductTreeItem productTreeItem, TierDto tierDto,
                              List<CategoryDto> categoryDtos) {
 
         this.asyncRestClientMenuService = asyncRestClientMenuService;

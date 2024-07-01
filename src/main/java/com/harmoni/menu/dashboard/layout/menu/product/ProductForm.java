@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
@@ -9,6 +10,7 @@ import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
+import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
@@ -26,6 +28,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.Objects;
 
 @Route("product-form")
 @Slf4j
@@ -46,17 +50,12 @@ public class ProductForm extends FormLayout  {
     @Getter
     private UI ui;
     @Getter
-    private ProductDto productDto;
+    private transient ProductDto productDto;
     private final AsyncRestClientMenuService asyncRestClientMenuService;
-    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
-    private final RestClientMenuService restClientMenuService;
 
-    public ProductForm(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
-                       @Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                       @Autowired RestClientMenuService restClientMenuService) {
+    public ProductForm(@Autowired AsyncRestClientMenuService asyncRestClientMenuService) {
         this.asyncRestClientMenuService = asyncRestClientMenuService;
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
-        this.restClientMenuService = restClientMenuService;
+
         addValidation();
 
         categoryBox.setItemLabelGenerator(CategoryDto::getName);
@@ -71,30 +70,7 @@ public class ProductForm extends FormLayout  {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         this.ui = attachEvent.getUI();
-        broadcasterRegistration = Broadcaster.register(message -> {
-            try {
-                BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
-                        showNotification("Category created..");
-                        hideForm();
-                    }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
-                        showErrorDialog(message);
-                    }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
-                        showErrorDialog(message);
-                    }
-                }
-            } catch (JsonProcessingException e) {
-                log.error("Broadcast Handler Error", e);
-            }
-
-            if (message.equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
-                showNotification("Category created..");
-                hideForm();
-            }
-        });
+        broadcasterRegistration = Broadcaster.register(this::acceptNotification);
 
         fetchCategories();
     }
@@ -116,9 +92,7 @@ public class ProductForm extends FormLayout  {
     }
 
     public void hideForm() {
-        ui.access(()->{
-            this.setVisible(false);
-        });
+        ui.access(()-> this.setVisible(false));
     }
 
     @Override
@@ -155,20 +129,13 @@ public class ProductForm extends FormLayout  {
     }
 
     private void fetchCategories() {
-        asyncRestClientMenuService.getAllCategoryAsync(result -> {
-            ui.access(()->{
-                categoryBox.setItems(result);
-            });
-        }, 1);
-        //TODO
+        asyncRestClientMenuService.getAllCategoryAsync(result ->
+                ui.access(()-> categoryBox.setItems(result)), 1);
     }
 
     private void fetchDetailCategory(Long id) {
-        asyncRestClientMenuService.getDetailCategoryAsync(result -> {
-            ui.access(()->{
-                categoryBox.setValue(result);
-            });
-        }, id);
+        asyncRestClientMenuService.getDetailCategoryAsync(result ->
+                ui.access(()-> categoryBox.setValue(result)), id);
     }
 
     private HorizontalLayout createButtonsLayout() {
@@ -182,30 +149,48 @@ public class ProductForm extends FormLayout  {
 
         closeButton.addClickShortcut(Key.ESCAPE);
 
-//        updateButton.addClickListener(new BrandUpdateEventListener(this, restClientService));
-
-//        saveButton.addClickListener(
-//                new CategorySaveEventListener(this, restClientMenuService));
         closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
 
         return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
     }
 
     public void restructureButton(FormAction formAction) {
-        switch (formAction) {
-            case CREATE -> {
-                saveButton.setVisible(true);
-                updateButton.setVisible(false);
-                deleteButton.setVisible(false);
-                closeButton.setVisible(true);
-                break;
-            }
-            case EDIT -> {
-                saveButton.setVisible(false);
-                updateButton.setVisible(true);
-                deleteButton.setVisible(true);
-                closeButton.setVisible(true);
-            }
+        if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
+            saveButton.setVisible(true);
+            updateButton.setVisible(false);
+            deleteButton.setVisible(false);
+            closeButton.setVisible(true);
+        } else if (formAction == FormAction.EDIT) {
+            saveButton.setVisible(false);
+            updateButton.setVisible(true);
+            deleteButton.setVisible(true);
+            closeButton.setVisible(true);
         }
+    }
+
+    private void acceptNotification(String message) {
+        try {
+            BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
+            if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
+                showNotification(broadcastMessage);
+            }
+        } catch (JsonProcessingException e) {
+            log.error("Broadcast Handler Error", e);
+        }
+    }
+
+    private void showNotification(BroadcastMessage broadcastMessage) {
+        RestAPIResponse restAPIResponse = (RestAPIResponse) broadcastMessage.getData();
+        if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
+            showNotification("Category created..");
+            hideForm();
+        }
+        if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
+            showErrorDialog(restAPIResponse.getData().toString());
+        }
+        if (broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
+            showErrorDialog(restAPIResponse.getData().toString());
+        }
+
     }
 }

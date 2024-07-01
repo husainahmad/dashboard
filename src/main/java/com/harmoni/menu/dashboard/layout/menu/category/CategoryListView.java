@@ -5,16 +5,13 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -75,7 +72,7 @@ public class CategoryListView extends VerticalLayout {
     }
 
     private void configureForm() {
-        categoryForm = new CategoryForm(this.asyncRestClientMenuService,
+        categoryForm = new CategoryForm(
                 this.asyncRestClientOrganizationService,
                 this.restClientMenuService);
         categoryForm.setWidth("25em");
@@ -96,9 +93,7 @@ public class CategoryListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addBrandButton = new Button("Add Category");
-        addBrandButton.addClickListener(buttonClickEvent -> {
-            addCategory();
-        });
+        addBrandButton.addClickListener((ComponentEventListener<ClickEvent<Button>>) buttonClickEvent -> CategoryListView.this.addCategory());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -151,19 +146,8 @@ public class CategoryListView extends VerticalLayout {
         removeClassName("editing");
     }
 
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
-        });
-    }
-
     private void fetchCategories() {
-        asyncRestClientMenuService.getAllCategoryAsync(result -> {
-            ui.access(()-> {
-                categoryDtoGrid.setItems(result);
-            });
-        }, 1);
+        asyncRestClientMenuService.getAllCategoryAsync(result -> ui.access(()->
+                categoryDtoGrid.setItems(result)), 1);
     }
 }

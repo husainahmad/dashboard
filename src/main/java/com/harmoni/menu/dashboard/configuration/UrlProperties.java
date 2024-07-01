@@ -2,8 +2,10 @@ package com.harmoni.menu.dashboard.configuration;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class UrlProperties {
+public class UrlProperties implements Serializable {
     private String store;
     private String category;
     private String sku;
@@ -12,7 +14,7 @@ public class UrlProperties {
     private String chain;
     private String tier;
     private String product;
-    private TierProperties tiers;
-    private CategoryProperties categories;
-    private ProductProperties products;
+    private transient TierProperties tiers;
+    private transient CategoryProperties categories;
+    private transient ProductProperties products;
 }

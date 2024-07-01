@@ -21,7 +21,7 @@ import java.io.Serializable;
 @Slf4j
 public class RestClientMenuService implements Serializable {
 
-    private final MenuProperties urlMenuProperties;
+    private final transient MenuProperties urlMenuProperties;
 
     public Mono<RestAPIResponse> createCategory(CategoryDto categoryDto) {
 

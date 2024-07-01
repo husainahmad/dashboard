@@ -29,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Objects;
+
 @Route("category-form")
 @Slf4j
 public class CategoryForm extends FormLayout  {
@@ -49,15 +51,12 @@ public class CategoryForm extends FormLayout  {
     @Getter
     private UI ui;
     @Getter
-    private CategoryDto categoryDto;
-    private final AsyncRestClientMenuService asyncRestClientMenuService;
+    private transient CategoryDto categoryDto;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
 
-    public CategoryForm(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
-                        @Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+    public CategoryForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                         @Autowired RestClientMenuService restClientMenuService) {
-        this.asyncRestClientMenuService = asyncRestClientMenuService;
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientMenuService = restClientMenuService;
         addValidation();
@@ -114,9 +113,7 @@ public class CategoryForm extends FormLayout  {
     }
 
     public void hideForm() {
-        ui.access(()->{
-            this.setVisible(false);
-        });
+        ui.access(()-> this.setVisible(false));
     }
 
     @Override
@@ -161,19 +158,13 @@ public class CategoryForm extends FormLayout  {
     }
 
     private void fetchBrands() {
-        asyncRestClientOrganizationService.getAllBrandAsync(result -> {
-            ui.access(()->{
-                brandBox.setItems(result);
-            });
-        });
+        asyncRestClientOrganizationService.getAllBrandAsync(result ->
+                ui.access(()-> brandBox.setItems(result)));
     }
 
     private void fetchDetailBrands(Long id) {
-        asyncRestClientOrganizationService.getDetailBrandAsync(result -> {
-            ui.access(()->{
-                brandBox.setValue(result);
-            });
-        }, id);
+        asyncRestClientOrganizationService.getDetailBrandAsync(result ->
+                ui.access(()-> brandBox.setValue(result)), id);
     }
 
     private HorizontalLayout createButtonsLayout() {
@@ -187,8 +178,6 @@ public class CategoryForm extends FormLayout  {
 
         closeButton.addClickShortcut(Key.ESCAPE);
 
-//        updateButton.addClickListener(new BrandUpdateEventListener(this, restClientService));
-
         saveButton.addClickListener(
                 new CategorySaveEventListener(this, restClientMenuService));
         closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
@@ -197,20 +186,16 @@ public class CategoryForm extends FormLayout  {
     }
 
     public void restructureButton(FormAction formAction) {
-        switch (formAction) {
-            case CREATE -> {
-                saveButton.setVisible(true);
-                updateButton.setVisible(false);
-                deleteButton.setVisible(false);
-                closeButton.setVisible(true);
-                break;
-            }
-            case EDIT -> {
-                saveButton.setVisible(false);
-                updateButton.setVisible(true);
-                deleteButton.setVisible(true);
-                closeButton.setVisible(true);
-            }
+        if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
+            saveButton.setVisible(true);
+            updateButton.setVisible(false);
+            deleteButton.setVisible(false);
+            closeButton.setVisible(true);
+        } else if (formAction == FormAction.EDIT) {
+            saveButton.setVisible(false);
+            updateButton.setVisible(true);
+            deleteButton.setVisible(true);
+            closeButton.setVisible(true);
         }
     }
 }

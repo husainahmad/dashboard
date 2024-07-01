@@ -25,7 +25,7 @@ import java.util.List;
 
 public class SkuComponentRender extends HorizontalLayout {
 
-    private final SkuDto skuDto;
+    private final transient SkuDto skuDto;
     private final ProductDialogEdit productDialogEdit;
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
@@ -86,9 +86,7 @@ public class SkuComponentRender extends HorizontalLayout {
 
         horizontalLayout.add(text, priceField, buttonDelete);
 
-        this.productDialogEdit.getUi().access(() -> {
-            verticalLayout.add(horizontalLayout);
-        });
+        this.productDialogEdit.getUi().access(() -> verticalLayout.add(horizontalLayout));
 
         if (skuId.equals(productDialogEdit.getProductTreeItem()
                         .getSkus().getLast().getId())) {
@@ -122,9 +120,7 @@ public class SkuComponentRender extends HorizontalLayout {
             if (productBinder.getBean().getSkuId().equals(skuTierPriceDto.getSkuId())) {
                 productBinder.getFields().forEach(hasValue -> {
                     if (hasValue instanceof NumberField numberField) {
-                        currentUi.access(() -> {
-                            numberField.setValue(skuTierPriceDto.getPrice());
-                        });
+                        currentUi.access(() -> numberField.setValue(skuTierPriceDto.getPrice()));
                     }
                 });
             }

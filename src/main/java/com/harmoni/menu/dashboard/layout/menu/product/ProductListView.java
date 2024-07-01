@@ -12,12 +12,10 @@ import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.dto.ProductDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
@@ -36,9 +34,8 @@ import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.spring.annotation.UIScope;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -52,9 +49,9 @@ import java.util.concurrent.atomic.AtomicReference;
 @Route(value = "product", layout = MainLayout.class)
 @PageTitle("Product | POSHarmoni")
 @Component
+@Slf4j
 public class ProductListView extends VerticalLayout {
 
-    private final static Logger log = LoggerFactory.getLogger(ProductListView.class);
     Registration broadcasterRegistration;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
@@ -63,7 +60,6 @@ public class ProductListView extends VerticalLayout {
 
     private final TreeGrid<ProductTreeItem> productDtoGrid = new TreeGrid<>(ProductTreeItem.class);
     private final AsyncRestClientMenuService asyncRestClientMenuService;
-    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
 
     private final TextField filterText = new TextField();
@@ -71,17 +67,15 @@ public class ProductListView extends VerticalLayout {
     private final ComboBox<BrandDto> brandDtoComboBox = new ComboBox<>();
     private final ComboBox<CategoryDto> categoryDtoComboBox = new ComboBox<>();
     private ProductForm productForm;
-    private TierDto tierDto;
-    private BrandDto brandDto;
-    private List<CategoryDto> categoryDtos;
+    private transient TierDto tierDto;
+    private transient BrandDto brandDto;
+    private transient List<CategoryDto> categoryDtos;
     private UI ui;
-    private int numFromClient = 0;
+
     public ProductListView(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
-                           @Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                            @Autowired RestClientMenuService restClientMenuService) {
 
         this.asyncRestClientMenuService = asyncRestClientMenuService;
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientMenuService = restClientMenuService;
 
         addClassName("list-view");
@@ -110,7 +104,6 @@ public class ProductListView extends VerticalLayout {
                     ProductDialogEdit productDialogEdit = new ProductDialogEdit(this.asyncRestClientMenuService,
                             this.restClientMenuService,
                             button.getProductTreeItem(),
-                            this.brandDtoComboBox.getValue(),
                             this.tierDtoComboBox.getValue(),
                             categoryDtos);
                     add(productDialogEdit);
@@ -125,9 +118,8 @@ public class ProductListView extends VerticalLayout {
             return button;
         });
 
-        productDtoGrid.addCollapseListener(event -> event.getItems().forEach(productTreeItem -> {
-            log.debug("item collapse {}", productTreeItem);
-        }));
+        productDtoGrid.addCollapseListener(event -> event.getItems().forEach(productTreeItem ->
+                log.debug("item collapse {}", productTreeItem)));
 
         productDtoGrid.addExpandListener(event -> {
             if (event.isFromClient()) {
@@ -150,17 +142,12 @@ public class ProductListView extends VerticalLayout {
             }
         });
 
-        productDtoGrid.asSingleSelect().addValueChangeListener(valueChangeEvent -> {
-        });
-
         productDtoGrid.getColumns().forEach(productDtoColumn -> productDtoColumn.setAutoWidth(true));
 
     }
 
     private void configureForm() {
-        productForm = new ProductForm(this.asyncRestClientMenuService,
-                this.asyncRestClientOrganizationService,
-                this.restClientMenuService);
+        productForm = new ProductForm(this.asyncRestClientMenuService);
         productForm.setWidth("25em");
     }
 
@@ -266,7 +253,6 @@ public class ProductListView extends VerticalLayout {
                             fetchTier(brandDto.getId());
 
                         }
-                        numFromClient++;
                     }
                 });
     }
@@ -291,15 +277,6 @@ public class ProductListView extends VerticalLayout {
         productForm.setVisible(false);
         removeClassName("editing");
     }
-
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
-        });
-    }
-
 
     private void fetchCategories(Integer brandId) {
         restClientMenuService.getAllCategoryByBrand(brandId)

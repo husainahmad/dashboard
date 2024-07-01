@@ -8,12 +8,8 @@ import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.exception.BusinessServerRequestException;
-import com.vaadin.flow.component.UI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,15 +24,13 @@ import java.util.Objects;
 @Slf4j
 public class AsyncRestClientOrganizationService implements Serializable {
 
-    private final MenuProperties menuProperties;
-
-    private UI ui;
+    private final transient MenuProperties menuProperties;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
 
-    public static interface AsyncRestCallback<T> {
+    public interface AsyncRestCallback<T> {
         void operationFinished(T result);
     }
 
@@ -62,7 +56,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
 
     public void getDetailChainAsync(AsyncRestCallback<ChainDto> callback, Long id) {
         RequestHeadersSpec<?> spec = WebClient.create().get()
-                .uri("%s/%d".formatted(menuProperties.getUrl().getChain(), id));
+                .uri(MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getChain(), id));
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -103,7 +97,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
 
     public void getDetailBrandAsync(AsyncRestCallback<BrandDto> callback, Long id) {
         RequestHeadersSpec<?> spec = WebClient.create().get()
-                .uri("%s/%d".formatted(menuProperties.getUrl().getBrand(), id));
+                .uri(MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getBrand(), id));
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -124,7 +118,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
 
     public void getDetailTierAsync(AsyncRestCallback<TierDto> callback, Long id) {
         RequestHeadersSpec<?> spec = WebClient.create().get()
-                .uri("%s/%d".formatted(menuProperties.getUrl().getTier(), id));
+                .uri(MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getTier(), id));
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,

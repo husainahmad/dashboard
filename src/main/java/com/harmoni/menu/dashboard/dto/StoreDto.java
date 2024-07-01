@@ -3,7 +3,6 @@ package com.harmoni.menu.dashboard.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 import java.util.Date;
 
