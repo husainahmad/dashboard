@@ -3,7 +3,7 @@ package com.harmoni.menu.dashboard.rest.data;
 import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
-import com.harmoni.menu.dashboard.layout.menu.product.ProductFormDto;
+import com.harmoni.menu.dashboard.layout.menu.product.dto.ProductFormDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;

@@ -1,10 +1,6 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
@@ -53,10 +49,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ProductListView extends VerticalLayout {
 
     Registration broadcasterRegistration;
-
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
 
     private final TreeGrid<ProductTreeItem> productDtoGrid = new TreeGrid<>(ProductTreeItem.class);
     private final AsyncRestClientMenuService asyncRestClientMenuService;
@@ -237,10 +229,7 @@ public class ProductListView extends VerticalLayout {
                 .subscribe(restAPIResponse -> {
                     if (!ObjectUtils.isEmpty(restAPIResponse.getData())) {
 
-                        final List<BrandDto> brands = objectMapper.convertValue(
-                                Objects.requireNonNull(restAPIResponse.getData()),
-                                new TypeReference<>() {
-                                });
+                        final List<BrandDto> brands = ObjectUtil.convertObjectToObject(restAPIResponse.getData());
 
                         brandDto = brands.getFirst();
                         if (!ObjectUtils.isEmpty(brands)) {
@@ -283,10 +272,9 @@ public class ProductListView extends VerticalLayout {
             .subscribe(restAPIResponse -> {
                 if (!ObjectUtils.isEmpty(restAPIResponse.getData())) {
 
-                    final List<CategoryDto> categories = objectMapper.convertValue(
-                            Objects.requireNonNull(restAPIResponse.getData()),
-                            new TypeReference<>() {
-                            });
+                    final List<CategoryDto> categories = ObjectUtil.convertObjectToObject(
+                            restAPIResponse.getData()
+                    );
 
                     categoryDtos = categories;
                     CategoryDto categoryDto = new CategoryDto();
@@ -305,10 +293,9 @@ public class ProductListView extends VerticalLayout {
         restClientMenuService.getAllTierByBrand(brandId)
             .subscribe(restAPIResponse -> {
                 if (!ObjectUtils.isEmpty(restAPIResponse.getData())) {
-                    final List<TierDto> tierDtos = objectMapper.convertValue(
-                            Objects.requireNonNull(restAPIResponse.getData()),
-                            new TypeReference<>() {
-                            });
+                    final List<TierDto> tierDtos = ObjectUtil.convertObjectToObject(
+                            restAPIResponse.getData()
+                    );
 
                     ui.access(()-> {
                         tierDto = tierDtos.getLast();

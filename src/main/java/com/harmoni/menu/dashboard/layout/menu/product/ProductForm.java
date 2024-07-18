@@ -1,6 +1,5 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
@@ -9,9 +8,7 @@ import com.harmoni.menu.dashboard.dto.ProductDto;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
-import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
@@ -172,14 +169,14 @@ public class ProductForm extends FormLayout  {
         try {
             BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
             if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                showNotification(broadcastMessage);
+                showBroadcastMessage(broadcastMessage);
             }
         } catch (JsonProcessingException e) {
             log.error("Broadcast Handler Error", e);
         }
     }
 
-    private void showNotification(BroadcastMessage broadcastMessage) {
+    private void showBroadcastMessage(BroadcastMessage broadcastMessage) {
         RestAPIResponse restAPIResponse = (RestAPIResponse) broadcastMessage.getData();
         if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
             showNotification("Category created..");

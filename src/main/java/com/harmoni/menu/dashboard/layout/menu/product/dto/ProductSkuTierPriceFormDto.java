@@ -1,4 +1,4 @@
-package com.harmoni.menu.dashboard.layout.menu.product;
+package com.harmoni.menu.dashboard.layout.menu.product.dto;
 
 import lombok.Builder;
 import lombok.Data;

@@ -2,9 +2,12 @@ package com.harmoni.menu.dashboard.util;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
+
+import java.util.Objects;
 
 public final class ObjectUtil {
 
@@ -19,5 +22,12 @@ public final class ObjectUtil {
     }
     public static Object jsonStringToBroadcastMessageClass(String string) throws JsonProcessingException {
         return objectMapper.readValue(string, BroadcastMessage.class);
+    }
+
+    public static  <T> T convertObjectToObject(Object object) {
+       return objectMapper.convertValue(
+                Objects.requireNonNull(object),
+                new TypeReference<>() {
+                });
     }
 }

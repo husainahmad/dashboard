@@ -8,7 +8,6 @@ import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.event.category.CategorySaveEventListener;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;

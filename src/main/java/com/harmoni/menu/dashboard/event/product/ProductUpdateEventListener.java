@@ -2,6 +2,9 @@ package com.harmoni.menu.dashboard.event.product;
 
 import com.harmoni.menu.dashboard.layout.menu.product.*;
 import com.harmoni.menu.dashboard.layout.menu.product.binder.ProductBinderBean;
+import com.harmoni.menu.dashboard.layout.menu.product.dto.ProductFormDto;
+import com.harmoni.menu.dashboard.layout.menu.product.dto.ProductSkuFormDto;
+import com.harmoni.menu.dashboard.layout.menu.product.dto.ProductSkuTierPriceFormDto;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
