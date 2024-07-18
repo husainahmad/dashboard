@@ -44,7 +44,7 @@ public class RestClientMenuService implements Serializable {
         WebClient webClient = WebClient.builder().build();
         return
                 webClient.get()
-                        .uri("%s/%d".formatted(urlMenuProperties.getUrl().getCategory(), brandId))
+                        .uri("%s/%d".formatted(urlMenuProperties.getUrl().getCategories().getBrand(), brandId))
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)

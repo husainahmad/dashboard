@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
@@ -229,7 +230,9 @@ public class ProductListView extends VerticalLayout {
                 .subscribe(restAPIResponse -> {
                     if (!ObjectUtils.isEmpty(restAPIResponse.getData())) {
 
-                        final List<BrandDto> brands = ObjectUtil.convertObjectToObject(restAPIResponse.getData());
+                        final List<BrandDto> brands = ObjectUtil.convertObjectToObject(restAPIResponse.getData(),
+                                new TypeReference<List<BrandDto>>() {
+                                });
 
                         brandDto = brands.getFirst();
                         if (!ObjectUtils.isEmpty(brands)) {
@@ -273,7 +276,9 @@ public class ProductListView extends VerticalLayout {
                 if (!ObjectUtils.isEmpty(restAPIResponse.getData())) {
 
                     final List<CategoryDto> categories = ObjectUtil.convertObjectToObject(
-                            restAPIResponse.getData()
+                            restAPIResponse.getData(),
+                            new TypeReference<List<CategoryDto>>() {
+                            }
                     );
 
                     categoryDtos = categories;
@@ -294,7 +299,8 @@ public class ProductListView extends VerticalLayout {
             .subscribe(restAPIResponse -> {
                 if (!ObjectUtils.isEmpty(restAPIResponse.getData())) {
                     final List<TierDto> tierDtos = ObjectUtil.convertObjectToObject(
-                            restAPIResponse.getData()
+                            restAPIResponse.getData(), new TypeReference<List<TierDto>>() {
+                            }
                     );
 
                     ui.access(()-> {

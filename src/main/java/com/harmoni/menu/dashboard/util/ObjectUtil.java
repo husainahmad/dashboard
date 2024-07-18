@@ -24,10 +24,8 @@ public final class ObjectUtil {
         return objectMapper.readValue(string, BroadcastMessage.class);
     }
 
-    public static  <T> T convertObjectToObject(Object object) {
+    public static  <T> T convertObjectToObject(Object object, TypeReference<T> typeReference) {
        return objectMapper.convertValue(
-                Objects.requireNonNull(object),
-                new TypeReference<>() {
-                });
+                Objects.requireNonNull(object), typeReference);
     }
 }
