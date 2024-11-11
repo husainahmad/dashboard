@@ -1,11 +1,12 @@
 package com.harmoni.menu.dashboard.layout.navigation;
 
 import com.harmoni.menu.dashboard.layout.menu.product.ProductListView;
+import com.harmoni.menu.dashboard.layout.setting.service.ServiceListView;
 import com.harmoni.menu.dashboard.layout.organization.brand.BrandListView;
 import com.harmoni.menu.dashboard.layout.menu.category.CategoryListView;
 import com.harmoni.menu.dashboard.layout.organization.chain.ChainListView;
 import com.harmoni.menu.dashboard.layout.organization.store.StoreListView;
-import com.harmoni.menu.dashboard.layout.organization.tier.TierListView;
+import com.harmoni.menu.dashboard.layout.organization.tier.TierPriceListView;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -25,16 +26,26 @@ public class SideNavMenu extends Div {
         SideNav sideNavAdmin = new SideNav();
         sideNavAdmin.setLabel("Admin");
         sideNavAdmin.setCollapsible(true);
-        sideNavAdmin.addItem(new SideNavItem("Chain", ChainListView.class));
         sideNavAdmin.addItem(new SideNavItem("Brand", BrandListView.class));
-        sideNavAdmin.addItem(new SideNavItem("Tier", TierListView.class));
+        sideNavAdmin.addItem(new SideNavItem("Chain", ChainListView.class));
+
+        SideNavItem sideNavTier = new SideNavItem("Tier");
+        sideNavTier.addItem(new SideNavItem("Price", TierPriceListView.class));
+
+        sideNavAdmin.addItem(sideNavTier);
         sideNavAdmin.addItem(new SideNavItem("Store", StoreListView.class));
 
-        VerticalLayout navWrapper = new VerticalLayout(sideNavMenu, sideNavAdmin);
+        SideNav sideNavSetting = new SideNav();
+        sideNavSetting.setLabel("Setting");
+        sideNavSetting.setCollapsible(true);
+        sideNavSetting.addItem(new SideNavItem("Service", ServiceListView.class));
+
+        VerticalLayout navWrapper = new VerticalLayout(sideNavMenu, sideNavAdmin, sideNavSetting);
         navWrapper.setSpacing(true);
         navWrapper.setSizeUndefined();
         sideNavMenu.setWidthFull();
         sideNavAdmin.setWidthFull();
+        sideNavSetting.setWidthFull();
 
         Scroller scroller = new Scroller(new Div(navWrapper));
         scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);

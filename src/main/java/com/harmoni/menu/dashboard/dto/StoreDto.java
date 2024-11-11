@@ -17,9 +17,9 @@ public class StoreDto {
     @JsonProperty("tier")
     private TierDto tierDto;
     @NotEmpty
-    private Integer brandId;
-    @JsonProperty("brand")
-    private BrandDto brandDto;
+    private Integer chainId;
+    @JsonProperty("chain")
+    private ChainDto chainDto;
     private String address;
     private Date createdAt;
     private Date updatedAt;

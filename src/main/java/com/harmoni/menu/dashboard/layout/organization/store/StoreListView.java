@@ -67,7 +67,8 @@ public class StoreListView extends VerticalLayout {
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS)) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
+                    broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS)) {
                         fetchStores();
                         ui.access(()->{
                             storeForm.setVisible(false);
@@ -102,7 +103,7 @@ public class StoreListView extends VerticalLayout {
         storeDtoGrid.removeAllColumns();
         storeDtoGrid.addColumn(StoreDto::getName).setHeader("Name");
         storeDtoGrid.addColumn(StoreDto::getAddress).setHeader("Address");
-        storeDtoGrid.addColumn("brandDto.name").setHeader("Brand");
+        storeDtoGrid.addColumn("chainDto.name").setHeader("Chain");
         storeDtoGrid.addColumn("tierDto.name").setHeader("Tier");
 
         storeDtoGrid.getColumns().forEach(storeDtoColumn -> storeDtoColumn.setAutoWidth(true));
@@ -156,10 +157,7 @@ public class StoreListView extends VerticalLayout {
     }
 
     private void fetchStores() {
-        asyncRestClientOrganizationService.getAllStoreAsync(result -> {
-            ui.access(()-> {
-                storeDtoGrid.setItems(result);
-            });
-        });
+        asyncRestClientOrganizationService.getAllStoreAsync(result -> ui.access(()->
+                storeDtoGrid.setItems(result)));
     }
 }

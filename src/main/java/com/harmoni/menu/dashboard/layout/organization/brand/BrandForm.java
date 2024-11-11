@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
-import com.harmoni.menu.dashboard.dto.ChainDto;
+import com.harmoni.menu.dashboard.event.brand.BrandDeleteEventListener;
 import com.harmoni.menu.dashboard.event.brand.BrandSaveEventListener;
 import com.harmoni.menu.dashboard.event.brand.BrandUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
@@ -15,7 +15,6 @@ import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -36,8 +35,6 @@ public class BrandForm extends FormLayout  {
     BeanValidationBinder<BrandDto> binder = new BeanValidationBinder<>(BrandDto.class);
     @Getter
     TextField brandNameField = new TextField("Brand name");
-    @Getter
-    ComboBox<ChainDto> chainBox = new ComboBox<>("Chain");
     private final Button saveButton = new Button("Save");
     private final Button  deleteButton = new Button("Delete");
     private final Button  closeButton = new Button("Cancel");
@@ -55,15 +52,10 @@ public class BrandForm extends FormLayout  {
         this.restClientOrganizationService = restClientOrganizationService;
         addValidation();
 
-        chainBox.setItemLabelGenerator(ChainDto::getName);
-
-        add(chainBox);
         add(brandNameField);
 
         add(createButtonsLayout());
         binder.bindInstanceFields(this);
-
-        fetchChains();
     }
 
     @Override
@@ -122,10 +114,7 @@ public class BrandForm extends FormLayout  {
     private void addValidation() {
         brandNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>) changeEvent -> binder.validate());
-        binder.forField(chainBox)
-                .withValidator(value -> value.getId()>0,
-                        "Chain must be not empty")
-                .bind(BrandDto::getChainDto, BrandDto::setChainDto);
+
         binder.forField(brandNameField)
                 .withValidator(value -> value.length()>2,
                         "Name must contain at least three characters")
@@ -134,27 +123,7 @@ public class BrandForm extends FormLayout  {
 
     void setBrandDto(BrandDto brandDto) {
         this.brandDto = brandDto;
-        if (!ObjectUtils.isEmpty(this.brandDto) &&
-                !ObjectUtils.isEmpty(this.brandDto.getChainId())) {
-            fetchDetailChains(brandDto.getChainId().longValue());
-        }
         binder.readBean(brandDto);
-    }
-
-    private void fetchChains() {
-        asyncRestClientOrganizationService.getAllChainAsync(result -> {
-            ui.access(()->{
-                chainBox.setItems(result);
-            });
-        });
-    }
-
-    private void fetchDetailChains(Long id) {
-        asyncRestClientOrganizationService.getDetailChainAsync(result -> {
-            ui.access(()->{
-                chainBox.setValue(result);
-            });
-        }, id);
     }
 
     private HorizontalLayout createButtonsLayout() {
@@ -169,6 +138,7 @@ public class BrandForm extends FormLayout  {
         closeButton.addClickShortcut(Key.ESCAPE);
 
         updateButton.addClickListener(new BrandUpdateEventListener(this, restClientOrganizationService));
+        deleteButton.addClickListener(new BrandDeleteEventListener(this, restClientOrganizationService));
 
         saveButton.addClickListener(
                 new BrandSaveEventListener(this, restClientOrganizationService));
@@ -184,7 +154,6 @@ public class BrandForm extends FormLayout  {
                 updateButton.setVisible(false);
                 deleteButton.setVisible(false);
                 closeButton.setVisible(true);
-                break;
             }
             case EDIT -> {
                 saveButton.setVisible(false);

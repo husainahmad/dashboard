@@ -1,11 +1,16 @@
 package com.harmoni.menu.dashboard.event.product;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.harmoni.menu.dashboard.component.BroadcastMessage;
+import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.layout.menu.product.*;
 import com.harmoni.menu.dashboard.layout.menu.product.binder.ProductBinderBean;
 import com.harmoni.menu.dashboard.layout.menu.product.dto.ProductFormDto;
 import com.harmoni.menu.dashboard.layout.menu.product.dto.ProductSkuFormDto;
 import com.harmoni.menu.dashboard.layout.menu.product.dto.ProductSkuTierPriceFormDto;
+import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -64,11 +69,7 @@ public class ProductUpdateEventListener implements ComponentEventListener<ClickE
                 .skus(skuFormDtos)
                 .build();
 
-        restClientMenuService.saveProductBulk(productFormDto).subscribe(restAPIResponse -> {
-            if (restAPIResponse.getHttpStatus() == HttpStatus.OK.value()) {
-                productDialogEdit.getUi().access(productDialogEdit::close);
-            }
-        });
+        restClientMenuService.saveProductBulk(productFormDto).subscribe(this::accept);
     }
 
     private boolean isSkuNameEqualsTo(Binder<ProductBinderBean> productBinderBean, int index,
@@ -86,4 +87,17 @@ public class ProductUpdateEventListener implements ComponentEventListener<ClickE
         return true;
     }
 
+    private void accept(RestAPIResponse restAPIResponse) {
+        if (restAPIResponse.getHttpStatus() == HttpStatus.OK.value()) {
+            productDialogEdit.getUi().access(productDialogEdit::close);
+
+            try {
+                Broadcaster.broadcast(ObjectUtil.objectToJsonString(BroadcastMessage.builder()
+                        .type(BroadcastMessage.PRODUCT_UPDATE_SUCCESS)
+                        .data(restAPIResponse).build()));
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
+    }
 }

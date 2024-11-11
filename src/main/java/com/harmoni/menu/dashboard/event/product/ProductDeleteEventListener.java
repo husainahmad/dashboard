@@ -54,7 +54,8 @@ public class ProductDeleteEventListener implements ComponentEventListener<ClickE
         this.productDialogEdit.setDataProvider(this.productDialogEdit.getProductTreeItem().getSkus());
     }
 
-    private void callRemoveAPI(SkuDto skuDto, BeanValidationBinder<ProductBinderBean> binder, ConfirmDialog.ConfirmEvent confirmEvent) {
+    private void callRemoveAPI(SkuDto skuDto, BeanValidationBinder<ProductBinderBean> binder,
+                               ConfirmDialog.ConfirmEvent confirmEvent) {
         log.debug("confirmEvent {}", confirmEvent);
         this.restClientMenuService.deleteSku(skuDto).subscribe(restAPIResponse -> {
             if (restAPIResponse.getHttpStatus() == HttpStatus.NO_CONTENT.value()) {

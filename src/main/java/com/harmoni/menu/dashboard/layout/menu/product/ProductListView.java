@@ -206,6 +206,8 @@ public class ProductListView extends VerticalLayout {
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
                     if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
                         fetchBrands();
+                    } else if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_UPDATE_SUCCESS)) {
+                        fetchProducts(getCategoryId(), brandDto.getId());
                     } else {
                         UiUtil.showErrorDialog(ui, this, message);
                     }

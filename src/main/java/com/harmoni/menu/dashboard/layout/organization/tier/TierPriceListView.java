@@ -29,7 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Route(value = "tier", layout = MainLayout.class)
 @PageTitle("Tier | POSHarmoni")
 @Slf4j
-public class TierListView extends VerticalLayout {
+public class TierPriceListView extends VerticalLayout {
 
     Registration broadcasterRegistration;
     private final Grid<TierDto> tierDtoGrid = new Grid<>(TierDto.class);
@@ -37,9 +37,9 @@ public class TierListView extends VerticalLayout {
     private final TextField filterText = new TextField();
     private UI ui;
     private final RestClientOrganizationService restClientOrganizationService;
-    private TierForm tierForm;
-    public TierListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                        @Autowired RestClientOrganizationService restClientOrganizationService) {
+    private TierPriceForm tierForm;
+    public TierPriceListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+                             @Autowired RestClientOrganizationService restClientOrganizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
         addClassName("list-view");
@@ -115,7 +115,7 @@ public class TierListView extends VerticalLayout {
     }
 
     private void configureForm() {
-        tierForm = new TierForm(this.asyncRestClientOrganizationService,
+        tierForm = new TierPriceForm(this.asyncRestClientOrganizationService,
                                 this.restClientOrganizationService);
         tierForm.setWidth("25em");
     }

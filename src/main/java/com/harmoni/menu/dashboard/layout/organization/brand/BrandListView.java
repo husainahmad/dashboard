@@ -74,7 +74,6 @@ public class BrandListView extends VerticalLayout {
         brandDtoGrid.setSizeFull();
         brandDtoGrid.removeAllColumns();
         brandDtoGrid.addColumn(BrandDto::getName).setHeader("Name");
-        brandDtoGrid.addColumn("chainDto.name").setHeader("Chain Name");
 
         brandDtoGrid.getColumns().forEach(brandDtoColumn -> brandDtoColumn.setAutoWidth(true));
         brandDtoGrid.asSingleSelect().addValueChangeListener(valueChangeEvent ->
@@ -102,7 +101,8 @@ public class BrandListView extends VerticalLayout {
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.BRAND_INSERT_SUCCESS)) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.BRAND_INSERT_SUCCESS) ||
+                            broadcastMessage.getType().equals(BroadcastMessage.BRAND_SUCCESS_UPDATED)) {
                         fetchBrands();
                     } else {
                         UiUtil.showErrorDialog(ui, this, message);

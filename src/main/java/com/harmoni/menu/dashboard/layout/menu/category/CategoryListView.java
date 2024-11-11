@@ -106,7 +106,8 @@ public class CategoryListView extends VerticalLayout {
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.CATEGORY_INSERT_SUCCESS)) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.CATEGORY_INSERT_SUCCESS) ||
+                    broadcastMessage.getType().equals(BroadcastMessage.CATEGORY_UPDATED_SUCCESS)) {
                         fetchCategories();
                     } else {
                         UiUtil.showErrorDialog(ui, this, message);

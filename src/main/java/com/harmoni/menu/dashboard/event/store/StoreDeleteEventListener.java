@@ -13,15 +13,15 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 
-public class StoreSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
+public class StoreDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
     private final StoreForm storeForm;
 
     private final RestClientOrganizationService restClientOrganizationService;
 
-    public StoreSaveEventListener(StoreForm storeForm,
-                                  RestClientOrganizationService restClientOrganizationService) {
+    public StoreDeleteEventListener(StoreForm storeForm,
+                                    RestClientOrganizationService restClientOrganizationService) {
         this.storeForm = storeForm;
         this.restClientOrganizationService = restClientOrganizationService;
     }
@@ -31,15 +31,16 @@ public class StoreSaveEventListener implements ComponentEventListener<ClickEvent
             return;
         }
         StoreDto storeDto = new StoreDto();
+        storeDto.setId(this.storeForm.getStoreDto().getId());
         storeDto.setName(this.storeForm.getStoreNameField().getValue());
         storeDto.setChainId(this.storeForm.getChainDtoComboBox().getValue().getId());
         storeDto.setTierId(this.storeForm.getTierBox().getValue().getId());
         storeDto.setAddress(this.storeForm.getAddressArea().getValue());
-        restClientOrganizationService.createStore(storeDto)
+        restClientOrganizationService.deleteStore(storeDto)
                 .subscribe(this::accept);
     }
 
     private void accept(RestAPIResponse restAPIResponse) {
-        broadcastMessage(BroadcastMessage.STORE_INSERT_SUCCESS, restAPIResponse);
+        broadcastMessage(BroadcastMessage.STORE_UPDATED_SUCCESS, restAPIResponse);
     }
 }

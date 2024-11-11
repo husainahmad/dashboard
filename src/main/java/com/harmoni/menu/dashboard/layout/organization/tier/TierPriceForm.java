@@ -29,7 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("tier-form")
 @Slf4j
-public class TierForm extends FormLayout  {
+public class TierPriceForm extends FormLayout  {
     Registration broadcasterRegistration;
     @Getter
     BeanValidationBinder<TierDto> binder = new BeanValidationBinder<>(TierDto.class);
@@ -48,8 +48,8 @@ public class TierForm extends FormLayout  {
     private TierDto tierDto;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
 
-    public TierForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                    @Autowired RestClientOrganizationService restClientOrganizationService) {
+    public TierPriceForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+                         @Autowired RestClientOrganizationService restClientOrganizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
         addValidation();

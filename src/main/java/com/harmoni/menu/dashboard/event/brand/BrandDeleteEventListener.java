@@ -1,12 +1,15 @@
 package com.harmoni.menu.dashboard.event.brand;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
+import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.exception.BrandHandler;
 import com.harmoni.menu.dashboard.layout.organization.brand.BrandForm;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -14,13 +17,12 @@ import com.vaadin.flow.component.notification.Notification;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BrandUpdateEventListener implements ComponentEventListener<ClickEvent<Button>>,
-        BroadcastMessageService {
+public class BrandDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>, BroadcastMessageService {
 
     private final BrandForm brandForm;
     private final RestClientOrganizationService restClientOrganizationService;
 
-    public BrandUpdateEventListener(BrandForm brandForm, RestClientOrganizationService restClientOrganizationService) {
+    public BrandDeleteEventListener(BrandForm brandForm, RestClientOrganizationService restClientOrganizationService) {
         this.brandForm = brandForm;
         this.restClientOrganizationService = restClientOrganizationService;
     }
@@ -32,14 +34,14 @@ public class BrandUpdateEventListener implements ComponentEventListener<ClickEve
         }
         BrandDto brandDto = this.brandForm.getBrandDto();
         brandDto.setName(this.brandForm.getBrandNameField().getValue());
-        restClientOrganizationService.updateBrand(brandDto)
+        restClientOrganizationService.deleteBrand(brandDto)
                 .doOnError(error -> new BrandHandler(this.brandForm.getUi(), "Error while inserting Brand ".concat(error.getMessage())))
                 .subscribe(this::accept);
     }
 
     private void accept(RestAPIResponse restAPIResponse) {
         this.brandForm.getUi().access(()->{
-            Notification notification = new Notification("Brand created..", 3000, Notification.Position.MIDDLE);
+            Notification notification = new Notification("Brand deleted..", 3000, Notification.Position.MIDDLE);
             notification.open();
 
             this.brandForm.setVisible(false);

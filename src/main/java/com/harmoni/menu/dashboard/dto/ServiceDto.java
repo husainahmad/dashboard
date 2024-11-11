@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-public class BrandDto {
+public class ServiceDto {
 
     private Integer id;
     @NotEmpty

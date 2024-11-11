@@ -42,6 +42,7 @@ public class ChainListView extends VerticalLayout  {
     private final TextField filterText = new TextField();
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
+    private final int TEMP_BRAND_ID = 1;
 
     public ChainListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                          @Autowired RestClientOrganizationService restClientOrganizationService) {
@@ -65,7 +66,8 @@ public class ChainListView extends VerticalLayout  {
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.CHAIN_INSERT_SUCCESS)) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.CHAIN_INSERT_SUCCESS) ||
+                    broadcastMessage.getType().equals(BroadcastMessage.CHAIN_SUCCESS_UPDATED)) {
                         fetchChains();
                     } else {
                         UiUtil.showErrorDialog(ui, this, message);
@@ -92,7 +94,7 @@ public class ChainListView extends VerticalLayout  {
     }
 
     private void configureForm() {
-        chainForm = new ChainForm(this.restClientOrganizationService);
+        chainForm = new ChainForm(this.restClientOrganizationService, this.asyncRestClientOrganizationService);
         chainForm.setWidth("25em");
     }
 
@@ -120,11 +122,8 @@ public class ChainListView extends VerticalLayout  {
     }
 
     private void fetchChains() {
-        asyncRestClientOrganizationService.getAllChainAsync(result -> {
-            ui.access(()->{
-                chainDtoGrid.setItems(result);
-            });
-        });
+        asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result ->
+                ui.access(()-> chainDtoGrid.setItems(result)), TEMP_BRAND_ID);
     }
 
     private void showErrorDialog(String message) {

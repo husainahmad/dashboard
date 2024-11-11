@@ -3,10 +3,12 @@ package com.harmoni.menu.dashboard.layout.organization.store;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
-import com.harmoni.menu.dashboard.dto.BrandDto;
+import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
+import com.harmoni.menu.dashboard.event.store.StoreDeleteEventListener;
 import com.harmoni.menu.dashboard.event.store.StoreSaveEventListener;
+import com.harmoni.menu.dashboard.event.store.StoreUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
@@ -29,8 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-
 @Route("store-form")
 @Slf4j
 public class StoreForm extends FormLayout  {
@@ -42,7 +42,7 @@ public class StoreForm extends FormLayout  {
     @Getter
     TextArea addressArea = new TextArea("Address");
     @Getter
-    ComboBox<BrandDto> brandBox = new ComboBox<>("Brand");
+    ComboBox<ChainDto> chainDtoComboBox = new ComboBox<>("Chain");
     @Getter
     ComboBox<TierDto> tierBox = new ComboBox<>("Tier");
     private final Button saveButton = new Button("Save");
@@ -55,22 +55,16 @@ public class StoreForm extends FormLayout  {
     @Getter
     private StoreDto storeDto;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
-
+    private static final int TEMP_BRAND_ID = 1;
     public StoreForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                      @Autowired RestClientOrganizationService restClientOrganizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
         addValidation();
 
-        brandBox.setItemLabelGenerator(BrandDto::getName);
-        brandBox.addValueChangeListener(changeEvent -> {
-            if (changeEvent.isFromClient()) {
-                tierBox.setItems(new ArrayList<TierDto>());
-                fetchDetailTierByBrand(changeEvent.getValue().getId());
-            }
-        });
+        chainDtoComboBox.setItemLabelGenerator(ChainDto::getName);
         tierBox.setItemLabelGenerator(TierDto::getName);
-        add(brandBox);
+        add(chainDtoComboBox);
         add(tierBox);
 
         add(storeNameField);
@@ -79,7 +73,7 @@ public class StoreForm extends FormLayout  {
         add(createButtonsLayout());
         binder.bindInstanceFields(this);
 
-        fetchBrands();
+        fetchChains();
         fetchTiers();
     }
 
@@ -91,7 +85,7 @@ public class StoreForm extends FormLayout  {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
                     if (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS)) {
-                        fetchBrands();
+                        fetchChains();
                         hideForm();
                     }
                     if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
@@ -126,10 +120,10 @@ public class StoreForm extends FormLayout  {
     }
 
     private void addValidation() {
-        brandBox.addValueChangeListener(changeEvent -> binder.validate());
-        binder.forField(brandBox)
-                .withValidator(value -> value.getId() > 0, "Brand not allow to be empty"
-                ).bind(StoreDto::getBrandDto, StoreDto::setBrandDto);
+        chainDtoComboBox.addValueChangeListener(changeEvent -> binder.validate());
+        binder.forField(chainDtoComboBox)
+                .withValidator(value -> value.getId() > 0, "Chain not allow to be empty"
+                ).bind(StoreDto::getChainDto, StoreDto::setChainDto);
 
         tierBox.addValueChangeListener(changeEvent -> binder.validate());
 
@@ -144,7 +138,8 @@ public class StoreForm extends FormLayout  {
                 ).bind(StoreDto::getTierDto, StoreDto::setTierDto);
 
         storeNameField.addValueChangeListener(
-                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>) changeEvent -> binder.validate());
+                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>)
+                        changeEvent -> binder.validate());
         binder.forField(storeNameField)
                 .withValidator(value -> value.length()>2,
                         "Name must contain at least three characters")
@@ -155,30 +150,27 @@ public class StoreForm extends FormLayout  {
         this.storeDto = storeDto;
 
         if (!ObjectUtils.isEmpty(this.storeDto) &&
-                !ObjectUtils.isEmpty(this.storeDto.getBrandId())) {
-            fetchDetailBrands(storeDto.getBrandId().longValue());
-            fetchDetailTierByBrand(storeDto.getBrandId());
+                !ObjectUtils.isEmpty(this.storeDto.getChainId())) {
+            fetchDetailChains(storeDto.getChainId().longValue());
+            fetchDetailTierByBrand(TEMP_BRAND_ID);
         }
 
         binder.readBean(storeDto);
     }
 
-    private void fetchBrands() {
-        asyncRestClientOrganizationService.getAllBrandAsync(result -> {
-            ui.access(()-> brandBox.setItems(result));
-        });
+    private void fetchChains() {
+        asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result ->
+                ui.access(()-> chainDtoComboBox.setItems(result)), TEMP_BRAND_ID);
     }
 
     private void fetchTiers() {
-        asyncRestClientOrganizationService.getAllTierAsync(result -> {
-            ui.access(()-> tierBox.setItems(result));
-        });
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(result ->
+                ui.access(()-> tierBox.setItems(result)), TEMP_BRAND_ID);
     }
 
-    private void fetchDetailBrands(Long id) {
-        asyncRestClientOrganizationService.getDetailBrandAsync(result -> {
-            ui.access(()-> brandBox.setValue(result));
-        }, id);
+    private void fetchDetailChains(Long id) {
+        asyncRestClientOrganizationService.getDetailChainAsync(result ->
+                ui.access(()-> chainDtoComboBox.setValue(result)), id);
     }
 
     private void fetchDetailTierByBrand(Integer id) {
@@ -205,10 +197,13 @@ public class StoreForm extends FormLayout  {
 
         closeButton.addClickShortcut(Key.ESCAPE);
 
-//        updateButton.addClickListener(new BrandUpdateEventListener(this, restClientService));
+        updateButton.addClickListener(
+                new StoreUpdateEventListener(this, restClientOrganizationService));
 
         saveButton.addClickListener(
                 new StoreSaveEventListener(this, restClientOrganizationService));
+        deleteButton.addClickListener(
+                new StoreDeleteEventListener(this, restClientOrganizationService));
         closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
 
         return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
@@ -229,7 +224,6 @@ public class StoreForm extends FormLayout  {
                 updateButton.setVisible(false);
                 deleteButton.setVisible(false);
                 closeButton.setVisible(true);
-                break;
             }
             case EDIT -> {
                 saveButton.setVisible(false);

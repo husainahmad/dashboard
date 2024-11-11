@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.layout.menu.product.dto.ProductFormDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,54 +23,55 @@ import java.io.Serializable;
 public class RestClientMenuService implements Serializable {
 
     private final transient MenuProperties urlMenuProperties;
+    private final transient  WebClient webClient = WebClient.builder().build();
 
     public Mono<RestAPIResponse> createCategory(CategoryDto categoryDto) {
-
-        WebClient webClient = WebClient.builder().build();
-
-        return
-                webClient.post()
-                .uri(urlMenuProperties.getUrl().getCategory())
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(Mono.just(categoryDto), CategoryDto.class)
-                .retrieve()
-                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
-                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
-                .bodyToMono(RestAPIResponse.class);
-
+        return create(urlMenuProperties.getUrl().getCategory(), Mono.just(categoryDto), CategoryDto.class);
     }
 
     public Mono<RestAPIResponse> getAllCategoryByBrand(Integer brandId) {
-        WebClient webClient = WebClient.builder().build();
-        return
-                webClient.get()
-                        .uri("%s/%d".formatted(urlMenuProperties.getUrl().getCategories().getBrand(), brandId))
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .retrieve()
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
-                        .bodyToMono(RestAPIResponse.class);
+        return get("%s/%d".formatted(urlMenuProperties.getUrl().getCategories().getBrand(), brandId));
     }
 
     public Mono<RestAPIResponse> getAllTierByBrand(Integer brandId) {
-        WebClient webClient = WebClient.builder().build();
+        return get("%s/brand/%d".formatted(urlMenuProperties.getUrl().getTier(), brandId));
+    }
+
+    public Mono<RestAPIResponse> getAllBrand() {
+        return get(urlMenuProperties.getUrl().getBrand());
+    }
+
+    public Mono<RestAPIResponse> saveProductBulk(ProductFormDto productFormDto) {
+        return put(urlMenuProperties.getUrl().getProducts().getBulk().formatted(productFormDto.getId()),
+                Mono.just(productFormDto),  ProductFormDto.class);
+    }
+
+    public Mono<RestAPIResponse> deleteSku(SkuDto skuDto) {
+        return delete("%s/%d".formatted(urlMenuProperties.getUrl().getSku(), skuDto.getId()));
+    }
+
+
+    public Mono<RestAPIResponse> deleteCategory(CategoryDto categoryDto) {
+        return delete("%s/%d".formatted(urlMenuProperties.getUrl().getCategory(), categoryDto.getId()));
+    }
+
+    private Mono<RestAPIResponse> create(String url, Publisher<?> publisher, Class<?> className) {
         return
-                webClient.get()
-                        .uri("%s/brand/%d".formatted(urlMenuProperties.getUrl().getTier(), brandId))
+                webClient.post()
+                        .uri(url)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .body(Mono.just(publisher), className)
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                         .bodyToMono(RestAPIResponse.class);
+
     }
 
-    public Mono<RestAPIResponse> getAllBrand() {
-        WebClient webClient = WebClient.builder().build();
+    private Mono<RestAPIResponse> get(String url) {
         WebClient.ResponseSpec retrieve = webClient.get()
-                .uri(urlMenuProperties.getUrl().getBrand())
+                .uri(url)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .retrieve();
         retrieve.onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent);
@@ -78,37 +80,29 @@ public class RestClientMenuService implements Serializable {
         return retrieve.bodyToMono(RestAPIResponse.class);
     }
 
-    public Mono<RestAPIResponse> saveProductBulk(ProductFormDto productFormDto) {
-
-        WebClient webClient = WebClient.builder().build();
-
+    private Mono<RestAPIResponse> put(String url, Publisher<?> publisher, Class<?> className) {
         return
-            webClient.put()
-                .uri(urlMenuProperties.getUrl().getProducts().getBulk().formatted(productFormDto.getId()))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(Mono.just(productFormDto), ProductFormDto.class)
-                .retrieve()
-                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
-                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
-                .bodyToMono(RestAPIResponse.class);
-
+                webClient.put()
+                        .uri(url)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .body(Mono.just(publisher), className)
+                        .retrieve()
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
+                        .bodyToMono(RestAPIResponse.class);
     }
 
-    public Mono<RestAPIResponse> deleteSku(SkuDto skuDto) {
-
-        WebClient webClient = WebClient.builder().build();
-
+    private Mono<RestAPIResponse> delete(String url) {
         return
-            webClient.delete()
-                .uri("%s/%d".formatted(urlMenuProperties.getUrl().getSku(), skuDto.getId()))
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .retrieve()
-                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
-                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                    .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
-                .bodyToMono(RestAPIResponse.class);
-
+                webClient.delete()
+                        .uri(url)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .retrieve()
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
+                        .bodyToMono(RestAPIResponse.class);
     }
 
     private Mono<? extends Throwable> handleBadRequest(ClientResponse clientResponse) {

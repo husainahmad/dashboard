@@ -5,6 +5,7 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
+import com.harmoni.menu.dashboard.event.category.CategoryDeleteEventListener;
 import com.harmoni.menu.dashboard.event.category.CategorySaveEventListener;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
@@ -179,6 +180,9 @@ public class CategoryForm extends FormLayout  {
 
         saveButton.addClickListener(
                 new CategorySaveEventListener(this, restClientMenuService));
+        deleteButton.addClickListener(
+                new CategoryDeleteEventListener(this, restClientMenuService));
+
         closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
 
         return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
