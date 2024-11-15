@@ -1,13 +1,16 @@
 package com.harmoni.menu.dashboard.layout.organization.chain;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
@@ -20,13 +23,13 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-
-import java.text.MessageFormat;
 
 @Route(value = "chain", layout = MainLayout.class)
 @PageTitle(MainLayout.TITLE)
+@Slf4j
 public class ChainListView extends VerticalLayout  {
 
     Registration broadcasterRegistration;
@@ -39,6 +42,7 @@ public class ChainListView extends VerticalLayout  {
     private final TextField filterText = new TextField();
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
+    private static final int BRANDID = 1;
 
     public ChainListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                          @Autowired RestClientOrganizationService restClientOrganizationService) {
@@ -58,14 +62,19 @@ public class ChainListView extends VerticalLayout  {
     protected void onAttach(AttachEvent attachEvent) {
         ui = attachEvent.getUI();
         broadcasterRegistration = Broadcaster.register(message -> {
-            if (message.equals(BroadcastMessage.CHAIN_INSERT_SUCCESS)) {
-                fetchChains();
-            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.BAD_REQUEST.value())))) {
-                showErrorDialog(message);
-            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value())))) {
-                showErrorDialog(message);
+
+            try {
+                BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.CHAIN_INSERT_SUCCESS) ||
+                    broadcastMessage.getType().equals(BroadcastMessage.CHAIN_SUCCESS_UPDATED)) {
+                        fetchChains();
+                    } else {
+                        UiUtil.showErrorDialog(ui, this, message);
+                    }
+                }
+            } catch (JsonProcessingException e) {
+                log.error("Broadcast Handler Error", e);
             }
         });
     }
@@ -85,7 +94,7 @@ public class ChainListView extends VerticalLayout  {
     }
 
     private void configureForm() {
-        chainForm = new ChainForm(this.restClientOrganizationService);
+        chainForm = new ChainForm(this.restClientOrganizationService, this.asyncRestClientOrganizationService);
         chainForm.setWidth("25em");
     }
 
@@ -104,20 +113,15 @@ public class ChainListView extends VerticalLayout  {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addChainButton = new Button("Add Chain");
-        addChainButton.addClickListener(buttonClickEvent -> {
-            addChain();
-        });
+        addChainButton.addClickListener(buttonClickEvent -> addChain());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
     }
 
     private void fetchChains() {
-        asyncRestClientOrganizationService.getAllChainAsync(result -> {
-            ui.access(()->{
-                chainDtoGrid.setItems(result);
-            });
-        });
+        asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result ->
+                ui.access(()-> chainDtoGrid.setItems(result)), BRANDID);
     }
 
     private void showErrorDialog(String message) {

@@ -2,9 +2,7 @@ package com.harmoni.menu.dashboard.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.experimental.Accessors;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
@@ -15,7 +13,7 @@ public class SkuTierPriceDto {
     private Integer tierId;
     @JsonProperty("tier")
     private TierDto tierDto;
-    private BigDecimal price;
+    private Double price;
     private Date createdAt;
     private Date updatedAt;
 

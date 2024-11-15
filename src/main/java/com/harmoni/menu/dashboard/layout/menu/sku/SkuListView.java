@@ -1,9 +1,7 @@
 package com.harmoni.menu.dashboard.layout.menu.sku;
 
-import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.SkuDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.vaadin.flow.component.AttachEvent;
@@ -18,9 +16,6 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-
-import java.text.MessageFormat;
 
 @Route(value = "sku", layout = MainLayout.class)
 @PageTitle("SKU | POSHarmoni")
@@ -37,7 +32,6 @@ public class SkuListView extends VerticalLayout {
         setSizeFull();
 
         configureGrid();
-        configureForm();
 
         add(getToolbar(), getContent());
 
@@ -54,22 +48,13 @@ public class SkuListView extends VerticalLayout {
                 editSku(valueChangeEvent.getValue(), FormAction.EDIT));
     }
 
-    private void configureForm() {
-//        productForm = new ProductForm(this.asyncRestClientMenuService,
-//                this.asyncRestClientOrganizationService,
-//                this.restClientMenuService);
-//        productForm.setWidth("25em");
-    }
-
     private HorizontalLayout getToolbar() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addBrandButton = new Button("Add Sku");
-        addBrandButton.addClickListener(buttonClickEvent -> {
-            addSku();
-        });
+        addBrandButton.addClickListener(buttonClickEvent -> addSku());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -78,7 +63,6 @@ public class SkuListView extends VerticalLayout {
     private HorizontalLayout getContent() {
         HorizontalLayout content = new HorizontalLayout(skuDtoGrid);
         content.setFlexGrow(1, skuDtoGrid);
-//        content.setFlexGrow(1, productForm);
         content.addClassNames("content");
         content.setSizeFull();
         return content;
@@ -87,17 +71,6 @@ public class SkuListView extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         ui = attachEvent.getUI();
-        broadcasterRegistration = Broadcaster.register(message -> {
-//            if (message.equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
-//                fetchProducts();
-//            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.BAD_REQUEST.value())))) {
-                showErrorDialog(message);
-            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value())))) {
-                showErrorDialog(message);
-            }
-        });
         fetchSkus();
     }
 
@@ -110,31 +83,16 @@ public class SkuListView extends VerticalLayout {
         if (skuDto == null) {
             closeEditor();
         } else {
-//            productForm.setProductDto(productDto);
-//            productForm.restructureButton(formAction);
-//            productForm.setVisible(true);
             addClassName("editing");
         }
     }
 
     private void closeEditor() {
-//        productForm.setVisible(false);
         removeClassName("editing");
     }
 
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
-        });
-    }
-
     private void fetchSkus() {
-        asyncRestClientMenuService.getAllSkuAsync(result -> {
-            ui.access(()-> {
-                skuDtoGrid.setItems(result);
-            });
-        });
+        asyncRestClientMenuService.getAllSkuAsync(result -> ui.access(()->
+                skuDtoGrid.setItems(result)));
     }
 }
