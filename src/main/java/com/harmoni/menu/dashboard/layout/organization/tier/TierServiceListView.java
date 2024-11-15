@@ -1,9 +1,10 @@
-package com.harmoni.menu.dashboard.layout.organization.chain;
+package com.harmoni.menu.dashboard.layout.organization.tier;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
-import com.harmoni.menu.dashboard.dto.ChainDto;
+import com.harmoni.menu.dashboard.dto.TierDto;
+import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
@@ -24,28 +25,22 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Route(value = "chain", layout = MainLayout.class)
-@PageTitle(MainLayout.TITLE)
+@Route(value = "tier-service", layout = MainLayout.class)
+@PageTitle("Tier | POSHarmoni")
 @Slf4j
-public class ChainListView extends VerticalLayout  {
+public class TierServiceListView extends VerticalLayout {
 
     Registration broadcasterRegistration;
-
-    private final Grid<ChainDto> chainDtoGrid = new Grid<>(ChainDto.class);
-    private ChainForm chainForm;
-
-    private UI ui;
-
-    private final TextField filterText = new TextField();
+    private final Grid<TierDto> tierDtoGrid = new Grid<>(TierDto.class);
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
+    private final TextField filterText = new TextField();
+    private UI ui;
     private final RestClientOrganizationService restClientOrganizationService;
-    private static final int BRANDID = 1;
-
-    public ChainListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                         @Autowired RestClientOrganizationService restClientOrganizationService) {
+    private TierPriceForm tierForm;
+    public TierServiceListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+                               @Autowired RestClientOrganizationService restClientOrganizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
         addClassName("list-view");
@@ -55,7 +50,13 @@ public class ChainListView extends VerticalLayout  {
 
         add(getToolbar(), getContent());
         closeEditor();
-        fetchChains();
+
+        fetchTier();
+    }
+
+    private void closeEditor() {
+        tierForm.setVisible(false);
+        removeClassName("editing");
     }
 
     @Override
@@ -65,10 +66,9 @@ public class ChainListView extends VerticalLayout  {
 
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.CHAIN_INSERT_SUCCESS) ||
-                    broadcastMessage.getType().equals(BroadcastMessage.CHAIN_SUCCESS_UPDATED)) {
-                        fetchChains();
+                if (org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage) && org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS)) {
+                        fetchTier();
                     } else {
                         UiUtil.showErrorDialog(ui, this, message);
                     }
@@ -79,6 +79,14 @@ public class ChainListView extends VerticalLayout  {
         });
     }
 
+    private void showErrorDialog(String message) {
+        DialogClosing dialog = new DialogClosing(message);
+        ui.access(()-> {
+            add(dialog);
+            dialog.open();
+        });
+    }
+
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         broadcasterRegistration.remove();
@@ -86,22 +94,37 @@ public class ChainListView extends VerticalLayout  {
     }
 
     private void configureGrid() {
-        chainDtoGrid.setSizeFull();
-        chainDtoGrid.setColumns("name");
-        chainDtoGrid.getColumns().forEach(chainDtoColumn -> chainDtoColumn.setAutoWidth(true));
-        chainDtoGrid.asSingleSelect().addValueChangeListener(valueChangeEvent ->
-                editChain(valueChangeEvent.getValue(), FormAction.EDIT));
+        tierDtoGrid.setSizeFull();
+        tierDtoGrid.removeAllColumns();
+        tierDtoGrid.addColumn(TierDto::getName).setHeader("Name");
+        tierDtoGrid.addColumn("brandDto.name").setHeader("Brand Name");
+
+        tierDtoGrid.getColumns().forEach(tierDtoColumn -> tierDtoColumn.setAutoWidth(true));
+        tierDtoGrid.asSingleSelect().addValueChangeListener(valueChangeEvent ->
+                editTier(valueChangeEvent.getValue(), FormAction.EDIT));
+    }
+
+    private void editTier(TierDto tierDto, FormAction formAction) {
+        if (tierDto == null) {
+            closeEditor();
+        } else {
+            tierForm.setTierDto(tierDto);
+            tierForm.restructureButton(formAction);
+            tierForm.setVisible(true);
+            addClassName("editing");
+        }
     }
 
     private void configureForm() {
-        chainForm = new ChainForm(this.restClientOrganizationService, this.asyncRestClientOrganizationService);
-        chainForm.setWidth("25em");
+        tierForm = new TierPriceForm(this.asyncRestClientOrganizationService,
+                                this.restClientOrganizationService);
+        tierForm.setWidth("25em");
     }
 
     private HorizontalLayout getContent() {
-        HorizontalLayout content = new HorizontalLayout(chainDtoGrid, chainForm);
-        content.setFlexGrow(2, chainDtoGrid);
-        content.setFlexGrow(1, chainForm);
+        HorizontalLayout content = new HorizontalLayout(tierDtoGrid, tierForm);
+        content.setFlexGrow(2, tierDtoGrid);
+        content.setFlexGrow(1, tierForm);
         content.addClassNames("content");
         content.setSizeFull();
         return content;
@@ -112,44 +135,22 @@ public class ChainListView extends VerticalLayout  {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addChainButton = new Button("Add Chain");
-        addChainButton.addClickListener(buttonClickEvent -> addChain());
+        Button addChainButton = new Button("Add Tier");
+        addChainButton.addClickListener(e -> addTier());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
     }
 
-    private void fetchChains() {
-        asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result ->
-                ui.access(()-> chainDtoGrid.setItems(result)), BRANDID);
+    private void addTier() {
+        tierDtoGrid.asSingleSelect().clear();
+        TierDto tierDto = new TierDto();
+        tierDto.setType(TierTypeDto.SERVICE);
+        editTier(tierDto, FormAction.CREATE);
     }
 
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
-        });
-    }
-
-    public void editChain(ChainDto chainDto, FormAction formAction) {
-        if (chainDto == null) {
-            closeEditor();
-        } else {
-            chainForm.setChainDto(chainDto);
-            chainForm.restructureButton(formAction);
-            chainForm.setVisible(true);
-            addClassName("editing");
-        }
-    }
-
-    private void closeEditor() {
-        chainForm.setVisible(false);
-        removeClassName("editing");
-    }
-
-    private void addChain() {
-        chainDtoGrid.asSingleSelect().clear();
-        editChain(new ChainDto(), FormAction.CREATE);
+    private void fetchTier() {
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> ui.access(()->
+                tierDtoGrid.setItems(result)), 1, TierTypeDto.SERVICE);
     }
 }

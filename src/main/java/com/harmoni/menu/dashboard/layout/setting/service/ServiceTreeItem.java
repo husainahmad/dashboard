@@ -1,7 +1,6 @@
 package com.harmoni.menu.dashboard.layout.setting.service;
 
 import com.harmoni.menu.dashboard.dto.SkuDto;
-import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
 import lombok.Builder;
 import lombok.Data;
 

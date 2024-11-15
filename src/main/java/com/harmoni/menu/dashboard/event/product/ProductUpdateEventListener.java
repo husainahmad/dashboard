@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.event.product;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
+import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.menu.product.*;
 import com.harmoni.menu.dashboard.layout.menu.product.binder.ProductBinderBean;
 import com.harmoni.menu.dashboard.layout.menu.product.dto.ProductFormDto;
@@ -26,7 +27,8 @@ import java.util.List;
 
 @AllArgsConstructor
 @Slf4j
-public class ProductUpdateEventListener implements ComponentEventListener<ClickEvent<Button>> {
+public class ProductUpdateEventListener implements ComponentEventListener<ClickEvent<Button>>,
+        BroadcastMessageService {
 
     private final ProductDialogEdit productDialogEdit;
     private final RestClientMenuService restClientMenuService;
@@ -90,14 +92,7 @@ public class ProductUpdateEventListener implements ComponentEventListener<ClickE
     private void accept(RestAPIResponse restAPIResponse) {
         if (restAPIResponse.getHttpStatus() == HttpStatus.OK.value()) {
             productDialogEdit.getUi().access(productDialogEdit::close);
-
-            try {
-                Broadcaster.broadcast(ObjectUtil.objectToJsonString(BroadcastMessage.builder()
-                        .type(BroadcastMessage.PRODUCT_UPDATE_SUCCESS)
-                        .data(restAPIResponse).build()));
-            } catch (JsonProcessingException e) {
-                throw new IllegalArgumentException(e);
-            }
+            broadcastMessage(BroadcastMessage.PRODUCT_UPDATE_SUCCESS, restAPIResponse);
         }
     }
 }

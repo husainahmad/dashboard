@@ -4,7 +4,6 @@ import com.harmoni.menu.dashboard.dto.SkuDto;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 

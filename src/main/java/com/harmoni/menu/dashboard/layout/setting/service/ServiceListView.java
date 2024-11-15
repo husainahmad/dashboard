@@ -1,24 +1,18 @@
 package com.harmoni.menu.dashboard.layout.setting.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
-import com.harmoni.menu.dashboard.dto.BrandDto;
-import com.harmoni.menu.dashboard.dto.ProductDto;
-import com.harmoni.menu.dashboard.dto.TierDto;
+import com.harmoni.menu.dashboard.dto.ServiceDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
-import com.harmoni.menu.dashboard.layout.menu.product.ProductForm;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
-import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
+import com.harmoni.menu.dashboard.rest.data.AsyncRestClientSettingService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.treegrid.TreeGrid;
@@ -47,24 +41,14 @@ public class ServiceListView extends VerticalLayout {
     Registration broadcasterRegistration;
 
     private final TreeGrid<ServiceTreeItem> serviceTreeGrid = new TreeGrid<>(ServiceTreeItem.class);
-    private final AsyncRestClientMenuService asyncRestClientMenuService;
-    private final RestClientMenuService restClientMenuService;
-    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
+    private final AsyncRestClientSettingService asyncRestClientSettingService;
 
-    private final ComboBox<TierDto> tierDtoComboBox = new ComboBox<>();
-    private final ComboBox<BrandDto> brandDtoComboBox = new ComboBox<>();
-    private ProductForm productForm;
-    private transient TierDto tierDto;
-    private transient BrandDto brandDto;
+    private ServiceForm serviceForm;
     private UI ui;
 
-    public ServiceListView(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
-                           @Autowired RestClientMenuService restClientMenuService,
-                           @Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService) {
+    public ServiceListView(@Autowired AsyncRestClientSettingService asyncRestClientSettingService) {
 
-        this.asyncRestClientMenuService = asyncRestClientMenuService;
-        this.restClientMenuService = restClientMenuService;
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
+        this.asyncRestClientSettingService = asyncRestClientSettingService;
 
         addClassName("list-view");
         setSizeFull();
@@ -80,56 +64,40 @@ public class ServiceListView extends VerticalLayout {
     private void configureGrid() {
         serviceTreeGrid.setSizeFull();
         serviceTreeGrid.removeAllColumns();
-        serviceTreeGrid.addHierarchyColumn(ServiceTreeItem::getName).setHeader("Store Name");
-        serviceTreeGrid.addColumn(ServiceTreeItem::getServiceName).setHeader("Service Name");
+        serviceTreeGrid.addHierarchyColumn(ServiceTreeItem::getServiceName).setHeader("Service Name");
         serviceTreeGrid.addColumn(ServiceTreeItem::getSubServiceName).setHeader("Sub Service Name");
-        serviceTreeGrid.addColumn(ServiceTreeItem::isActive).setHeader("Active");
 
         serviceTreeGrid.addCollapseListener(event -> event.getItems().forEach(serviceTreeItem ->
                 log.debug("item collapse {}", serviceTreeItem)));
 
         serviceTreeGrid.addExpandListener(event -> {
             if (event.isFromClient()) {
-                event.getItems().forEach(productTreeItem -> {
-                    log.debug("item expand {}", productTreeItem);
-                    List<Integer> skuIds = new ArrayList<>();
+                event.getItems().forEach(serviceTreeItem -> {
+                    log.debug("item expand {}", serviceTreeItem);
                 });
             }
         });
 
         serviceTreeGrid.getColumns().forEach(productDtoColumn -> productDtoColumn.setAutoWidth(true));
-
     }
 
     private void configureForm() {
-        productForm = new ProductForm(this.asyncRestClientMenuService);
-        productForm.setWidth("25em");
+        this.serviceForm = new ServiceForm(this.asyncRestClientSettingService);
+        this.serviceForm.setWidth("25em");
     }
 
-
     private HorizontalLayout getToolbar() {
-
-        brandDtoComboBox.setLabel("Brand");
-        brandDtoComboBox.setItems(new ArrayList<>());
-        brandDtoComboBox.setItemLabelGenerator(BrandDto::getName);
-        brandDtoComboBox.addValueChangeListener(valueChangeEvent -> {
-            if (valueChangeEvent.isFromClient()) {
-                brandDto = valueChangeEvent.getValue();
-                //fetchCategories(brandDto.getId());
-            }
-        });
-
-        Button addBrandButton = new Button("Add Service");
-        addBrandButton.addClickListener(buttonClickEvent -> addService());
-        HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, addBrandButton);
+        Button addServiceButton = new Button("Add Service");
+        addServiceButton.addClickListener(buttonClickEvent -> addService());
+        HorizontalLayout toolbar = new HorizontalLayout( addServiceButton);
         toolbar.addClassName("toolbar");
         return toolbar;
     }
 
     private HorizontalLayout getContent() {
-        HorizontalLayout content = new HorizontalLayout(serviceTreeGrid, productForm);
+        HorizontalLayout content = new HorizontalLayout(serviceTreeGrid, serviceForm);
         content.setFlexGrow(1, serviceTreeGrid);
-        content.setFlexGrow(1, productForm);
+        content.setFlexGrow(1, serviceForm);
         content.addClassNames("content");
         content.setSizeFull();
         return content;
@@ -141,12 +109,24 @@ public class ServiceListView extends VerticalLayout {
         broadcasterRegistration = Broadcaster.register(message -> {
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
+                            broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS)) {
+                        fetchServices();
+                        ui.access(()->{
+                            serviceForm.setVisible(false);
+                            removeClassName("editing");
+                        });
+                    } else {
+                        UiUtil.showErrorDialog(ui, this, message);
+                    }
+                }
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
         });
 
-        this.fetchBrands();
+        this.fetchServices();
     }
 
     @Override
@@ -155,38 +135,42 @@ public class ServiceListView extends VerticalLayout {
         broadcasterRegistration = null;
     }
 
-    private void fetchBrands() {
+    private void fetchServices() {
+        asyncRestClientSettingService.getAllService(result -> {
+            TreeData<ServiceTreeItem> serviceDtoTreeData = new TreeData<>();
+            result.forEach(serviceDto -> {
+                ServiceTreeItem serviceTreeItem = ServiceTreeItem.builder()
+                        .id(String.valueOf(serviceDto.getId()))
+                        .serviceName(serviceDto.getName())
+                        .build();
+                serviceDtoTreeData.addItem(null, serviceTreeItem);
+                if (ObjectUtils.isNotEmpty(serviceDto.getSubServices())) {
+                    serviceDtoTreeData.addItems(serviceTreeItem, getSubServices(serviceDto));
+                }
+            });
+            ui.access(() -> serviceTreeGrid.setTreeData(serviceDtoTreeData));
+        });
+    }
 
-        restClientMenuService.getAllBrand()
-                .subscribe(restAPIResponse -> {
-                    if (!ObjectUtils.isEmpty(restAPIResponse.getData())) {
-
-                        final List<BrandDto> brands = ObjectUtil.convertObjectToObject(restAPIResponse.getData(),
-                                new TypeReference<List<BrandDto>>() {
-                                });
-
-                        brandDto = brands.getFirst();
-                        if (!ObjectUtils.isEmpty(brands)) {
-                            ui.access(() -> {
-                                brandDtoComboBox.setItems(brands);
-                                brandDtoComboBox.setValue(brandDto);
-                            });
-
-                            //fetchCategories(brandDto.getId());
-                            fetchTier(brandDto.getId());
-
-                        }
-                    }
-                });
+    private List<ServiceTreeItem> getSubServices(ServiceDto serviceDto) {
+        List<ServiceTreeItem> serviceTreeItems = new ArrayList<>();
+        serviceDto.getSubServices().forEach(subServiceDto -> serviceTreeItems.add(ServiceTreeItem.builder()
+                .id(String.valueOf(serviceDto.getId())
+                        .concat("-")
+                        .concat(String.valueOf(subServiceDto.getId())))
+                .serviceName("")
+                .subServiceName(subServiceDto.getName())
+                .build()));
+        return serviceTreeItems;
     }
 
     private void addService() {
         serviceTreeGrid.asSingleSelect().clear();
-        editProduct(new ProductDto(), FormAction.CREATE);
+        editService(new ServiceDto(), FormAction.CREATE);
     }
 
-    public void editProduct(ProductDto productDto, FormAction formAction) {
-        if (productDto == null) {
+    public void editService(ServiceDto serviceDto, FormAction formAction) {
+        if (serviceDto == null) {
             closeEditor();
         } else {
 
@@ -194,37 +178,8 @@ public class ServiceListView extends VerticalLayout {
     }
 
     private void closeEditor() {
-        productForm.setVisible(false);
+        serviceForm.setVisible(false);
         removeClassName("editing");
-    }
-
-    private void fetchServices() {
-
-    }
-
-    private void fetchTier(Integer brandId) {
-    }
-
-    private void fetchAllStore(Integer brandId) {
-        asyncRestClientOrganizationService.getAllStoreAsync(result -> {
-            TreeData<ServiceTreeItem> serviceTreeItemTreeData = new TreeData<>();
-//            result.forEach(storeDto -> {
-//                ProductTreeItem productTreeItem =  ProductTreeItem.builder()
-//                        .id("%s|%d".formatted(ProductItemType.PRODUCT, productDto.getId()))
-//                        .name(productDto.getName())
-//                        .productId(productDto.getId())
-//                        .categoryId(productDto.getCategoryId())
-//                        .categoryName(productDto.getCategoryDto().getName())
-//                        .productItemType(ProductItemType.PRODUCT)
-//                        .skus(productDto.getSkuDtos())
-//                        .build();
-////                serviceTreeItemTreeData.addItems(null, productTreeItem);
-////                serviceTreeItemTreeData.addItems(productTreeItem, getSkus(productDto));
-//            });
-
-//            ui.access(()-> productDtoGrid.setTreeData(productDtoTreeData));
-
-        });
     }
 
 }

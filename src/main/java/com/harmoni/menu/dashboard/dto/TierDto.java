@@ -3,7 +3,6 @@ package com.harmoni.menu.dashboard.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 import java.util.Date;
 
@@ -15,6 +14,8 @@ public class TierDto {
     private String name;
     @NotEmpty
     private Integer brandId;
+    @NotEmpty
+    private TierTypeDto type;
     @NotEmpty
     @JsonProperty("brand")
     private BrandDto brandDto;

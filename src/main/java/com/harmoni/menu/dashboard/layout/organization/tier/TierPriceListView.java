@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.TierDto;
+import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
@@ -143,12 +144,13 @@ public class TierPriceListView extends VerticalLayout {
 
     private void addTier() {
         tierDtoGrid.asSingleSelect().clear();
-        editTier(new TierDto(), FormAction.CREATE);
+        TierDto tierDto = new TierDto();
+        tierDto.setType(TierTypeDto.PRICE);
+        editTier(tierDto, FormAction.CREATE);
     }
 
     private void fetchTier() {
-        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> ui.access(()-> {
-            tierDtoGrid.setItems(result);
-        }), 1);
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> ui.access(()->
+                tierDtoGrid.setItems(result)), 1, TierTypeDto.PRICE);
     }
 }

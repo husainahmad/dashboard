@@ -27,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Objects;
+
 @Route("tier-form")
 @Slf4j
 public class TierPriceForm extends FormLayout  {
@@ -174,20 +176,16 @@ public class TierPriceForm extends FormLayout  {
     }
 
     public void restructureButton(FormAction formAction) {
-        switch (formAction) {
-            case CREATE -> {
-                saveButton.setVisible(true);
-                updateButton.setVisible(false);
-                deleteButton.setVisible(false);
-                closeButton.setVisible(true);
-                break;
-            }
-            case EDIT -> {
-                saveButton.setVisible(false);
-                updateButton.setVisible(true);
-                deleteButton.setVisible(true);
-                closeButton.setVisible(true);
-            }
+        if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
+            saveButton.setVisible(true);
+            updateButton.setVisible(false);
+            deleteButton.setVisible(false);
+            closeButton.setVisible(true);
+        } else if (formAction == FormAction.EDIT) {
+            saveButton.setVisible(false);
+            updateButton.setVisible(true);
+            deleteButton.setVisible(true);
+            closeButton.setVisible(true);
         }
     }
 }

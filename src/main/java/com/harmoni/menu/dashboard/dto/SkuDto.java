@@ -2,7 +2,6 @@ package com.harmoni.menu.dashboard.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 import java.util.Date;
 

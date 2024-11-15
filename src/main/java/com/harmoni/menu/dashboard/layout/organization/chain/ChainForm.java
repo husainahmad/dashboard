@@ -27,6 +27,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
+import java.util.Objects;
+
 @Route("chain-form")
 @Slf4j
 public class ChainForm extends FormLayout  {
@@ -47,7 +49,7 @@ public class ChainForm extends FormLayout  {
     @Getter
     private UI ui;
     @Getter
-    private ChainDto chainDto;
+    private transient ChainDto chainDto;
 
     public ChainForm(RestClientOrganizationService restClientOrganizationService,
                      AsyncRestClientOrganizationService asyncRestClientOrganizationService) {
@@ -137,19 +139,16 @@ public class ChainForm extends FormLayout  {
     }
 
     public void restructureButton(FormAction formAction) {
-        switch (formAction) {
-            case CREATE -> {
-                saveButton.setVisible(true);
-                updateButton.setVisible(false);
-                deleteButton.setVisible(false);
-                closeButton.setVisible(true);
-            }
-            case EDIT -> {
-                saveButton.setVisible(false);
-                updateButton.setVisible(true);
-                deleteButton.setVisible(true);
-                closeButton.setVisible(true);
-            }
+        if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
+            saveButton.setVisible(true);
+            updateButton.setVisible(false);
+            deleteButton.setVisible(false);
+            closeButton.setVisible(true);
+        } else if (formAction == FormAction.EDIT) {
+            saveButton.setVisible(false);
+            updateButton.setVisible(true);
+            deleteButton.setVisible(true);
+            closeButton.setVisible(true);
         }
     }
 

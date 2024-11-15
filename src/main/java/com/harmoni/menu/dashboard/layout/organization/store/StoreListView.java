@@ -143,9 +143,7 @@ public class StoreListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addChainButton = new Button("Add Store");
-        addChainButton.addClickListener(buttonClickEvent -> {
-            addStore();
-        });
+        addChainButton.addClickListener(buttonClickEvent -> addStore());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;

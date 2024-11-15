@@ -33,6 +33,7 @@ public class ChainSaveEventListener implements ComponentEventListener<ClickEvent
         restClientOrganizationService.createChain(chainDto)
                 .subscribe(this::accept);
     }
+
     private void accept(RestAPIResponse restAPIResponse) {
         broadcastMessage(BroadcastMessage.CHAIN_INSERT_SUCCESS, restAPIResponse);
     }

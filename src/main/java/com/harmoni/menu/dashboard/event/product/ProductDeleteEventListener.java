@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.event.product;
 
 import com.harmoni.menu.dashboard.dto.SkuDto;
+import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductDialogEdit;
 import com.harmoni.menu.dashboard.layout.menu.product.binder.ProductBinderBean;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
@@ -16,10 +17,13 @@ import org.springframework.http.HttpStatus;
 
 @AllArgsConstructor
 @Slf4j
-public class ProductDeleteEventListener implements ComponentEventListener<ClickEvent<Button>> {
+public class ProductDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
+        BroadcastMessageService {
+
     private final BeanValidationBinder<ProductBinderBean> binder;
     private final ProductDialogEdit productDialogEdit;
     private final RestClientMenuService restClientMenuService;
+
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
 

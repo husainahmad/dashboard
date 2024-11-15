@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-
 @Route(value = "brand", layout = MainLayout.class)
 @PageTitle("Brand | POSHarmoni")
 @Slf4j
@@ -86,9 +85,7 @@ public class BrandListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addBrandButton = new Button("Add Brand");
-        addBrandButton.addClickListener(buttonClickEvent -> {
-            addBrand();
-        });
+        addBrandButton.addClickListener(buttonClickEvent -> addBrand());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -129,8 +126,7 @@ public class BrandListView extends VerticalLayout {
     }
 
     private void configureForm() {
-        brandForm = new BrandForm(this.asyncRestClientOrganizationService,
-                        this.restClientOrganizationService);
+        brandForm = new BrandForm(this.restClientOrganizationService);
         brandForm.setWidth("25em");
     }
 
@@ -156,10 +152,6 @@ public class BrandListView extends VerticalLayout {
     }
 
     private void fetchBrands() {
-        asyncRestClientOrganizationService.getAllBrandAsync(result -> {
-            ui.access(()->{
-                brandDtoGrid.setItems(result);
-            });
-        });
+        asyncRestClientOrganizationService.getAllBrandAsync(result -> ui.access(()-> brandDtoGrid.setItems(result)));
     }
 }

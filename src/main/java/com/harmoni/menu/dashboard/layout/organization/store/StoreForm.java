@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
+import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.event.store.StoreDeleteEventListener;
 import com.harmoni.menu.dashboard.event.store.StoreSaveEventListener;
 import com.harmoni.menu.dashboard.event.store.StoreUpdateEventListener;
@@ -53,7 +54,7 @@ public class StoreForm extends FormLayout  {
     @Getter
     private UI ui;
     @Getter
-    private StoreDto storeDto;
+    private transient StoreDto storeDto;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private static final int TEMP_BRAND_ID = 1;
     public StoreForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
@@ -165,7 +166,7 @@ public class StoreForm extends FormLayout  {
 
     private void fetchTiers() {
         asyncRestClientOrganizationService.getAllTierByBrandAsync(result ->
-                ui.access(()-> tierBox.setItems(result)), TEMP_BRAND_ID);
+                ui.access(()-> tierBox.setItems(result)), TEMP_BRAND_ID, TierTypeDto.PRICE);
     }
 
     private void fetchDetailChains(Long id) {
@@ -183,7 +184,7 @@ public class StoreForm extends FormLayout  {
                     break;
                 }
             }
-        }, id);
+        }, id, TierTypeDto.PRICE);
     }
 
     private HorizontalLayout createButtonsLayout() {

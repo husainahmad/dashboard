@@ -8,7 +8,7 @@ import com.harmoni.menu.dashboard.util.ObjectUtil;
 
 public interface BroadcastMessageService {
 
-    public default void broadcastMessage(String type, RestAPIResponse restAPIResponse) {
+    default void broadcastMessage(String type, RestAPIResponse restAPIResponse) {
         try {
             Broadcaster.broadcast(ObjectUtil.objectToJsonString(BroadcastMessage.builder()
                     .type(type)

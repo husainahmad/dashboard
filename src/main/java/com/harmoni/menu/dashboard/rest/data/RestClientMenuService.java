@@ -23,7 +23,7 @@ import java.io.Serializable;
 public class RestClientMenuService implements Serializable {
 
     private final transient MenuProperties urlMenuProperties;
-    private final transient  WebClient webClient = WebClient.builder().build();
+    private final transient WebClient webClient = WebClient.builder().build();
 
     public Mono<RestAPIResponse> createCategory(CategoryDto categoryDto) {
         return create(urlMenuProperties.getUrl().getCategory(), Mono.just(categoryDto), CategoryDto.class);
@@ -49,7 +49,6 @@ public class RestClientMenuService implements Serializable {
     public Mono<RestAPIResponse> deleteSku(SkuDto skuDto) {
         return delete("%s/%d".formatted(urlMenuProperties.getUrl().getSku(), skuDto.getId()));
     }
-
 
     public Mono<RestAPIResponse> deleteCategory(CategoryDto categoryDto) {
         return delete("%s/%d".formatted(urlMenuProperties.getUrl().getCategory(), categoryDto.getId()));
