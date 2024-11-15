@@ -1,18 +1,19 @@
 package com.harmoni.menu.dashboard.layout.organization.brand;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
-import com.harmoni.menu.dashboard.dto.ChainDto;
+import com.harmoni.menu.dashboard.event.brand.BrandDeleteEventListener;
 import com.harmoni.menu.dashboard.event.brand.BrandSaveEventListener;
 import com.harmoni.menu.dashboard.event.brand.BrandUpdateEventListener;
+import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -21,18 +22,20 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ObjectUtils;
+
+import java.util.Objects;
 
 @Route("brand-form")
+@Slf4j
 public class BrandForm extends FormLayout  {
     Registration broadcasterRegistration;
     @Getter
     BeanValidationBinder<BrandDto> binder = new BeanValidationBinder<>(BrandDto.class);
     @Getter
     TextField brandNameField = new TextField("Brand name");
-    @Getter
-    ComboBox<ChainDto> chainBox = new ComboBox<>("Chain");
     private final Button saveButton = new Button("Save");
     private final Button  deleteButton = new Button("Delete");
     private final Button  closeButton = new Button("Cancel");
@@ -41,33 +44,39 @@ public class BrandForm extends FormLayout  {
     @Getter
     private UI ui;
     @Getter
-    private BrandDto brandDto;
-    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
+    private transient BrandDto brandDto;
 
-    public BrandForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+    public BrandForm(@Autowired
                      RestClientOrganizationService restClientOrganizationService) {
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
         addValidation();
 
-        chainBox.setItemLabelGenerator(ChainDto::getName);
-
-        add(chainBox);
         add(brandNameField);
 
         add(createButtonsLayout());
         binder.bindInstanceFields(this);
-
-        fetchChains();
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         this.ui = attachEvent.getUI();
         broadcasterRegistration = Broadcaster.register(message -> {
-            if (message.equals(BroadcastMessage.BRAND_INSERT_SUCCESS)) {
-                showNotification("Brand created..");
-                hideForm();
+            try {
+                BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.BRAND_INSERT_SUCCESS)) {
+                        showNotification("Brand created..");
+                        hideForm();
+                    }
+                    if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
+                        showErrorDialog(message);
+                    }
+                    if (broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
+                        showErrorDialog(message);
+                    }
+                }
+            } catch (JsonProcessingException e) {
+                log.error("Broadcast Handler Error", e);
             }
         });
     }
@@ -81,10 +90,16 @@ public class BrandForm extends FormLayout  {
         });
     }
 
-    public void hideForm() {
-        ui.access(()->{
-            this.setVisible(false);
+    private void showErrorDialog(String message) {
+        DialogClosing dialog = new DialogClosing(message);
+        ui.access(()-> {
+            add(dialog);
+            dialog.open();
         });
+    }
+
+    public void hideForm() {
+        ui.access(()-> this.setVisible(false));
     }
 
     @Override
@@ -96,10 +111,7 @@ public class BrandForm extends FormLayout  {
     private void addValidation() {
         brandNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>) changeEvent -> binder.validate());
-        binder.forField(chainBox)
-                .withValidator(value -> value.getId()>0,
-                        "Chain must be not empty")
-                .bind(BrandDto::getChainDto, BrandDto::setChainDto);
+
         binder.forField(brandNameField)
                 .withValidator(value -> value.length()>2,
                         "Name must contain at least three characters")
@@ -108,27 +120,7 @@ public class BrandForm extends FormLayout  {
 
     void setBrandDto(BrandDto brandDto) {
         this.brandDto = brandDto;
-        if (!ObjectUtils.isEmpty(this.brandDto) &&
-                !ObjectUtils.isEmpty(this.brandDto.getChainId())) {
-            fetchDetailChains(brandDto.getChainId().longValue());
-        }
         binder.readBean(brandDto);
-    }
-
-    private void fetchChains() {
-        asyncRestClientOrganizationService.getAllChainAsync(result -> {
-            ui.access(()->{
-                chainBox.setItems(result);
-            });
-        });
-    }
-
-    private void fetchDetailChains(Long id) {
-        asyncRestClientOrganizationService.getDetailChainAsync(result -> {
-            ui.access(()->{
-                chainBox.setValue(result);
-            });
-        }, id);
     }
 
     private HorizontalLayout createButtonsLayout() {
@@ -143,6 +135,7 @@ public class BrandForm extends FormLayout  {
         closeButton.addClickShortcut(Key.ESCAPE);
 
         updateButton.addClickListener(new BrandUpdateEventListener(this, restClientOrganizationService));
+        deleteButton.addClickListener(new BrandDeleteEventListener(this, restClientOrganizationService));
 
         saveButton.addClickListener(
                 new BrandSaveEventListener(this, restClientOrganizationService));
@@ -152,20 +145,16 @@ public class BrandForm extends FormLayout  {
     }
 
     public void restructureButton(FormAction formAction) {
-        switch (formAction) {
-            case CREATE -> {
-                saveButton.setVisible(true);
-                updateButton.setVisible(false);
-                deleteButton.setVisible(false);
-                closeButton.setVisible(true);
-                break;
-            }
-            case EDIT -> {
-                saveButton.setVisible(false);
-                updateButton.setVisible(true);
-                deleteButton.setVisible(true);
-                closeButton.setVisible(true);
-            }
+        if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
+            saveButton.setVisible(true);
+            updateButton.setVisible(false);
+            deleteButton.setVisible(false);
+            closeButton.setVisible(true);
+        } else if (formAction == FormAction.EDIT) {
+            saveButton.setVisible(false);
+            updateButton.setVisible(true);
+            deleteButton.setVisible(true);
+            closeButton.setVisible(true);
         }
     }
 }

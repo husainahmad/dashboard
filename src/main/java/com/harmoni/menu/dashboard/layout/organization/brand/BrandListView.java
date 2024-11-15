@@ -1,13 +1,16 @@
 package com.harmoni.menu.dashboard.layout.organization.brand;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
@@ -20,14 +23,13 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-
-import java.text.MessageFormat;
-
 
 @Route(value = "brand", layout = MainLayout.class)
 @PageTitle("Brand | POSHarmoni")
+@Slf4j
 public class BrandListView extends VerticalLayout {
 
     Registration broadcasterRegistration;
@@ -71,7 +73,6 @@ public class BrandListView extends VerticalLayout {
         brandDtoGrid.setSizeFull();
         brandDtoGrid.removeAllColumns();
         brandDtoGrid.addColumn(BrandDto::getName).setHeader("Name");
-        brandDtoGrid.addColumn("chainDto.name").setHeader("Chain Name");
 
         brandDtoGrid.getColumns().forEach(brandDtoColumn -> brandDtoColumn.setAutoWidth(true));
         brandDtoGrid.asSingleSelect().addValueChangeListener(valueChangeEvent ->
@@ -84,9 +85,7 @@ public class BrandListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addBrandButton = new Button("Add Brand");
-        addBrandButton.addClickListener(buttonClickEvent -> {
-            addBrand();
-        });
+        addBrandButton.addClickListener(buttonClickEvent -> addBrand());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -96,15 +95,18 @@ public class BrandListView extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         ui = attachEvent.getUI();
         broadcasterRegistration = Broadcaster.register(message -> {
-            if (message.equals(BroadcastMessage.BRAND_INSERT_SUCCESS)) {
-                fetchBrands();
-            }
-
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.BAD_REQUEST.value())))) {
-                showErrorDialog(message);
-            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value())))) {
-                showErrorDialog(message);
+            try {
+                BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.BRAND_INSERT_SUCCESS) ||
+                            broadcastMessage.getType().equals(BroadcastMessage.BRAND_SUCCESS_UPDATED)) {
+                        fetchBrands();
+                    } else {
+                        UiUtil.showErrorDialog(ui, this, message);
+                    }
+                }
+            } catch (JsonProcessingException e) {
+                log.error("Broadcast Handler Error", e);
             }
         });
     }
@@ -124,8 +126,7 @@ public class BrandListView extends VerticalLayout {
     }
 
     private void configureForm() {
-        brandForm = new BrandForm(this.asyncRestClientOrganizationService,
-                        this.restClientOrganizationService);
+        brandForm = new BrandForm(this.restClientOrganizationService);
         brandForm.setWidth("25em");
     }
 
@@ -151,10 +152,6 @@ public class BrandListView extends VerticalLayout {
     }
 
     private void fetchBrands() {
-        asyncRestClientOrganizationService.getAllBrandAsync(result -> {
-            ui.access(()->{
-                brandDtoGrid.setItems(result);
-            });
-        });
+        asyncRestClientOrganizationService.getAllBrandAsync(result -> ui.access(()-> brandDtoGrid.setItems(result)));
     }
 }

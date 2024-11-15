@@ -1,13 +1,16 @@
 package com.harmoni.menu.dashboard.layout.organization.store;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
@@ -20,13 +23,13 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-
-import java.text.MessageFormat;
 
 @Route(value = "store", layout = MainLayout.class)
 @PageTitle("Store | POSHarmoni")
+@Slf4j
 public class StoreListView extends VerticalLayout {
 
     Registration broadcasterRegistration;
@@ -60,18 +63,23 @@ public class StoreListView extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         ui = attachEvent.getUI();
         broadcasterRegistration = Broadcaster.register(message -> {
-            if (message.equals(BroadcastMessage.STORE_INSERT_SUCCESS)) {
-                fetchStores();
-                ui.access(()->{
-                    storeForm.setVisible(false);
-                    removeClassName("editing");
-                });
-            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.BAD_REQUEST.value())))) {
-                showErrorDialog(message);
-            }
-            if (message.startsWith(MessageFormat.format("{0}|", String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value())))) {
-                showErrorDialog(message);
+
+            try {
+                BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
+                    broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS)) {
+                        fetchStores();
+                        ui.access(()->{
+                            storeForm.setVisible(false);
+                            removeClassName("editing");
+                        });
+                    } else {
+                        UiUtil.showErrorDialog(ui, this, message);
+                    }
+                }
+            } catch (JsonProcessingException e) {
+                log.error("Broadcast Handler Error", e);
             }
         });
     }
@@ -95,7 +103,7 @@ public class StoreListView extends VerticalLayout {
         storeDtoGrid.removeAllColumns();
         storeDtoGrid.addColumn(StoreDto::getName).setHeader("Name");
         storeDtoGrid.addColumn(StoreDto::getAddress).setHeader("Address");
-        storeDtoGrid.addColumn("brandDto.name").setHeader("Brand");
+        storeDtoGrid.addColumn("chainDto.name").setHeader("Chain");
         storeDtoGrid.addColumn("tierDto.name").setHeader("Tier");
 
         storeDtoGrid.getColumns().forEach(storeDtoColumn -> storeDtoColumn.setAutoWidth(true));
@@ -135,9 +143,7 @@ public class StoreListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addChainButton = new Button("Add Store");
-        addChainButton.addClickListener(buttonClickEvent -> {
-            addStore();
-        });
+        addChainButton.addClickListener(buttonClickEvent -> addStore());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -149,10 +155,7 @@ public class StoreListView extends VerticalLayout {
     }
 
     private void fetchStores() {
-        asyncRestClientOrganizationService.getAllStoreAsync(result -> {
-            ui.access(()-> {
-                storeDtoGrid.setItems(result);
-            });
-        });
+        asyncRestClientOrganizationService.getAllStoreAsync(result -> ui.access(()->
+                storeDtoGrid.setItems(result)));
     }
 }

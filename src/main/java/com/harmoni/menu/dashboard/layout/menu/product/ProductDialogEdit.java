@@ -1,88 +1,96 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
+import com.harmoni.menu.dashboard.layout.component.SkuComponentRender;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
-import com.harmoni.menu.dashboard.dto.ProductDto;
 import com.harmoni.menu.dashboard.dto.SkuDto;
-import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
+import com.harmoni.menu.dashboard.dto.TierDto;
+import com.harmoni.menu.dashboard.event.product.ProductUpdateEventListener;
+import com.harmoni.menu.dashboard.layout.menu.product.binder.ProductBinderBean;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.virtuallist.VirtualList;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.ListDataProvider;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
 
-@Route("product-dialog")
+@Route("product-dialog-edit")
+@Slf4j
 public class ProductDialogEdit extends Dialog {
-    private final static Logger log = LoggerFactory.getLogger(ProductListView.class);
 
     @Getter
     private TextField productNameField;
     @Getter
     ComboBox<CategoryDto> categoryBox;
-    private  AsyncRestClientMenuService asyncRestClientMenuService;
-    private AsyncRestClientOrganizationService asyncRestClientOrganizationService;
-    private RestClientMenuService restClientMenuService;
+    private final AsyncRestClientMenuService asyncRestClientMenuService;
+    private final RestClientMenuService restClientMenuService;
+    @Getter
     private UI ui;
-
     private final TabSheet tabSheet = new TabSheet();
-
-    private ProductTreeItem productTreeItem;
-    private List<SkuDto> skuDtos = new ArrayList<>();
+    @Getter
+    private final transient ProductTreeItem productTreeItem;
     private final VirtualList<SkuDto> skuDtoVirtualList;
-    private ListDataProvider<SkuDto> dataProvider;
+    @Getter
+    private final transient TierDto tierDto;
+    private final transient List<CategoryDto> categoryDtos;
+    @Getter
+    private final List<Binder<ProductBinderBean>> binders;
+    private int newSkuTempId = -1;
+    @Getter
+    private final ConfirmDialog confirmDialog = new ConfirmDialog();
 
     public ProductDialogEdit(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
-                             @Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                              @Autowired RestClientMenuService restClientMenuService,
-                             ProductTreeItem productTreeItem) {
+                             ProductTreeItem productTreeItem, TierDto tierDto,
+                             List<CategoryDto> categoryDtos) {
 
         this.asyncRestClientMenuService = asyncRestClientMenuService;
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientMenuService = restClientMenuService;
         this.productTreeItem = productTreeItem;
         this.skuDtoVirtualList = new VirtualList<>();
-
-
+        this.tierDto = tierDto;
+        this.categoryDtos = categoryDtos;
+        this.binders = new ArrayList<>();
         setHeaderTitle("Edit Product");
 
         VerticalLayout dialogLayout = createDialogLayout();
+        dialogLayout.setPadding(false);
+        dialogLayout.setSpacing(false);
+
         add(dialogLayout);
 
         Button saveButton = createSaveButton(this);
-        Button cancelButton = new Button("Cancel", e -> this.close());
+        Button cancelButton = new Button("Cancel",
+                (ComponentEventListener<ClickEvent<Button>>) e -> ProductDialogEdit.this.close());
         getFooter().add(cancelButton);
         getFooter().add(saveButton);
 
         fetchCategories();
     }
 
-
     private VerticalLayout createDialogLayout() {
-
         tabSheet.add("Product", productLayout());
         tabSheet.add("SKU", skuLayout());
-
         return new VerticalLayout(tabSheet);
     }
 
@@ -100,16 +108,32 @@ public class ProductDialogEdit extends Dialog {
     private Div skuLayout() {
         Div skuDiv = new Div();
 
+        setDataProvider(this.productTreeItem.getSkus());
 
-        productNameField = new TextField("SKU name");
-        skuDiv.add(setDialogLayout(productNameField));
+        final HorizontalLayout horizontalLayout = getHorizontalLayout();
+        horizontalLayout.setWidthFull();
+        final VerticalLayout titleLayout = new VerticalLayout(horizontalLayout, setDialogLayout(this.skuDtoVirtualList));
+        titleLayout.setPadding(false);
+
+        skuDiv.add(titleLayout);
         return skuDiv;
+    }
+
+    private HorizontalLayout getHorizontalLayout() {
+        Button buttonAdd = new Button("Add SKU", new Icon(VaadinIcon.PLUS), this::onButtonAddSkuEvent);
+        return new HorizontalLayout(FlexComponent.Alignment.STRETCH, new Text("SKU name"), buttonAdd);
+    }
+
+    public void setDataProvider(List<SkuDto> skuDtos) {
+        ListDataProvider<SkuDto> dataProvider = new ListDataProvider<>(skuDtos);
+        this.skuDtoVirtualList.setDataProvider(dataProvider);
+        this.skuDtoVirtualList.setRenderer(new ComponentRenderer<>(this::skusRender));
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        getSkus(this.productTreeItem.getProductId());
+        ui = attachEvent.getUI();
     }
 
     private VerticalLayout setDialogLayout(Component... children) {
@@ -117,51 +141,37 @@ public class ProductDialogEdit extends Dialog {
         dialogLayout.setPadding(false);
         dialogLayout.setSpacing(false);
         dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
-        dialogLayout.getStyle().set("width", "25rem").set("max-width", "100%");
+        dialogLayout.getStyle().set("width", "45rem").set("max-width", "100%");
         return dialogLayout;
     }
 
-    private static Button createSaveButton(Dialog dialog) {
-        Button saveButton = new Button("Add", e -> dialog.close());
+    private Button createSaveButton(Dialog dialog) {
+        Button saveButton = new Button("Update", new ProductUpdateEventListener(this, restClientMenuService));
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-
         return saveButton;
     }
 
     private void fetchCategories() {
-        asyncRestClientMenuService.getAllCategoryAsync(result -> {
-            this.getUI().get().access(() -> {
-                categoryBox.setItems(result);
-            });
+        categoryBox.setItems(this.categoryDtos);
+        this.categoryDtos.forEach(categoryDto -> {
+            if (categoryDto.getId().equals(this.productTreeItem.getCategoryId())) {
+                categoryBox.setValue(categoryDto);
+            }
         });
     }
 
-    public void getSkus(Integer productId) {
-
-        asyncRestClientMenuService.getAllSkuByProductAsync(result -> {
-            log.debug("skus {}", result);
-            List<Integer> skuIds = new ArrayList<>();
-            result.forEach(skuDto -> {
-                skuIds.add(skuDto.getId());
-            });
-
-            skuDtos = result;
-            this.dataProvider = new ListDataProvider<SkuDto>(skuDtos);
-            this.skuDtoVirtualList.setDataProvider(this.dataProvider);
-
-            //this.skuDtoVirtualList.setRenderer(this.dataProvider);
-            fetchPriceBySku(skuIds);
-
-        }, productId);
-
-
+    private Component skusRender(SkuDto skuDto) {
+        return new SkuComponentRender(skuDto, this,
+                this.asyncRestClientMenuService, this.restClientMenuService);
     }
 
-    private void fetchPriceBySku(List<Integer> skuIds) {
-        asyncRestClientMenuService.getDetailSkuTierPriceAsync(result -> {
-            result.forEach(skuTierPriceDto -> {
-                log.debug("{}", skuTierPriceDto);
-            });
-        }, skuIds);
+    private void onButtonAddSkuEvent(ClickEvent<Button> buttonClickEvent) {
+        if (buttonClickEvent.isFromClient()) {
+            SkuDto skuDto = new SkuDto();
+            skuDto.setId(newSkuTempId);
+            this.productTreeItem.getSkus().add(skuDto);
+            setDataProvider(this.productTreeItem.getSkus());
+            newSkuTempId--;
+        }
     }
 }

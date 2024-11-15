@@ -14,13 +14,18 @@
 	<name>dashboard</name>
 	<description>Menu Dashboard</description>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>22</java.version>
 		<vaadin.version>24.3.8</vaadin.version>
 	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<artifactId>vaadin-spring-boot-starter</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.vaadin</groupId>
+			<artifactId>vaadin-themes</artifactId>
+			<version>8.25.2</version>
 		</dependency>
 
 		<dependency>
@@ -82,7 +87,7 @@
 						</exclude>
 					</excludes>
 					<jvmArguments>
-						-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005
+						-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=6006
 					</jvmArguments>
 				</configuration>
 			</plugin>

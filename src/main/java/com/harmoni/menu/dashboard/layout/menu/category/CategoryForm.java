@@ -1,14 +1,17 @@
 package com.harmoni.menu.dashboard.layout.menu.category;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
+import com.harmoni.menu.dashboard.event.category.CategoryDeleteEventListener;
 import com.harmoni.menu.dashboard.event.category.CategorySaveEventListener;
+import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -22,10 +25,14 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ObjectUtils;
+
+import java.util.Objects;
 
 @Route("category-form")
+@Slf4j
 public class CategoryForm extends FormLayout  {
     Registration broadcasterRegistration;
     @Getter
@@ -44,15 +51,12 @@ public class CategoryForm extends FormLayout  {
     @Getter
     private UI ui;
     @Getter
-    private CategoryDto categoryDto;
-    private final AsyncRestClientMenuService asyncRestClientMenuService;
+    private transient CategoryDto categoryDto;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
 
-    public CategoryForm(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
-                        @Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+    public CategoryForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                         @Autowired RestClientMenuService restClientMenuService) {
-        this.asyncRestClientMenuService = asyncRestClientMenuService;
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientMenuService = restClientMenuService;
         addValidation();
@@ -71,9 +75,22 @@ public class CategoryForm extends FormLayout  {
     protected void onAttach(AttachEvent attachEvent) {
         this.ui = attachEvent.getUI();
         broadcasterRegistration = Broadcaster.register(message -> {
-            if (message.equals(BroadcastMessage.CATEGORY_INSERT_SUCCESS)) {
-                showNotification("Category created..");
-                hideForm();
+            try {
+                BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
+                    if (broadcastMessage.getType().equals(BroadcastMessage.CATEGORY_INSERT_SUCCESS)) {
+                        showNotification("Category created..");
+                        hideForm();
+                    }
+                    if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
+                        showErrorDialog(message);
+                    }
+                    if (broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
+                        showErrorDialog(message);
+                    }
+                }
+            } catch (JsonProcessingException e) {
+                log.error("Broadcast Handler Error", e);
             }
         });
         fetchBrands();
@@ -87,10 +104,16 @@ public class CategoryForm extends FormLayout  {
         });
     }
 
-    public void hideForm() {
-        ui.access(()->{
-            this.setVisible(false);
+    private void showErrorDialog(String message) {
+        DialogClosing dialog = new DialogClosing(message);
+        ui.access(()-> {
+            add(dialog);
+            dialog.open();
         });
+    }
+
+    public void hideForm() {
+        ui.access(()-> this.setVisible(false));
     }
 
     @Override
@@ -135,19 +158,13 @@ public class CategoryForm extends FormLayout  {
     }
 
     private void fetchBrands() {
-        asyncRestClientOrganizationService.getAllBrandAsync(result -> {
-            ui.access(()->{
-                brandBox.setItems(result);
-            });
-        });
+        asyncRestClientOrganizationService.getAllBrandAsync(result ->
+                ui.access(()-> brandBox.setItems(result)));
     }
 
     private void fetchDetailBrands(Long id) {
-        asyncRestClientOrganizationService.getDetailBrandAsync(result -> {
-            ui.access(()->{
-                brandBox.setValue(result);
-            });
-        }, id);
+        asyncRestClientOrganizationService.getDetailBrandAsync(result ->
+                ui.access(()-> brandBox.setValue(result)), id);
     }
 
     private HorizontalLayout createButtonsLayout() {
@@ -161,30 +178,27 @@ public class CategoryForm extends FormLayout  {
 
         closeButton.addClickShortcut(Key.ESCAPE);
 
-//        updateButton.addClickListener(new BrandUpdateEventListener(this, restClientService));
-
         saveButton.addClickListener(
                 new CategorySaveEventListener(this, restClientMenuService));
+        deleteButton.addClickListener(
+                new CategoryDeleteEventListener(this, restClientMenuService));
+
         closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
 
         return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
     }
 
     public void restructureButton(FormAction formAction) {
-        switch (formAction) {
-            case CREATE -> {
-                saveButton.setVisible(true);
-                updateButton.setVisible(false);
-                deleteButton.setVisible(false);
-                closeButton.setVisible(true);
-                break;
-            }
-            case EDIT -> {
-                saveButton.setVisible(false);
-                updateButton.setVisible(true);
-                deleteButton.setVisible(true);
-                closeButton.setVisible(true);
-            }
+        if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
+            saveButton.setVisible(true);
+            updateButton.setVisible(false);
+            deleteButton.setVisible(false);
+            closeButton.setVisible(true);
+        } else if (formAction == FormAction.EDIT) {
+            saveButton.setVisible(false);
+            updateButton.setVisible(true);
+            deleteButton.setVisible(true);
+            closeButton.setVisible(true);
         }
     }
 }
