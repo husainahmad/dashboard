@@ -14,6 +14,7 @@ public class UrlProperties implements Serializable {
     private String chain;
     private String tier;
     private String product;
+    private String service;
     private transient TierProperties tiers;
     private transient CategoryProperties categories;
     private transient ProductProperties products;

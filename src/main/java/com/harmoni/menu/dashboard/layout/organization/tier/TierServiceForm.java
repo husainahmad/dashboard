@@ -4,10 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
+import com.harmoni.menu.dashboard.dto.ServiceDto;
+import com.harmoni.menu.dashboard.dto.SubServiceDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
-import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
-import com.harmoni.menu.dashboard.event.tier.TierSaveEventListener;
-import com.harmoni.menu.dashboard.event.tier.TierUpdateEventListener;
+import com.harmoni.menu.dashboard.event.tier.*;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
@@ -16,6 +16,7 @@ import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;
@@ -29,18 +30,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
-@Route("tier-price-form")
+@Route("tier-service-form")
 @Slf4j
-public class TierPriceForm extends FormLayout  {
+public class TierServiceForm extends FormLayout  {
     Registration broadcasterRegistration;
     @Getter
     BeanValidationBinder<TierDto> binder = new BeanValidationBinder<>(TierDto.class);
     @Getter
-    TextField tierNameField = new TextField("Tier name");
+    TextField tierNameField = new TextField("Tier service name");
     @Getter
     ComboBox<BrandDto> brandBox = new ComboBox<>("Brand");
+    ComboBox<ServiceDto> serviceBox = new ComboBox<>("Service");
+
+    CheckboxGroup<String> checkboxGroup = new CheckboxGroup<>();
+
+    ComboBox<SubServiceDto> subServiceBox = new ComboBox<>("Sub Service");
     private final Button saveButton = new Button("Save");
     private final Button  deleteButton = new Button("Delete");
     private final Button  closeButton = new Button("Cancel");
@@ -52,22 +61,35 @@ public class TierPriceForm extends FormLayout  {
     private TierDto tierDto;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
 
-    public TierPriceForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                         @Autowired RestClientOrganizationService restClientOrganizationService) {
+    public TierServiceForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+                           @Autowired RestClientOrganizationService restClientOrganizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
         addValidation();
 
         brandBox.setItemLabelGenerator(BrandDto::getName);
-
         add(brandBox);
+        serviceBox.setItemLabelGenerator(ServiceDto::getName);
+        add(serviceBox);
+        serviceBox.addValueChangeListener(event -> {
+            ServiceDto serviceDto = event.getValue();
+            checkboxGroup.setLabel("Sub Service");
+            List<String> subServices = new ArrayList<>();
+            serviceDto.getSubServices().forEach(subServiceDto -> {
+                subServices.add(subServiceDto.getName());
+            });
+            checkboxGroup.setItems(subServices.toArray(new String[0]));
+        });
 
+        add(checkboxGroup);
         add(tierNameField);
 
         add(createButtonsLayout());
         binder.bindInstanceFields(this);
 
         fetchBrands();
+        fetchServices();
+
     }
 
     @Override
@@ -127,6 +149,15 @@ public class TierPriceForm extends FormLayout  {
         binder.forField(brandBox)
                         .withValidator(value -> value.getId() > 0, "Brand not allow to be empty"
                         ).bind(TierDto::getBrandDto, TierDto::setBrandDto);
+        serviceBox.addValueChangeListener(changeEvent -> binder.validate());
+        binder.forField(serviceBox)
+                .withValidator(value -> value.getId() > 0, "Service not allow to be empty"
+                ).bind(TierDto::getServiceDto, TierDto::setServiceDto);
+
+        checkboxGroup.addValueChangeListener(changeEvent -> {
+            log.debug("{}", changeEvent);
+        });
+
         tierNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField
                         .ComponentValueChangeEvent<TextField, String>>) changeEvent -> binder.validate());
@@ -149,9 +180,11 @@ public class TierPriceForm extends FormLayout  {
     }
 
     private void fetchBrands() {
-        asyncRestClientOrganizationService.getAllBrandAsync(result -> ui.access(()->{
-            brandBox.setItems(result);
-        }));
+        asyncRestClientOrganizationService.getAllBrandAsync(result -> ui.access(()-> brandBox.setItems(result)));
+    }
+
+    private void fetchServices() {
+        asyncRestClientOrganizationService.getAllServicesAsync(result -> ui.access(()-> serviceBox.setItems(result)));
     }
 
     private void fetchDetailBrands(Long id) {
@@ -171,9 +204,9 @@ public class TierPriceForm extends FormLayout  {
 
         closeButton.addClickShortcut(Key.ESCAPE);
         saveButton.addClickListener(
-                new TierSaveEventListener(this, restClientOrganizationService));
-        updateButton.addClickListener(new TierUpdateEventListener(this, restClientOrganizationService));
-        deleteButton.addClickListener(new TierDeleteEventListener(this, restClientOrganizationService));
+                new TierServiceSaveEventListener(this, restClientOrganizationService));
+        updateButton.addClickListener(new TierServiceUpdateEventListener(this, restClientOrganizationService));
+        deleteButton.addClickListener(new TierServiceDeleteEventListener(this, restClientOrganizationService));
 
         closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
 

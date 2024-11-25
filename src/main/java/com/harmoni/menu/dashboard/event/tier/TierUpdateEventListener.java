@@ -11,14 +11,14 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 
-public class TierSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
+public class TierUpdateEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
     private final TierPriceForm tierForm;
 
     private final RestClientOrganizationService restClientOrganizationService;
 
-    public TierSaveEventListener(TierPriceForm tierForm, RestClientOrganizationService restClientOrganizationService) {
+    public TierUpdateEventListener(TierPriceForm tierForm, RestClientOrganizationService restClientOrganizationService) {
         this.tierForm = tierForm;
         this.restClientOrganizationService = restClientOrganizationService;
     }
@@ -32,13 +32,13 @@ public class TierSaveEventListener implements ComponentEventListener<ClickEvent<
         tierDto.setType(this.tierForm.getTierDto().getType());
         tierDto.setName(this.tierForm.getTierNameField().getValue());
         tierDto.setBrandId(this.tierForm.getBrandBox().getValue().getId());
-        restClientOrganizationService.createTier(tierDto)
+        restClientOrganizationService.updateTier(tierDto)
                 .doOnError(error -> new BrandHandler(this.tierForm.getUi(),
-                        "Error while inserting Brand ".concat(error.getMessage())))
+                        "Error while updating Tier ".concat(error.getMessage())))
                 .subscribe(this::accept);
     }
 
     private void accept(RestAPIResponse restAPIResponse) {
-        broadcastMessage(BroadcastMessage.TIER_INSERT_SUCCESS, restAPIResponse);
+        broadcastMessage(BroadcastMessage.TIER_UPDATED_SUCCESS, restAPIResponse);
     }
 }

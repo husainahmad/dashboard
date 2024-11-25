@@ -1,10 +1,7 @@
 package com.harmoni.menu.dashboard.rest.data;
 
 import com.harmoni.menu.dashboard.configuration.MenuProperties;
-import com.harmoni.menu.dashboard.dto.BrandDto;
-import com.harmoni.menu.dashboard.dto.ChainDto;
-import com.harmoni.menu.dashboard.dto.StoreDto;
-import com.harmoni.menu.dashboard.dto.TierDto;
+import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +52,19 @@ public class RestClientOrganizationService implements Serializable {
         return create(menuProperties.getUrl().getTier(), Mono.just(tierDto), TierDto.class);
     }
 
+    public Mono<RestAPIResponse> updateTier(TierDto tierDto) {
+        return update(URL_FORMAT.formatted(menuProperties.getUrl().getTier(), tierDto.getId()),
+                Mono.just(tierDto), TierDto.class);
+    }
+
+    public Mono<RestAPIResponse> deleteTier(TierDto tierDto) {
+        return delete(URL_FORMAT.formatted(menuProperties.getUrl().getTier(), tierDto.getId()));
+    }
+
+    public Mono<RestAPIResponse> createTierService(TierServiceDto tierServiceDto) {
+        return create(menuProperties.getUrl().getTiers().getService(), Mono.just(tierServiceDto), TierServiceDto.class);
+    }
+
     public Mono<RestAPIResponse> deleteChain(ChainDto chainDto) {
         return delete(URL_FORMAT.formatted(menuProperties.getUrl().getChain(), chainDto.getId()));
     }
@@ -79,7 +89,7 @@ public class RestClientOrganizationService implements Serializable {
                 webClient.post()
                         .uri(url)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .body(Mono.just(publisher), className)
+                        .body(publisher, className)
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),
                                 RestClientOrganizationService::applyOnBadRequest

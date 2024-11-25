@@ -7,4 +7,5 @@ import java.io.Serializable;
 @Data
 public class TierProperties implements Serializable {
     private String brand;
+    private String service;
 }

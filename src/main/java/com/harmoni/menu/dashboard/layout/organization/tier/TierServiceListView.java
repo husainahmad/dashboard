@@ -38,7 +38,7 @@ public class TierServiceListView extends VerticalLayout {
     private final TextField filterText = new TextField();
     private UI ui;
     private final RestClientOrganizationService restClientOrganizationService;
-    private TierPriceForm tierForm;
+    private TierServiceForm tierForm;
     public TierServiceListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                                @Autowired RestClientOrganizationService restClientOrganizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
@@ -66,24 +66,16 @@ public class TierServiceListView extends VerticalLayout {
 
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage) && org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS)) {
+                if (org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage)
+                        && org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage.getType())
+                        && (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS) ||
+                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS))) {
                         fetchTier();
-                    } else {
-                        UiUtil.showErrorDialog(ui, this, message);
                     }
-                }
+
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
-        });
-    }
-
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
         });
     }
 
@@ -116,7 +108,7 @@ public class TierServiceListView extends VerticalLayout {
     }
 
     private void configureForm() {
-        tierForm = new TierPriceForm(this.asyncRestClientOrganizationService,
+        tierForm = new TierServiceForm(this.asyncRestClientOrganizationService,
                                 this.restClientOrganizationService);
         tierForm.setWidth("25em");
     }
@@ -135,9 +127,9 @@ public class TierServiceListView extends VerticalLayout {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addChainButton = new Button("Add Tier");
-        addChainButton.addClickListener(e -> addTier());
-        HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
+        Button addTierServiceButton = new Button("Add Tier Service");
+        addTierServiceButton.addClickListener(e -> addTier());
+        HorizontalLayout toolbar = new HorizontalLayout(filterText, addTierServiceButton);
         toolbar.addClassName("toolbar");
         return toolbar;
     }

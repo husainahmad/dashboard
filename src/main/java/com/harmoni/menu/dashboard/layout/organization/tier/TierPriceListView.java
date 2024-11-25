@@ -27,7 +27,7 @@ import com.vaadin.flow.shared.Registration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Route(value = "tier", layout = MainLayout.class)
+@Route(value = "tier-price", layout = MainLayout.class)
 @PageTitle("Tier | POSHarmoni")
 @Slf4j
 public class TierPriceListView extends VerticalLayout {
@@ -39,6 +39,7 @@ public class TierPriceListView extends VerticalLayout {
     private UI ui;
     private final RestClientOrganizationService restClientOrganizationService;
     private TierPriceForm tierForm;
+
     public TierPriceListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                              @Autowired RestClientOrganizationService restClientOrganizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
@@ -66,24 +67,16 @@ public class TierPriceListView extends VerticalLayout {
 
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage) && org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS)) {
+                if (org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage)
+                        && org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage.getType())
+                        && (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS) ||
+                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS))) {
                         fetchTier();
-                    } else {
-                        UiUtil.showErrorDialog(ui, this, message);
                     }
-                }
+
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
-        });
-    }
-
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
         });
     }
 

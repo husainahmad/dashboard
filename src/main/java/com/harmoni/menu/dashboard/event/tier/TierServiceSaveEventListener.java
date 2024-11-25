@@ -2,23 +2,25 @@ package com.harmoni.menu.dashboard.event.tier;
 
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.dto.TierDto;
+import com.harmoni.menu.dashboard.dto.TierServiceDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.exception.BrandHandler;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierPriceForm;
+import com.harmoni.menu.dashboard.layout.organization.tier.TierServiceForm;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 
-public class TierSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
+public class TierServiceSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
-    private final TierPriceForm tierForm;
+    private final TierServiceForm tierForm;
 
     private final RestClientOrganizationService restClientOrganizationService;
 
-    public TierSaveEventListener(TierPriceForm tierForm, RestClientOrganizationService restClientOrganizationService) {
+    public TierServiceSaveEventListener(TierServiceForm tierForm, RestClientOrganizationService restClientOrganizationService) {
         this.tierForm = tierForm;
         this.restClientOrganizationService = restClientOrganizationService;
     }
@@ -32,7 +34,10 @@ public class TierSaveEventListener implements ComponentEventListener<ClickEvent<
         tierDto.setType(this.tierForm.getTierDto().getType());
         tierDto.setName(this.tierForm.getTierNameField().getValue());
         tierDto.setBrandId(this.tierForm.getBrandBox().getValue().getId());
-        restClientOrganizationService.createTier(tierDto)
+
+        TierServiceDto tierServiceDto = new TierServiceDto();
+        tierServiceDto.s
+        restClientOrganizationService.createTierService(tierDto)
                 .doOnError(error -> new BrandHandler(this.tierForm.getUi(),
                         "Error while inserting Brand ".concat(error.getMessage())))
                 .subscribe(this::accept);

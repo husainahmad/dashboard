@@ -19,6 +19,10 @@ public class TierDto {
     @NotEmpty
     @JsonProperty("brand")
     private BrandDto brandDto;
+    @NotEmpty
+    @JsonProperty("service")
+    private ServiceDto serviceDto;
+
     private Date createdAt;
     private Date updatedAt;
 
