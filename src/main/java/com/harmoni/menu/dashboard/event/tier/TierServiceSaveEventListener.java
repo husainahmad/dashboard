@@ -36,8 +36,8 @@ public class TierServiceSaveEventListener implements ComponentEventListener<Clic
         tierDto.setBrandId(this.tierForm.getBrandBox().getValue().getId());
 
         TierServiceDto tierServiceDto = new TierServiceDto();
-        tierServiceDto.s
-        restClientOrganizationService.createTierService(tierDto)
+        tierServiceDto.setTierDto(tierDto);
+        restClientOrganizationService.createTierService(tierServiceDto)
                 .doOnError(error -> new BrandHandler(this.tierForm.getUi(),
                         "Error while inserting Brand ".concat(error.getMessage())))
                 .subscribe(this::accept);
