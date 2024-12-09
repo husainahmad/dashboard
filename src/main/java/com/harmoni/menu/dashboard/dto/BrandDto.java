@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.dto;
 
 import jakarta.validation.constraints.NotEmpty;
+import lombok.Builder;
 import lombok.Data;
 
 import java.util.Date;

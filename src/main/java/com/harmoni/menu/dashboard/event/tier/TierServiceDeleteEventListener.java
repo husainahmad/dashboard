@@ -4,8 +4,8 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.exception.BrandHandler;
-import com.harmoni.menu.dashboard.layout.organization.tier.TierPriceForm;
-import com.harmoni.menu.dashboard.layout.organization.tier.TierServiceForm;
+import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceForm;
+import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceListView;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.vaadin.flow.component.ClickEvent;
@@ -15,27 +15,22 @@ import com.vaadin.flow.component.button.Button;
 public class TierServiceDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
-    private final TierServiceForm tierForm;
+    private final Integer id;
 
     private final RestClientOrganizationService restClientOrganizationService;
-
-    public TierServiceDeleteEventListener(TierServiceForm tierForm, RestClientOrganizationService restClientOrganizationService) {
-        this.tierForm = tierForm;
+    private final TierServiceListView layout;
+    public TierServiceDeleteEventListener(TierServiceListView layout, Integer id, RestClientOrganizationService restClientOrganizationService) {
+        this.layout = layout;
+        this.id = id;
         this.restClientOrganizationService = restClientOrganizationService;
     }
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
-        if (this.tierForm.getBinder().validate().hasErrors()) {
-            return;
-        }
         TierDto tierDto = new TierDto();
-        tierDto.setId(this.tierForm.getTierDto().getId());
-        tierDto.setType(this.tierForm.getTierDto().getType());
-        tierDto.setName(this.tierForm.getTierNameField().getValue());
-        tierDto.setBrandId(this.tierForm.getBrandBox().getValue().getId());
+        tierDto.setId(this.id);
         restClientOrganizationService.deleteTier(tierDto)
-                .doOnError(error -> new BrandHandler(this.tierForm.getUi(),
+                .doOnError(error -> new BrandHandler(this.layout.getUi(),
                         "Error while deleting Tier ".concat(error.getMessage())))
                 .subscribe(this::accept);
     }
