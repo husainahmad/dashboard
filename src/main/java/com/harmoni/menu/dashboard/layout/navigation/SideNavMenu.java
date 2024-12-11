@@ -7,7 +7,7 @@ import com.harmoni.menu.dashboard.layout.organization.brand.BrandListView;
 import com.harmoni.menu.dashboard.layout.menu.category.CategoryListView;
 import com.harmoni.menu.dashboard.layout.organization.chain.ChainListView;
 import com.harmoni.menu.dashboard.layout.organization.store.StoreListView;
-import com.harmoni.menu.dashboard.layout.organization.tier.TierPriceListView;
+import com.harmoni.menu.dashboard.layout.organization.tier.price.TierPriceListView;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;

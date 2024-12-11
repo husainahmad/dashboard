@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @Builder
 public class TierServiceTreeItem {
+    private Integer rootIndex;
     private String id;
     private String name;
     private String serviceName;

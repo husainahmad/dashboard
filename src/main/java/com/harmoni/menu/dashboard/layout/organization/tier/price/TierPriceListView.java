@@ -1,4 +1,4 @@
-package com.harmoni.menu.dashboard.layout.organization.tier;
+package com.harmoni.menu.dashboard.layout.organization.tier.price;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
@@ -6,9 +6,7 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -101,7 +99,7 @@ public class TierPriceListView extends VerticalLayout {
         if (tierDto == null) {
             closeEditor();
         } else {
-            tierForm.setTierDto(tierDto);
+            tierForm.setChangeTierDto(tierDto);
             tierForm.restructureButton(formAction);
             tierForm.setVisible(true);
             addClassName("editing");
@@ -109,8 +107,7 @@ public class TierPriceListView extends VerticalLayout {
     }
 
     private void configureForm() {
-        tierForm = new TierPriceForm(this.asyncRestClientOrganizationService,
-                                this.restClientOrganizationService);
+        tierForm = new TierPriceForm(this.restClientOrganizationService, this.asyncRestClientOrganizationService);
         tierForm.setWidth("25em");
     }
 
