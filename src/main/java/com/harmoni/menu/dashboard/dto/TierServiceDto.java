@@ -1,21 +1,25 @@
 package com.harmoni.menu.dashboard.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.Valid;
 import lombok.Data;
 
-import java.util.List;
 
 @Data
 public class TierServiceDto {
 
     private Integer id;
 
-    @NotEmpty
     @JsonProperty("tier")
-    private TierDto tierDto;
+    private @Valid TierDto tierDto;
 
-    @JsonProperty("subServices")
-    private List<SubServiceDto> subServiceDtos;
+    @JsonProperty("subService")
+    private SubServiceDto subServiceDto;
+
+    @JsonProperty("subServiceId")
+    private Integer subServiceId;
+
+    @JsonProperty("active")
+    private boolean active;
 
 }

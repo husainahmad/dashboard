@@ -56,52 +56,62 @@ public class AsyncRestClientOrganizationService implements Serializable {
 
     public void getAllChainByBrandIdAsync(AsyncRestCallback<List<ChainDto>> callback, Integer brandId) {
         String uri = String.format("%s/brand/%d", menuProperties.getUrl().getChain(), brandId);
-        makeAsyncRequest(uri, new TypeReference<List<ChainDto>>() {}, callback);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
     }
 
     public void getDetailChainAsync(AsyncRestCallback<ChainDto> callback, Long id) {
         String uri = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getChain(), id);
-        makeAsyncRequest(uri, new TypeReference<ChainDto>() {}, callback);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
     }
 
     public void getAllBrandAsync(AsyncRestCallback<List<BrandDto>> callback) {
         String uri = menuProperties.getUrl().getBrand();
-        makeAsyncRequest(uri, new TypeReference<List<BrandDto>>() {}, callback);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
     }
 
     public void getDetailBrandAsync(AsyncRestCallback<BrandDto> callback, Long id) {
         String uri = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getBrand(), id);
-        makeAsyncRequest(uri, new TypeReference<BrandDto>() {}, callback);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
     }
 
     public void getDetailTierAsync(AsyncRestCallback<TierDto> callback, Long id) {
         String uri = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getTier(), id);
-        makeAsyncRequest(uri, new TypeReference<TierDto>() {}, callback);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
     }
 
     public void getAllTierAsync(AsyncRestCallback<List<TierDto>> callback) {
         String uri = menuProperties.getUrl().getTier();
-        makeAsyncRequest(uri, new TypeReference<List<TierDto>>() {}, callback);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
     }
 
     public void getAllTierByBrandAsync(AsyncRestCallback<List<TierDto>> callback, Integer id, TierTypeDto tierTypeDto) {
         String uri = String.format("%s/brand/%d/type/%s", menuProperties.getUrl().getTier(), id, tierTypeDto);
-        makeAsyncRequest(uri, new TypeReference<List<TierDto>>() {}, callback);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
     }
 
     public void getAllStoreAsync(AsyncRestCallback<List<StoreDto>> callback) {
         String uri = menuProperties.getUrl().getStore();
-        makeAsyncRequest(uri, new TypeReference<List<StoreDto>>() {}, callback);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
     }
 
     public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback) {
         String uri = menuProperties.getUrl().getCategory();
-        makeAsyncRequest(uri, new TypeReference<List<CategoryDto>>() {}, callback);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
     }
 
     public void getAllServicesAsync(AsyncRestCallback<List<ServiceDto>> callback) {
         String uri = menuProperties.getUrl().getService();
-        makeAsyncRequest(uri, new TypeReference<List<ServiceDto>>() {}, callback);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
     }
 
 }

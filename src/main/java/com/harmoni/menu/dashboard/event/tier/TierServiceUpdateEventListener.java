@@ -4,7 +4,7 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.exception.BrandHandler;
-import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceForm;
+import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.vaadin.flow.component.ClickEvent;
@@ -14,11 +14,11 @@ import com.vaadin.flow.component.button.Button;
 public class TierServiceUpdateEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
-    private final TierServiceForm tierForm;
-
+    private final TierForm tierForm;
     private final RestClientOrganizationService restClientOrganizationService;
 
-    public TierServiceUpdateEventListener(TierServiceForm tierForm, RestClientOrganizationService restClientOrganizationService) {
+    public TierServiceUpdateEventListener(TierForm tierForm,
+                                          RestClientOrganizationService restClientOrganizationService) {
         this.tierForm = tierForm;
         this.restClientOrganizationService = restClientOrganizationService;
     }

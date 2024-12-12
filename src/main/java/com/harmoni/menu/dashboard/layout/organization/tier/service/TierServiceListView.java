@@ -3,11 +3,9 @@ package com.harmoni.menu.dashboard.layout.organization.tier.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
-import com.harmoni.menu.dashboard.dto.BrandDto;
-import com.harmoni.menu.dashboard.dto.ServiceDto;
-import com.harmoni.menu.dashboard.dto.TierDto;
-import com.harmoni.menu.dashboard.dto.TierTypeDto;
+import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.event.tier.TierServiceDeleteEventListener;
+import com.harmoni.menu.dashboard.event.tier.TierSubServiceUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
@@ -56,6 +54,7 @@ public class TierServiceListView extends VerticalLayout {
     private Button[] buttonUpdates;
     private Button[] buttonEdits;
     private Button[] buttonDeletes;
+    private Map<String, Checkbox> checkBoxes = new HashMap<>();
 
     public TierServiceListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                                @Autowired RestClientOrganizationService restClientOrganizationService) {
@@ -116,6 +115,10 @@ public class TierServiceListView extends VerticalLayout {
         tierServiceTreeGrid.addComponentColumn(this::applyCheckbox).setHeader("Selected");
         tierServiceTreeGrid.addComponentColumn(this::applyButton).setHeader("Action");
         tierServiceTreeGrid.getColumns().forEach(productDtoColumn -> productDtoColumn.setAutoWidth(true));
+        tierServiceTreeGrid.addExpandListener(expandEvent -> {
+            log.debug("expanded {} ", expandEvent);
+            log.debug("expanded checkbox {} ", checkBoxes);
+        });
     }
 
     private void editTier(TierDto tierDto, FormAction action) {
@@ -172,7 +175,7 @@ public class TierServiceListView extends VerticalLayout {
     }
 
     private void extractedServiceName(TreeData<TierServiceTreeItem> tierServiceTreeItemTreeData,
-                                      TierServiceTreeItem tierServiceTreeItem) {
+                                      TierServiceTreeItem tierServiceTreeItem, TierDto tierDto) {
 
         for (ServiceDto serviceDto : serviceDtos) {
             TierServiceTreeItem tServiceTreeItem = TierServiceTreeItem.builder()
@@ -184,17 +187,32 @@ public class TierServiceListView extends VerticalLayout {
 
             tierServiceTreeItemTreeData.addItem(tierServiceTreeItem, tServiceTreeItem);
 
-            serviceDto.getSubServices().stream().map(subServiceDto -> TierServiceTreeItem.builder()
-                    .id(tierServiceTreeItem.getId().concat("-").concat(String.valueOf(serviceDto.getId()))
-                            .concat("-").concat(String.valueOf(subServiceDto.getId())))
-                    .name(subServiceDto.getName())
-                    .tierServiceTreeItemParent(tServiceTreeItem)
-                    .treeLevel(TreeLevel.CHILD)
-                    .build()).forEach(tSubServiceTreeItem -> tierServiceTreeItemTreeData.addItem(tServiceTreeItem,
-                    tSubServiceTreeItem));
+            serviceDto.getSubServices().forEach(subServiceDto -> {
 
+                TierServiceDto tierServiceDto = getSubServiceFound(tierDto, subServiceDto);
+
+                TierServiceTreeItem tSubServiceTreeItem = TierServiceTreeItem.builder()
+                        .id(tierServiceTreeItem.getId().concat("-").concat(String.valueOf(serviceDto.getId()))
+                                .concat("-").concat(String.valueOf(subServiceDto.getId())))
+                        .subServiceId(subServiceDto.getId())
+                        .name(subServiceDto.getName())
+                        .tierServiceTreeItemParent(tServiceTreeItem)
+                        .active(tierServiceDto != null && tierServiceDto.isActive())
+                        .treeLevel(TreeLevel.CHILD)
+                        .build();
+                tierServiceTreeItemTreeData.addItem(tServiceTreeItem,
+                        tSubServiceTreeItem);
+            });
         }
+    }
 
+    private static TierServiceDto getSubServiceFound(TierDto tierDto, SubServiceDto subServiceDto) {
+        for (TierServiceDto tierServiceDto : tierDto.getTierServices()) {
+            if (subServiceDto.getId().equals(tierServiceDto.getSubServiceId())) {
+                return tierServiceDto;
+            }
+        }
+        return null;
     }
 
     private void fetchService() {
@@ -221,6 +239,8 @@ public class TierServiceListView extends VerticalLayout {
             tierServiceTreeItem.setActive(event.getValue());
         });
 
+        checkBoxes.put(tierServiceTreeItem.getId(), checkbox);
+
         return checkbox;
     }
 
@@ -244,7 +264,7 @@ public class TierServiceListView extends VerticalLayout {
     }
 
     private Button applyButtonEdit(TierServiceTreeItem tierServiceTreeItem) {
-        buttonEdits[tierServiceTreeItem.getRootIndex()] = new Button("Edit");
+        buttonEdits[tierServiceTreeItem.getRootIndex()] = new Button("Edit Name");
 
         buttonEdits[tierServiceTreeItem.getRootIndex()]
                 .addClickListener(buttonClickEvent -> editTier(getTierDto(tierServiceTreeItem), FormAction.EDIT));
@@ -255,8 +275,10 @@ public class TierServiceListView extends VerticalLayout {
         buttonUpdates[tierServiceTreeItem.getRootIndex()] = new Button("Update");
         buttonUpdates[tierServiceTreeItem.getRootIndex()].setEnabled(false);
 
-        buttonUpdates[tierServiceTreeItem.getRootIndex()]
-                .addClickListener(buttonClickEvent -> editTier(getTierDto(tierServiceTreeItem), FormAction.EDIT));
+        buttonUpdates[tierServiceTreeItem.getRootIndex()].addClickListener(new TierSubServiceUpdateEventListener(tierForm,
+                restClientOrganizationService, getTierDto(tierServiceTreeItem),
+                tierServiceTreeGrid, tierServiceTreeItem));
+
         return buttonUpdates[tierServiceTreeItem.getRootIndex()];
     }
 
@@ -275,16 +297,19 @@ public class TierServiceListView extends VerticalLayout {
         buttonDeletes = new Button[result.size()];
 
         AtomicInteger rootIndex = new AtomicInteger();
-        result.stream().map(tierServiceDto -> TierServiceTreeItem.builder()
-                .rootIndex(rootIndex.getAndIncrement())
-                .id(tierServiceDto.getId().toString())
-                .name(tierServiceDto.getName())
-                .subServiceName("")
-                .serviceName("")
-                .treeLevel(TreeLevel.ROOT)
-                .build()).forEach(tierServiceTreeItem -> {
+
+        result.forEach(tierServiceDto -> {
+            TierServiceTreeItem tierServiceTreeItem = TierServiceTreeItem.builder()
+                    .rootIndex(rootIndex.getAndIncrement())
+                    .id(tierServiceDto.getId().toString())
+                    .name(tierServiceDto.getName())
+                    .subServiceName("")
+                    .serviceId(tierServiceDto.getId())
+                    .serviceName("")
+                    .treeLevel(TreeLevel.ROOT)
+                    .build();
             tierServiceTreeItemTreeData.addItem(null, tierServiceTreeItem);
-            extractedServiceName(tierServiceTreeItemTreeData, tierServiceTreeItem);
+            extractedServiceName(tierServiceTreeItemTreeData, tierServiceTreeItem, tierServiceDto);
         });
 
         ui.access(() -> tierServiceTreeGrid.setTreeData(tierServiceTreeItemTreeData));

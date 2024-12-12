@@ -15,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.Serializable;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -55,6 +56,12 @@ public class RestClientOrganizationService implements Serializable {
     public Mono<RestAPIResponse> updateTier(TierDto tierDto) {
         return update(URL_FORMAT.formatted(menuProperties.getUrl().getTier(), tierDto.getId()),
                 Mono.just(tierDto), TierDto.class);
+    }
+
+
+    public Mono<RestAPIResponse> updateTierService(TierDto tierDto, List<TierServiceDto> tierServiceDtos) {
+        return update(String.format(menuProperties.getUrl().getTiers().getService(), tierDto.getId()),
+                Mono.just(tierServiceDtos), List.class);
     }
 
     public Mono<RestAPIResponse> deleteTier(TierDto tierDto) {
