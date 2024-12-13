@@ -1,7 +1,6 @@
 package com.harmoni.menu.dashboard.layout;
 
 import com.harmoni.menu.dashboard.layout.navigation.SideNavMenu;
-import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.dependency.CssImport;

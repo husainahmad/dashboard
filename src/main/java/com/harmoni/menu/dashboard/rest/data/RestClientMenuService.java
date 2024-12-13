@@ -33,8 +33,8 @@ public class RestClientMenuService implements Serializable {
         return get("%s/%d".formatted(urlMenuProperties.getUrl().getCategories().getBrand(), brandId));
     }
 
-    public Mono<RestAPIResponse> getAllTierByBrand(Integer brandId) {
-        return get("%s/brand/%d".formatted(urlMenuProperties.getUrl().getTier(), brandId));
+    public Mono<RestAPIResponse> getAllTierByBrand(Integer brandId, String type) {
+        return get("%s/brand/%d/type/%s".formatted(urlMenuProperties.getUrl().getTier(), brandId, type));
     }
 
     public Mono<RestAPIResponse> getAllBrand() {
