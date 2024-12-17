@@ -13,8 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.Serializable;
+import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -58,42 +60,43 @@ public class AsyncRestClientMenuService implements Serializable {
 
     public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback, Integer brandId) {
         String url = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getCategories().getBrand(), brandId);
-        makeAsyncRequest(url, new TypeReference<List<CategoryDto>>() {}, callback);
+        makeAsyncRequest(url, new TypeReference<>() {
+        }, callback);
     }
 
     public void getAllProductAsync(AsyncRestCallback<List<ProductDto>> callback, Integer categoryId) {
         String url = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getProducts().getCategory(), categoryId);
-        makeAsyncRequest(url, new TypeReference<List<ProductDto>>() {}, callback);
+        makeAsyncRequest(url, new TypeReference<>() {
+        }, callback);
     }
 
     public void getAllProductCategoryBrandAsync(AsyncRestCallback<List<ProductDto>> callback,
                                                 Integer categoryId, Integer brandId) {
         String url = MenuProperties.CATEGORY_BRAND.formatted(menuProperties.getUrl().getProducts().getCategory(),
                 categoryId, brandId);
-        makeAsyncRequest(url, new TypeReference<List<ProductDto>>() {}, callback);
+        makeAsyncRequest(url, new TypeReference<>() {
+        }, callback);
     }
 
     public void getAllSkuAsync(AsyncRestCallback<List<SkuDto>> callback) {
         String url = menuProperties.getUrl().getSku();
-        makeAsyncRequest(url, new TypeReference<List<SkuDto>>() {}, callback);
+        makeAsyncRequest(url, new TypeReference<>() {
+        }, callback);
     }
 
     public void getDetailCategoryAsync(AsyncRestCallback<CategoryDto> callback, Long id) {
         String url = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getCategory(), id);
-        makeAsyncRequest(url, new TypeReference<CategoryDto>() {}, callback);
+        makeAsyncRequest(url, new TypeReference<>() {
+        }, callback);
     }
 
     public void getDetailSkuTierPriceAsync(AsyncRestCallback<List<SkuTierPriceDto>> callback,
                                            List<Integer> skuIds, Integer tierId) {
-        String url = WebClient
-                .create(menuProperties.getUrl().getSkutierprice())
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                        .queryParam("skuIds", skuIds.stream().map(String::valueOf).collect(Collectors.joining(",")))
-                        .queryParam("tierId", tierId)
-                        .build())
-                .toString();
+        URI uri = UriComponentsBuilder.fromUriString(menuProperties.getUrl().getSkutierprice())
+                .queryParam("skuIds", skuIds.stream().map(String::valueOf).collect(Collectors.joining(",")))
+                .queryParam("tierId", tierId).build().toUri();
 
-        makeAsyncRequest(url, new TypeReference<List<SkuTierPriceDto>>() {}, callback);
+        makeAsyncRequest(uri.toString(), new TypeReference<>() {
+        }, callback);
     }
 }

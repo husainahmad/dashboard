@@ -13,8 +13,11 @@ public class SkuDto {
     private Integer productId;
     @JsonProperty("product")
     private ProductDto productDto;
+    @JsonProperty("tierPrice")
+    private SkuTierPriceDto skuTierPriceDto;
+
     private Date createdAt;
     private Date updatedAt;
-    private Boolean isActive;
+    private Boolean active;
 
 }

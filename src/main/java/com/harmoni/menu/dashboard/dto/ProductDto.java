@@ -11,6 +11,8 @@ public class ProductDto {
 
     private Integer id;
     private String name;
+    @JsonProperty("description")
+    private String description;
     private Integer categoryId;
     @JsonProperty("category")
     private CategoryDto categoryDto;

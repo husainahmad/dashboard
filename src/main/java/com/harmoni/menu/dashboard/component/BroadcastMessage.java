@@ -34,6 +34,11 @@ public class BroadcastMessage {
     public static final String PROCESS_FAILED = "PROCESS_FAILED";
     public static final String BAD_REQUEST_FAILED = "BAD_REQUEST_FAILED";
 
+
+    public static final String ADD_PRODUCT = "ADD_PRODUCT";
+    public static final String UPDATE_PRODUCT = "UPDATE_PRODUCT";
+    public static final String CANCEL_PRODUCT = "CANCEL_PRODUCT";
+
     private String type;
     private Object data;
 }
