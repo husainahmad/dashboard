@@ -111,8 +111,8 @@ public class SkuComponentRender extends HorizontalLayout {
 
     private Button getButtonDelete(BeanValidationBinder<ProductBinderBean> binder) {
         return new Button(new Icon(VaadinIcon.MINUS),
-                new ProductDeleteEventListener(binder, this.productDialogEdit,
-                        this.restClientMenuService));
+                new ProductDeleteEventListener(
+                        this.restClientMenuService, null));
     }
 
     private void setPriceFromServer(SkuTierPriceDto skuTierPriceDto, List<Binder<ProductBinderBean>> currentBinder, UI currentUi) {

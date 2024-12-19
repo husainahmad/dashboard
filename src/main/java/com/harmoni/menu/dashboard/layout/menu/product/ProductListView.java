@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
+import com.harmoni.menu.dashboard.event.product.ProductDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -14,6 +15,7 @@ import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -33,6 +35,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +43,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
+import java.util.concurrent.atomic.AtomicInteger;
 @AllArgsConstructor
 @UIScope
 @PreserveOnRefresh
@@ -64,14 +66,19 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     private final ComboBox<CategoryDto> categoryDtoComboBox = new ComboBox<>();
     private transient List<CategoryDto> categoryDtos = new ArrayList<>();
     private UI ui;
-    private final Integer TEMP_BRAND_ID = 1;
-    private List<BrandDto> brandDtos = new ArrayList<>();
-    private List<TierDto> tierDtos = new ArrayList<>();
+    private static final Integer TEMP_BRAND_ID = 1;
+    private transient List<BrandDto> brandDtos = new ArrayList<>();
+    private transient List<TierDto> tierDtos = new ArrayList<>();
+    @Getter
+    private Tab defaultTab;
+
     public ProductListView(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
-                           @Autowired RestClientMenuService restClientMenuService) {
+                           @Autowired RestClientMenuService restClientMenuService, Tab defaultTab) {
 
         this.asyncRestClientMenuService = asyncRestClientMenuService;
         this.restClientMenuService = restClientMenuService;
+        this.defaultTab = defaultTab;
+
         addClassName("list-view");
 
         brandDtos.add(getTempBrandDto());
@@ -84,15 +91,16 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         fetchBrands();
     }
 
-    private static ProductEditButton applyEditButton(ProductTreeItem productTreeItem) {
-        AtomicReference<ProductTreeItem> atomicProductItem = new AtomicReference<>(productTreeItem);
-        ProductEditButton button = new ProductEditButton(atomicProductItem.get());
-
-        if (!ObjectUtils.isEmpty(productTreeItem)
-                && productTreeItem.getProductItemType() == ProductItemType.SKU) {
-            button.setVisible(false);
+    private HorizontalLayout applyButton(ProductTreeItem productTreeItem) {
+        if (productTreeItem.getProductItemType().equals(ProductItemType.PRODUCT)) {
+            HorizontalLayout horizontalLayout = new HorizontalLayout();
+            Button ditButton = new Button("Edit");
+            Button deleteButton = new Button("Delete");
+            deleteButton.addClickListener(new ProductDeleteEventListener(restClientMenuService, productTreeItem));
+            horizontalLayout.add(ditButton, deleteButton);
+            return horizontalLayout;
         }
-        return button;
+        return null;
     }
 
     private void configureGrid() {
@@ -102,7 +110,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         productDtoGrid.addColumn(ProductTreeItem::getCategoryName).setHeader("Category");
         productDtoGrid.addColumn(ProductTreeItem::getPrice).setHeader("Price");
         productDtoGrid.addColumn(ProductTreeItem::getTierName).setHeader("Tier");
-        productDtoGrid.addComponentColumn(ProductListView::applyEditButton);
+        productDtoGrid.addComponentColumn(this::applyButton);
 
         productDtoGrid.addCollapseListener(event -> event.getItems().forEach(productTreeItem ->
                 log.debug("item collapse {}", productTreeItem)));
@@ -166,7 +174,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
             }
         });
         Button addProduct = new Button("Add Product");
-        addProduct.addClickListener(buttonClickEvent -> addProduct());
+        addProduct.addClickListener(this::onAddProductListener);
 
         HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, categoryDtoComboBox,
                 tierDtoComboBox, filterText, addProduct);
@@ -208,9 +216,11 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
-        Tab tabNewProduct = new Tab(new ProductForm(this.brandDtoComboBox.getValue(),
-                this.categoryDtos, this.tierDtos));
-        tabSheet.add("New Product", tabNewProduct);
+        Tab tabNewProduct = new Tab();
+        tabNewProduct.setLabel("New Product");
+        tabSheet.add(tabNewProduct, new ProductForm(this.restClientMenuService,
+                this.brandDtoComboBox.getValue(),
+                this.categoryDtos, this.tierDtos, tabNewProduct));
         tabSheet.setSizeFull();
         tabSheet.setSelectedTab(tabNewProduct);
     }
@@ -371,5 +381,9 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
             fetchPriceBySku(skuIds, productTreeItems, tierDtoComboBox.getValue().getId());
         });
+    }
+
+    private void onAddProductListener(ClickEvent<Button> buttonClickEvent) {
+        addProduct();
     }
 }

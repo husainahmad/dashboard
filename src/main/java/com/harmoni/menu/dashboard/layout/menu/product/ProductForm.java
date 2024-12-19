@@ -1,14 +1,12 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.harmoni.menu.dashboard.component.BroadcastMessage;
-import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.*;
+import com.harmoni.menu.dashboard.event.product.ProductSaveEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.menu.ProductFormLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
-import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -30,7 +28,6 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,6 +42,7 @@ public class ProductForm extends ProductFormLayout {
     TextField productNameField = new TextField();
     @Getter
     TextArea productDescTextArea = new TextArea();
+    @Getter
     private final TreeGrid<SkuTreeItem> skuDtoGrid = new TreeGrid<>(SkuTreeItem.class);
     private final TreeData<SkuTreeItem> skuTreeItemTreeData = new TreeData<>();
     private final TreeDataProvider<SkuTreeItem> skuDataProvider;
@@ -55,17 +53,25 @@ public class ProductForm extends ProductFormLayout {
     private final Button  closeButton = new Button("Cancel");
 
     private transient List<TierDto> tierDtos;
-    private transient final BrandDto brandDto;
+    private final transient BrandDto brandDto;
+    @Getter
     private Map<String, String> skuNames = new HashMap<>();
+    @Getter
     private Map<String, String> skuDescs = new HashMap<>();
+    @Getter
     private Map<String, Double> skuTierPrices = new HashMap<>();
+    private RestClientMenuService restClientMenuService;
+    private final Tab productTab;
 
-    public ProductForm(BrandDto brandDto,
+    public ProductForm(RestClientMenuService restClientMenuService,
+                       BrandDto brandDto,
                        List<CategoryDto> categoryDtos,
-                       List<TierDto> tierDtos) {
+                       List<TierDto> tierDtos, Tab productTab) {
 
+        this.restClientMenuService = restClientMenuService;
         this.brandDto = brandDto;
         this.tierDtos = tierDtos;
+        this.productTab = productTab;
 
         categoryBox.setLabel("Category");
         categoryBox.setItems(categoryDtos);
@@ -98,18 +104,12 @@ public class ProductForm extends ProductFormLayout {
 
         Button addButton = new Button("Add SKU");
         add(getToolbar(addButton), getContent(skuDtoGrid), getButtonBar());
-        addButton.addClickListener(buttonClickEvent -> populateSkuTreeItemTreeData());
+        addButton.addClickListener(this::onButtonAddEvent);
 
         setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1, ResponsiveStep.LabelsPosition.ASIDE));
 
         binder.bindInstanceFields(this);
 
-    }
-
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        setBroadcasterRegistration(Broadcaster.register(this::acceptNotification));
     }
 
     private void configureGrid() {
@@ -130,6 +130,7 @@ public class ProductForm extends ProductFormLayout {
                 .id(String.valueOf(UUID.randomUUID()))
                 .name("")
                 .desc("")
+                .tierId(firstTierDto.getId())
                 .tierName(firstTierDto.getName())
                 .price(0.0)
                 .treeLevel(TreeLevel.ROOT)
@@ -144,6 +145,7 @@ public class ProductForm extends ProductFormLayout {
                         .id(UUID.randomUUID().toString()
                                 .concat(String.valueOf(i.getAndIncrement())))
                         .tierName(tierDto.getName())
+                        .tierId(tierDto.getId())
                         .price(0.0)
                         .treeLevel(TreeLevel.PARENT)
                         .build();
@@ -155,20 +157,13 @@ public class ProductForm extends ProductFormLayout {
     }
 
     public void removeFromSheet() {
-        if (!(this.getParent().orElseThrow() instanceof Tab tab)) {
-            return;
-        }
 
-        if ((!(tab.getParent().orElseThrow() instanceof TabSheet tabSheet))) {
-            return;
-        }
-
-        Component content = tabSheet.getSelectedTab();
-        if (content != null && content.getElement().getParent() != null) {
-            content.getElement().removeFromParent();
-        }
-
-        tabSheet.setSelectedIndex(0);
+        getUi().access(() -> {
+            if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+                return;
+            }
+            tabSheet.remove(productTab);
+        });
     }
 
     private void addValidation() {
@@ -193,43 +188,15 @@ public class ProductForm extends ProductFormLayout {
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         saveButton.addClickShortcut(Key.ENTER);
-        saveButton.addClickListener(buttonClickEvent -> {
-            if (binder.validate().isOk()) {
-                ProductDto productDto = populatePayload();
-            }
-
-        });
+        saveButton.addClickListener(new ProductSaveEventListener(this, restClientMenuService));
         closeButton.addClickShortcut(Key.ESCAPE);
 
-        closeButton.addClickListener(buttonClickEvent -> removeFromSheet());
+        closeButton.addClickListener(this::onButtonClose);
         HorizontalLayout toolbar = new HorizontalLayout( saveButton, closeButton);
         toolbar.addClassName("toolbar");
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
 
         return toolbar;
-    }
-
-    private ProductDto populatePayload() {
-        ProductDto productDto = new ProductDto();
-        productDto.setCategoryId(categoryBox.getValue().getId());
-        productDto.setName(productNameField.getValue());
-        productDto.setDescription(productDescTextArea.getValue());
-
-        List<SkuDto> skuDtos = new ArrayList<>();
-
-        skuDtoGrid.getTreeData().getRootItems().forEach(skuTreeItem -> {
-            SkuDto skuDto = new SkuDto();
-            skuDto.setName(skuTreeItem.getName());
-            skuDto.setActive(true);
-
-            SkuTierPriceDto skuTierPriceDto = new SkuTierPriceDto();
-            skuTierPriceDto.setTierId(skuTreeItem.getTierId());
-            skuDto.setSkuTierPriceDto(skuTierPriceDto);
-            skuTierPriceDto.setPrice(skuTreeItem.getPrice());
-            skuDtos.add(skuDto);
-        });
-
-        return productDto;
     }
 
     public void restructureButton(FormAction formAction) {
@@ -242,39 +209,22 @@ public class ProductForm extends ProductFormLayout {
         }
     }
 
-    private void acceptNotification(String message) {
-        try {
-            BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-            if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                showBroadcastMessage(broadcastMessage);
-            }
-        } catch (JsonProcessingException e) {
-            log.error("Broadcast Handler Error", e);
-        }
-    }
-
-    @Override
-    public void showBroadcastMessage(BroadcastMessage broadcastMessage) {
-        if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
-            removeFromSheet();
-        }
-        super.showBroadcastMessage(broadcastMessage);
-    }
-
     private Button applyButtonDelete(SkuTreeItem skuTreeItem) {
         if (skuTreeItem.getTreeLevel().equals(TreeLevel.ROOT)) {
             Button button = new Button("Delete");
-            button.addClickListener(buttonClickEvent -> {
-                if (skuDtoGrid.getTreeData().getRootItems().size() == 1) {
-                    showErrorDialog("Delete rejected!. Product should have one SKU!!");
-                    return;
-                }
-                skuDataProvider.getTreeData().removeItem(skuTreeItem);
-                skuDataProvider.refreshAll();
-            });
+            button.addClickListener(buttonClickEvent -> onDeleteSku(skuTreeItem));
             return button;
         }
         return null;
+    }
+
+    private void onDeleteSku(SkuTreeItem skuTreeItem) {
+        if (skuDtoGrid.getTreeData().getRootItems().size() == 1) {
+            showErrorDialog("Delete rejected!. Product should have one SKU!!");
+            return;
+        }
+        skuDataProvider.getTreeData().removeItem(skuTreeItem);
+        skuDataProvider.refreshAll();
     }
 
     private TextField applySkuNameTextField(SkuTreeItem skuTreeItem) {
@@ -307,5 +257,13 @@ public class ProductForm extends ProductFormLayout {
         numberField.addValueChangeListener(changeEvent ->
                 skuTierPrices.put(skuTreeItem.getId(), changeEvent.getValue()));
         return numberField;
+    }
+
+    private void onButtonClose(ClickEvent<Button> buttonClickEvent) {
+        removeFromSheet();
+    }
+
+    private void onButtonAddEvent(ClickEvent<Button> buttonClickEvent) {
+        populateSkuTreeItemTreeData();
     }
 }

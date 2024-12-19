@@ -24,13 +24,14 @@ public class RestClientMenuService implements Serializable {
 
     private final transient MenuProperties urlMenuProperties;
     private final transient WebClient webClient = WebClient.builder().build();
+    private static final String FORMAT_STRING = "%s/%d";
 
     public Mono<RestAPIResponse> createCategory(CategoryDto categoryDto) {
         return create(urlMenuProperties.getUrl().getCategory(), Mono.just(categoryDto), CategoryDto.class);
     }
 
     public Mono<RestAPIResponse> getAllCategoryByBrand(Integer brandId) {
-        return get("%s/%d".formatted(urlMenuProperties.getUrl().getCategories().getBrand(), brandId));
+        return get(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getCategories().getBrand(), brandId));
     }
 
     public Mono<RestAPIResponse> getAllTierByBrand(Integer brandId, String type) {
@@ -46,12 +47,21 @@ public class RestClientMenuService implements Serializable {
                 Mono.just(productFormDto),  ProductFormDto.class);
     }
 
+    public Mono<RestAPIResponse> saveProduct(ProductDto productDto) {
+        return create(urlMenuProperties.getUrl().getProduct(),
+                Mono.just(productDto),  ProductDto.class);
+    }
+
     public Mono<RestAPIResponse> deleteSku(SkuDto skuDto) {
-        return delete("%s/%d".formatted(urlMenuProperties.getUrl().getSku(), skuDto.getId()));
+        return delete(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getSku(), skuDto.getId()));
+    }
+
+    public Mono<RestAPIResponse> deleteProduct(ProductDto productDto) {
+        return delete(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getProduct(), productDto.getId()));
     }
 
     public Mono<RestAPIResponse> deleteCategory(CategoryDto categoryDto) {
-        return delete("%s/%d".formatted(urlMenuProperties.getUrl().getCategory(), categoryDto.getId()));
+        return delete(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getCategory(), categoryDto.getId()));
     }
 
     private Mono<RestAPIResponse> create(String url, Publisher<?> publisher, Class<?> className) {
@@ -59,7 +69,7 @@ public class RestClientMenuService implements Serializable {
                 webClient.post()
                         .uri(url)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .body(Mono.just(publisher), className)
+                        .body(publisher, className)
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
@@ -84,7 +94,7 @@ public class RestClientMenuService implements Serializable {
                 webClient.put()
                         .uri(url)
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .body(Mono.just(publisher), className)
+                        .body(publisher, className)
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
