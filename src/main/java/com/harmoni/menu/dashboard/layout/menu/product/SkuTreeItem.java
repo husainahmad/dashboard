@@ -8,8 +8,9 @@ import lombok.Data;
 @Builder
 public class SkuTreeItem {
     private String id;
-    private String name;
-    private String desc;
+    private Integer skuId;
+    private String skuName;
+    private String skuDesc;
     private Integer tierId;
     private String tierName;
     private Double price;

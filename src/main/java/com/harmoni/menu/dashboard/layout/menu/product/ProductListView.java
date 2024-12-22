@@ -9,7 +9,6 @@ import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.event.product.ProductDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
-import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
@@ -43,7 +42,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+
 @AllArgsConstructor
 @UIScope
 @PreserveOnRefresh
@@ -94,10 +93,11 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     private HorizontalLayout applyButton(ProductTreeItem productTreeItem) {
         if (productTreeItem.getProductItemType().equals(ProductItemType.PRODUCT)) {
             HorizontalLayout horizontalLayout = new HorizontalLayout();
-            Button ditButton = new Button("Edit");
+            Button editButton = new Button("Edit");
+            editButton.addClickListener(buttonClickEvent -> editProduct(productTreeItem));
             Button deleteButton = new Button("Delete");
             deleteButton.addClickListener(new ProductDeleteEventListener(restClientMenuService, productTreeItem));
-            horizontalLayout.add(ditButton, deleteButton);
+            horizontalLayout.add(editButton, deleteButton);
             return horizontalLayout;
         }
         return null;
@@ -220,7 +220,21 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         tabNewProduct.setLabel("New Product");
         tabSheet.add(tabNewProduct, new ProductForm(this.restClientMenuService,
                 this.brandDtoComboBox.getValue(),
-                this.categoryDtos, this.tierDtos, tabNewProduct));
+                this.categoryDtos, this.tierDtos, tabNewProduct, null));
+        tabSheet.setSizeFull();
+        tabSheet.setSelectedTab(tabNewProduct);
+    }
+
+    private void editProduct(ProductTreeItem productTreeItem) {
+        productDtoGrid.asSingleSelect().clear();
+        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+            return;
+        }
+        Tab tabNewProduct = new Tab();
+        tabNewProduct.setLabel("Edit ".concat(productTreeItem.getName()));
+        tabSheet.add(tabNewProduct, new ProductForm(this.restClientMenuService,
+                this.brandDtoComboBox.getValue(),
+                this.categoryDtos, this.tierDtos, tabNewProduct, productTreeItem));
         tabSheet.setSizeFull();
         tabSheet.setSelectedTab(tabNewProduct);
     }
@@ -352,8 +366,6 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
                     fetchBrands();
                 } else if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_UPDATE_SUCCESS)) {
                     fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId());
-                } else {
-                    UiUtil.showErrorDialog(ui, this, message);
                 }
             }
         } catch (JsonProcessingException e) {

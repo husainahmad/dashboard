@@ -42,6 +42,10 @@ public class RestClientMenuService implements Serializable {
         return get(urlMenuProperties.getUrl().getBrand());
     }
 
+    public Mono<RestAPIResponse> getProduct(Integer productId) {
+        return get(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getProduct(), productId));
+    }
+
     public Mono<RestAPIResponse> saveProductBulk(ProductFormDto productFormDto) {
         return put(urlMenuProperties.getUrl().getProducts().getBulk().formatted(productFormDto.getId()),
                 Mono.just(productFormDto),  ProductFormDto.class);
@@ -49,6 +53,11 @@ public class RestClientMenuService implements Serializable {
 
     public Mono<RestAPIResponse> saveProduct(ProductDto productDto) {
         return create(urlMenuProperties.getUrl().getProduct(),
+                Mono.just(productDto),  ProductDto.class);
+    }
+
+    public Mono<RestAPIResponse> updateProduct(ProductDto productDto) {
+        return put(urlMenuProperties.getUrl().getProduct(),
                 Mono.just(productDto),  ProductDto.class);
     }
 
