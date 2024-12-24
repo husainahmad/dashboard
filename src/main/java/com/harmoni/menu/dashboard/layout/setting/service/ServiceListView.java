@@ -38,6 +38,7 @@ import java.util.List;
 @Slf4j
 public class ServiceListView extends VerticalLayout {
 
+    private static final String EDITING = "editing";
     Registration broadcasterRegistration;
 
     private final TreeGrid<ServiceTreeItem> serviceTreeGrid = new TreeGrid<>(ServiceTreeItem.class);
@@ -72,9 +73,7 @@ public class ServiceListView extends VerticalLayout {
 
         serviceTreeGrid.addExpandListener(event -> {
             if (event.isFromClient()) {
-                event.getItems().forEach(serviceTreeItem -> {
-                    log.debug("item expand {}", serviceTreeItem);
-                });
+                event.getItems().forEach(serviceTreeItem -> log.debug("item expand {}", serviceTreeItem));
             }
         });
 
@@ -109,18 +108,16 @@ public class ServiceListView extends VerticalLayout {
         broadcasterRegistration = Broadcaster.register(message -> {
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
-                            broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS)) {
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
+                        && (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
+                            broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS))) {
                         fetchServices();
                         ui.access(()->{
                             serviceForm.setVisible(false);
-                            removeClassName("editing");
+                            removeClassName(EDITING);
                         });
-                    } else {
-                        UiUtil.showErrorDialog(ui, this, message);
                     }
-                }
+
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
@@ -166,20 +163,18 @@ public class ServiceListView extends VerticalLayout {
 
     private void addService() {
         serviceTreeGrid.asSingleSelect().clear();
-        editService(new ServiceDto(), FormAction.CREATE);
+        editService(new ServiceDto());
     }
 
-    public void editService(ServiceDto serviceDto, FormAction formAction) {
+    public void editService(ServiceDto serviceDto) {
         if (serviceDto == null) {
             closeEditor();
-        } else {
-
         }
     }
 
     private void closeEditor() {
         serviceForm.setVisible(false);
-        removeClassName("editing");
+        removeClassName(EDITING);
     }
 
 }

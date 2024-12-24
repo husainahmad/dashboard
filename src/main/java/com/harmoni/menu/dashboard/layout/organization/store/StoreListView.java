@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Slf4j
 public class StoreListView extends VerticalLayout {
 
+    private static final String EDITING = "editing";
     Registration broadcasterRegistration;
     private final Grid<StoreDto> storeDtoGrid = new Grid<>(StoreDto.class);
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
@@ -56,7 +57,7 @@ public class StoreListView extends VerticalLayout {
 
     private void closeEditor() {
         storeForm.setVisible(false);
-        removeClassName("editing");
+        removeClassName(EDITING);
     }
 
     @Override
@@ -66,29 +67,19 @@ public class StoreListView extends VerticalLayout {
 
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
-                    broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS)) {
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
+                        && (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
+                    broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS))) {
                         fetchStores();
                         ui.access(()->{
                             storeForm.setVisible(false);
-                            removeClassName("editing");
+                            removeClassName(EDITING);
                         });
-                    } else {
-                        UiUtil.showErrorDialog(ui, this, message);
                     }
-                }
+
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
-        });
-    }
-
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
         });
     }
 
@@ -118,7 +109,7 @@ public class StoreListView extends VerticalLayout {
             storeForm.setStoreDto(storeDto);
             storeForm.restructureButton(formAction);
             storeForm.setVisible(true);
-            addClassName("editing");
+            addClassName(EDITING);
         }
     }
 

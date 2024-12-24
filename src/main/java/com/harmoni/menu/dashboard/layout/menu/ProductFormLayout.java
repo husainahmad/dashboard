@@ -3,7 +3,6 @@ package com.harmoni.menu.dashboard.layout.menu;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;

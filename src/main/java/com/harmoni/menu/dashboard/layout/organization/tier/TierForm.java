@@ -9,7 +9,6 @@ import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
 import com.harmoni.menu.dashboard.event.tier.TierSaveEventListener;
 import com.harmoni.menu.dashboard.event.tier.TierUpdateEventListener;
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
@@ -79,19 +78,13 @@ public class TierForm extends FormLayout {
         broadcasterRegistration = Broadcaster.register(message -> {
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS) ||
-                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS)) {
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
+                        && (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS) ||
+                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS))) {
                         showNotification("Tier updated..");
                         hideForm();
                     }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
-                        showErrorDialog(message);
-                    }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
-                        showErrorDialog(message);
-                    }
-                }
+
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
@@ -104,14 +97,6 @@ public class TierForm extends FormLayout {
             Notification notification = new Notification(text, 3000,
                     Notification.Position.MIDDLE);
             notification.open();
-        });
-    }
-
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
         });
     }
 

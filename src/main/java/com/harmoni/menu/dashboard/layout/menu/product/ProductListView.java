@@ -13,12 +13,10 @@ import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -70,6 +68,14 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     private transient List<TierDto> tierDtos = new ArrayList<>();
     @Getter
     private Tab defaultTab;
+    private int totalPages;
+    private int currentPage = 1;
+    private int pageSize = 15;
+    private int totalRecords = 0;
+    private int totalDisplayRecords = 0;
+
+    private Text pageInfoText;
+
 
     public ProductListView(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
                            @Autowired RestClientMenuService restClientMenuService, Tab defaultTab) {
@@ -86,7 +92,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
         setSizeFull();
         configureGrid();
-        add(getToolbar(), getContent());
+        add(getToolbar(), getContent(), getPaginationFooter());
         fetchBrands();
     }
 
@@ -101,6 +107,35 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
             return horizontalLayout;
         }
         return null;
+    }
+
+    private HorizontalLayout getPaginationFooter() {
+        HorizontalLayout paginationFooter = new HorizontalLayout();
+        Button previousButton = new Button("Previous", e -> {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
+            }
+        });
+        Button nextButton = new Button("Next", e -> {
+            if (currentPage < totalPages) {
+                currentPage++;
+                fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
+            }
+        });
+        pageInfoText = new Text(getPaginationInfo());
+        paginationFooter.add(previousButton, pageInfoText, nextButton);
+        paginationFooter.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        paginationFooter.setWidthFull();
+        paginationFooter.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        return paginationFooter;
+    }
+
+    private String getPaginationInfo() {
+        return "Page "
+                .concat(String.valueOf(currentPage))
+                .concat(" of ")
+                .concat(String.valueOf(totalPages));
     }
 
     private void configureGrid() {
@@ -146,6 +181,12 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
+        filterText.addValueChangeListener(changeEvent -> {
+            if (changeEvent.getValue().isEmpty()) {
+                currentPage = 1;
+                fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
+            }
+        });
 
         brandDtoComboBox.setItems(brandDtos);
         brandDtoComboBox.setLabel("Brand");
@@ -170,14 +211,16 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         tierDtoComboBox.setItemLabelGenerator(TierDto::getName);
         tierDtoComboBox.addValueChangeListener(valueChangeEvent -> {
             if (valueChangeEvent.isFromClient()) {
-                fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId());
+                fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
             }
         });
+        Button searchProduct = new Button("Search");
+        searchProduct.addClickListener(this::onSearchProductListener);
         Button addProduct = new Button("Add Product");
         addProduct.addClickListener(this::onAddProductListener);
 
         HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, categoryDtoComboBox,
-                tierDtoComboBox, filterText, addProduct);
+                tierDtoComboBox, filterText, searchProduct, addProduct);
         toolbar.addClassName("toolbar");
         toolbar.setAlignItems(Alignment.BASELINE);
         return toolbar;
@@ -254,32 +297,47 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
                     ui.access(()-> {
                         tierDtoComboBox.setItems(tierDtos);
                         tierDtoComboBox.setValue(tierDtos.getFirst());
-                        fetchProducts(getCategoryId(), brandId);
+                        fetchProducts(getCategoryId(), brandId, filterText.getValue());
                     });
                 }
             });
     }
 
-    private void fetchProducts(Integer categoryId, Integer brandId) {
+    private void fetchProducts(Integer categoryId, Integer brandId, String searchProduct) {
         asyncRestClientMenuService.getAllProductCategoryBrandAsync(result -> {
-            TreeData<ProductTreeItem> productDtoTreeData = new TreeData<>();
-            result.forEach(productDto -> {
-                ProductTreeItem productTreeItem =  ProductTreeItem.builder()
-                        .id("%s|%d".formatted(ProductItemType.PRODUCT, productDto.getId()))
-                        .name(productDto.getName())
-                        .productId(productDto.getId())
-                        .categoryId(productDto.getCategoryId())
-                        .categoryName(productDto.getCategoryDto().getName())
-                        .productItemType(ProductItemType.PRODUCT)
-                        .skus(productDto.getSkuDtos())
-                        .build();
-                productDtoTreeData.addItems(null, productTreeItem);
-                productDtoTreeData.addItems(productTreeItem, getSkus(productDto));
-            });
+            if (ObjectUtils.isNotEmpty(result.get("data"))
+                && result.get("data") instanceof List<?> dataList && !dataList.isEmpty()) {
+                    TreeData<ProductTreeItem> productDtoTreeData = new TreeData<>();
 
-            ui.access(()-> productDtoGrid.setTreeData(productDtoTreeData));
+                    dataList.forEach(o -> {
+                        ProductDto productDto = ObjectUtil.convertValueToObject(o, ProductDto.class);
+                        extractedProductDtoToItem(productDto, productDtoTreeData);
+                    });
 
-        }, categoryId, brandId);
+                    totalPages = Integer.parseInt(result.get("page") == null ? "0" :result.get("page").toString());
+                    totalRecords = Integer.parseInt(result.get("total") == null ? "0" :result.get("total").toString());
+                    totalDisplayRecords = Integer.parseInt(result.get("size") == null ? "0" :result.get("size").toString());
+
+                    ui.access(()-> {
+                        productDtoGrid.setTreeData(productDtoTreeData);
+                        pageInfoText.setText(getPaginationInfo());
+                    });
+                }
+        }, categoryId, brandId, currentPage, pageSize, searchProduct);
+    }
+
+    private void extractedProductDtoToItem(ProductDto productDto, TreeData<ProductTreeItem> productDtoTreeData) {
+        ProductTreeItem productTreeItem =  ProductTreeItem.builder()
+                .id("%s|%d".formatted(ProductItemType.PRODUCT, productDto.getId()))
+                .name(productDto.getName())
+                .productId(productDto.getId())
+                .categoryId(productDto.getCategoryId())
+                .categoryName(productDto.getCategoryDto().getName())
+                .productItemType(ProductItemType.PRODUCT)
+                .skus(productDto.getSkuDtos())
+                .build();
+        productDtoTreeData.addItems(null, productTreeItem);
+        productDtoTreeData.addItems(productTreeItem, getSkus(productDto));
     }
 
     public List<ProductTreeItem> getSkus(ProductDto productDto) {
@@ -365,7 +423,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
                 if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
                     fetchBrands();
                 } else if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_UPDATE_SUCCESS)) {
-                    fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId());
+                    fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
                 }
             }
         } catch (JsonProcessingException e) {
@@ -398,4 +456,10 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     private void onAddProductListener(ClickEvent<Button> buttonClickEvent) {
         addProduct();
     }
+
+    private void onSearchProductListener(ClickEvent<Button> buttonClickEvent) {
+        currentPage = 1;
+        fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
+    }
+
 }

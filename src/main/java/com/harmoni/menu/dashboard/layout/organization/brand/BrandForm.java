@@ -63,18 +63,12 @@ public class BrandForm extends FormLayout  {
         broadcasterRegistration = Broadcaster.register(message -> {
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.BRAND_INSERT_SUCCESS)) {
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
+                        && broadcastMessage.getType().equals(BroadcastMessage.BRAND_INSERT_SUCCESS)) {
                         showNotification("Brand created..");
                         hideForm();
                     }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
-                        showErrorDialog(message);
-                    }
-                    if (broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
-                        showErrorDialog(message);
-                    }
-                }
+
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
@@ -87,14 +81,6 @@ public class BrandForm extends FormLayout  {
             Notification notification = new Notification(text, 3000,
                     Notification.Position.MIDDLE);
             notification.open();
-        });
-    }
-
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
         });
     }
 

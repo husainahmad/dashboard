@@ -97,14 +97,12 @@ public class BrandListView extends VerticalLayout {
         broadcasterRegistration = Broadcaster.register(message -> {
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.BRAND_INSERT_SUCCESS) ||
-                            broadcastMessage.getType().equals(BroadcastMessage.BRAND_SUCCESS_UPDATED)) {
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
+                        && (broadcastMessage.getType().equals(BroadcastMessage.BRAND_INSERT_SUCCESS) ||
+                            broadcastMessage.getType().equals(BroadcastMessage.BRAND_SUCCESS_UPDATED))) {
                         fetchBrands();
-                    } else {
-                        UiUtil.showErrorDialog(ui, this, message);
                     }
-                }
+
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
@@ -115,14 +113,6 @@ public class BrandListView extends VerticalLayout {
     protected void onDetach(DetachEvent detachEvent) {
         broadcasterRegistration.remove();
         broadcasterRegistration = null;
-    }
-
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
-        });
     }
 
     private void configureForm() {

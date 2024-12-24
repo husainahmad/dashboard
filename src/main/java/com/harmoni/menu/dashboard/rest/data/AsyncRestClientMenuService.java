@@ -18,6 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -70,10 +71,15 @@ public class AsyncRestClientMenuService implements Serializable {
         }, callback);
     }
 
-    public void getAllProductCategoryBrandAsync(AsyncRestCallback<List<ProductDto>> callback,
-                                                Integer categoryId, Integer brandId) {
+    public void getAllProductCategoryBrandAsync(AsyncRestCallback<Map<String, Object>> callback,
+                                                Integer categoryId, Integer brandId, int page, int size, String search) {
         String url = MenuProperties.CATEGORY_BRAND.formatted(menuProperties.getUrl().getProducts().getCategory(),
-                categoryId, brandId);
+                categoryId, brandId).concat("?page=")
+                .concat(String.valueOf(page))
+                .concat("&size=")
+                .concat(String.valueOf(size))
+                .concat("&search=")
+                .concat(search);
         makeAsyncRequest(url, new TypeReference<>() {
         }, callback);
     }

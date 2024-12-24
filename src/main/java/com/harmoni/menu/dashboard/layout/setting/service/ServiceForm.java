@@ -3,19 +3,13 @@ package com.harmoni.menu.dashboard.layout.setting.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
-import com.harmoni.menu.dashboard.dto.CategoryDto;
-import com.harmoni.menu.dashboard.dto.ProductDto;
 import com.harmoni.menu.dashboard.dto.ServiceDto;
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientSettingService;
-import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -72,14 +66,6 @@ public class ServiceForm extends FormLayout  {
             Notification notification = new Notification(text, 3000,
                     Notification.Position.MIDDLE);
             notification.open();
-        });
-    }
-
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
         });
     }
 
@@ -153,17 +139,9 @@ public class ServiceForm extends FormLayout  {
     }
 
     private void showBroadcastMessage(BroadcastMessage broadcastMessage) {
-        RestAPIResponse restAPIResponse = (RestAPIResponse) broadcastMessage.getData();
         if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
             showNotification("Category created..");
             hideForm();
         }
-        if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED)) {
-            showErrorDialog(restAPIResponse.getData().toString());
-        }
-        if (broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
-            showErrorDialog(restAPIResponse.getData().toString());
-        }
-
     }
 }

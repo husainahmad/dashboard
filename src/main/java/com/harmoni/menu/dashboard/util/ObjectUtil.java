@@ -21,6 +21,7 @@ public final class ObjectUtil {
     public static String objectToJsonString(Object object) throws JsonProcessingException {
         return objectMapper.writeValueAsString(object);
     }
+
     public static Object jsonStringToBroadcastMessageClass(String string) throws JsonProcessingException {
         return objectMapper.readValue(string, BroadcastMessage.class);
     }
@@ -28,6 +29,10 @@ public final class ObjectUtil {
     public static  <T> T convertObjectToObject(Object object, TypeReference<T> typeReference) {
        return objectMapper.convertValue(
                 Objects.requireNonNull(object), typeReference);
+    }
+
+    public static <T> T convertValueToObject(Object object, Class<T> tClass) {
+        return objectMapper.convertValue(object, tClass);
     }
 
     public static boolean isNotEmpty(Object object) {

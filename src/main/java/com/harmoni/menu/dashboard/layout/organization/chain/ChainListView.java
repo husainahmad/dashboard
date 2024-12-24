@@ -65,14 +65,12 @@ public class ChainListView extends VerticalLayout  {
 
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                    if (broadcastMessage.getType().equals(BroadcastMessage.CHAIN_INSERT_SUCCESS) ||
-                    broadcastMessage.getType().equals(BroadcastMessage.CHAIN_SUCCESS_UPDATED)) {
+                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
+                        && (broadcastMessage.getType().equals(BroadcastMessage.CHAIN_INSERT_SUCCESS) ||
+                    broadcastMessage.getType().equals(BroadcastMessage.CHAIN_SUCCESS_UPDATED))) {
                         fetchChains();
-                    } else {
-                        UiUtil.showErrorDialog(ui, this, message);
                     }
-                }
+
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
@@ -122,14 +120,6 @@ public class ChainListView extends VerticalLayout  {
     private void fetchChains() {
         asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result ->
                 ui.access(()-> chainDtoGrid.setItems(result)), BRANDID);
-    }
-
-    private void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
-            add(dialog);
-            dialog.open();
-        });
     }
 
     public void editChain(ChainDto chainDto, FormAction formAction) {
