@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.layout.navigation;
 
 import com.harmoni.menu.dashboard.layout.menu.product.ProductLayout;
+import com.harmoni.menu.dashboard.layout.organization.tier.menu.TierMenuListView;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceListView;
 import com.harmoni.menu.dashboard.layout.setting.service.ServiceListView;
 import com.harmoni.menu.dashboard.layout.organization.brand.BrandListView;
@@ -33,6 +34,7 @@ public class SideNavMenu extends Div {
         SideNavItem sideNavTier = new SideNavItem("Tier");
         sideNavTier.addItem(new SideNavItem("Price", TierPriceListView.class));
         sideNavTier.addItem(new SideNavItem("Service", TierServiceListView.class));
+        sideNavTier.addItem(new SideNavItem("Menu", TierMenuListView.class));
 
         sideNavAdmin.addItem(sideNavTier);
         sideNavAdmin.addItem(new SideNavItem("Store", StoreListView.class));

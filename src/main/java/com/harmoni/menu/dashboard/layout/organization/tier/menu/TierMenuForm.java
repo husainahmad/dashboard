@@ -1,4 +1,4 @@
-package com.harmoni.menu.dashboard.layout.organization.tier.service;
+package com.harmoni.menu.dashboard.layout.organization.tier.menu;
 
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
@@ -11,14 +11,14 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 @Getter
-@Route("tier-service-form")
+@Route("tier-menu-form")
 @Slf4j
-public class TierServiceForm extends TierForm {
+public class TierMenuForm extends TierForm {
 
     private List<String> subNames;
 
-    public TierServiceForm(RestClientOrganizationService restClientOrganizationService,
-                           AsyncRestClientOrganizationService asyncRestClientOrganizationService) {
+    public TierMenuForm(RestClientOrganizationService restClientOrganizationService,
+                        AsyncRestClientOrganizationService asyncRestClientOrganizationService) {
         super(restClientOrganizationService, asyncRestClientOrganizationService);
         brandBox.setItemLabelGenerator(BrandDto::getName);
         add(brandBox);

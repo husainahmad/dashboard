@@ -13,10 +13,7 @@ import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.Key;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -47,7 +44,7 @@ public class TierForm extends FormLayout {
     @Getter
     private BeanValidationBinder<TierDto> binder = new BeanValidationBinder<>(TierDto.class);
     @Getter
-    public TextField tierNameField = new TextField("Tier service name");
+    public TextField tierNameField = new TextField("Tier name");
     @Getter
     @Setter
     public ComboBox<BrandDto> brandBox = new ComboBox<>("Brand");
@@ -115,6 +112,23 @@ public class TierForm extends FormLayout {
         getBinder().readBean(this.getTierDto());
     }
 
+    public void addValidation() {
+
+        brandBox.addValueChangeListener(changeEvent -> getBinder().validate());
+        getBinder().forField(brandBox)
+                .withValidator(value -> value.getId() > 0, "Brand not allow to be empty"
+                ).bind(TierDto::getBrandDto, TierDto::setBrandDto);
+        tierNameField.addValueChangeListener(
+                (HasValue.ValueChangeListener<AbstractField
+                        .ComponentValueChangeEvent<TextField, String>>) changeEvent -> getBinder().validate());
+
+        getBinder().forField(tierNameField)
+                .withValidator(value -> value.length() > 2,
+                        "Name must contain at least three characters")
+                .bind(TierDto::getName, TierDto::setName);
+
+    }
+
     public void restructureButton(FormAction formAction) {
         if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
             saveButton.setVisible(true);
@@ -158,6 +172,24 @@ public class TierForm extends FormLayout {
 
         horizontalLayout.add(closeButton);
         return horizontalLayout;
+    }
+
+    public void fetchBrands() {
+        this.getAsyncRestClientOrganizationService().getAllBrandAsync(result ->
+                getUi().access(()-> brandBox.setItems(result)));
+    }
+
+    public void fetchDetailBrands(Long id) {
+        this.getAsyncRestClientOrganizationService().getDetailBrandAsync(result ->
+                getUi().access(()-> brandBox.setValue(result)), id);
+    }
+
+    public void changeTierDto(TierDto tierDto) {
+        this.setTierDtoAndBind(tierDto);
+
+        if (!ObjectUtils.isEmpty(tierDto) && !ObjectUtils.isEmpty(tierDto.getBrandId())) {
+            fetchDetailBrands(tierDto.getBrandId().longValue());
+        }
     }
 
 }

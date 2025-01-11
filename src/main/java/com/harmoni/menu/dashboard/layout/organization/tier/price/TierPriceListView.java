@@ -99,7 +99,9 @@ public class TierPriceListView extends VerticalLayout {
         if (tierDto == null) {
             closeEditor();
         } else {
-            tierForm.setChangeTierDto(tierDto);
+
+            tierDto.setBrandId(1);
+            tierForm.changeTierDto(tierDto);
             tierForm.restructureButton(formAction);
             tierForm.setVisible(true);
             addClassName("editing");

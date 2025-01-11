@@ -5,7 +5,6 @@ import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.exception.BrandHandler;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
-import com.harmoni.menu.dashboard.layout.organization.tier.price.TierPriceForm;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.vaadin.flow.component.ClickEvent;
@@ -30,6 +29,7 @@ public class TierUpdateEventListener implements ComponentEventListener<ClickEven
             return;
         }
         TierDto tierDto = new TierDto();
+        tierDto.setId(this.tierForm.getTierDto().getId());
         tierDto.setType(this.tierForm.getTierDto().getType());
         tierDto.setName(this.tierForm.getTierNameField().getValue());
         tierDto.setBrandId(this.tierForm.getBrandBox().getValue().getId());
