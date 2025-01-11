@@ -54,7 +54,7 @@ public class TierServiceListView extends VerticalLayout {
     private Button[] buttonUpdates;
     private Button[] buttonEdits;
     private Button[] buttonDeletes;
-    private Map<String, Checkbox> checkBoxes = new HashMap<>();
+    private final Map<String, Checkbox> checkBoxes = new HashMap<>();
 
     public TierServiceListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                                @Autowired RestClientOrganizationService restClientOrganizationService) {
@@ -70,7 +70,6 @@ public class TierServiceListView extends VerticalLayout {
         add(getToolbar(), getContent());
 
         fetchBrands();
-        fetchTier();
         fetchService();
 
         closeEditor();
@@ -91,7 +90,8 @@ public class TierServiceListView extends VerticalLayout {
                 if (ObjectUtil.isNotEmpty(broadcastMessage)
                         && ObjectUtil.isNotEmpty(broadcastMessage.getType())
                         && (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS) ||
-                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS))) {
+                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS) ||
+                        broadcastMessage.getType().equals(BroadcastMessage.TIER_DELETED_SUCCESS))) {
                         fetchTier();
                     }
 
@@ -156,7 +156,7 @@ public class TierServiceListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addTierServiceButton = new Button("Add Tier Service");
-        addTierServiceButton.addClickListener(e -> addTier());
+        addTierServiceButton.addClickListener(_ -> addTier());
 
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addTierServiceButton);
         toolbar.addClassName("toolbar");
@@ -216,7 +216,10 @@ public class TierServiceListView extends VerticalLayout {
     }
 
     private void fetchService() {
-        asyncRestClientOrganizationService.getAllServicesAsync(result -> serviceDtos = result);
+        asyncRestClientOrganizationService.getAllServicesAsync(result -> {
+            serviceDtos = result;
+            fetchTier();
+        });
     }
 
     private void fetchBrands() {
@@ -267,7 +270,7 @@ public class TierServiceListView extends VerticalLayout {
         buttonEdits[tierServiceTreeItem.getRootIndex()] = new Button("Edit Name");
 
         buttonEdits[tierServiceTreeItem.getRootIndex()]
-                .addClickListener(buttonClickEvent -> editTier(getTierDto(tierServiceTreeItem), FormAction.EDIT));
+                .addClickListener(_ -> editTier(getTierDto(tierServiceTreeItem), FormAction.EDIT));
         return buttonEdits[tierServiceTreeItem.getRootIndex()];
     }
 

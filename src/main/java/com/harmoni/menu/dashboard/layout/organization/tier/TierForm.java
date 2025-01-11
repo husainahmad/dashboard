@@ -6,7 +6,6 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ServiceDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
-import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
 import com.harmoni.menu.dashboard.event.tier.TierSaveEventListener;
 import com.harmoni.menu.dashboard.event.tier.TierUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
@@ -52,7 +51,6 @@ public class TierForm extends FormLayout {
     MultiSelectComboBox<ServiceDto> serviceBox = new MultiSelectComboBox<>("Service");
 
     protected final Button saveButton = new Button("Save");
-    protected final Button  deleteButton = new Button("Delete");
     protected final Button  closeButton = new Button("Cancel");
     protected final Button  updateButton = new Button("Update");
 
@@ -77,7 +75,8 @@ public class TierForm extends FormLayout {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
                         && (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS) ||
-                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS))) {
+                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS) ||
+                        broadcastMessage.getType().equals(BroadcastMessage.TIER_DELETED_SUCCESS))) {
                         showNotification("Tier updated..");
                         hideForm();
                     }
@@ -114,13 +113,13 @@ public class TierForm extends FormLayout {
 
     public void addValidation() {
 
-        brandBox.addValueChangeListener(changeEvent -> getBinder().validate());
+        brandBox.addValueChangeListener(_ -> getBinder().validate());
         getBinder().forField(brandBox)
                 .withValidator(value -> value.getId() > 0, "Brand not allow to be empty"
                 ).bind(TierDto::getBrandDto, TierDto::setBrandDto);
         tierNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextField, String>>) changeEvent -> getBinder().validate());
+                        .ComponentValueChangeEvent<TextField, String>>) _ -> getBinder().validate());
 
         getBinder().forField(tierNameField)
                 .withValidator(value -> value.length() > 2,
@@ -141,12 +140,11 @@ public class TierForm extends FormLayout {
         }
     }
 
-    protected HorizontalLayout createButtonsLayout(boolean enableUpdate, boolean enableDelete, boolean enableSave) {
+    protected HorizontalLayout createButtonsLayout(boolean enableUpdate, boolean enableSave) {
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
 
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         saveButton.addClickShortcut(Key.ENTER);
@@ -156,18 +154,14 @@ public class TierForm extends FormLayout {
         saveButton.addClickListener(
                 new TierSaveEventListener(this, this.getRestClientOrganizationService()));
         updateButton.addClickListener(new TierUpdateEventListener(this, this.getRestClientOrganizationService()));
-        deleteButton.addClickListener(new TierDeleteEventListener(this, this.getRestClientOrganizationService()));
 
-        closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
+        closeButton.addClickListener(_ -> this.setVisible(false));
 
         if (enableSave) {
             horizontalLayout.add(saveButton);
         }
         if (enableUpdate) {
             horizontalLayout.add(updateButton);
-        }
-        if (enableDelete) {
-            horizontalLayout.add(deleteButton);
         }
 
         horizontalLayout.add(closeButton);

@@ -5,12 +5,14 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.dto.TierTypeDto;
+import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -68,7 +70,8 @@ public class TierPriceListView extends VerticalLayout {
                 if (org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage)
                         && org.apache.commons.lang3.ObjectUtils.isNotEmpty(broadcastMessage.getType())
                         && (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS) ||
-                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS))) {
+                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS) ||
+                        broadcastMessage.getType().equals(BroadcastMessage.TIER_DELETED_SUCCESS))) {
                         fetchTier();
                     }
 
@@ -89,10 +92,30 @@ public class TierPriceListView extends VerticalLayout {
         tierDtoGrid.removeAllColumns();
         tierDtoGrid.addColumn(TierDto::getName).setHeader("Name");
         tierDtoGrid.addColumn("brandDto.name").setHeader("Brand Name");
-
+        tierDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
         tierDtoGrid.getColumns().forEach(tierDtoColumn -> tierDtoColumn.setAutoWidth(true));
         tierDtoGrid.asSingleSelect().addValueChangeListener(valueChangeEvent ->
                 editTier(valueChangeEvent.getValue(), FormAction.EDIT));
+    }
+
+    private Button applyEditButton(TierDto tierDto) {
+        Button buttonEdit = new Button("Edit");
+        buttonEdit.addClickListener(_ -> editTier(tierDto, FormAction.EDIT));
+        return buttonEdit;
+    }
+
+    private Button applyDeleteButton(TierDto tierDto) {
+        Button buttonDelete = new Button("Delete");
+        buttonDelete.addClickListener(new TierDeleteEventListener(this.ui, tierDto.getId(),
+                this.restClientOrganizationService));
+        return buttonDelete;
+    }
+
+    private Component applyButton(TierDto tierDto) {
+        HorizontalLayout layout = new HorizontalLayout();
+        layout.add(applyEditButton(tierDto));
+        layout.add(applyDeleteButton(tierDto));
+        return layout;
     }
 
     private void editTier(TierDto tierDto, FormAction formAction) {
@@ -128,7 +151,7 @@ public class TierPriceListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addChainButton = new Button("Add Tier");
-        addChainButton.addClickListener(e -> addTier());
+        addChainButton.addClickListener(_ -> addTier());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;

@@ -71,8 +71,6 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     private int totalPages;
     private int currentPage = 1;
     private int pageSize = 15;
-    private int totalRecords = 0;
-    private int totalDisplayRecords = 0;
 
     private Text pageInfoText;
 
@@ -100,7 +98,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         if (productTreeItem.getProductItemType().equals(ProductItemType.PRODUCT)) {
             HorizontalLayout horizontalLayout = new HorizontalLayout();
             Button editButton = new Button("Edit");
-            editButton.addClickListener(buttonClickEvent -> editProduct(productTreeItem));
+            editButton.addClickListener(_ -> editProduct(productTreeItem));
             Button deleteButton = new Button("Delete");
             deleteButton.addClickListener(new ProductDeleteEventListener(restClientMenuService, productTreeItem));
             horizontalLayout.add(editButton, deleteButton);
@@ -111,7 +109,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
     private HorizontalLayout getPaginationFooter() {
         HorizontalLayout paginationFooter = new HorizontalLayout();
-        Button previousButton = new Button("Previous", e -> {
+        Button previousButton = new Button("Previous", _ -> {
             if (currentPage > 1) {
                 currentPage--;
                 fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
@@ -315,8 +313,6 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
                     });
 
                     totalPages = Integer.parseInt(result.get("page") == null ? "0" :result.get("page").toString());
-                    totalRecords = Integer.parseInt(result.get("total") == null ? "0" :result.get("total").toString());
-                    totalDisplayRecords = Integer.parseInt(result.get("size") == null ? "0" :result.get("size").toString());
 
                     ui.access(()-> {
                         productDtoGrid.setTreeData(productDtoTreeData);

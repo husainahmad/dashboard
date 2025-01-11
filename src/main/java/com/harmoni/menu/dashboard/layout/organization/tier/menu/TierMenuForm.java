@@ -8,14 +8,10 @@ import com.vaadin.flow.router.Route;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-
 @Getter
 @Route("tier-menu-form")
 @Slf4j
 public class TierMenuForm extends TierForm {
-
-    private List<String> subNames;
 
     public TierMenuForm(RestClientOrganizationService restClientOrganizationService,
                         AsyncRestClientOrganizationService asyncRestClientOrganizationService) {
@@ -23,7 +19,7 @@ public class TierMenuForm extends TierForm {
         brandBox.setItemLabelGenerator(BrandDto::getName);
         add(brandBox);
         add(tierNameField);
-        add(createButtonsLayout(true, false, true));
+        add(createButtonsLayout(true, true));
         addValidation();
     }
 

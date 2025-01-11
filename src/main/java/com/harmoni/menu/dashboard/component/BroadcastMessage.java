@@ -18,6 +18,7 @@ public class BroadcastMessage {
     public static final String BRAND_SUCCESS_UPDATED = "BRAND_SUCCESS_UPDATED";
     public static final String TIER_INSERT_SUCCESS = "TIER_INSERT_SUCCESS";
     public static final String TIER_UPDATED_SUCCESS = "TIER_UPDATED_SUCCESS";
+    public static final String TIER_DELETED_SUCCESS = "TIER_DELETED_SUCCESS";
     public static final String STORE_INSERT_SUCCESS = "STORE_INSERT_SUCCESS";
     public static final String STORE_UPDATED_SUCCESS = "STORE_UPDATED_SUCCESS";
 

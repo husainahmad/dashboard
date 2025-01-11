@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.*;
+import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
@@ -95,7 +96,8 @@ public class TierMenuListView extends VerticalLayout {
                 if (ObjectUtil.isNotEmpty(broadcastMessage)
                         && ObjectUtil.isNotEmpty(broadcastMessage.getType())
                         && (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS) ||
-                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS))) {
+                            broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS) ||
+                        broadcastMessage.getType().equals(BroadcastMessage.TIER_DELETED_SUCCESS))) {
                         fetchTier();
                     }
 
@@ -163,7 +165,7 @@ public class TierMenuListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addTierServiceButton = new Button("Add Tier Menu");
-        addTierServiceButton.addClickListener(e -> addTier());
+        addTierServiceButton.addClickListener(_ -> addTier());
 
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addTierServiceButton);
         toolbar.addClassName("toolbar");
@@ -240,9 +242,9 @@ public class TierMenuListView extends VerticalLayout {
 
     private Button applyButtonDelete(TierMenuTreeItem tierMenuTreeItem) {
         buttonDeletes[tierMenuTreeItem.getRootIndex()] = new Button("Delete");
-//        buttonDeletes[tierMenuTreeItem.getRootIndex()].addClickListener(new TierServiceDeleteEventListener(this,
-//                Integer.valueOf(tierMenuTreeItem.getId()),
-//                restClientOrganizationService));
+        buttonDeletes[tierMenuTreeItem.getRootIndex()].addClickListener(new TierDeleteEventListener(this.ui,
+                tierMenuTreeItem.getTierId(),
+                restClientOrganizationService));
         return buttonDeletes[tierMenuTreeItem.getRootIndex()];
     }
 
@@ -250,17 +252,13 @@ public class TierMenuListView extends VerticalLayout {
         buttonEdits[tierMenuTreeItem.getRootIndex()] = new Button("Edit Name");
 
         buttonEdits[tierMenuTreeItem.getRootIndex()]
-                .addClickListener(buttonClickEvent -> editTier(getTierDto(tierMenuTreeItem), FormAction.EDIT));
+                .addClickListener(_ -> editTier(getTierDto(tierMenuTreeItem), FormAction.EDIT));
         return buttonEdits[tierMenuTreeItem.getRootIndex()];
     }
 
     private Button applyButtonUpdate(TierMenuTreeItem tierMenuTreeItem) {
         buttonUpdates[tierMenuTreeItem.getRootIndex()] = new Button("Update");
         buttonUpdates[tierMenuTreeItem.getRootIndex()].setEnabled(false);
-
-//        buttonUpdates[tierMenuTreeItem.getRootIndex()].addClickListener(new TierSubServiceUpdateEventListener(tierForm,
-//                restClientOrganizationService, getTierDto(tierMenuTreeItem),
-//                tierMenuTreeGrid, tierMenuTreeItem));
 
         return buttonUpdates[tierMenuTreeItem.getRootIndex()];
     }

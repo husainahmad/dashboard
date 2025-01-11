@@ -5,24 +5,19 @@ import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.exception.BrandHandler;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
-import com.harmoni.menu.dashboard.layout.organization.tier.price.TierPriceForm;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class TierSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
     private final TierForm tierForm;
-
     private final RestClientOrganizationService restClientOrganizationService;
-
-    public TierSaveEventListener(TierForm tierForm, RestClientOrganizationService restClientOrganizationService) {
-        this.tierForm = tierForm;
-        this.restClientOrganizationService = restClientOrganizationService;
-    }
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
