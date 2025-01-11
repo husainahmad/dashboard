@@ -99,7 +99,7 @@ public class TierPriceListView extends VerticalLayout {
     }
 
     private Button applyEditButton(TierDto tierDto) {
-        Button buttonEdit = new Button("Edit");
+        Button buttonEdit = new Button("Edit Name");
         buttonEdit.addClickListener(_ -> editTier(tierDto, FormAction.EDIT));
         return buttonEdit;
     }

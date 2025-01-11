@@ -260,9 +260,9 @@ public class TierServiceListView extends VerticalLayout {
 
     private Button applyButtonDelete(TierServiceTreeItem tierServiceTreeItem) {
         buttonDeletes[tierServiceTreeItem.getRootIndex()] = new Button("Delete");
-        buttonDeletes[tierServiceTreeItem.getRootIndex()].addClickListener(new TierServiceDeleteEventListener(this,
+        buttonDeletes[tierServiceTreeItem.getRootIndex()].addClickListener(new TierServiceDeleteEventListener(
                 Integer.valueOf(tierServiceTreeItem.getId()),
-                restClientOrganizationService));
+                restClientOrganizationService, this.getUi()));
         return buttonDeletes[tierServiceTreeItem.getRootIndex()];
     }
 
@@ -278,9 +278,8 @@ public class TierServiceListView extends VerticalLayout {
         buttonUpdates[tierServiceTreeItem.getRootIndex()] = new Button("Update");
         buttonUpdates[tierServiceTreeItem.getRootIndex()].setEnabled(false);
 
-        buttonUpdates[tierServiceTreeItem.getRootIndex()].addClickListener(new TierSubServiceUpdateEventListener(tierForm,
-                restClientOrganizationService, getTierDto(tierServiceTreeItem),
-                tierServiceTreeGrid, tierServiceTreeItem));
+        buttonUpdates[tierServiceTreeItem.getRootIndex()].addClickListener(new TierSubServiceUpdateEventListener(tierForm.getUi(),
+                restClientOrganizationService, tierServiceTreeGrid, tierServiceTreeItem, getTierDto(tierServiceTreeItem)));
 
         return buttonUpdates[tierServiceTreeItem.getRootIndex()];
     }

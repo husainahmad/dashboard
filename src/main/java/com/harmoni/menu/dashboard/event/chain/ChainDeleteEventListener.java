@@ -10,18 +10,14 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.notification.Notification;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class ChainDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
     private final ChainForm chainForm;
     private final RestClientOrganizationService restClientOrganizationService;
-
-    public ChainDeleteEventListener(ChainForm chainForm,
-                                    RestClientOrganizationService restClientOrganizationService) {
-        this.chainForm = chainForm;
-        this.restClientOrganizationService = restClientOrganizationService;
-    }
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {

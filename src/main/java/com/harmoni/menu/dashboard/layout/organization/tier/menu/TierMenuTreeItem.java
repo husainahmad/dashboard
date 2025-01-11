@@ -15,4 +15,5 @@ public class TierMenuTreeItem {
     private String categoryName;
     private boolean active;
     private TreeLevel treeLevel;
+    private TierMenuTreeItem itemParent;
 }

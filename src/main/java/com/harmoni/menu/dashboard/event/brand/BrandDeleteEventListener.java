@@ -11,18 +11,15 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.notification.Notification;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@RequiredArgsConstructor
 @Slf4j
 public class BrandDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>, BroadcastMessageService {
 
     private final BrandForm brandForm;
     private final RestClientOrganizationService restClientOrganizationService;
-
-    public BrandDeleteEventListener(BrandForm brandForm, RestClientOrganizationService restClientOrganizationService) {
-        this.brandForm = brandForm;
-        this.restClientOrganizationService = restClientOrganizationService;
-    }
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {

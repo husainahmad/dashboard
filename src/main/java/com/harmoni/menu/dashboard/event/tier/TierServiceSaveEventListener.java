@@ -10,19 +10,15 @@ import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
+import lombok.RequiredArgsConstructor;
 
 
+@RequiredArgsConstructor
 public class TierServiceSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
     private final TierServiceForm tierForm;
-
     private final RestClientOrganizationService restClientOrganizationService;
-
-    public TierServiceSaveEventListener(TierServiceForm tierForm, RestClientOrganizationService restClientOrganizationService) {
-        this.tierForm = tierForm;
-        this.restClientOrganizationService = restClientOrganizationService;
-    }
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {

@@ -195,6 +195,7 @@ public class TierMenuListView extends VerticalLayout {
                         .categoryId(categoryDto.getId())
                         .categoryName(categoryDto.getName())
                         .treeLevel(TreeLevel.CHILD)
+                        .itemParent(tierMenuTreeItem)
                         .build();
                 tierMenuTreeItemTreeData.addItem(tierMenuTreeItem, childItem);
             }
@@ -222,7 +223,13 @@ public class TierMenuListView extends VerticalLayout {
         }
 
         Checkbox checkbox = new Checkbox(tierMenuTreeItem.isActive());
-        checkbox.addValueChangeListener(event -> tierMenuTreeItem.setActive(event.getValue()));
+        checkbox.addValueChangeListener(event -> {
+            tierMenuTreeItem.setActive(event.getValue());
+
+            if (ObjectUtils.isNotEmpty(tierMenuTreeItem.getItemParent())) {
+                buttonUpdates[tierMenuTreeItem.getItemParent().getRootIndex()].setEnabled(true);
+            }
+        });
 
         checkBoxes.put(tierMenuTreeItem.getId(), checkbox);
 

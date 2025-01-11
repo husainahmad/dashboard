@@ -9,18 +9,14 @@ import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class ChainSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
     private final ChainForm chainForm;
     private final RestClientOrganizationService restClientOrganizationService;
-
-    public ChainSaveEventListener(ChainForm chainForm,
-                                  RestClientOrganizationService restClientOrganizationService) {
-        this.chainForm = chainForm;
-        this.restClientOrganizationService = restClientOrganizationService;
-    }
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
