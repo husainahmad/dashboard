@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
 import java.util.Date;
-import java.util.List;
 
 @Data
 public class TierDto {
@@ -20,12 +19,6 @@ public class TierDto {
     @NotEmpty
     @JsonProperty("brand")
     private BrandDto brandDto;
-    @NotEmpty
-    @JsonProperty("service")
-    private ServiceDto serviceDto;
-    @JsonProperty("tierServices")
-    private List<TierServiceDto> tierServices;
-
     private Date createdAt;
     private Date updatedAt;
 

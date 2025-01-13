@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class TierSubServiceUpdateEventListener implements ComponentEventListener<ClickEvent<Button>>,
+public class TierMenuUpdateEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
     private final UI ui;

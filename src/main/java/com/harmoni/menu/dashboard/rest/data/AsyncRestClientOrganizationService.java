@@ -96,6 +96,12 @@ public class AsyncRestClientOrganizationService implements Serializable {
         }, callback);
     }
 
+    public void getTierServiceByBrandAsync(AsyncRestCallback<List<TierServiceDto>> callback, Integer id) {
+        String uri = String.format(menuProperties.getUrl().getTiers().getService(), id);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
+    }
+
     public void getAllStoreAsync(AsyncRestCallback<List<StoreDto>> callback) {
         String uri = menuProperties.getUrl().getStore();
         makeAsyncRequest(uri, new TypeReference<>() {

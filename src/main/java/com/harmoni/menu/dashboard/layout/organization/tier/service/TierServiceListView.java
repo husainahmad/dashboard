@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Route(value = "tier-service", layout = MainLayout.class)
 @PageTitle("Tier | POSHarmoni")
@@ -170,49 +171,7 @@ public class TierServiceListView extends VerticalLayout {
     }
 
     private void fetchTier() {
-        asyncRestClientOrganizationService.getAllTierByBrandAsync(this::operationFinished, brandDto.getId(),
-                TierTypeDto.SERVICE);
-    }
-
-    private void extractedServiceName(TreeData<TierServiceTreeItem> tierServiceTreeItemTreeData,
-                                      TierServiceTreeItem tierServiceTreeItem, TierDto tierDto) {
-
-        for (ServiceDto serviceDto : serviceDtos) {
-            TierServiceTreeItem tServiceTreeItem = TierServiceTreeItem.builder()
-                    .id(tierServiceTreeItem.getId().concat("-").concat(String.valueOf(serviceDto.getId())))
-                    .name(serviceDto.getName())
-                    .treeLevel(TreeLevel.PARENT)
-                    .tierServiceTreeItemParent(tierServiceTreeItem)
-                    .build();
-
-            tierServiceTreeItemTreeData.addItem(tierServiceTreeItem, tServiceTreeItem);
-
-            serviceDto.getSubServices().forEach(subServiceDto -> {
-
-                TierServiceDto tierServiceDto = getSubServiceFound(tierDto, subServiceDto);
-
-                TierServiceTreeItem tSubServiceTreeItem = TierServiceTreeItem.builder()
-                        .id(tierServiceTreeItem.getId().concat("-").concat(String.valueOf(serviceDto.getId()))
-                                .concat("-").concat(String.valueOf(subServiceDto.getId())))
-                        .subServiceId(subServiceDto.getId())
-                        .name(subServiceDto.getName())
-                        .tierServiceTreeItemParent(tServiceTreeItem)
-                        .active(tierServiceDto != null && tierServiceDto.isActive())
-                        .treeLevel(TreeLevel.CHILD)
-                        .build();
-                tierServiceTreeItemTreeData.addItem(tServiceTreeItem,
-                        tSubServiceTreeItem);
-            });
-        }
-    }
-
-    private static TierServiceDto getSubServiceFound(TierDto tierDto, SubServiceDto subServiceDto) {
-        for (TierServiceDto tierServiceDto : tierDto.getTierServices()) {
-            if (subServiceDto.getId().equals(tierServiceDto.getSubServiceId())) {
-                return tierServiceDto;
-            }
-        }
-        return null;
+        asyncRestClientOrganizationService.getTierServiceByBrandAsync(this::operationFinished, brandDto.getId());
     }
 
     private void fetchService() {
@@ -292,29 +251,85 @@ public class TierServiceListView extends VerticalLayout {
         return tierDto;
     }
 
-    private void operationFinished(List<TierDto> result) {
+    private void operationFinished(List<TierServiceDto> result) {
         TreeData<TierServiceTreeItem> tierServiceTreeItemTreeData = new TreeData<>();
-        buttonUpdates = new Button[result.size()];
-        buttonEdits = new Button[result.size()];
-        buttonDeletes = new Button[result.size()];
+
+        Map<TierDto, List<TierServiceDto>> tierGroup = result.stream().collect(
+                Collectors.groupingBy(TierServiceDto::getTierDto));
+
+        buttonUpdates = new Button[tierGroup.size()];
+        buttonEdits = new Button[tierGroup.size()];
+        buttonDeletes = new Button[tierGroup.size()];
 
         AtomicInteger rootIndex = new AtomicInteger();
 
-        result.forEach(tierServiceDto -> {
-            TierServiceTreeItem tierServiceTreeItem = TierServiceTreeItem.builder()
-                    .rootIndex(rootIndex.getAndIncrement())
-                    .id(tierServiceDto.getId().toString())
-                    .name(tierServiceDto.getName())
-                    .subServiceName("")
-                    .serviceId(tierServiceDto.getId())
-                    .serviceName("")
-                    .treeLevel(TreeLevel.ROOT)
-                    .build();
+        tierGroup.forEach((tierDto, tierServiceDtos) -> {
+            TierServiceTreeItem tierServiceTreeItem = getTreeItem(rootIndex.getAndIncrement(),
+                    tierDto.getId().toString(), tierDto.getName(), null, null, false, TreeLevel.ROOT);
+
             tierServiceTreeItemTreeData.addItem(null, tierServiceTreeItem);
-            extractedServiceName(tierServiceTreeItemTreeData, tierServiceTreeItem, tierServiceDto);
+            extractedServiceName(tierServiceTreeItemTreeData, tierServiceTreeItem, tierServiceDtos);
         });
 
         ui.access(() -> tierServiceTreeGrid.setTreeData(tierServiceTreeItemTreeData));
+    }
 
+    private void extractedServiceName(TreeData<TierServiceTreeItem> tierServiceTreeItemTreeData,
+                                      TierServiceTreeItem tierServiceTreeItem, List<TierServiceDto> tierServiceDtos) {
+        serviceDtos.parallelStream().forEach(serviceDto -> {
+            TierServiceTreeItem tServiceTreeItem = getTierServiceTreeItem(tierServiceTreeItem, serviceDto);
+            tierServiceTreeItemTreeData.addItem(tierServiceTreeItem, tServiceTreeItem);
+            extractedSubServiceName(tierServiceTreeItemTreeData, tierServiceTreeItem, tierServiceDtos,
+                    serviceDto, tServiceTreeItem);
+        });
+    }
+
+    private static void extractedSubServiceName(TreeData<TierServiceTreeItem> tierServiceTreeItemTreeData,
+                                                TierServiceTreeItem tierServiceTreeItem, List<TierServiceDto> tierServiceDtos,
+                                                ServiceDto serviceDto, TierServiceTreeItem tServiceTreeItem) {
+        serviceDto.getSubServices().forEach(subServiceDto -> tierServiceTreeItemTreeData.addItem(tServiceTreeItem,
+                getTierServiceTreeItemSubService(tierServiceTreeItem, serviceDto, tServiceTreeItem,
+                        subServiceDto, getMatchTierSubService(tierServiceDtos, subServiceDto))));
+    }
+
+    private static TierServiceDto getMatchTierSubService(List<TierServiceDto> tierServiceDtos, SubServiceDto subServiceDto) {
+        return tierServiceDtos.stream().filter(tierServiceDto -> ObjectUtils.isNotEmpty(tierServiceDto.getSubServiceDto()) &&
+                subServiceDto.getId().equals(tierServiceDto.getSubServiceDto().getId())).findFirst().orElse(null);
+    }
+
+    private static TierServiceTreeItem getTierServiceTreeItemSubService(TierServiceTreeItem tierServiceTreeItem, ServiceDto serviceDto,
+                                                                        TierServiceTreeItem tServiceTreeItem, SubServiceDto subServiceDto,
+                                                                        TierServiceDto tierServiceDtoFound) {
+        return getTreeItem(null,
+                tierServiceTreeItem.getId()
+                        .concat("-").concat(String.valueOf(serviceDto.getId()))
+                        .concat("-").concat(String.valueOf(subServiceDto.getId())),
+                subServiceDto.getName(),subServiceDto.getId(), tServiceTreeItem,
+                (tierServiceDtoFound != null && tierServiceDtoFound.isActive()),
+                TreeLevel.CHILD);
+    }
+
+    private static TierServiceTreeItem getTierServiceTreeItem(TierServiceTreeItem tierServiceTreeItem, ServiceDto serviceDto) {
+        return getTreeItem(null,
+                tierServiceTreeItem.getId()
+                        .concat("-")
+                        .concat(String.valueOf(serviceDto.getId())),
+                serviceDto.getName(), null,
+                tierServiceTreeItem,
+                false,
+                TreeLevel.PARENT);
+    }
+
+    private static TierServiceTreeItem getTreeItem(Integer rootIndex, String id, String name, Integer subServiceId,
+                                                   TierServiceTreeItem parent, boolean isActive, TreeLevel level) {
+        return TierServiceTreeItem.builder()
+                .rootIndex(rootIndex)
+                .id(id)
+                .name(name)
+                .subServiceId(subServiceId)
+                .tierServiceTreeItemParent(parent)
+                .active(isActive)
+                .treeLevel(level)
+                .build();
     }
 }
