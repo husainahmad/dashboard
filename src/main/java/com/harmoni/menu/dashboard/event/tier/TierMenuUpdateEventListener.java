@@ -1,12 +1,10 @@
 package com.harmoni.menu.dashboard.event.tier;
 
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
-import com.harmoni.menu.dashboard.dto.SubServiceDto;
-import com.harmoni.menu.dashboard.dto.TierDto;
-import com.harmoni.menu.dashboard.dto.TierSubServiceDto;
+import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.exception.BrandHandler;
-import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceTreeItem;
+import com.harmoni.menu.dashboard.layout.organization.tier.menu.TierMenuTreeItem;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.vaadin.flow.component.ClickEvent;
@@ -27,36 +25,37 @@ public class TierMenuUpdateEventListener implements ComponentEventListener<Click
 
     private final UI ui;
     private final RestClientOrganizationService restClientOrganizationService;
-    private final TreeGrid<TierServiceTreeItem> treeItemTreeGrid;
-    private final List<TierSubServiceDto> tierServiceDtos = new ArrayList<>();
-    private final transient TierServiceTreeItem tierServiceTreeItem;
+    private final TreeGrid<TierMenuTreeItem> treeItemTreeGrid;
+    private final transient TierMenuTreeItem tierMenuTreeItem;
     private final transient TierDto tierDto;
 
-    private void extractedPayload(TierServiceTreeItem tierServiceTreeItem) {
-        TreeDataProvider<TierServiceTreeItem> dataProvider = (TreeDataProvider<TierServiceTreeItem>)
+    private List<TierMenuDto> extractedPayload(TierMenuTreeItem tierMenuTreeItem) {
+        TreeDataProvider<TierMenuTreeItem> dataProvider = (TreeDataProvider<TierMenuTreeItem>)
                 this.treeItemTreeGrid.getDataProvider();
-        TreeData<TierServiceTreeItem> treeItemTreeData =  dataProvider.getTreeData();
+        TreeData<TierMenuTreeItem> treeItemTreeData =  dataProvider.getTreeData();
 
-        treeItemTreeData.getChildren(tierServiceTreeItem).forEach(serviceTreeItem ->
-            treeItemTreeData.getChildren(serviceTreeItem).forEach(lastServiceTreeItem -> {
-                SubServiceDto subServiceDto = new SubServiceDto();
-                subServiceDto.setId(lastServiceTreeItem.getSubServiceId());
+        List<TierMenuDto> tierMenuDtos = new ArrayList<>();
 
-                TierSubServiceDto tierServiceDto = new TierSubServiceDto();
-                tierServiceDto.setTierDto(this.tierDto);
-                tierServiceDto.setSubServiceDto(subServiceDto);
-                tierServiceDto.setActive(lastServiceTreeItem.isActive());
+        treeItemTreeData.getChildren(tierMenuTreeItem).forEach(menuTreeItem ->
+                tierMenuDtos.add(extractedChild(menuTreeItem)));
+        return tierMenuDtos;
+    }
 
-                tierServiceDtos.add(tierServiceDto);
-            }
-        ));
+    private TierMenuDto extractedChild(TierMenuTreeItem menuTreeItem) {
+        CategoryDto categoryDto = new CategoryDto();
+        categoryDto.setId(menuTreeItem.getCategoryDto().getId());
+        categoryDto.setBrandId(this.tierDto.getBrandId());
+        TierMenuDto tierServiceDto = new TierMenuDto();
+        tierServiceDto.setTierDto(this.tierDto);
+
+        tierServiceDto.setCategoryDto(categoryDto);
+        tierServiceDto.setActive(menuTreeItem.isActive());
+        return tierServiceDto;
     }
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
-        extractedPayload(this.tierServiceTreeItem);
-
-        restClientOrganizationService.updateTierService(this.tierDto, this.tierServiceDtos)
+        restClientOrganizationService.updateTierMenu(this.tierDto, extractedPayload(this.tierMenuTreeItem))
                 .doOnError(error -> new BrandHandler(this.ui,
                         "Error while updating Tier ".concat(error.getMessage())))
                 .subscribe(this::accept);

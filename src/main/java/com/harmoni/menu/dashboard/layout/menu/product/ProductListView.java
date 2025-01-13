@@ -115,7 +115,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
                 fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
             }
         });
-        Button nextButton = new Button("Next", e -> {
+        Button nextButton = new Button("Next", _ -> {
             if (currentPage < totalPages) {
                 currentPage++;
                 fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
@@ -386,12 +386,14 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
             if (!ObjectUtils.isEmpty(brandDtos)) {
 
                 brandDtos.addFirst(getTempBrandDto());
-                ui.access(() -> {
-                    brandDtoComboBox.setItems(brandDtos);
-                    brandDtoComboBox.setValue(brandDtos.get(1));
-                    fetchCategories(brandDtoComboBox.getValue().getId());
-                    fetchTier(brandDtoComboBox.getValue().getId());
-                });
+                if (ObjectUtils.isNotEmpty(ui)) {
+                    ui.access(() -> {
+                        brandDtoComboBox.setItems(brandDtos);
+                        brandDtoComboBox.setValue(brandDtos.get(1));
+                        fetchCategories(brandDtoComboBox.getValue().getId());
+                        fetchTier(brandDtoComboBox.getValue().getId());
+                    });
+                }
             }
         }
     }

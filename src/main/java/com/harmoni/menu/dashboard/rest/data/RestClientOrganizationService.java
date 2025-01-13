@@ -58,18 +58,18 @@ public class RestClientOrganizationService implements Serializable {
                 Mono.just(tierDto), TierDto.class);
     }
 
-
     public Mono<RestAPIResponse> updateTierService(TierDto tierDto, List<TierSubServiceDto> tierServiceDtos) {
-        return update(String.format(menuProperties.getUrl().getTiers().getService(), tierDto.getId()),
+        return update(String.format(menuProperties.getUrl().getTiers().getServices().getUpdate(), tierDto.getId()),
                 Mono.just(tierServiceDtos), List.class);
+    }
+
+    public Mono<RestAPIResponse> updateTierMenu(TierDto tierDto, List<TierMenuDto> tierMenuDtos) {
+        return update(String.format(menuProperties.getUrl().getTiers().getMenus().getUpdate(), tierDto.getId()),
+                Mono.just(tierMenuDtos), List.class);
     }
 
     public Mono<RestAPIResponse> deleteTier(TierDto tierDto) {
         return delete(URL_FORMAT.formatted(menuProperties.getUrl().getTier(), tierDto.getId()));
-    }
-
-    public Mono<RestAPIResponse> createTierService(TierSubServiceDto tierServiceDto) {
-        return create(menuProperties.getUrl().getTiers().getService(), Mono.just(tierServiceDto), TierSubServiceDto.class);
     }
 
     public Mono<RestAPIResponse> deleteChain(ChainDto chainDto) {

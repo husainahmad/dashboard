@@ -5,6 +5,7 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
+import com.harmoni.menu.dashboard.event.tier.TierMenuUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
@@ -36,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Route(value = "tier-menu", layout = MainLayout.class)
 @PageTitle("Tier | POSHarmoni")
@@ -179,27 +181,7 @@ public class TierMenuListView extends VerticalLayout {
     }
 
     private void fetchTier() {
-        asyncRestClientOrganizationService.getAllTierByBrandAsync(this::operationFinished, brandDto.getId(),
-                TierTypeDto.MENU);
-    }
-
-    private void extractedCategoryName(TreeData<TierMenuTreeItem> tierMenuTreeItemTreeData,
-                                       TierMenuTreeItem tierMenuTreeItem, TierDto tierDto) {
-
-        if (ObjectUtils.isNotEmpty(categoryDtos)) {
-            for (CategoryDto categoryDto: categoryDtos) {
-                TierMenuTreeItem childItem = TierMenuTreeItem.builder()
-                        .id(UUID.randomUUID().toString())
-                        .tierId(tierDto.getId())
-                        .name(categoryDto.getName())
-                        .categoryId(categoryDto.getId())
-                        .categoryName(categoryDto.getName())
-                        .treeLevel(TreeLevel.CHILD)
-                        .itemParent(tierMenuTreeItem)
-                        .build();
-                tierMenuTreeItemTreeData.addItem(tierMenuTreeItem, childItem);
-            }
-        }
+        asyncRestClientOrganizationService.getTierMenuByBrandAsync(this::operationFinished, brandDto.getId());
     }
 
     private void fetchCategories() {
@@ -250,7 +232,7 @@ public class TierMenuListView extends VerticalLayout {
     private Button applyButtonDelete(TierMenuTreeItem tierMenuTreeItem) {
         buttonDeletes[tierMenuTreeItem.getRootIndex()] = new Button("Delete");
         buttonDeletes[tierMenuTreeItem.getRootIndex()].addClickListener(new TierDeleteEventListener(this.ui,
-                tierMenuTreeItem.getTierId(),
+                tierMenuTreeItem.getTierDto().getId(),
                 restClientOrganizationService));
         return buttonDeletes[tierMenuTreeItem.getRootIndex()];
     }
@@ -266,46 +248,72 @@ public class TierMenuListView extends VerticalLayout {
     private Button applyButtonUpdate(TierMenuTreeItem tierMenuTreeItem) {
         buttonUpdates[tierMenuTreeItem.getRootIndex()] = new Button("Update");
         buttonUpdates[tierMenuTreeItem.getRootIndex()].setEnabled(false);
-
+        buttonUpdates[tierMenuTreeItem.getRootIndex()].addClickListener(new TierMenuUpdateEventListener(this.ui,
+                restClientOrganizationService, tierMenuTreeGrid, tierMenuTreeItem, getTierDto(tierMenuTreeItem)));
         return buttonUpdates[tierMenuTreeItem.getRootIndex()];
     }
 
     private static TierDto getTierDto(TierMenuTreeItem tierMenuTreeItem) {
         TierDto tierDto = new TierDto();
-        tierDto.setId(tierMenuTreeItem.getTierId());
+        tierDto.setId(tierMenuTreeItem.getTierDto().getId());
+        tierDto.setBrandId(tierMenuTreeItem.getTierDto().getBrandId());
         tierDto.setType(TierTypeDto.MENU);
         tierDto.setName(tierMenuTreeItem.getName());
         return tierDto;
     }
 
-    private void operationFinished(List<TierDto> result) {
-        buttonUpdates = new Button[result.size()];
-        buttonEdits = new Button[result.size()];
-        buttonDeletes = new Button[result.size()];
-        populateGridValues(result);
-
-    }
-
-    private void populateGridValues(List<TierDto> result) {
+    private void operationFinished(List<TierMenuDto> result) {
         TreeData<TierMenuTreeItem> tierMenuTreeItemTreeData = new TreeData<>();
+
+        Map<TierDto, List<TierMenuDto>> tierGroup = result.stream().collect(
+                Collectors.groupingBy(TierMenuDto::getTierDto));
+
+        buttonUpdates = new Button[tierGroup.size()];
+        buttonEdits = new Button[tierGroup.size()];
+        buttonDeletes = new Button[tierGroup.size()];
+
         AtomicInteger rootIndex = new AtomicInteger();
 
-        result.forEach(tierMenuDto -> {
-            TierMenuTreeItem tierMenuTreeItem = TierMenuTreeItem.builder()
-                    .rootIndex(rootIndex.getAndIncrement())
-                    .tierId(tierMenuDto.getId())
-                    .id(UUID.randomUUID().toString())
-                    .name(tierMenuDto.getName())
-                    .treeLevel(TreeLevel.ROOT)
-                    .build();
+        tierGroup.forEach((tierDto, tierMenuDtos) -> {
+            TierMenuTreeItem tierMenuTreeItem = getTierMenuTreeItem(rootIndex.getAndIncrement(), tierDto,
+                    tierDto.getName(), null, false, null, TreeLevel.ROOT);
             tierMenuTreeItemTreeData.addItem(null, tierMenuTreeItem);
-            extractedCategoryName(tierMenuTreeItemTreeData, tierMenuTreeItem, tierMenuDto);
+            extractedCategoryName(tierMenuTreeItemTreeData, tierMenuTreeItem, tierMenuDtos);
         });
 
-        ui.access(() -> {
-            tierMenuTreeGrid.getTreeData().clear();
-            tierMenuTreeGrid.setTreeData(tierMenuTreeItemTreeData);
-        });
+        ui.access(() -> tierMenuTreeGrid.setTreeData(tierMenuTreeItemTreeData));
+    }
 
+    private static TierMenuTreeItem getTierMenuTreeItem(Integer rootIndex, TierDto tierDto, String name,
+                                                        CategoryDto categoryDto,
+                                                        boolean isActive,
+                                                        TierMenuTreeItem parent,
+                                                        TreeLevel treeLevel) {
+        return TierMenuTreeItem.builder()
+                .rootIndex(rootIndex)
+                .tierDto(tierDto)
+                .id(UUID.randomUUID().toString())
+                .name(name)
+                .categoryDto(categoryDto)
+                .active(isActive)
+                .itemParent(parent)
+                .treeLevel(treeLevel)
+                .build();
+    }
+
+    private void extractedCategoryName(TreeData<TierMenuTreeItem> tierMenuTreeItemTreeData,
+                                       TierMenuTreeItem tierMenuTreeItem, List<TierMenuDto> tierMenuDtos) {
+        for (CategoryDto categoryDto: categoryDtos) {
+            TierMenuTreeItem childItem = getTierMenuTreeItem(null, tierMenuTreeItem.getTierDto(),
+                    categoryDto.getName(), categoryDto,
+                    false, tierMenuTreeItem, TreeLevel.CHILD);
+            tierMenuDtos.forEach(tierMenuDto -> {
+                if (ObjectUtils.isNotEmpty(tierMenuDto.getCategoryDto())
+                        && tierMenuDto.getCategoryDto().getId().equals(categoryDto.getId())) {
+                    childItem.setActive(tierMenuDto.getActive());
+                }
+            });
+            tierMenuTreeItemTreeData.addItem(tierMenuTreeItem, childItem);
+        }
     }
 }

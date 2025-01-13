@@ -19,7 +19,6 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
@@ -74,9 +73,6 @@ public class StoreForm extends FormLayout  {
 
         add(createButtonsLayout());
         binder.bindInstanceFields(this);
-
-        fetchChains();
-        fetchTiers();
     }
 
     @Override
@@ -95,14 +91,9 @@ public class StoreForm extends FormLayout  {
                 log.error("Broadcast Handler Error", e);
             }
         });
-    }
 
-    public void showNotification(String text) {
-        ui.access(()->{
-            Notification notification = new Notification(text, 3000,
-                    Notification.Position.MIDDLE);
-            notification.open();
-        });
+        fetchChains();
+        fetchTiers();
     }
 
     public void hideForm() {
@@ -155,8 +146,12 @@ public class StoreForm extends FormLayout  {
     }
 
     private void fetchChains() {
-        asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result ->
-                ui.access(()-> chainDtoComboBox.setItems(result)), TEMP_BRAND_ID);
+        asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result -> {
+            if (ObjectUtils.isNotEmpty(ui)) {
+                ui.access(()-> chainDtoComboBox.setItems(result));
+            }
+        }, TEMP_BRAND_ID);
+
     }
 
     private void fetchTiers() {

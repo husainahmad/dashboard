@@ -85,7 +85,9 @@ public class TierForm extends FormLayout {
                 log.error("Broadcast Handler Error", e);
             }
         });
-        ui.access(() -> brandBox.setItems(brandDtos));
+        if (ObjectUtils.isNotEmpty(brandDtos)) {
+            ui.access(() -> brandBox.setItems(brandDtos));
+        }
     }
 
     public void showNotification(String text) {
@@ -170,7 +172,7 @@ public class TierForm extends FormLayout {
 
     public void fetchBrands() {
         this.getAsyncRestClientOrganizationService().getAllBrandAsync(result ->
-                getUi().access(()-> brandBox.setItems(result)));
+                ui.access(()-> brandBox.setItems(result)));
     }
 
     public void fetchDetailBrands(Long id) {

@@ -78,38 +78,30 @@ public class AsyncRestClientOrganizationService implements Serializable {
         }, callback);
     }
 
-    public void getDetailTierAsync(AsyncRestCallback<TierDto> callback, Long id) {
-        String uri = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getTier(), id);
-        makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
-    }
-
-    public void getAllTierAsync(AsyncRestCallback<List<TierDto>> callback) {
-        String uri = menuProperties.getUrl().getTier();
-        makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
-    }
-
     public void getAllTierByBrandAsync(AsyncRestCallback<List<TierDto>> callback, Integer id, TierTypeDto tierTypeDto) {
         String uri = String.format("%s/brand/%d/type/%s", menuProperties.getUrl().getTier(), id, tierTypeDto);
         makeAsyncRequest(uri, new TypeReference<>() {
         }, callback);
     }
 
+    public void getTierMenuByBrandAsync(AsyncRestCallback<List<TierMenuDto>> callback, Integer id) {
+        String uri = menuProperties.getUrl().getTiers().getMenu()
+                .concat("?brandId=")
+                .concat(id.toString());
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
+    }
+
     public void getTierServiceByBrandAsync(AsyncRestCallback<List<TierServiceDto>> callback, Integer id) {
-        String uri = String.format(menuProperties.getUrl().getTiers().getService(), id);
+        String uri = menuProperties.getUrl().getTiers().getService()
+                .concat("?brandId=")
+                .concat(id.toString());
         makeAsyncRequest(uri, new TypeReference<>() {
         }, callback);
     }
 
     public void getAllStoreAsync(AsyncRestCallback<List<StoreDto>> callback) {
         String uri = menuProperties.getUrl().getStore();
-        makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
-    }
-
-    public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback) {
-        String uri = menuProperties.getUrl().getCategory();
         makeAsyncRequest(uri, new TypeReference<>() {
         }, callback);
     }

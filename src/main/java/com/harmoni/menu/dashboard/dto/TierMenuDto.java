@@ -1,19 +1,26 @@
 package com.harmoni.menu.dashboard.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.Valid;
 import lombok.Data;
+
+import java.util.Date;
 
 
 @Data
 public class TierMenuDto {
 
     private Integer id;
-
+    private Integer tierId;
     @JsonProperty("tier")
-    private @Valid TierDto tierDto;
+    private TierDto tierDto;
 
-    @JsonProperty("active")
-    private boolean active;
+    private Integer categoryId;
+    @JsonProperty("category")
+    private CategoryDto categoryDto;
+
+    private Boolean active;
+    private Date createdAt;
+    private Date updatedAt;
+    private Date deletedAt;
 
 }
