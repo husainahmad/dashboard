@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @AllArgsConstructor
@@ -73,7 +74,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     private int pageSize = 15;
 
     private Text pageInfoText;
-
+    private ProductTreeItem expandTreeItem;
 
     public ProductListView(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
                            @Autowired RestClientMenuService restClientMenuService, Tab defaultTab) {
@@ -145,11 +146,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         productDtoGrid.addColumn(ProductTreeItem::getTierName).setHeader("Tier");
         productDtoGrid.addComponentColumn(this::applyButton);
 
-        productDtoGrid.addCollapseListener(event -> event.getItems().forEach(productTreeItem ->
-                log.debug("item collapse {}", productTreeItem)));
-
         productDtoGrid.addExpandListener(this::onComponentEventExpandListener);
-
         productDtoGrid.getColumns().forEach(productDtoColumn -> productDtoColumn.setAutoWidth(true));
     }
 
@@ -316,6 +313,9 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
                     ui.access(()-> {
                         productDtoGrid.setTreeData(productDtoTreeData);
+                        if (ObjectUtils.isNotEmpty(expandTreeItem)) {
+                            productDtoGrid.expand(expandTreeItem);
+                        }
                         pageInfoText.setText(getPaginationInfo());
                     });
                 }
@@ -430,23 +430,17 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     }
 
     private void onComponentEventExpandListener(ExpandEvent<ProductTreeItem, TreeGrid<ProductTreeItem>> event) {
-        if (!event.isFromClient()) {
-            return;
-        }
+
         event.getItems().forEach(productTreeItem -> {
-            log.debug("item expand {}", productTreeItem);
+            expandTreeItem = productTreeItem;
             List<Integer> skuIds = new ArrayList<>();
             List<ProductTreeItem> productTreeItems = new ArrayList<>();
             event.getSource().getTreeData().getChildren(productTreeItem).forEach(productTreeItemChild -> {
-                log.debug("item expand child {}", productTreeItemChild);
                 skuIds.add(productTreeItemChild.getSkuId());
                 productTreeItems.add(productTreeItemChild);
                 productTreeItemChild.setPrice(0.0);
                 productTreeItemChild.setTierName("");
             });
-            log.debug("skuids {}", skuIds);
-            log.debug("productTreeItems {}", productTreeItems);
-
             fetchPriceBySku(skuIds, productTreeItems, tierDtoComboBox.getValue().getId());
         });
     }

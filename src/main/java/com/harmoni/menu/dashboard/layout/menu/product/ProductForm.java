@@ -312,6 +312,7 @@ public class ProductForm extends ProductFormLayout {
                 .orElse(skuTreeItem.getPrice()));
         numberField.addValueChangeListener(changeEvent ->
                 skuTierPrices.put(skuTreeItem.getId(), changeEvent.getValue()));
+        skuTierPrices.put(skuTreeItem.getId(), numberField.getValue());
         return numberField;
     }
 
