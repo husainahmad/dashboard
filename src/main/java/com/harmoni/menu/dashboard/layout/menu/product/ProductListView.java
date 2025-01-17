@@ -39,7 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @AllArgsConstructor
@@ -74,7 +73,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     private int pageSize = 15;
 
     private Text pageInfoText;
-    private ProductTreeItem expandTreeItem;
+    private transient ProductTreeItem expandTreeItem;
 
     public ProductListView(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
                            @Autowired RestClientMenuService restClientMenuService, Tab defaultTab) {
