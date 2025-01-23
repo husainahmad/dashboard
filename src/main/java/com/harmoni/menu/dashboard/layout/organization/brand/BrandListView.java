@@ -5,9 +5,7 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -23,10 +21,11 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
+@RequiredArgsConstructor
 @Route(value = "brand", layout = MainLayout.class)
 @PageTitle("Brand | POSHarmoni")
 @Slf4j
@@ -38,16 +37,12 @@ public class BrandListView extends VerticalLayout {
     private BrandForm brandForm;
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
-
     private final RestClientOrganizationService restClientOrganizationService;
+
     private UI ui;
     private final TextField filterText = new TextField();
 
-    public BrandListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                         @Autowired RestClientOrganizationService restClientOrganizationService) {
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
-        this.restClientOrganizationService = restClientOrganizationService;
-
+    private void renderLayout() {
         addClassName("list-view");
         setSizeFull();
 
@@ -56,7 +51,6 @@ public class BrandListView extends VerticalLayout {
 
         add(getToolbar(), getContent());
         closeEditor();
-
         fetchBrands();
     }
 
@@ -85,7 +79,7 @@ public class BrandListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addBrandButton = new Button("Add Brand");
-        addBrandButton.addClickListener(buttonClickEvent -> addBrand());
+        addBrandButton.addClickListener(_ -> addBrand());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -107,6 +101,7 @@ public class BrandListView extends VerticalLayout {
                 log.error("Broadcast Handler Error", e);
             }
         });
+        renderLayout();
     }
 
     @Override

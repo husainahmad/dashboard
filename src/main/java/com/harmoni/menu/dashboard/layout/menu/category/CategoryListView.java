@@ -6,7 +6,6 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
@@ -21,10 +20,11 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
+@RequiredArgsConstructor
 @Route(value = "category", layout = MainLayout.class)
 @PageTitle("Category | POSHarmoni")
 @Slf4j
@@ -41,14 +41,7 @@ public class CategoryListView extends VerticalLayout {
 
     private UI ui;
 
-    public CategoryListView(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
-                            @Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                            @Autowired RestClientMenuService restClientMenuService) {
-
-        this.asyncRestClientMenuService = asyncRestClientMenuService;
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
-        this.restClientMenuService = restClientMenuService;
-
+    private void renderLayout() {
         addClassName("list-view");
         setSizeFull();
 
@@ -57,7 +50,6 @@ public class CategoryListView extends VerticalLayout {
 
         add(getToolbar(), getContent());
         closeEditor();
-
     }
 
     private void configureGrid() {
@@ -93,7 +85,7 @@ public class CategoryListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addBrandButton = new Button("Add Category");
-        addBrandButton.addClickListener((ComponentEventListener<ClickEvent<Button>>) buttonClickEvent -> CategoryListView.this.addCategory());
+        addBrandButton.addClickListener((ComponentEventListener<ClickEvent<Button>>) _ -> CategoryListView.this.addCategory());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -115,6 +107,7 @@ public class CategoryListView extends VerticalLayout {
                 log.error("Broadcast Handler Error", e);
             }
         });
+        renderLayout();
         fetchCategories();
     }
 

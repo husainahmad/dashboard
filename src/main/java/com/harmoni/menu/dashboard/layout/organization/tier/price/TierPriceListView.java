@@ -24,9 +24,10 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
+@RequiredArgsConstructor
 @Route(value = "tier-price", layout = MainLayout.class)
 @PageTitle("Tier | POSHarmoni")
 @Slf4j
@@ -40,10 +41,7 @@ public class TierPriceListView extends VerticalLayout {
     private final RestClientOrganizationService restClientOrganizationService;
     private TierPriceForm tierForm;
 
-    public TierPriceListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                             @Autowired RestClientOrganizationService restClientOrganizationService) {
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
-        this.restClientOrganizationService = restClientOrganizationService;
+    private void renderLayout() {
         addClassName("list-view");
         setSizeFull();
         configureGrid();
@@ -79,6 +77,8 @@ public class TierPriceListView extends VerticalLayout {
                 log.error("Broadcast Handler Error", e);
             }
         });
+
+        renderLayout();
     }
 
     @Override
@@ -94,8 +94,6 @@ public class TierPriceListView extends VerticalLayout {
         tierDtoGrid.addColumn("brandDto.name").setHeader("Brand Name");
         tierDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
         tierDtoGrid.getColumns().forEach(tierDtoColumn -> tierDtoColumn.setAutoWidth(true));
-        tierDtoGrid.asSingleSelect().addValueChangeListener(valueChangeEvent ->
-                editTier(valueChangeEvent.getValue(), FormAction.EDIT));
     }
 
     private Button applyEditButton(TierDto tierDto) {

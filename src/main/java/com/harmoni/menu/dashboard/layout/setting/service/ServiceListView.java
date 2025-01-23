@@ -5,8 +5,6 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.ServiceDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
-import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientSettingService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
@@ -22,14 +20,15 @@ import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.spring.annotation.UIScope;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@RequiredArgsConstructor
 @UIScope
 @PreserveOnRefresh
 @Route(value = "service", layout = MainLayout.class)
@@ -47,10 +46,7 @@ public class ServiceListView extends VerticalLayout {
     private ServiceForm serviceForm;
     private UI ui;
 
-    public ServiceListView(@Autowired AsyncRestClientSettingService asyncRestClientSettingService) {
-
-        this.asyncRestClientSettingService = asyncRestClientSettingService;
-
+    private void renderLayout() {
         addClassName("list-view");
         setSizeFull();
 
@@ -58,7 +54,6 @@ public class ServiceListView extends VerticalLayout {
         configureForm();
 
         add(getToolbar(), getContent());
-
         closeEditor();
     }
 
@@ -87,7 +82,7 @@ public class ServiceListView extends VerticalLayout {
 
     private HorizontalLayout getToolbar() {
         Button addServiceButton = new Button("Add Service");
-        addServiceButton.addClickListener(buttonClickEvent -> addService());
+        addServiceButton.addClickListener(_ -> addService());
         HorizontalLayout toolbar = new HorizontalLayout( addServiceButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -122,7 +117,7 @@ public class ServiceListView extends VerticalLayout {
                 log.error("Broadcast Handler Error", e);
             }
         });
-
+        renderLayout();
         this.fetchServices();
     }
 

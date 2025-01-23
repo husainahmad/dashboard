@@ -5,9 +5,7 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -23,10 +21,11 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
+@RequiredArgsConstructor
 @Route(value = "chain", layout = MainLayout.class)
 @PageTitle(MainLayout.TITLE)
 @Slf4j
@@ -42,12 +41,9 @@ public class ChainListView extends VerticalLayout  {
     private final TextField filterText = new TextField();
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
-    private static final int BRANDID = 1;
+    private static final int BRAND_ID = 1;
 
-    public ChainListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                         @Autowired RestClientOrganizationService restClientOrganizationService) {
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
-        this.restClientOrganizationService = restClientOrganizationService;
+    private void renderLayout() {
         addClassName("list-view");
         setSizeFull();
         configureGrid();
@@ -75,6 +71,8 @@ public class ChainListView extends VerticalLayout  {
                 log.error("Broadcast Handler Error", e);
             }
         });
+
+        renderLayout();
     }
 
     @Override
@@ -111,7 +109,7 @@ public class ChainListView extends VerticalLayout  {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addChainButton = new Button("Add Chain");
-        addChainButton.addClickListener(buttonClickEvent -> addChain());
+        addChainButton.addClickListener(_ -> addChain());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -119,7 +117,7 @@ public class ChainListView extends VerticalLayout  {
 
     private void fetchChains() {
         asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result ->
-                ui.access(()-> chainDtoGrid.setItems(result)), BRANDID);
+                ui.access(()-> chainDtoGrid.setItems(result)), BRAND_ID);
     }
 
     public void editChain(ChainDto chainDto, FormAction formAction) {

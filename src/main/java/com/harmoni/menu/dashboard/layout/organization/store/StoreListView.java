@@ -5,9 +5,7 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -23,10 +21,11 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
+@RequiredArgsConstructor
 @Route(value = "store", layout = MainLayout.class)
 @PageTitle("Store | POSHarmoni")
 @Slf4j
@@ -40,19 +39,14 @@ public class StoreListView extends VerticalLayout {
     private UI ui;
     private final RestClientOrganizationService restClientOrganizationService;
     private StoreForm storeForm;
-    public StoreListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                         @Autowired RestClientOrganizationService restClientOrganizationService) {
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
-        this.restClientOrganizationService = restClientOrganizationService;
+
+    private void renderLayout() {
         addClassName("list-view");
         setSizeFull();
         configureGrid();
         configureForm();
-
         add(getToolbar(), getContent());
         closeEditor();
-
-        fetchStores();
     }
 
     private void closeEditor() {
@@ -81,6 +75,8 @@ public class StoreListView extends VerticalLayout {
                 log.error("Broadcast Handler Error", e);
             }
         });
+        renderLayout();
+        fetchStores();
     }
 
     @Override
@@ -134,7 +130,7 @@ public class StoreListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addChainButton = new Button("Add Store");
-        addChainButton.addClickListener(buttonClickEvent -> addStore());
+        addChainButton.addClickListener(_ -> addStore());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;

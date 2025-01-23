@@ -30,15 +30,16 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Route(value = "tier-menu", layout = MainLayout.class)
 @PageTitle("Tier | POSHarmoni")
 @Slf4j
@@ -65,13 +66,7 @@ public class TierMenuListView extends VerticalLayout {
     private Button[] buttonDeletes;
     private final Map<String, Checkbox> checkBoxes = new HashMap<>();
 
-    public TierMenuListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                            @Autowired RestClientOrganizationService restClientOrganizationService,
-                            @Autowired AsyncRestClientMenuService asyncRestClientMenuService) {
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
-        this.restClientOrganizationService = restClientOrganizationService;
-        this.asyncRestClientMenuService = asyncRestClientMenuService;
-
+    private void renderLayout() {
         brandDto.setId(TEMP_BRAND_ID);
         addClassName("list-view");
         setSizeFull();
@@ -79,7 +74,6 @@ public class TierMenuListView extends VerticalLayout {
 
         configureForm();
         add(getToolbar(), getContent());
-
         closeEditor();
     }
 
@@ -91,8 +85,8 @@ public class TierMenuListView extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         ui = attachEvent.getUI();
+        renderLayout();
         broadcasterRegistration = Broadcaster.register(message -> {
-
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
                 if (ObjectUtil.isNotEmpty(broadcastMessage)
@@ -107,9 +101,7 @@ public class TierMenuListView extends VerticalLayout {
                 log.error("Broadcast Handler Error", e);
             }
         });
-
         fetchBrands();
-        fetchTier();
     }
 
     @Override

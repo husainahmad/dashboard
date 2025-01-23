@@ -24,15 +24,16 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Route(value = "tier-service", layout = MainLayout.class)
 @PageTitle("Tier | POSHarmoni")
 @Slf4j
@@ -57,11 +58,7 @@ public class TierServiceListView extends VerticalLayout {
     private Button[] buttonDeletes;
     private final Map<String, Checkbox> checkBoxes = new HashMap<>();
 
-    public TierServiceListView(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                               @Autowired RestClientOrganizationService restClientOrganizationService) {
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
-        this.restClientOrganizationService = restClientOrganizationService;
-
+    private void renderLayout() {
         brandDto.setId(TEMP_BRAND_ID);
         addClassName("list-view");
         setSizeFull();
@@ -100,6 +97,7 @@ public class TierServiceListView extends VerticalLayout {
                 log.error("Broadcast Handler Error", e);
             }
         });
+        renderLayout();
     }
 
     @Override

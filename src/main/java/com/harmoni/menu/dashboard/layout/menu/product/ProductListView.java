@@ -52,25 +52,24 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
     Registration broadcasterRegistration;
 
-    private final TreeGrid<ProductTreeItem> productDtoGrid = new TreeGrid<>(ProductTreeItem.class);
+    private TreeGrid<ProductTreeItem> productDtoGrid = new TreeGrid<>(ProductTreeItem.class);
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
 
-    private final TextField filterText = new TextField();
-    private final ComboBox<TierDto> tierDtoComboBox = new ComboBox<>();
-    private final ComboBox<BrandDto> brandDtoComboBox = new ComboBox<>();
-    private final ComboBox<CategoryDto> categoryDtoComboBox = new ComboBox<>();
+    private TextField filterText = new TextField();
+    private ComboBox<TierDto> tierDtoComboBox = new ComboBox<>();
+    private ComboBox<BrandDto> brandDtoComboBox = new ComboBox<>();
+    private ComboBox<CategoryDto> categoryDtoComboBox = new ComboBox<>();
     private transient List<CategoryDto> categoryDtos = new ArrayList<>();
     private UI ui;
     private static final Integer TEMP_BRAND_ID = 1;
     private transient List<BrandDto> brandDtos = new ArrayList<>();
     private transient List<TierDto> tierDtos = new ArrayList<>();
     @Getter
-    private Tab defaultTab;
+    private final Tab defaultTab;
     private int totalPages;
     private int currentPage = 1;
-    private int pageSize = 15;
 
     private Text pageInfoText;
     private transient ProductTreeItem expandTreeItem;
@@ -81,7 +80,9 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         this.asyncRestClientMenuService = asyncRestClientMenuService;
         this.restClientMenuService = restClientMenuService;
         this.defaultTab = defaultTab;
+    }
 
+    private void renderLayout() {
         addClassName("list-view");
 
         brandDtos.add(getTempBrandDto());
@@ -232,7 +233,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     protected void onAttach(AttachEvent attachEvent) {
         ui = attachEvent.getUI();
         broadcasterRegistration = Broadcaster.register(this::acceptNotification);
-
+        renderLayout();
         brandDtoComboBox.setValue(brandDtos.getFirst());
         categoryDtoComboBox.setValue(categoryDtos.getFirst());
         tierDtoComboBox.setValue(tierDtos.getFirst());
@@ -298,6 +299,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     }
 
     private void fetchProducts(Integer categoryId, Integer brandId, String searchProduct) {
+        int pageSize = 15;
         asyncRestClientMenuService.getAllProductCategoryBrandAsync(result -> {
             if (ObjectUtils.isNotEmpty(result.get("data"))
                 && result.get("data") instanceof List<?> dataList && !dataList.isEmpty()) {
