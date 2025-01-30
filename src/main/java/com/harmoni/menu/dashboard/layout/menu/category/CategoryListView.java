@@ -59,8 +59,11 @@ public class CategoryListView extends VerticalLayout {
         categoryDtoGrid.addColumn("brandDto.name").setHeader("Brand Name");
 
         categoryDtoGrid.getColumns().forEach(categoryDtoColumn -> categoryDtoColumn.setAutoWidth(true));
-        categoryDtoGrid.asSingleSelect().addValueChangeListener(valueChangeEvent ->
-                editCategory(valueChangeEvent.getValue(), FormAction.EDIT));
+        categoryDtoGrid.addComponentColumn(categoryDto -> {
+            Button buttonEdit = new Button("Edit");
+            buttonEdit.addClickListener(_ -> editCategory(categoryDto, FormAction.EDIT));
+            return buttonEdit;
+        });
     }
 
     private void configureForm() {

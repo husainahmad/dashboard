@@ -1,13 +1,13 @@
 package com.harmoni.menu.dashboard.layout.navigation;
 
 import com.harmoni.menu.dashboard.layout.menu.product.ProductLayout;
+import com.harmoni.menu.dashboard.layout.organization.store.StoreLayout;
 import com.harmoni.menu.dashboard.layout.organization.tier.menu.TierMenuListView;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceListView;
 import com.harmoni.menu.dashboard.layout.setting.service.ServiceListView;
 import com.harmoni.menu.dashboard.layout.organization.brand.BrandListView;
 import com.harmoni.menu.dashboard.layout.menu.category.CategoryListView;
 import com.harmoni.menu.dashboard.layout.organization.chain.ChainListView;
-import com.harmoni.menu.dashboard.layout.organization.store.StoreListView;
 import com.harmoni.menu.dashboard.layout.organization.tier.price.TierPriceListView;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.orderedlayout.Scroller;
@@ -37,7 +37,7 @@ public class SideNavMenu extends Div {
         sideNavTier.addItem(new SideNavItem("Menu", TierMenuListView.class));
 
         sideNavAdmin.addItem(sideNavTier);
-        sideNavAdmin.addItem(new SideNavItem("Store", StoreListView.class));
+        sideNavAdmin.addItem(new SideNavItem("Store", StoreLayout.class));
 
         SideNav sideNavSetting = new SideNav();
         sideNavSetting.setLabel("Setting");

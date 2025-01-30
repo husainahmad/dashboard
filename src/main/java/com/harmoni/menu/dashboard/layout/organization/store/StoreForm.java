@@ -20,6 +20,8 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.tabs.Tab;
+import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
@@ -57,12 +59,17 @@ public class StoreForm extends FormLayout  {
     private transient StoreDto storeDto;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private static final int TEMP_BRAND_ID = 1;
+    private final Tab storeTab;
+
     public StoreForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                     @Autowired RestClientOrganizationService restClientOrganizationService) {
+                     @Autowired RestClientOrganizationService restClientOrganizationService, Tab storeTab) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
-        addValidation();
+        this.storeTab = storeTab;
+    }
 
+    private void renderLayout() {
+        setSizeFull();
         chainDtoComboBox.setItemLabelGenerator(ChainDto::getName);
         tierBox.setItemLabelGenerator(TierDto::getName);
         add(chainDtoComboBox);
@@ -72,7 +79,9 @@ public class StoreForm extends FormLayout  {
         add(addressArea);
 
         add(createButtonsLayout());
+        addValidation();
         binder.bindInstanceFields(this);
+        setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1, ResponsiveStep.LabelsPosition.ASIDE));
     }
 
     @Override
@@ -84,20 +93,24 @@ public class StoreForm extends FormLayout  {
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
                         && broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS)) {
                         fetchChains();
-                        hideForm();
                     }
 
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
         });
-
+        renderLayout();
         fetchChains();
         fetchTiers();
     }
 
-    public void hideForm() {
-        ui.access(()-> this.setVisible(false));
+    public void removeFromSheet() {
+        getUi().access(() -> {
+            if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+                return;
+            }
+            tabSheet.remove(storeTab);
+        });
     }
 
     @Override
@@ -195,7 +208,7 @@ public class StoreForm extends FormLayout  {
                 new StoreSaveEventListener(this, restClientOrganizationService));
         deleteButton.addClickListener(
                 new StoreDeleteEventListener(this, restClientOrganizationService));
-        closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
+        closeButton.addClickListener(_ -> removeFromSheet());
 
         return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
     }

@@ -67,9 +67,6 @@ public class TierServiceListView extends VerticalLayout {
         configureForm();
         add(getToolbar(), getContent());
 
-        fetchBrands();
-        fetchService();
-
         closeEditor();
     }
 
@@ -98,6 +95,8 @@ public class TierServiceListView extends VerticalLayout {
             }
         });
         renderLayout();
+        fetchBrands();
+        fetchService();
     }
 
     @Override

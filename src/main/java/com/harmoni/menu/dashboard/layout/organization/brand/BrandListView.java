@@ -69,8 +69,11 @@ public class BrandListView extends VerticalLayout {
         brandDtoGrid.addColumn(BrandDto::getName).setHeader("Name");
 
         brandDtoGrid.getColumns().forEach(brandDtoColumn -> brandDtoColumn.setAutoWidth(true));
-        brandDtoGrid.asSingleSelect().addValueChangeListener(valueChangeEvent ->
-                editBrand(valueChangeEvent.getValue(), FormAction.EDIT));
+        brandDtoGrid.addComponentColumn(brandDto -> {
+            Button buttonEdit = new Button("Edit");
+            buttonEdit.addClickListener(_ -> editBrand(brandDto, FormAction.EDIT));
+            return buttonEdit;
+        });
     }
 
     private HorizontalLayout getToolbar() {

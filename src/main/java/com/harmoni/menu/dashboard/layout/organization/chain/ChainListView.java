@@ -85,8 +85,11 @@ public class ChainListView extends VerticalLayout  {
         chainDtoGrid.setSizeFull();
         chainDtoGrid.setColumns("name");
         chainDtoGrid.getColumns().forEach(chainDtoColumn -> chainDtoColumn.setAutoWidth(true));
-        chainDtoGrid.asSingleSelect().addValueChangeListener(valueChangeEvent ->
-                editChain(valueChangeEvent.getValue(), FormAction.EDIT));
+        chainDtoGrid.addComponentColumn(chainDto -> {
+            Button buttonEdit = new Button("Edit");
+            buttonEdit.addClickListener(_ -> editChain(chainDto, FormAction.EDIT));
+            return buttonEdit;
+        });
     }
 
     private void configureForm() {

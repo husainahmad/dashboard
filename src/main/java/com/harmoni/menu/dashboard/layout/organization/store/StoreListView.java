@@ -5,7 +5,6 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
-import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -16,6 +15,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tabs.Tab;
+import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
@@ -26,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 @RequiredArgsConstructor
-@Route(value = "store", layout = MainLayout.class)
+@Route(value = "store-list", layout = MainLayout.class)
 @PageTitle("Store | POSHarmoni")
 @Slf4j
 public class StoreListView extends VerticalLayout {
@@ -35,23 +36,20 @@ public class StoreListView extends VerticalLayout {
     Registration broadcasterRegistration;
     private final Grid<StoreDto> storeDtoGrid = new Grid<>(StoreDto.class);
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
+    private final RestClientOrganizationService restClientOrganizationService;
+
     private final TextField filterText = new TextField();
     private UI ui;
-    private final RestClientOrganizationService restClientOrganizationService;
-    private StoreForm storeForm;
+
+    private static Button applyButtonEdit(StoreDto storeDto) {
+        return new Button("Edit");
+    }
 
     private void renderLayout() {
         addClassName("list-view");
         setSizeFull();
         configureGrid();
-        configureForm();
         add(getToolbar(), getContent());
-        closeEditor();
-    }
-
-    private void closeEditor() {
-        storeForm.setVisible(false);
-        removeClassName(EDITING);
     }
 
     @Override
@@ -65,10 +63,6 @@ public class StoreListView extends VerticalLayout {
                         && (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
                     broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS))) {
                         fetchStores();
-                        ui.access(()->{
-                            storeForm.setVisible(false);
-                            removeClassName(EDITING);
-                        });
                     }
 
             } catch (JsonProcessingException e) {
@@ -94,31 +88,12 @@ public class StoreListView extends VerticalLayout {
         storeDtoGrid.addColumn("tierDto.name").setHeader("Tier");
 
         storeDtoGrid.getColumns().forEach(storeDtoColumn -> storeDtoColumn.setAutoWidth(true));
-        storeDtoGrid.asSingleSelect().addValueChangeListener(valueChangeEvent ->
-                editStore(valueChangeEvent.getValue(), FormAction.EDIT));
-    }
-
-    private void editStore(StoreDto storeDto, FormAction formAction) {
-        if (storeDto == null) {
-            closeEditor();
-        } else {
-            storeForm.setStoreDto(storeDto);
-            storeForm.restructureButton(formAction);
-            storeForm.setVisible(true);
-            addClassName(EDITING);
-        }
-    }
-
-    private void configureForm() {
-        storeForm = new StoreForm(this.asyncRestClientOrganizationService,
-                                this.restClientOrganizationService);
-        storeForm.setWidth("25em");
+        storeDtoGrid.addComponentColumn(StoreListView::applyButtonEdit);
     }
 
     private HorizontalLayout getContent() {
-        HorizontalLayout content = new HorizontalLayout(storeDtoGrid, storeForm);
-        content.setFlexGrow(2, storeDtoGrid);
-        content.setFlexGrow(1, storeForm);
+        HorizontalLayout content = new HorizontalLayout(storeDtoGrid);
+        content.setFlexGrow(1, storeDtoGrid);
         content.addClassNames("content");
         content.setSizeFull();
         return content;
@@ -138,7 +113,16 @@ public class StoreListView extends VerticalLayout {
 
     private void addStore() {
         storeDtoGrid.asSingleSelect().clear();
-        editStore(new StoreDto(), FormAction.CREATE);
+
+        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+            return;
+        }
+        Tab tabNewStore = new Tab();
+        tabNewStore.setLabel("New Store");
+        tabSheet.add(tabNewStore, new StoreForm(this.asyncRestClientOrganizationService,
+                this.restClientOrganizationService, tabNewStore));
+        tabSheet.setSizeFull();
+        tabSheet.setSelectedTab(tabNewStore);
     }
 
     private void fetchStores() {

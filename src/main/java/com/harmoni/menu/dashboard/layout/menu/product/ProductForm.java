@@ -13,7 +13,6 @@ import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -48,7 +47,7 @@ public class ProductForm extends ProductFormLayout {
     @Getter
     private final TreeGrid<SkuTreeItem> skuDtoGrid = new TreeGrid<>(SkuTreeItem.class);
     private final TreeData<SkuTreeItem> skuTreeItemTreeData = new TreeData<>();
-    private final TreeDataProvider<SkuTreeItem> skuDataProvider;
+    private TreeDataProvider<SkuTreeItem> skuDataProvider;
 
     @Getter
     ComboBox<CategoryDto> categoryBox = new ComboBox<>();
@@ -64,11 +63,12 @@ public class ProductForm extends ProductFormLayout {
     private Map<String, String> skuDescs = new HashMap<>();
     @Getter
     private Map<String, Double> skuTierPrices = new HashMap<>();
-    private RestClientMenuService restClientMenuService;
+    private final RestClientMenuService restClientMenuService;
     private final Tab productTab;
     private final ProductTreeItem productTreeItem;
     @Getter
-    private ProductDto productDto;
+    private transient ProductDto productDto;
+    private final transient List<CategoryDto> categoryDtos;
 
     public ProductForm(RestClientMenuService restClientMenuService,
                        BrandDto brandDto,
@@ -77,9 +77,13 @@ public class ProductForm extends ProductFormLayout {
 
         this.restClientMenuService = restClientMenuService;
         this.brandDto = brandDto;
+        this.categoryDtos = categoryDtos;
         this.tierDtos = tierDtos;
         this.productTab = productTab;
         this.productTreeItem = productTreeItem;
+    }
+
+    private void renderLayout() {
 
         categoryBox.setLabel("Category");
         categoryBox.setItems(categoryDtos);
@@ -103,6 +107,7 @@ public class ProductForm extends ProductFormLayout {
         setSizeFull();
 
         skuDataProvider = new TreeDataProvider<>(skuTreeItemTreeData);
+
         skuDtoGrid.setDataProvider(skuDataProvider);
         skuDtoGrid.setSelectionMode(Grid.SelectionMode.NONE);
 
@@ -115,7 +120,7 @@ public class ProductForm extends ProductFormLayout {
         add(getToolbar(addButton), getContent(skuDtoGrid), getButtonBar());
         addButton.addClickListener(this::onButtonAddEvent);
 
-        setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1, ResponsiveStep.LabelsPosition.ASIDE));
+        setResponsiveSteps(new ResponsiveStep("0", 1, ResponsiveStep.LabelsPosition.ASIDE));
 
         binder.bindInstanceFields(this);
     }
@@ -123,6 +128,7 @@ public class ProductForm extends ProductFormLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        renderLayout();
         fetchProduct();
     }
 

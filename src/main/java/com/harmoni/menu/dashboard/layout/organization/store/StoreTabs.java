@@ -1,29 +1,28 @@
-package com.harmoni.menu.dashboard.layout.menu.product;
+package com.harmoni.menu.dashboard.layout.organization.store;
 
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
-import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.Route;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
-@Route("product-tabs")
-public class ProductTabs extends VerticalLayout {
+@Route("store-tabs")
+public class StoreTabs extends VerticalLayout {
 
-    private final AsyncRestClientMenuService asyncRestClientMenuService;
-    private final RestClientMenuService restClientMenuService;
+    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
+    private final RestClientOrganizationService restClientOrganizationService;
 
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
         browseTab.setLabel("Browse");
-        tabSheet.add(browseTab, new ProductListView(asyncRestClientMenuService, restClientMenuService, browseTab));
+        tabSheet.add(browseTab, new StoreListView(asyncRestClientOrganizationService, restClientOrganizationService));
         tabSheet.setSizeFull();
         add(tabSheet);
         setSizeFull();
