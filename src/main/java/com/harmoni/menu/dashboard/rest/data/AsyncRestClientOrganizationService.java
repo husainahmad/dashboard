@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @RequiredArgsConstructor
@@ -100,8 +101,17 @@ public class AsyncRestClientOrganizationService implements Serializable {
         }, callback);
     }
 
-    public void getAllStoreAsync(AsyncRestCallback<List<StoreDto>> callback) {
+    public void getAllStoreAsync(AsyncRestCallback<Map<String, Object>> callback, Long chainId, int page, int size, String search) {
         String uri = menuProperties.getUrl().getStore();
+        uri = uri
+                .concat("?chainId=").concat(String.valueOf(chainId))
+                .concat("&page=")
+                .concat(String.valueOf(page))
+                .concat("&size=")
+                .concat(String.valueOf(size))
+                .concat("&search=")
+                .concat(search);
+
         makeAsyncRequest(uri, new TypeReference<>() {
         }, callback);
     }

@@ -7,7 +7,6 @@ import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.dto.TierTypeDto;
-import com.harmoni.menu.dashboard.event.store.StoreDeleteEventListener;
 import com.harmoni.menu.dashboard.event.store.StoreSaveEventListener;
 import com.harmoni.menu.dashboard.event.store.StoreUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
@@ -29,12 +28,13 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Objects;
 
+@RequiredArgsConstructor
 @Route("store-form")
 @Slf4j
 public class StoreForm extends FormLayout  {
@@ -48,24 +48,18 @@ public class StoreForm extends FormLayout  {
     ComboBox<TierDto> tierMenuBox = new ComboBox<>("Menu");
     ComboBox<TierDto> tierServiceBox = new ComboBox<>("Service");
 
-    private final Button saveButton = new Button("Save");
-    private final Button  deleteButton = new Button("Delete");
-    private final Button  closeButton = new Button("Cancel");
-    private final Button  updateButton = new Button("Update");
-    private final RestClientOrganizationService restClientOrganizationService;
+    Button saveButton = new Button("Save");
+    Button closeButton = new Button("Cancel");
+    Button updateButton = new Button("Update");
 
-    private UI ui;
-    private transient StoreDto storeDto = new StoreDto();
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
-    private static final int TEMP_BRAND_ID = 1;
+    private final RestClientOrganizationService restClientOrganizationService;
     private final Tab storeTab;
+    private final FormAction formAction;
 
-    public StoreForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                     @Autowired RestClientOrganizationService restClientOrganizationService, Tab storeTab) {
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
-        this.restClientOrganizationService = restClientOrganizationService;
-        this.storeTab = storeTab;
-    }
+    UI ui;
+    transient StoreDto storeDto = new StoreDto();
+    static final int TEMP_BRAND_ID = 1;
 
     private void renderLayout() {
         setSizeFull();
@@ -93,6 +87,7 @@ public class StoreForm extends FormLayout  {
         add(accordion);
 
         add(createButtonsLayout());
+        restructureButton();
         addValidation();
         binder.bindInstanceFields(this);
         setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1, ResponsiveStep.LabelsPosition.ASIDE));
@@ -136,7 +131,7 @@ public class StoreForm extends FormLayout  {
     }
 
     private void addValidation() {
-        chainDtoComboBox.addValueChangeListener(changeEvent -> binder.validate());
+        chainDtoComboBox.addValueChangeListener(_ -> binder.validate());
         binder.forField(chainDtoComboBox)
                 .withValidator(value -> value.getId() > 0, "Chain not allow to be empty"
                 ).bind(StoreDto::getChainDto, StoreDto::setChainDto);
@@ -186,7 +181,6 @@ public class StoreForm extends FormLayout  {
                 ui.access(()-> chainDtoComboBox.setItems(result));
             }
         }, TEMP_BRAND_ID);
-
     }
 
     private void fetchTierPrices() {
@@ -225,7 +219,6 @@ public class StoreForm extends FormLayout  {
     private HorizontalLayout createButtonsLayout() {
 
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         saveButton.addClickShortcut(Key.ENTER);
@@ -234,27 +227,22 @@ public class StoreForm extends FormLayout  {
         closeButton.addClickShortcut(Key.ESCAPE);
 
         updateButton.addClickListener(
-                new StoreUpdateEventListener(getStoreDto(), restClientOrganizationService));
-
+                new StoreUpdateEventListener(this, restClientOrganizationService));
         saveButton.addClickListener(
-                new StoreSaveEventListener(getStoreDto(), restClientOrganizationService));
-        deleteButton.addClickListener(
-                new StoreDeleteEventListener(getStoreDto(), restClientOrganizationService));
+                new StoreSaveEventListener(this, restClientOrganizationService));
         closeButton.addClickListener(_ -> removeFromSheet());
 
-        return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
+        return new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
     }
 
-    public void restructureButton(FormAction formAction) {
+    public void restructureButton() {
         if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
             saveButton.setVisible(true);
             updateButton.setVisible(false);
-            deleteButton.setVisible(false);
             closeButton.setVisible(true);
         } else if (formAction == FormAction.EDIT) {
             saveButton.setVisible(false);
             updateButton.setVisible(true);
-            deleteButton.setVisible(true);
             closeButton.setVisible(true);
         }
     }

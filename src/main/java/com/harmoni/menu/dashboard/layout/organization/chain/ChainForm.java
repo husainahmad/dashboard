@@ -24,11 +24,13 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Objects;
 
+@RequiredArgsConstructor
 @Route("chain-form")
 @Slf4j
 public class ChainForm extends FormLayout  {
@@ -39,23 +41,24 @@ public class ChainForm extends FormLayout  {
     ComboBox<BrandDto> brandComboBox = new ComboBox<>("Brand");
     @Getter
     TextField chainNameField = new TextField("Chain name");
-    private final Button saveButton = new Button("Save");
-    private final Button  deleteButton = new Button("Delete");
-    private final Button  closeButton = new Button("Cancel");
-    private final Button  updateButton = new Button("Update");
+
+    Button saveButton = new Button("Save");
+    Button deleteButton = new Button("Delete");
+    Button closeButton = new Button("Cancel");
+    Button updateButton = new Button("Update");
+
     private final RestClientOrganizationService restClientOrganizationService;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
 
     @Getter
-    private UI ui;
+    UI ui;
     @Getter
-    private transient ChainDto chainDto;
+    transient ChainDto chainDto;
 
-    public ChainForm(RestClientOrganizationService restClientOrganizationService,
-                     AsyncRestClientOrganizationService asyncRestClientOrganizationService) {
-        this.restClientOrganizationService = restClientOrganizationService;
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
-
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        this.ui = attachEvent.getUI();
+        broadcasterRegistration = Broadcaster.register(this::receiptBroadcast);
         addValidation();
         brandComboBox.setItemLabelGenerator(BrandDto::getName);
 
@@ -63,14 +66,7 @@ public class ChainForm extends FormLayout  {
         add(chainNameField);
         add(createButtonsLayout());
         binder.bindInstanceFields(this);
-
         fetchBrands();
-    }
-
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        this.ui = attachEvent.getUI();
-        broadcasterRegistration = Broadcaster.register(this::receiptBroadcast);
     }
 
     @Override
@@ -93,7 +89,7 @@ public class ChainForm extends FormLayout  {
 
     private void addValidation() {
         chainNameField.addValueChangeListener(
-                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>) changeEvent ->
+                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>) _ ->
                         binder.validate());
         binder.forField(brandComboBox)
                 .withValidator(value -> value.getId()>0,
@@ -133,7 +129,7 @@ public class ChainForm extends FormLayout  {
         updateButton.addClickListener(new ChainUpdateEventListener(this, restClientOrganizationService));
         saveButton.addClickListener(new ChainSaveEventListener(this, restClientOrganizationService));
         deleteButton.addClickListener(new ChainDeleteEventListener(this, restClientOrganizationService));
-        closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
+        closeButton.addClickListener(_ -> this.setVisible(false));
 
         return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
     }

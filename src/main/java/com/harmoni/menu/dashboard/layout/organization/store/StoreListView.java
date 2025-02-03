@@ -6,15 +6,14 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.event.store.StoreDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -28,33 +27,38 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RequiredArgsConstructor
 @Route(value = "store-list", layout = MainLayout.class)
 @PageTitle("Store | POSHarmoni")
 @Slf4j
 public class StoreListView extends VerticalLayout {
 
-    private static final String EDITING = "editing";
     Registration broadcasterRegistration;
     private final Grid<StoreDto> storeDtoGrid = new Grid<>(StoreDto.class);
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
 
-    private final TextField filterText = new TextField();
-    private UI ui;
+    TextField filterText = new TextField();
+    Text pageInfoText;
+
+    UI ui;
+    int totalPages;
+    int currentPage = 1;
 
     private void renderLayout() {
         addClassName("list-view");
         setSizeFull();
         configureGrid();
-        add(getToolbar(), getContent());
+        add(getToolbar(), getContent(), getPaginationFooter());
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         ui = attachEvent.getUI();
         broadcasterRegistration = Broadcaster.register(message -> {
-
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
@@ -83,22 +87,21 @@ public class StoreListView extends VerticalLayout {
         storeDtoGrid.addColumn(StoreDto::getName).setHeader("Name");
         storeDtoGrid.addColumn(StoreDto::getAddress).setHeader("Address");
         storeDtoGrid.addColumn("chainDto.name").setHeader("Chain");
-
+        storeDtoGrid.addComponentColumn(this::applyGroupButton).setHeader("Action");
         storeDtoGrid.getColumns().forEach(storeDtoColumn -> storeDtoColumn.setAutoWidth(true));
-        storeDtoGrid.addComponentColumn(StoreListView::applyButtonEdit);
-        storeDtoGrid.addComponentColumn(this::applyButtonDelete);
     }
 
-    private static Component applyButtonEdit(StoreDto storeDto) {
+    private Component applyGroupButton(StoreDto storeDto) {
+        HorizontalLayout horizontalLayout = new HorizontalLayout();
+
         Button editButton = new Button("Edit");
-        return editButton;
-    }
+        horizontalLayout.add(editButton);
 
-    private Component applyButtonDelete(StoreDto storeDto) {
         Button deleteButton = new Button("Delete");
-        deleteButton.addClickListener(new StoreDeleteEventListener(storeDto,
-                this.restClientOrganizationService));
-        return deleteButton;
+        deleteButton.addClickListener(new StoreDeleteEventListener(storeDto, this.restClientOrganizationService));
+        horizontalLayout.add(deleteButton);
+
+        return horizontalLayout;
     }
 
     private HorizontalLayout getContent() {
@@ -113,12 +116,47 @@ public class StoreListView extends VerticalLayout {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
+        filterText.addValueChangeListener(changeEvent -> {
+            if (!changeEvent.getOldValue().equals(changeEvent.getValue())) {
+                currentPage = 1;
+                fetchStores();
+            }
+        });
 
         Button addChainButton = new Button("Add Store");
         addChainButton.addClickListener(_ -> addStore());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
+    }
+
+    private HorizontalLayout getPaginationFooter() {
+        HorizontalLayout paginationFooter = new HorizontalLayout();
+        Button previousButton = new Button("Previous", _ -> {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchStores();
+            }
+        });
+        Button nextButton = new Button("Next", _ -> {
+            if (currentPage < totalPages) {
+                currentPage++;
+                fetchStores();
+            }
+        });
+        pageInfoText = new Text(getPaginationInfo());
+        paginationFooter.add(previousButton, pageInfoText, nextButton);
+        paginationFooter.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        paginationFooter.setWidthFull();
+        paginationFooter.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        return paginationFooter;
+    }
+
+    private String getPaginationInfo() {
+        return "Page "
+                .concat(String.valueOf(currentPage))
+                .concat(" of ")
+                .concat(String.valueOf(totalPages));
     }
 
     private void addStore() {
@@ -130,13 +168,29 @@ public class StoreListView extends VerticalLayout {
         Tab tabNewStore = new Tab();
         tabNewStore.setLabel("New Store");
         tabSheet.add(tabNewStore, new StoreForm(this.asyncRestClientOrganizationService,
-                this.restClientOrganizationService, tabNewStore));
+                this.restClientOrganizationService, tabNewStore, FormAction.CREATE));
         tabSheet.setSizeFull();
         tabSheet.setSelectedTab(tabNewStore);
     }
 
     private void fetchStores() {
-        asyncRestClientOrganizationService.getAllStoreAsync(result -> ui.access(()->
-                storeDtoGrid.setItems(result)));
+        int pageSize = 10;
+        asyncRestClientOrganizationService.getAllStoreAsync(result -> {
+            if (ObjectUtils.isNotEmpty(result.get("data"))
+                    && result.get("data") instanceof List<?> dataList && !dataList.isEmpty()) {
+                totalPages = Integer.parseInt(result.get("page") == null ? "0" :result.get("page").toString());
+
+                List<StoreDto> storeDtos = new ArrayList<>();
+                dataList.forEach(object -> {
+                    StoreDto storeDto = ObjectUtil.convertValueToObject(object, StoreDto.class);
+                    storeDtos.add(storeDto);
+                });
+
+                ui.access(()-> {
+                    storeDtoGrid.setItems(storeDtos);
+                    pageInfoText.setText(getPaginationInfo());
+                });
+            }
+        }, 24L, currentPage, pageSize, filterText.getValue());
     }
 }
