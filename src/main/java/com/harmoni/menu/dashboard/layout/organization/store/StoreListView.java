@@ -4,11 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.StoreDto;
+import com.harmoni.menu.dashboard.event.store.StoreDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -40,10 +42,6 @@ public class StoreListView extends VerticalLayout {
 
     private final TextField filterText = new TextField();
     private UI ui;
-
-    private static Button applyButtonEdit(StoreDto storeDto) {
-        return new Button("Edit");
-    }
 
     private void renderLayout() {
         addClassName("list-view");
@@ -85,10 +83,22 @@ public class StoreListView extends VerticalLayout {
         storeDtoGrid.addColumn(StoreDto::getName).setHeader("Name");
         storeDtoGrid.addColumn(StoreDto::getAddress).setHeader("Address");
         storeDtoGrid.addColumn("chainDto.name").setHeader("Chain");
-        storeDtoGrid.addColumn("tierDto.name").setHeader("Tier");
 
         storeDtoGrid.getColumns().forEach(storeDtoColumn -> storeDtoColumn.setAutoWidth(true));
         storeDtoGrid.addComponentColumn(StoreListView::applyButtonEdit);
+        storeDtoGrid.addComponentColumn(this::applyButtonDelete);
+    }
+
+    private static Component applyButtonEdit(StoreDto storeDto) {
+        Button editButton = new Button("Edit");
+        return editButton;
+    }
+
+    private Component applyButtonDelete(StoreDto storeDto) {
+        Button deleteButton = new Button("Delete");
+        deleteButton.addClickListener(new StoreDeleteEventListener(storeDto,
+                this.restClientOrganizationService));
+        return deleteButton;
     }
 
     private HorizontalLayout getContent() {

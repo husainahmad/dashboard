@@ -13,13 +13,13 @@ public class StoreDto {
     @NotEmpty
     private String name;
     @NotEmpty
-    private Integer tierId;
-    @JsonProperty("tier")
-    private TierDto tierDto;
-    @NotEmpty
     private Integer chainId;
     @JsonProperty("chain")
     private ChainDto chainDto;
+    private Integer tierMenuId;
+    private Integer tierPriceId;
+    private Integer tierServiceId;
+
     private String address;
     private Date createdAt;
     private Date updatedAt;

@@ -15,6 +15,8 @@ import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.accordion.Accordion;
+import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -27,7 +29,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,25 +39,23 @@ import java.util.Objects;
 @Slf4j
 public class StoreForm extends FormLayout  {
     Registration broadcasterRegistration;
-    @Getter
     BeanValidationBinder<StoreDto> binder = new BeanValidationBinder<>(StoreDto.class);
-    @Getter
+
     TextField storeNameField = new TextField("Store name");
-    @Getter
     TextArea addressArea = new TextArea("Address");
-    @Getter
     ComboBox<ChainDto> chainDtoComboBox = new ComboBox<>("Chain");
-    @Getter
-    ComboBox<TierDto> tierBox = new ComboBox<>("Tier");
+    ComboBox<TierDto> tierPriceBox = new ComboBox<>("Price");
+    ComboBox<TierDto> tierMenuBox = new ComboBox<>("Menu");
+    ComboBox<TierDto> tierServiceBox = new ComboBox<>("Service");
+
     private final Button saveButton = new Button("Save");
     private final Button  deleteButton = new Button("Delete");
     private final Button  closeButton = new Button("Cancel");
     private final Button  updateButton = new Button("Update");
     private final RestClientOrganizationService restClientOrganizationService;
-    @Getter
+
     private UI ui;
-    @Getter
-    private transient StoreDto storeDto;
+    private transient StoreDto storeDto = new StoreDto();
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private static final int TEMP_BRAND_ID = 1;
     private final Tab storeTab;
@@ -71,12 +70,27 @@ public class StoreForm extends FormLayout  {
     private void renderLayout() {
         setSizeFull();
         chainDtoComboBox.setItemLabelGenerator(ChainDto::getName);
-        tierBox.setItemLabelGenerator(TierDto::getName);
+        tierPriceBox.setItemLabelGenerator(TierDto::getName);
+        tierMenuBox.setItemLabelGenerator(TierDto::getName);
+        tierServiceBox.setItemLabelGenerator(TierDto::getName);
         add(chainDtoComboBox);
-        add(tierBox);
 
         add(storeNameField);
         add(addressArea);
+
+        Accordion accordion = new Accordion();
+        FormLayout tierFormLayout = new FormLayout();
+        tierFormLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1),
+                new ResponsiveStep("20cm", 2));
+        tierFormLayout.add(tierPriceBox);
+        tierFormLayout.add(tierMenuBox);
+        tierFormLayout.add(tierServiceBox);
+
+        AccordionPanel menuPanel = accordion.add("Tier", tierFormLayout);
+
+        menuPanel.setOpened(true);
+
+        add(accordion);
 
         add(createButtonsLayout());
         addValidation();
@@ -92,7 +106,7 @@ public class StoreForm extends FormLayout  {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
                         && broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS)) {
-                        fetchChains();
+                        removeFromSheet();
                     }
 
             } catch (JsonProcessingException e) {
@@ -101,11 +115,13 @@ public class StoreForm extends FormLayout  {
         });
         renderLayout();
         fetchChains();
-        fetchTiers();
+        fetchTierPrices();
+        fetchTierMenus();
+        fetchTierServices();
     }
 
     public void removeFromSheet() {
-        getUi().access(() -> {
+        this.ui.access(() -> {
             if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
                 return;
             }
@@ -125,21 +141,17 @@ public class StoreForm extends FormLayout  {
                 .withValidator(value -> value.getId() > 0, "Chain not allow to be empty"
                 ).bind(StoreDto::getChainDto, StoreDto::setChainDto);
 
-        tierBox.addValueChangeListener(changeEvent -> binder.validate());
+        tierPriceBox.addValueChangeListener(_ -> binder.validate());
 
         binder.forField(addressArea)
                 .withValidator(value -> !value.isEmpty(), "Address not allow to be empty"
                 ).bind(StoreDto::getAddress, StoreDto::setAddress);
 
-        tierBox.addValueChangeListener(changeEvent -> binder.validate());
-
-        binder.forField(tierBox)
-                .withValidator(value -> value.getId() > 0, "Tier not allow to be empty"
-                ).bind(StoreDto::getTierDto, StoreDto::setTierDto);
+        tierPriceBox.addValueChangeListener(_ -> binder.validate());
 
         storeNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>)
-                        changeEvent -> binder.validate());
+                        _ -> binder.validate());
         binder.forField(storeNameField)
                 .withValidator(value -> value.length()>2,
                         "Name must contain at least three characters")
@@ -158,6 +170,16 @@ public class StoreForm extends FormLayout  {
         binder.readBean(storeDto);
     }
 
+    public StoreDto getStoreDto() {
+        storeDto.setName(this.storeNameField.getValue());
+        storeDto.setChainId(this.chainDtoComboBox.getValue().getId());
+        storeDto.setTierPriceId(this.tierPriceBox.getValue().getId());
+        storeDto.setTierMenuId(this.tierMenuBox.getValue().getId());
+        storeDto.setTierServiceId(this.tierServiceBox.getValue().getId());
+        storeDto.setAddress(this.addressArea.getValue());
+        return storeDto;
+    }
+
     private void fetchChains() {
         asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result -> {
             if (ObjectUtils.isNotEmpty(ui)) {
@@ -167,9 +189,19 @@ public class StoreForm extends FormLayout  {
 
     }
 
-    private void fetchTiers() {
+    private void fetchTierPrices() {
         asyncRestClientOrganizationService.getAllTierByBrandAsync(result ->
-                ui.access(()-> tierBox.setItems(result)), TEMP_BRAND_ID, TierTypeDto.PRICE);
+                ui.access(()-> tierPriceBox.setItems(result)), TEMP_BRAND_ID, TierTypeDto.PRICE);
+    }
+
+    private void fetchTierMenus() {
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(result ->
+                ui.access(()-> tierMenuBox.setItems(result)), TEMP_BRAND_ID, TierTypeDto.MENU);
+    }
+
+    private void fetchTierServices() {
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(result ->
+                ui.access(()-> tierServiceBox.setItems(result)), TEMP_BRAND_ID, TierTypeDto.SERVICE);
     }
 
     private void fetchDetailChains(Long id) {
@@ -179,11 +211,11 @@ public class StoreForm extends FormLayout  {
 
     private void fetchDetailTierByBrand(Integer id) {
         asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> {
-            ui.access(()-> tierBox.setItems(result));
+            ui.access(()-> tierPriceBox.setItems(result));
 
             for (TierDto tierDto : result) {
-                if (tierDto.getId().longValue() == this.storeDto.getTierId().longValue()) {
-                    ui.access(()-> tierBox.setValue(tierDto));
+                if (tierDto.getId().longValue() == this.storeDto.getTierPriceId().longValue()) {
+                    ui.access(()-> tierPriceBox.setValue(tierDto));
                     break;
                 }
             }
@@ -202,12 +234,12 @@ public class StoreForm extends FormLayout  {
         closeButton.addClickShortcut(Key.ESCAPE);
 
         updateButton.addClickListener(
-                new StoreUpdateEventListener(this, restClientOrganizationService));
+                new StoreUpdateEventListener(getStoreDto(), restClientOrganizationService));
 
         saveButton.addClickListener(
-                new StoreSaveEventListener(this, restClientOrganizationService));
+                new StoreSaveEventListener(getStoreDto(), restClientOrganizationService));
         deleteButton.addClickListener(
-                new StoreDeleteEventListener(this, restClientOrganizationService));
+                new StoreDeleteEventListener(getStoreDto(), restClientOrganizationService));
         closeButton.addClickListener(_ -> removeFromSheet());
 
         return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
