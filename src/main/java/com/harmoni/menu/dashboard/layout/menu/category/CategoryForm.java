@@ -24,12 +24,13 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Objects;
 
+@RequiredArgsConstructor
 @Route("category-form")
 @Slf4j
 public class CategoryForm extends FormLayout  {
@@ -42,33 +43,17 @@ public class CategoryForm extends FormLayout  {
     TextArea categoryDescArea = new TextArea("Description");
     @Getter
     ComboBox<BrandDto> brandBox = new ComboBox<>("Brand");
-    private final Button saveButton = new Button("Save");
-    private final Button  deleteButton = new Button("Delete");
-    private final Button  closeButton = new Button("Cancel");
-    private final Button  updateButton = new Button("Update");
+    Button saveButton = new Button("Save");
+    Button deleteButton = new Button("Delete");
+    Button closeButton = new Button("Cancel");
+    Button updateButton = new Button("Update");
 
     @Getter
-    private UI ui;
+    UI ui;
     @Getter
-    private transient CategoryDto categoryDto;
+    transient CategoryDto categoryDto;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
-
-    public CategoryForm(@Autowired AsyncRestClientOrganizationService asyncRestClientOrganizationService,
-                        @Autowired RestClientMenuService restClientMenuService) {
-        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
-        this.restClientMenuService = restClientMenuService;
-        addValidation();
-
-        brandBox.setItemLabelGenerator(BrandDto::getName);
-
-        add(brandBox);
-        add(categoryNameField);
-        add(categoryDescArea);
-
-        add(createButtonsLayout());
-        binder.bindInstanceFields(this);
-    }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
@@ -86,6 +71,16 @@ public class CategoryForm extends FormLayout  {
                 log.error("Broadcast Handler Error", e);
             }
         });
+        addValidation();
+
+        brandBox.setItemLabelGenerator(BrandDto::getName);
+
+        add(brandBox);
+        add(categoryNameField);
+        add(categoryDescArea);
+
+        add(createButtonsLayout());
+        binder.bindInstanceFields(this);
         fetchBrands();
     }
 
@@ -109,13 +104,13 @@ public class CategoryForm extends FormLayout  {
 
     private void addValidation() {
 
-        brandBox.addValueChangeListener(changeEvent -> binder.validate());
+        brandBox.addValueChangeListener(_ -> binder.validate());
         binder.forField(brandBox)
                         .withValidator(value -> value.getId() > 0, "Brand not allow to be empty"
                         ).bind(CategoryDto::getBrandDto, CategoryDto::setBrandDto);
         categoryNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextField, String>>) changeEvent -> binder.validate());
+                        .ComponentValueChangeEvent<TextField, String>>) _ -> binder.validate());
 
         binder.forField(categoryNameField)
                 .withValidator(value -> value.length() > 2,
@@ -124,7 +119,7 @@ public class CategoryForm extends FormLayout  {
 
         categoryDescArea.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextArea, String>>) changeEvent -> binder.validate());
+                        .ComponentValueChangeEvent<TextArea, String>>) _ -> binder.validate());
         binder.forField(categoryDescArea)
                 .withValidator(value -> value.length() > 2,
                         "Name must contain at least three characters")
@@ -168,7 +163,7 @@ public class CategoryForm extends FormLayout  {
         deleteButton.addClickListener(
                 new CategoryDeleteEventListener(this, restClientMenuService));
 
-        closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
+        closeButton.addClickListener(_ -> this.setVisible(false));
 
         return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
     }

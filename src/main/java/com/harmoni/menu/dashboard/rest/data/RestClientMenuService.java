@@ -3,18 +3,23 @@ package com.harmoni.menu.dashboard.rest.data;
 import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
-import com.harmoni.menu.dashboard.layout.menu.product.dto.ProductFormDto;
+import com.harmoni.menu.dashboard.util.ImageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 
 @RequiredArgsConstructor
@@ -46,11 +51,6 @@ public class RestClientMenuService implements Serializable {
         return get(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getProduct(), productId));
     }
 
-    public Mono<RestAPIResponse> saveProductBulk(ProductFormDto productFormDto) {
-        return put(urlMenuProperties.getUrl().getProducts().getBulk().formatted(productFormDto.getId()),
-                Mono.just(productFormDto),  ProductFormDto.class);
-    }
-
     public Mono<RestAPIResponse> saveProduct(ProductDto productDto) {
         return create(urlMenuProperties.getUrl().getProduct(),
                 Mono.just(productDto),  ProductDto.class);
@@ -61,8 +61,10 @@ public class RestClientMenuService implements Serializable {
                 Mono.just(productDto),  ProductDto.class);
     }
 
-    public Mono<RestAPIResponse> deleteSku(SkuDto skuDto) {
-        return delete(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getSku(), skuDto.getId()));
+    public Mono<RestAPIResponse> uploadProduct(ImageDto imageDto) throws IOException {
+        File file = ImageUtil.convertImageDtoToFile(imageDto);
+        return upload(urlMenuProperties.getUrl().getProducts().getImages().getUpload(),
+                file);
     }
 
     public Mono<RestAPIResponse> deleteProduct(ProductDto productDto) {
@@ -121,6 +123,23 @@ public class RestClientMenuService implements Serializable {
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                         .bodyToMono(RestAPIResponse.class);
+    }
+
+    private Mono<RestAPIResponse> upload(String url, File file) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new FileSystemResource(file)); // "file" should match the expected request parameter name
+
+        return
+                webClient.post()
+                        .uri(url)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE)
+                        .bodyValue(body)
+                        .retrieve()
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
+                        .bodyToMono(RestAPIResponse.class);
+
     }
 
     private Mono<? extends Throwable> handleBadRequest(ClientResponse clientResponse) {

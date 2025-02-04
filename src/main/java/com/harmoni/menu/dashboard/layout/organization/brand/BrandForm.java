@@ -7,7 +7,6 @@ import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.event.brand.BrandDeleteEventListener;
 import com.harmoni.menu.dashboard.event.brand.BrandSaveEventListener;
 import com.harmoni.menu.dashboard.event.brand.BrandUpdateEventListener;
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -22,12 +21,13 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Objects;
 
+@RequiredArgsConstructor
 @Route("brand-form")
 @Slf4j
 public class BrandForm extends FormLayout  {
@@ -36,26 +36,15 @@ public class BrandForm extends FormLayout  {
     BeanValidationBinder<BrandDto> binder = new BeanValidationBinder<>(BrandDto.class);
     @Getter
     TextField brandNameField = new TextField("Brand name");
-    private final Button saveButton = new Button("Save");
-    private final Button  deleteButton = new Button("Delete");
-    private final Button  closeButton = new Button("Cancel");
-    private final Button  updateButton = new Button("Update");
+    Button saveButton = new Button("Save");
+    Button  deleteButton = new Button("Delete");
+    Button  closeButton = new Button("Cancel");
+    Button  updateButton = new Button("Update");
+    @Getter
+    UI ui;
+    @Getter
+    transient BrandDto brandDto;
     private final RestClientOrganizationService restClientOrganizationService;
-    @Getter
-    private UI ui;
-    @Getter
-    private transient BrandDto brandDto;
-
-    public BrandForm(@Autowired
-                     RestClientOrganizationService restClientOrganizationService) {
-        this.restClientOrganizationService = restClientOrganizationService;
-        addValidation();
-
-        add(brandNameField);
-
-        add(createButtonsLayout());
-        binder.bindInstanceFields(this);
-    }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
@@ -73,6 +62,12 @@ public class BrandForm extends FormLayout  {
                 log.error("Broadcast Handler Error", e);
             }
         });
+        addValidation();
+
+        add(brandNameField);
+
+        add(createButtonsLayout());
+        binder.bindInstanceFields(this);
     }
 
 
@@ -96,7 +91,7 @@ public class BrandForm extends FormLayout  {
 
     private void addValidation() {
         brandNameField.addValueChangeListener(
-                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>) changeEvent -> binder.validate());
+                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>) _ -> binder.validate());
 
         binder.forField(brandNameField)
                 .withValidator(value -> value.length()>2,
@@ -125,7 +120,7 @@ public class BrandForm extends FormLayout  {
 
         saveButton.addClickListener(
                 new BrandSaveEventListener(this, restClientOrganizationService));
-        closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
+        closeButton.addClickListener(_ -> this.setVisible(false));
 
         return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
     }

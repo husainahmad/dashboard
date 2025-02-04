@@ -9,4 +9,5 @@ public class ProductProperties implements Serializable {
     private String bulk;
     private String sku;
     private String category;
+    private ImageProperties images;
 }

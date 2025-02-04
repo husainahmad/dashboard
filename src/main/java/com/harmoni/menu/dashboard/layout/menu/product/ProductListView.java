@@ -31,17 +31,16 @@ import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.spring.annotation.UIScope;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @UIScope
 @PreserveOnRefresh
 @Route(value = "product-list", layout = MainLayout.class)
@@ -52,35 +51,27 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
     Registration broadcasterRegistration;
 
-    private TreeGrid<ProductTreeItem> productDtoGrid = new TreeGrid<>(ProductTreeItem.class);
+    TreeGrid<ProductTreeItem> productDtoGrid = new TreeGrid<>(ProductTreeItem.class);
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
-
-    private TextField filterText = new TextField();
-    private ComboBox<TierDto> tierDtoComboBox = new ComboBox<>();
-    private ComboBox<BrandDto> brandDtoComboBox = new ComboBox<>();
-    private ComboBox<CategoryDto> categoryDtoComboBox = new ComboBox<>();
-    private transient List<CategoryDto> categoryDtos = new ArrayList<>();
-    private UI ui;
-    private static final Integer TEMP_BRAND_ID = 1;
-    private transient List<BrandDto> brandDtos = new ArrayList<>();
-    private transient List<TierDto> tierDtos = new ArrayList<>();
     @Getter
     private final Tab defaultTab;
-    private int totalPages;
-    private int currentPage = 1;
 
-    private Text pageInfoText;
-    private transient ProductTreeItem expandTreeItem;
+    TextField filterText = new TextField();
+    ComboBox<TierDto> tierDtoComboBox = new ComboBox<>();
+    ComboBox<BrandDto> brandDtoComboBox = new ComboBox<>();
+    ComboBox<CategoryDto> categoryDtoComboBox = new ComboBox<>();
+    transient List<CategoryDto> categoryDtos = new ArrayList<>();
+    UI ui;
+    static final Integer TEMP_BRAND_ID = 1;
+    transient List<BrandDto> brandDtos = new ArrayList<>();
+    transient List<TierDto> tierDtos = new ArrayList<>();
+    int totalPages;
+    int currentPage = 1;
 
-    public ProductListView(@Autowired AsyncRestClientMenuService asyncRestClientMenuService,
-                           @Autowired RestClientMenuService restClientMenuService, Tab defaultTab) {
-
-        this.asyncRestClientMenuService = asyncRestClientMenuService;
-        this.restClientMenuService = restClientMenuService;
-        this.defaultTab = defaultTab;
-    }
+    Text pageInfoText;
+    transient ProductTreeItem expandTreeItem;
 
     private void renderLayout() {
         addClassName("list-view");

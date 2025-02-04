@@ -36,10 +36,10 @@ public class CategoryListView extends VerticalLayout {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
 
-    private final TextField filterText = new TextField();
-    private CategoryForm categoryForm;
+    TextField filterText = new TextField();
+    CategoryForm categoryForm;
 
-    private UI ui;
+    UI ui;
 
     private void renderLayout() {
         addClassName("list-view");

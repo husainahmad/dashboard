@@ -31,14 +31,14 @@ import java.util.List;
 @Slf4j
 public class ServiceListView extends VerticalLayout {
 
-    private static final String EDITING = "editing";
+    static final String EDITING = "editing";
     Registration broadcasterRegistration;
 
     private final TreeGrid<ServiceTreeItem> serviceTreeGrid = new TreeGrid<>(ServiceTreeItem.class);
     private final AsyncRestClientSettingService asyncRestClientSettingService;
 
-    private ServiceForm serviceForm;
-    private UI ui;
+    ServiceForm serviceForm;
+    UI ui;
 
     private void renderLayout() {
         addClassName("list-view");

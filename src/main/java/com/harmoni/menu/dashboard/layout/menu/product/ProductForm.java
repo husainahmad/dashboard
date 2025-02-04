@@ -28,12 +28,14 @@ import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@RequiredArgsConstructor
 @Route(value = "product-form", layout = MainLayout.class)
 @Slf4j
 public class ProductForm extends ProductFormLayout {
@@ -45,43 +47,32 @@ public class ProductForm extends ProductFormLayout {
     @Getter
     TextArea productDescTextArea = new TextArea();
     @Getter
-    private final TreeGrid<SkuTreeItem> skuDtoGrid = new TreeGrid<>(SkuTreeItem.class);
-    private final TreeData<SkuTreeItem> skuTreeItemTreeData = new TreeData<>();
-    private TreeDataProvider<SkuTreeItem> skuDataProvider;
+    TreeGrid<SkuTreeItem> skuDtoGrid = new TreeGrid<>(SkuTreeItem.class);
+    TreeData<SkuTreeItem> skuTreeItemTreeData = new TreeData<>();
+    TreeDataProvider<SkuTreeItem> skuDataProvider;
 
     @Getter
     ComboBox<CategoryDto> categoryBox = new ComboBox<>();
-    private final Button saveButton = new Button("Save");
-    private final Button updateButton = new Button("Update");
-    private final Button  closeButton = new Button("Cancel");
+    Button saveButton = new Button("Save");
+    Button updateButton = new Button("Update");
+    Button closeButton = new Button("Cancel");
 
-    private transient List<TierDto> tierDtos;
-    private final transient BrandDto brandDto;
     @Getter
-    private Map<String, String> skuNames = new HashMap<>();
+    transient Map<String, String> skuNames = new HashMap<>();
     @Getter
-    private Map<String, String> skuDescs = new HashMap<>();
+    transient Map<String, String> skuDescs = new HashMap<>();
     @Getter
-    private Map<String, Double> skuTierPrices = new HashMap<>();
+    transient Map<String, Double> skuTierPrices = new HashMap<>();
+
     private final RestClientMenuService restClientMenuService;
-    private final Tab productTab;
-    private final ProductTreeItem productTreeItem;
-    @Getter
-    private transient ProductDto productDto;
+    private final transient BrandDto brandDto;
     private final transient List<CategoryDto> categoryDtos;
+    private final transient List<TierDto> tierDtos;
+    private final Tab productTab;
+    private final transient ProductTreeItem productTreeItem;
 
-    public ProductForm(RestClientMenuService restClientMenuService,
-                       BrandDto brandDto,
-                       List<CategoryDto> categoryDtos,
-                       List<TierDto> tierDtos, Tab productTab, ProductTreeItem productTreeItem) {
-
-        this.restClientMenuService = restClientMenuService;
-        this.brandDto = brandDto;
-        this.categoryDtos = categoryDtos;
-        this.tierDtos = tierDtos;
-        this.productTab = productTab;
-        this.productTreeItem = productTreeItem;
-    }
+    @Getter
+    transient ProductDto productDto;
 
     private void renderLayout() {
 
@@ -103,6 +94,7 @@ public class ProductForm extends ProductFormLayout {
         productNameField.setValueChangeMode(ValueChangeMode.LAZY);
 
         add(productDescTextArea);
+        add(new ProductImageUploadView(restClientMenuService));
 
         setSizeFull();
 
@@ -237,13 +229,13 @@ public class ProductForm extends ProductFormLayout {
 
     private void addValidation() {
 
-        categoryBox.addValueChangeListener(changeEvent -> binder.validate());
+        categoryBox.addValueChangeListener(_ -> binder.validate());
         binder.forField(categoryBox)
                         .withValidator(value -> (value==null || value.getId() > 0), "Category not allow to be empty"
                         ).bind(ProductDto::getCategoryDto, ProductDto::setCategoryDto);
         productNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextField, String>>) changeEvent -> binder.validate());
+                        .ComponentValueChangeEvent<TextField, String>>) _ -> binder.validate());
 
         binder.forField(productNameField)
                 .withValidator(value -> value.length() > 2,
@@ -274,7 +266,7 @@ public class ProductForm extends ProductFormLayout {
     private Button applyButtonDelete(SkuTreeItem skuTreeItem) {
         if (skuTreeItem.getTreeLevel().equals(TreeLevel.ROOT)) {
             Button button = new Button("Delete");
-            button.addClickListener(buttonClickEvent -> onDeleteSku(skuTreeItem));
+            button.addClickListener(_ -> onDeleteSku(skuTreeItem));
             return button;
         }
         return null;

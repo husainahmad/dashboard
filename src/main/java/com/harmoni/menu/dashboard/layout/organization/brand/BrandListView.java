@@ -33,14 +33,14 @@ public class BrandListView extends VerticalLayout {
 
     Registration broadcasterRegistration;
 
-    private final Grid<BrandDto> brandDtoGrid = new Grid<>(BrandDto.class);
-    private BrandForm brandForm;
+    Grid<BrandDto> brandDtoGrid = new Grid<>(BrandDto.class);
+    BrandForm brandForm;
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
 
-    private UI ui;
-    private final TextField filterText = new TextField();
+    UI ui;
+    TextField filterText = new TextField();
 
     private void renderLayout() {
         addClassName("list-view");

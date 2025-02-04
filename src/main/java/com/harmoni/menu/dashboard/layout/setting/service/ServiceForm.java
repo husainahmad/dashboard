@@ -18,12 +18,13 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Objects;
 
+@RequiredArgsConstructor
 @Route("service-form")
 @Slf4j
 public class ServiceForm extends FormLayout  {
@@ -33,32 +34,25 @@ public class ServiceForm extends FormLayout  {
     @Getter
     TextField serviceNameField = new TextField("Service name");
 
-    private final Button saveButton = new Button("Save");
-    private final Button  deleteButton = new Button("Delete");
-    private final Button  closeButton = new Button("Cancel");
-    private final Button  updateButton = new Button("Update");
+    Button saveButton = new Button("Save");
+    Button deleteButton = new Button("Delete");
+    Button closeButton = new Button("Cancel");
+    Button updateButton = new Button("Update");
 
     @Getter
-    private UI ui;
+    UI ui;
     @Getter
-    private transient ServiceDto serviceDto;
+    transient ServiceDto serviceDto;
     private final AsyncRestClientSettingService asyncRestClientSettingService;
-
-    public ServiceForm(@Autowired AsyncRestClientSettingService asyncRestClientSettingService) {
-        this.asyncRestClientSettingService = asyncRestClientSettingService;
-
-        addValidation();
-
-        add(serviceNameField);
-
-        add(createButtonsLayout());
-        binder.bindInstanceFields(this);
-    }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         this.ui = attachEvent.getUI();
         broadcasterRegistration = Broadcaster.register(this::acceptNotification);
+        addValidation();
+        add(serviceNameField);
+        add(createButtonsLayout());
+        binder.bindInstanceFields(this);
     }
 
     public void showNotification(String text) {
@@ -80,16 +74,14 @@ public class ServiceForm extends FormLayout  {
     }
 
     private void addValidation() {
-
         serviceNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextField, String>>) changeEvent -> binder.validate());
+                        .ComponentValueChangeEvent<TextField, String>>) _ -> binder.validate());
 
         binder.forField(serviceNameField)
                 .withValidator(value -> value.length() > 2,
                         "Name must contain at least three characters")
                 .bind(ServiceDto::getName, ServiceDto::setName);
-
     }
 
     void setServiceDto(ServiceDto serviceDto) {
@@ -108,7 +100,7 @@ public class ServiceForm extends FormLayout  {
 
         closeButton.addClickShortcut(Key.ESCAPE);
 
-        closeButton.addClickListener(buttonClickEvent -> this.setVisible(false));
+        closeButton.addClickListener(_ -> this.setVisible(false));
 
         return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
     }

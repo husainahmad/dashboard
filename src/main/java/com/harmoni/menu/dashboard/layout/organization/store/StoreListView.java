@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.StoreDto;
+import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.event.store.StoreDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
@@ -28,13 +29,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @Route(value = "store-list", layout = MainLayout.class)
 @PageTitle("Store | POSHarmoni")
 @Slf4j
 public class StoreListView extends VerticalLayout {
+
+    static final String LIST_CHAIN = "LIST_CHAIN";
+    static final String LIST_TIER_PRICE = "LIST_TIER_PRICE";
+    static final String LIST_TIER_MENU = "LIST_TIER_MENU";
+    static final String LIST_TIER_SERVICE = "LIST_TIER_SERVICE";
 
     Registration broadcasterRegistration;
     private final Grid<StoreDto> storeDtoGrid = new Grid<>(StoreDto.class);
@@ -47,6 +55,8 @@ public class StoreListView extends VerticalLayout {
     UI ui;
     int totalPages;
     int currentPage = 1;
+    final transient Map<String, Object> objectParams = new HashMap<>();
+    static final int TEMP_BRAND_ID = 1;
 
     private void renderLayout() {
         addClassName("list-view");
@@ -73,6 +83,10 @@ public class StoreListView extends VerticalLayout {
         });
         renderLayout();
         fetchStores();
+        fetchChains();
+        fetchTierPrices();
+        fetchTierMenus();
+        fetchTierServices();
     }
 
     @Override
@@ -95,6 +109,8 @@ public class StoreListView extends VerticalLayout {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
 
         Button editButton = new Button("Edit");
+        editButton.addClickListener(_ -> showAddEditStore(storeDto, "Edit Store", FormAction.EDIT));
+
         horizontalLayout.add(editButton);
 
         Button deleteButton = new Button("Delete");
@@ -102,6 +118,18 @@ public class StoreListView extends VerticalLayout {
         horizontalLayout.add(deleteButton);
 
         return horizontalLayout;
+    }
+
+    private void showAddEditStore(StoreDto storeDto, String title, FormAction action) {
+        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+            return;
+        }
+        Tab tabNewStore = new Tab();
+        tabNewStore.setLabel(title);
+        tabSheet.add(tabNewStore, new StoreForm(this.asyncRestClientOrganizationService,
+                this.restClientOrganizationService, tabNewStore, action, storeDto, objectParams));
+        tabSheet.setSizeFull();
+        tabSheet.setSelectedTab(tabNewStore);
     }
 
     private HorizontalLayout getContent() {
@@ -124,7 +152,7 @@ public class StoreListView extends VerticalLayout {
         });
 
         Button addChainButton = new Button("Add Store");
-        addChainButton.addClickListener(_ -> addStore());
+        addChainButton.addClickListener(_ -> showAddEditStore(null, "New Store", FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -159,20 +187,6 @@ public class StoreListView extends VerticalLayout {
                 .concat(String.valueOf(totalPages));
     }
 
-    private void addStore() {
-        storeDtoGrid.asSingleSelect().clear();
-
-        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
-            return;
-        }
-        Tab tabNewStore = new Tab();
-        tabNewStore.setLabel("New Store");
-        tabSheet.add(tabNewStore, new StoreForm(this.asyncRestClientOrganizationService,
-                this.restClientOrganizationService, tabNewStore, FormAction.CREATE));
-        tabSheet.setSizeFull();
-        tabSheet.setSelectedTab(tabNewStore);
-    }
-
     private void fetchStores() {
         int pageSize = 10;
         asyncRestClientOrganizationService.getAllStoreAsync(result -> {
@@ -192,5 +206,21 @@ public class StoreListView extends VerticalLayout {
                 });
             }
         }, 24L, currentPage, pageSize, filterText.getValue());
+    }
+
+    private void fetchChains() {
+        asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result -> objectParams.put(LIST_CHAIN, result), TEMP_BRAND_ID);
+    }
+
+    private void fetchTierPrices() {
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> objectParams.put(LIST_TIER_PRICE, result), TEMP_BRAND_ID, TierTypeDto.PRICE);
+    }
+
+    private void fetchTierMenus() {
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> objectParams.put(LIST_TIER_MENU, result), TEMP_BRAND_ID, TierTypeDto.MENU);
+    }
+
+    private void fetchTierServices() {
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> objectParams.put(LIST_TIER_SERVICE, result), TEMP_BRAND_ID, TierTypeDto.SERVICE);
     }
 }
