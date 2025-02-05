@@ -1,10 +1,9 @@
 package com.harmoni.menu.dashboard.util;
 
 import com.harmoni.menu.dashboard.dto.ImageDto;
+import com.vaadin.flow.server.StreamResource;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.UUID;
 
 public class ImageUtil {
@@ -14,10 +13,15 @@ public class ImageUtil {
     }
 
     public static File convertImageDtoToFile(ImageDto imageDto) throws IOException {
-        File tempFile = File.createTempFile("temp_".concat(UUID.randomUUID().toString()).concat("_"), imageDto.getFileName());
+        File tempFile = File.createTempFile("".concat(UUID.randomUUID().toString()).concat("_"), imageDto.getFileName());
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             fos.write(imageDto.getFileStream().readAllBytes()); // Assuming imageDto has byte[] data
         }
         return tempFile;
+    }
+
+    public static StreamResource createStreamResource(byte[] imageBytes, String fileName) {
+        return new StreamResource(fileName,
+                () -> new ByteArrayInputStream(imageBytes));
     }
 }

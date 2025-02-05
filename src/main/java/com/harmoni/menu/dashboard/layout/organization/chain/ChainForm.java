@@ -5,7 +5,6 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ChainDto;
-import com.harmoni.menu.dashboard.event.chain.ChainDeleteEventListener;
 import com.harmoni.menu.dashboard.event.chain.ChainSaveEventListener;
 import com.harmoni.menu.dashboard.event.chain.ChainUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
@@ -43,7 +42,6 @@ public class ChainForm extends FormLayout  {
     TextField chainNameField = new TextField("Chain name");
 
     Button saveButton = new Button("Save");
-    Button deleteButton = new Button("Delete");
     Button closeButton = new Button("Cancel");
     Button updateButton = new Button("Update");
 
@@ -99,7 +97,6 @@ public class ChainForm extends FormLayout  {
                 .withValidator(value -> value.length()>2,
                         "Name must contain at least three characters")
                 .bind(ChainDto::getName, ChainDto::setName);
-
     }
 
     void setChainDto(ChainDto chainDto) {
@@ -118,7 +115,6 @@ public class ChainForm extends FormLayout  {
     private HorizontalLayout createButtonsLayout() {
 
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
         saveButton.addClickShortcut(Key.ENTER);
@@ -128,22 +124,19 @@ public class ChainForm extends FormLayout  {
 
         updateButton.addClickListener(new ChainUpdateEventListener(this, restClientOrganizationService));
         saveButton.addClickListener(new ChainSaveEventListener(this, restClientOrganizationService));
-        deleteButton.addClickListener(new ChainDeleteEventListener(this, restClientOrganizationService));
         closeButton.addClickListener(_ -> this.setVisible(false));
 
-        return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
+        return new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
     }
 
     public void restructureButton(FormAction formAction) {
         if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
             saveButton.setVisible(true);
             updateButton.setVisible(false);
-            deleteButton.setVisible(false);
             closeButton.setVisible(true);
         } else if (formAction == FormAction.EDIT) {
             saveButton.setVisible(false);
             updateButton.setVisible(true);
-            deleteButton.setVisible(true);
             closeButton.setVisible(true);
         }
     }

@@ -4,15 +4,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
+import com.harmoni.menu.dashboard.event.brand.BrandDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -69,11 +72,28 @@ public class BrandListView extends VerticalLayout {
         brandDtoGrid.addColumn(BrandDto::getName).setHeader("Name");
 
         brandDtoGrid.getColumns().forEach(brandDtoColumn -> brandDtoColumn.setAutoWidth(true));
-        brandDtoGrid.addComponentColumn(brandDto -> {
-            Button buttonEdit = new Button("Edit");
-            buttonEdit.addClickListener(_ -> editBrand(brandDto, FormAction.EDIT));
-            return buttonEdit;
-        });
+        brandDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
+    }
+
+    private Component applyButton(BrandDto brandDto) {
+        HorizontalLayout layout = new HorizontalLayout();
+        layout.add(applyButtonEdit(brandDto));
+        layout.add(applyButtonDelete(brandDto));
+        return layout;
+    }
+
+    private Button applyButtonEdit(BrandDto brandDto) {
+        Button editButton = new Button("Edit");
+        editButton.addClickListener(_ -> editBrand(brandDto, FormAction.EDIT));
+        return editButton;
+    }
+
+    private Button applyButtonDelete(BrandDto brandDto) {
+        Button deleteButton = new Button("Delete");
+        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        deleteButton.addClickListener(
+                new BrandDeleteEventListener(brandDto, restClientOrganizationService));
+        return deleteButton;
     }
 
     private HorizontalLayout getToolbar() {

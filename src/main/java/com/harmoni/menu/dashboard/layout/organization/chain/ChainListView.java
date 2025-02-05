@@ -4,15 +4,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.ChainDto;
+import com.harmoni.menu.dashboard.event.chain.ChainDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -85,11 +88,28 @@ public class ChainListView extends VerticalLayout  {
         chainDtoGrid.setSizeFull();
         chainDtoGrid.setColumns("name");
         chainDtoGrid.getColumns().forEach(chainDtoColumn -> chainDtoColumn.setAutoWidth(true));
-        chainDtoGrid.addComponentColumn(chainDto -> {
-            Button buttonEdit = new Button("Edit");
-            buttonEdit.addClickListener(_ -> editChain(chainDto, FormAction.EDIT));
-            return buttonEdit;
-        });
+        chainDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
+    }
+
+    private Component applyButton(ChainDto chainDto) {
+        HorizontalLayout layout = new HorizontalLayout();
+        layout.add(applyButtonEdit(chainDto));
+        layout.add(applyButtonDelete(chainDto));
+        return layout;
+    }
+
+    private Button applyButtonEdit(ChainDto chainDto) {
+        Button editButton = new Button("Edit");
+        editButton.addClickListener(_ -> editChain(chainDto, FormAction.EDIT));
+        return editButton;
+    }
+
+    private Button applyButtonDelete(ChainDto chainDto) {
+        Button deleteButton = new Button("Delete");
+        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        deleteButton.addClickListener(
+                new ChainDeleteEventListener(chainDto, restClientOrganizationService));
+        return deleteButton;
     }
 
     private void configureForm() {

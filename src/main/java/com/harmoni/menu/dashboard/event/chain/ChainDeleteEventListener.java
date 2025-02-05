@@ -3,42 +3,41 @@ package com.harmoni.menu.dashboard.event.chain;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
-import com.harmoni.menu.dashboard.layout.organization.chain.ChainForm;
 import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
 import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class ChainDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
-    private final ChainForm chainForm;
+    private final transient ChainDto chainDto;
     private final RestClientOrganizationService restClientOrganizationService;
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
-        if (this.chainForm.getBinder().validate().hasErrors()) {
-            return;
-        }
+        setConfirmDialogDelete();
+    }
 
-        ChainDto chainDto = this.chainForm.getChainDto();
-        chainDto.setName(this.chainForm.getChainNameField().getValue());
+    private void setConfirmDialogDelete() {
+        ConfirmDialog confirmDialog = new ConfirmDialog();
+        confirmDialog.setHeader("Confirmation");
+        confirmDialog.setText("Do you want to remove this chain ".concat(chainDto.getName()).concat("?"));
+        confirmDialog.setCancelable(true);
+        confirmDialog.addConfirmListener(_ -> callRemoveAPI());
+        confirmDialog.open();
+    }
 
+    private void callRemoveAPI() {
         restClientOrganizationService.deleteChain(chainDto)
                 .subscribe(this::accept);
     }
 
     private void accept(RestAPIResponse restAPIResponse) {
-        this.chainForm.getUi().access(()->{
-            Notification notification = new Notification("Chain deleted..", 3000, Notification.Position.MIDDLE);
-            notification.open();
-
-            this.chainForm.setVisible(false);
-            broadcastMessage(BroadcastMessage.CHAIN_SUCCESS_UPDATED, restAPIResponse);
-        });
+        broadcastMessage(BroadcastMessage.CHAIN_SUCCESS_UPDATED, restAPIResponse);
     }
 }

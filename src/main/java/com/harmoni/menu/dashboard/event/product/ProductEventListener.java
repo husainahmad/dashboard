@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.event.product;
 
 import com.harmoni.menu.dashboard.dto.ProductDto;
+import com.harmoni.menu.dashboard.dto.ProductImageDto;
 import com.harmoni.menu.dashboard.dto.SkuDto;
 import com.harmoni.menu.dashboard.dto.SkuTierPriceDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
@@ -40,6 +41,12 @@ public class ProductEventListener implements
                 skuDtos.add(getSkuDto(skuTreeItem)));
 
         productDto.setSkuDtos(skuDtos);
+        if (ObjectUtils.isNotEmpty(productForm.getProductImageUploadView())
+                && ObjectUtils.isNotEmpty(productForm.getProductImageUploadView().getProductImageDto())) {
+            ProductImageDto productImageDto = productForm.getProductImageUploadView().getProductImageDto();
+            productImageDto.setImageBlob(null); // no need to include byte
+            productDto.setProductImageDto(productImageDto);
+        }
         return productDto;
     }
 

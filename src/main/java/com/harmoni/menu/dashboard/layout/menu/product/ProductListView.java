@@ -135,7 +135,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         productDtoGrid.addColumn(ProductTreeItem::getCategoryName).setHeader("Category");
         productDtoGrid.addColumn(ProductTreeItem::getPrice).setHeader("Price");
         productDtoGrid.addColumn(ProductTreeItem::getTierName).setHeader("Tier");
-        productDtoGrid.addComponentColumn(this::applyButton);
+        productDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
 
         productDtoGrid.addExpandListener(this::onComponentEventExpandListener);
         productDtoGrid.getColumns().forEach(productDtoColumn -> productDtoColumn.setAutoWidth(true));

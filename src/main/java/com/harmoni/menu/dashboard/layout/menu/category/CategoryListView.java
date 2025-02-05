@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
+import com.harmoni.menu.dashboard.event.category.CategoryDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
@@ -12,6 +13,7 @@ import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -59,11 +61,28 @@ public class CategoryListView extends VerticalLayout {
         categoryDtoGrid.addColumn("brandDto.name").setHeader("Brand Name");
 
         categoryDtoGrid.getColumns().forEach(categoryDtoColumn -> categoryDtoColumn.setAutoWidth(true));
-        categoryDtoGrid.addComponentColumn(categoryDto -> {
-            Button buttonEdit = new Button("Edit");
-            buttonEdit.addClickListener(_ -> editCategory(categoryDto, FormAction.EDIT));
-            return buttonEdit;
-        });
+        categoryDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
+    }
+
+    private Component applyButton(CategoryDto categoryDto) {
+        HorizontalLayout layout = new HorizontalLayout();
+        layout.add(applyButtonEdit(categoryDto));
+        layout.add(applyButtonDelete(categoryDto));
+        return layout;
+    }
+
+    private Button applyButtonEdit(CategoryDto categoryDto) {
+        Button editButton = new Button("Edit");
+        editButton.addClickListener(_ -> editCategory(categoryDto, FormAction.EDIT));
+        return editButton;
+    }
+
+    private Button applyButtonDelete(CategoryDto categoryDto) {
+        Button deleteButton = new Button("Delete");
+        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        deleteButton.addClickListener(
+                new CategoryDeleteEventListener(categoryDto, restClientMenuService));
+        return deleteButton;
     }
 
     private void configureForm() {

@@ -8,8 +8,11 @@ import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.menu.ProductFormLayout;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
 import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.ImageUtil;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.accordion.Accordion;
+import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -56,7 +59,9 @@ public class ProductForm extends ProductFormLayout {
     Button saveButton = new Button("Save");
     Button updateButton = new Button("Update");
     Button closeButton = new Button("Cancel");
-
+    AccordionPanel menuPanel;
+    @Getter
+    ProductImageUploadView productImageUploadView;
     @Getter
     transient Map<String, String> skuNames = new HashMap<>();
     @Getter
@@ -94,8 +99,12 @@ public class ProductForm extends ProductFormLayout {
         productNameField.setValueChangeMode(ValueChangeMode.LAZY);
 
         add(productDescTextArea);
-        add(new ProductImageUploadView(restClientMenuService));
 
+        Accordion accordion = new Accordion();
+        productImageUploadView = new ProductImageUploadView(restClientMenuService, getUi(), productTreeItem);
+        menuPanel = accordion.add("Upload Image", productImageUploadView);
+
+        add(accordion);
         setSizeFull();
 
         skuDataProvider = new TreeDataProvider<>(skuTreeItemTreeData);
@@ -139,9 +148,20 @@ public class ProductForm extends ProductFormLayout {
                             productNameField.setValue(productDto.getName());
                             productDescTextArea.setValue(productDto.getDescription()==null ? "" : productDto.getDescription());
                             productDto.getSkuDtos().forEach(this::populateSkuTreeItemTreeData);
+                            refreshImage();
                         });
                     }
                 });
+        }
+    }
+
+    private void refreshImage() {
+        if (ObjectUtils.isNotEmpty(productDto.getProductImageDto()) &&
+                ObjectUtils.isNotEmpty(productDto.getProductImageDto().getImageBlob())) {
+
+            this.productImageUploadView.image.setSrc(ImageUtil.createStreamResource(productDto.getProductImageDto().getImageBlob(),
+                    productDto.getProductImageDto().getFileName()));
+            this.productImageUploadView.image.setMaxWidth("300px");
         }
     }
 

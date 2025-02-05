@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -65,6 +66,11 @@ public class RestClientMenuService implements Serializable {
         File file = ImageUtil.convertImageDtoToFile(imageDto);
         return upload(urlMenuProperties.getUrl().getProducts().getImages().getUpload(),
                 file);
+    }
+
+    public Mono<RestAPIResponse> uploadUpdatedProduct(Integer productId, ImageDto imageDto) throws IOException {
+        File file = ImageUtil.convertImageDtoToFile(imageDto);
+        return uploadUpdate(urlMenuProperties.getUrl().getProducts().getImages().getUploadUpdate().formatted(productId), file);
     }
 
     public Mono<RestAPIResponse> deleteProduct(ProductDto productDto) {
@@ -132,8 +138,27 @@ public class RestClientMenuService implements Serializable {
         return
                 webClient.post()
                         .uri(url)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE)
-                        .bodyValue(body)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .contentType(MediaType.MULTIPART_FORM_DATA)
+                        .body(BodyInserters.fromMultipartData(body))
+                        .retrieve()
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
+                        .bodyToMono(RestAPIResponse.class);
+
+    }
+
+    private Mono<RestAPIResponse> uploadUpdate(String url, File file) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new FileSystemResource(file)); // "file" should match the expected request parameter name
+
+        return
+                webClient.put()
+                        .uri(url)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .contentType(MediaType.MULTIPART_FORM_DATA)
+                        .body(BodyInserters.fromMultipartData(body))
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)

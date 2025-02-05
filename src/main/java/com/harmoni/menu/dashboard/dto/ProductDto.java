@@ -18,8 +18,9 @@ public class ProductDto {
     private CategoryDto categoryDto;
     @JsonProperty("skus")
     private List<SkuDto> skuDtos;
+    @JsonProperty("productImage")
+    private ProductImageDto productImageDto;
     private Date createdAt;
     private Date updatedAt;
     private Date deletedAt;
-
 }
