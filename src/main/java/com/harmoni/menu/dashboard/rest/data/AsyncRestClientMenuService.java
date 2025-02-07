@@ -8,8 +8,12 @@ import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.exception.BusinessServerRequestException;
+import com.harmoni.menu.dashboard.exception.UnAuthorizedServerRequestException;
+import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -29,6 +33,7 @@ public class AsyncRestClientMenuService implements Serializable {
 
     private final transient MenuProperties menuProperties;
     private final transient WebClient webClient = WebClient.builder().build();
+    private static final String BEARER = "Bearer ";
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -42,14 +47,17 @@ public class AsyncRestClientMenuService implements Serializable {
                                       AsyncRestClientMenuService.AsyncRestCallback<T> callback) {
         WebClient.ResponseSpec responseSpec = webClient.get()
                 .uri(uri)
+                .header(HttpHeaders.AUTHORIZATION, getTokenString())
                 .retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
                         clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
                                 .map(BusinessBadRequestException::new))
                 .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals,
                         clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
-                                .map(BusinessServerRequestException::new));
-
+                                .map(BusinessServerRequestException::new))
+                .onStatus(HttpStatus.UNAUTHORIZED::equals,
+                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
+                                .map(UnAuthorizedServerRequestException::new));
         responseSpec.toEntity(RestAPIResponse.class).subscribe(result -> {
             T data = objectMapper.convertValue(
                     Objects.requireNonNull(result.getBody()).getData(),
@@ -61,12 +69,6 @@ public class AsyncRestClientMenuService implements Serializable {
 
     public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback, Integer brandId) {
         String url = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getCategories().getBrand(), brandId);
-        makeAsyncRequest(url, new TypeReference<>() {
-        }, callback);
-    }
-
-    public void getAllProductAsync(AsyncRestCallback<List<ProductDto>> callback, Integer categoryId) {
-        String url = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getProducts().getCategory(), categoryId);
         makeAsyncRequest(url, new TypeReference<>() {
         }, callback);
     }
@@ -90,12 +92,6 @@ public class AsyncRestClientMenuService implements Serializable {
         }, callback);
     }
 
-    public void getDetailCategoryAsync(AsyncRestCallback<CategoryDto> callback, Long id) {
-        String url = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getCategory(), id);
-        makeAsyncRequest(url, new TypeReference<>() {
-        }, callback);
-    }
-
     public void getDetailSkuTierPriceAsync(AsyncRestCallback<List<SkuTierPriceDto>> callback,
                                            List<Integer> skuIds, Integer tierId) {
         URI uri = UriComponentsBuilder.fromUriString(menuProperties.getUrl().getSkutierprice())
@@ -104,5 +100,13 @@ public class AsyncRestClientMenuService implements Serializable {
 
         makeAsyncRequest(uri.toString(), new TypeReference<>() {
         }, callback);
+    }
+
+    private static String getTokenString() {
+        String token = VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);
+        if (ObjectUtils.isNotEmpty(token)) {
+            return BEARER.concat(token);
+        }
+        return token;
     }
 }

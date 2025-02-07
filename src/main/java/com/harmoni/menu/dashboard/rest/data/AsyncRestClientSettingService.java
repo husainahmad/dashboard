@@ -8,8 +8,11 @@ import com.harmoni.menu.dashboard.configuration.SettingProperties;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.exception.BusinessServerRequestException;
+import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,6 +29,7 @@ public class AsyncRestClientSettingService implements Serializable {
 
     private final transient SettingProperties settingProperties;
     private final transient WebClient webClient = WebClient.builder().build();
+    private static final String BEARER = "Bearer ";
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -41,7 +45,9 @@ public class AsyncRestClientSettingService implements Serializable {
 
     private <T> void makeAsyncRequest(String uri, TypeReference<T> typeReference,
                                       AsyncRestClientSettingService.AsyncRestCallback<T> callback) {
-        RequestHeadersSpec<?> spec = webClient.get().uri(uri);
+        RequestHeadersSpec<?> spec = webClient.get()
+                .uri(uri)
+                .header(HttpHeaders.AUTHORIZATION, getTokenString());
 
         spec.retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
@@ -57,6 +63,14 @@ public class AsyncRestClientSettingService implements Serializable {
                     );
                     callback.operationFinished(data);
                 });
+    }
+
+    private static String getTokenString() {
+        String token = VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);
+        if (ObjectUtils.isNotEmpty(token)) {
+            return BEARER.concat(token);
+        }
+        return token;
     }
 
 }

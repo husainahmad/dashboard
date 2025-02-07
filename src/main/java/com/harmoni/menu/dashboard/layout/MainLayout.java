@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.navigation.SideNavMenu;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -15,15 +16,15 @@ import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.shared.Registration;
 import org.apache.commons.lang3.ObjectUtils;
 
-
 @CssImport("./styles/shared-styles.css")
-public class MainLayout extends AppLayout implements BroadcastMessageService {
+public class MainLayout extends AppLayout implements BroadcastMessageService, BeforeEnterObserver {
 
     Registration broadcasterRegistration;
-
     public static final String TITLE = "POSHarmoni";
 
     public MainLayout() {
@@ -60,7 +61,6 @@ public class MainLayout extends AppLayout implements BroadcastMessageService {
     }
 
     private void acceptNotification(String message) {
-
         try {
             BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
             if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
@@ -76,6 +76,12 @@ public class MainLayout extends AppLayout implements BroadcastMessageService {
                 broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
             showErrorDialog(broadcastMessage.getData().toString());
         }
+        if (broadcastMessage.getType().equals(BroadcastMessage.UN_AUTHORIZED)) {
+            getUI().ifPresent(ui -> ui.access(() -> {
+                VaadinSessionUtil.close();
+                ui.navigate(LoginView.class);
+            }));
+        }
     }
 
     private void showErrorDialog(String message) {
@@ -85,6 +91,14 @@ public class MainLayout extends AppLayout implements BroadcastMessageService {
                 this.getUI().get().add(dialog);
                 dialog.open();
             });
+        }
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
+        String token = VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);
+        if (ObjectUtils.isEmpty(token)) {
+            beforeEnterEvent.forwardTo(LoginView.class);
         }
     }
 }

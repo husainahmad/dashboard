@@ -8,8 +8,11 @@ import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.exception.BusinessServerRequestException;
+import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,6 +29,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
 
     private final transient MenuProperties menuProperties;
     private final transient WebClient webClient = WebClient.builder().build();
+    private static final String BEARER = "Bearer ";
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -38,6 +42,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
     private <T> void makeAsyncRequest(String uri, TypeReference<T> typeReference, AsyncRestCallback<T> callback) {
         WebClient.ResponseSpec responseSpec = webClient.get()
                 .uri(uri)
+                .header(HttpHeaders.AUTHORIZATION, getTokenString())
                 .retrieve()
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
                         clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
@@ -57,12 +62,6 @@ public class AsyncRestClientOrganizationService implements Serializable {
 
     public void getAllChainByBrandIdAsync(AsyncRestCallback<List<ChainDto>> callback, Integer brandId) {
         String uri = String.format("%s/brand/%d", menuProperties.getUrl().getChain(), brandId);
-        makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
-    }
-
-    public void getDetailChainAsync(AsyncRestCallback<ChainDto> callback, Long id) {
-        String uri = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getChain(), id);
         makeAsyncRequest(uri, new TypeReference<>() {
         }, callback);
     }
@@ -120,6 +119,14 @@ public class AsyncRestClientOrganizationService implements Serializable {
         String uri = menuProperties.getUrl().getService();
         makeAsyncRequest(uri, new TypeReference<>() {
         }, callback);
+    }
+
+    private static String getTokenString() {
+        String token = VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);
+        if (ObjectUtils.isNotEmpty(token)) {
+            return BEARER.concat(token);
+        }
+        return token;
     }
 
 }
