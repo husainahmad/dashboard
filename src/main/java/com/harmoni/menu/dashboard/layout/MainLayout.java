@@ -12,6 +12,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -36,13 +37,29 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         DrawerToggle toggle = new DrawerToggle();
 
         H2 logo = new H2(TITLE);
-        HorizontalLayout header = new HorizontalLayout(toggle, logo);
+        HorizontalLayout header = new HorizontalLayout(logo);
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         header.expand(logo);
         header.setWidth("100%");
         header.addClassNames("py-0", "px-m");
 
-        addToNavbar(header);
+        Button logoutButton = new Button("Logout", event -> {
+            getUI().ifPresent(ui -> ui.getSession().close());
+            getUI().ifPresent(ui -> ui.navigate(LoginView.class));
+        });
+
+        HorizontalLayout profileLayout = new HorizontalLayout(logoutButton);
+        profileLayout.setSpacing(true);
+        profileLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        HorizontalLayout navbar = new HorizontalLayout(toggle, logo, profileLayout);
+        navbar.setWidthFull();
+        navbar.setPadding(true);
+        navbar.setSpacing(true);
+        navbar.setAlignItems(FlexComponent.Alignment.CENTER);
+        navbar.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN); // Push profile section to the right
+
+        addToNavbar(navbar);
     }
 
     private void createDrawer() {
