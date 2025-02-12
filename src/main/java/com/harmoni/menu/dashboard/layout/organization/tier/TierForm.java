@@ -9,8 +9,8 @@ import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.tier.TierSaveEventListener;
 import com.harmoni.menu.dashboard.event.tier.TierUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
-import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
@@ -51,8 +51,8 @@ public class TierForm extends FormLayout {
     MultiSelectComboBox<ServiceDto> serviceBox = new MultiSelectComboBox<>("Service");
 
     protected final Button saveButton = new Button("Save");
-    protected final Button  closeButton = new Button("Cancel");
-    protected final Button  updateButton = new Button("Update");
+    protected final Button closeButton = new Button("Cancel");
+    protected final Button updateButton = new Button("Update");
 
     @Getter
     private UI ui;
@@ -167,6 +167,8 @@ public class TierForm extends FormLayout {
         }
 
         horizontalLayout.add(closeButton);
+        horizontalLayout.setPadding(true);
+
         return horizontalLayout;
     }
 

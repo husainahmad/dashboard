@@ -1,4 +1,4 @@
-package com.harmoni.menu.dashboard.layout.organization.store;
+package com.harmoni.menu.dashboard.layout.organization.user;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.service.AccessService;
@@ -10,8 +10,8 @@ import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-@Route(value = "store", layout = MainLayout.class)
-public class StoreLayout extends VerticalLayout {
+@Route(value = "users", layout = MainLayout.class)
+public class UserLayout extends VerticalLayout {
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
@@ -20,7 +20,7 @@ public class StoreLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        add(new StoreTabs(asyncRestClientOrganizationService, restClientOrganizationService, accessService));
+        add(new UserTabs(asyncRestClientOrganizationService, restClientOrganizationService, accessService));
         setSizeFull();
     }
 }

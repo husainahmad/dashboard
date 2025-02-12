@@ -2,7 +2,7 @@ package com.harmoni.menu.dashboard.layout;
 
 import com.harmoni.menu.dashboard.dto.LoginDto;
 import com.harmoni.menu.dashboard.event.user.LoginEventListener;
-import com.harmoni.menu.dashboard.rest.data.RestClientLoginService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientLoginService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.CssImport;

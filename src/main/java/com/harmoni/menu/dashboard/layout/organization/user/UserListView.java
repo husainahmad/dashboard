@@ -1,21 +1,22 @@
-package com.harmoni.menu.dashboard.layout.organization.store;
+package com.harmoni.menu.dashboard.layout.organization.user;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
-import com.harmoni.menu.dashboard.dto.StoreDto;
-import com.harmoni.menu.dashboard.dto.TierTypeDto;
-import com.harmoni.menu.dashboard.event.store.StoreDeleteEventListener;
+import com.harmoni.menu.dashboard.dto.UserDto;
+import com.harmoni.menu.dashboard.event.user.UserDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.enums.RoleType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -30,23 +31,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RequiredArgsConstructor
-@Route(value = "store-list", layout = MainLayout.class)
-@PageTitle("Store | POSHarmoni")
+@Route(value = "users-list", layout = MainLayout.class)
+@PageTitle("User | POSHarmoni")
 @Slf4j
-public class StoreListView extends VerticalLayout {
-
-    static final String LIST_CHAIN = "LIST_CHAIN";
-    static final String LIST_TIER_PRICE = "LIST_TIER_PRICE";
-    static final String LIST_TIER_MENU = "LIST_TIER_MENU";
-    static final String LIST_TIER_SERVICE = "LIST_TIER_SERVICE";
+public class UserListView extends VerticalLayout {
 
     Registration broadcasterRegistration;
-    private final Grid<StoreDto> storeDtoGrid = new Grid<>(StoreDto.class);
+    private final Grid<UserDto> userDtoGrid = new Grid<>(UserDto.class);
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
@@ -57,7 +51,7 @@ public class StoreListView extends VerticalLayout {
     UI ui;
     int totalPages;
     int currentPage = 1;
-    final transient Map<String, Object> objectParams = new HashMap<>();
+    static final int TEMP_BRAND_ID = 1;
 
     private void renderLayout() {
         addClassName("list-view");
@@ -75,19 +69,16 @@ public class StoreListView extends VerticalLayout {
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
                         && (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
                     broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS))) {
-                        fetchStores();
+                        fetchUsers();
                     }
 
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
         });
+
         renderLayout();
-        fetchStores();
-        fetchChains();
-        fetchTierPrices();
-        fetchTierMenus();
-        fetchTierServices();
+        fetchUsers();
     }
 
     @Override
@@ -97,45 +88,50 @@ public class StoreListView extends VerticalLayout {
     }
 
     private void configureGrid() {
-        storeDtoGrid.setSizeFull();
-        storeDtoGrid.removeAllColumns();
-        storeDtoGrid.addColumn(StoreDto::getName).setHeader("Name");
-        storeDtoGrid.addColumn(StoreDto::getAddress).setHeader("Address");
-        storeDtoGrid.addColumn("chainDto.name").setHeader("Chain");
-        storeDtoGrid.addComponentColumn(this::applyGroupButton).setHeader("Action");
-        storeDtoGrid.getColumns().forEach(storeDtoColumn -> storeDtoColumn.setAutoWidth(true));
+        userDtoGrid.setSizeFull();
+        userDtoGrid.removeAllColumns();
+        userDtoGrid.addColumn(UserDto::getUsername).setHeader("Name");
+        userDtoGrid.addComponentColumn(userDto -> {
+            return switch (userDto.getAuthId()) {
+                case 1 -> new Span(RoleType.ADMIN.name());
+                case 2 -> new Span(RoleType.MANAGER.name());
+                default -> new Span(RoleType.USER.name());
+            };
+        }).setHeader("Auth");
+        userDtoGrid.addComponentColumn(this::applyGroupButton).setHeader("Action");
+        userDtoGrid.getColumns().forEach(storeDtoColumn -> storeDtoColumn.setAutoWidth(true));
     }
 
-    private Component applyGroupButton(StoreDto storeDto) {
+    private Component applyGroupButton(UserDto userDto) {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
 
         Button editButton = new Button("Edit");
-        editButton.addClickListener(_ -> showAddEditStore(storeDto, "Edit Store", FormAction.EDIT));
+        editButton.addClickListener(_ -> showAddEditUser(userDto, "Edit User", FormAction.EDIT));
 
         horizontalLayout.add(editButton);
 
         Button deleteButton = new Button("Delete");
-        deleteButton.addClickListener(new StoreDeleteEventListener(storeDto, this.restClientOrganizationService));
+        deleteButton.addClickListener(new UserDeleteEventListener(userDto, this.restClientOrganizationService));
         horizontalLayout.add(deleteButton);
 
         return horizontalLayout;
     }
 
-    private void showAddEditStore(StoreDto storeDto, String title, FormAction action) {
+    private void showAddEditUser(UserDto userDto, String title, FormAction action) {
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
         Tab tabNewStore = new Tab();
         tabNewStore.setLabel(title);
-        tabSheet.add(tabNewStore, new StoreForm(this.asyncRestClientOrganizationService,
-                this.restClientOrganizationService, tabNewStore, action, storeDto, objectParams));
+        tabSheet.add(tabNewStore, new UserForm(this.asyncRestClientOrganizationService,
+                this.restClientOrganizationService, this.accessService, tabNewStore, action, userDto));
         tabSheet.setSizeFull();
         tabSheet.setSelectedTab(tabNewStore);
     }
 
     private HorizontalLayout getContent() {
-        HorizontalLayout content = new HorizontalLayout(storeDtoGrid);
-        content.setFlexGrow(1, storeDtoGrid);
+        HorizontalLayout content = new HorizontalLayout(userDtoGrid);
+        content.setFlexGrow(1, userDtoGrid);
         content.addClassNames("content");
         content.setSizeFull();
         return content;
@@ -148,12 +144,12 @@ public class StoreListView extends VerticalLayout {
         filterText.addValueChangeListener(changeEvent -> {
             if (!changeEvent.getOldValue().equals(changeEvent.getValue())) {
                 currentPage = 1;
-                fetchStores();
+                fetchUsers();
             }
         });
 
-        Button addChainButton = new Button("Add Store");
-        addChainButton.addClickListener(_ -> showAddEditStore(null, "New Store", FormAction.CREATE));
+        Button addChainButton = new Button("Add User");
+        addChainButton.addClickListener(_ -> showAddEditUser(new UserDto(), "New User", FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -164,20 +160,20 @@ public class StoreListView extends VerticalLayout {
         Button previousButton = new Button("Previous", _ -> {
             if (currentPage > 1) {
                 currentPage--;
-                fetchStores();
+                fetchUsers();
             }
         });
         Button nextButton = new Button("Next", _ -> {
             if (currentPage < totalPages) {
                 currentPage++;
-                fetchStores();
+                fetchUsers();
             }
         });
         pageInfoText = new Text(getPaginationInfo());
         paginationFooter.add(previousButton, pageInfoText, nextButton);
-        paginationFooter.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        paginationFooter.setDefaultVerticalComponentAlignment(Alignment.CENTER);
         paginationFooter.setWidthFull();
-        paginationFooter.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        paginationFooter.setJustifyContentMode(JustifyContentMode.BETWEEN);
         return paginationFooter;
     }
 
@@ -188,44 +184,25 @@ public class StoreListView extends VerticalLayout {
                 .concat(String.valueOf(totalPages));
     }
 
-    private void fetchStores() {
+    private void fetchUsers() {
         int pageSize = 10;
-        asyncRestClientOrganizationService.getAllStoreAsync(result -> {
+        asyncRestClientOrganizationService.getAllUserByChainAsync(result -> {
             if (ObjectUtils.isNotEmpty(result.get("data"))
                     && result.get("data") instanceof List<?> dataList && !dataList.isEmpty()) {
                 totalPages = Integer.parseInt(result.get("page") == null ? "0" :result.get("page").toString());
 
-                List<StoreDto> storeDtos = new ArrayList<>();
+                List<UserDto> userDtos = new ArrayList<>();
                 dataList.forEach(object -> {
-                    StoreDto storeDto = ObjectUtil.convertValueToObject(object, StoreDto.class);
-                    storeDtos.add(storeDto);
+                    UserDto userDto = ObjectUtil.convertValueToObject(object, UserDto.class);
+                    userDtos.add(userDto);
                 });
 
                 ui.access(()-> {
-                    storeDtoGrid.setItems(storeDtos);
+                    userDtoGrid.setItems(userDtos);
                     pageInfoText.setText(getPaginationInfo());
                 });
             }
-        }, accessService.getUserDetail().getStoreDto().getChainDto().getId(), currentPage, pageSize, filterText.getValue());
+        }, accessService.getUserDetail().getStoreDto().getChainId(), currentPage, pageSize, filterText.getValue());
     }
 
-    private void fetchChains() {
-        asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result -> objectParams.put(LIST_CHAIN, result),
-                accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
-    }
-
-    private void fetchTierPrices() {
-        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> objectParams.put(LIST_TIER_PRICE, result),
-                accessService.getUserDetail().getStoreDto().getChainDto().getBrandId(), TierTypeDto.PRICE);
-    }
-
-    private void fetchTierMenus() {
-        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> objectParams.put(LIST_TIER_MENU, result),
-                accessService.getUserDetail().getStoreDto().getChainDto().getBrandId(), TierTypeDto.MENU);
-    }
-
-    private void fetchTierServices() {
-        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> objectParams.put(LIST_TIER_SERVICE, result),
-                accessService.getUserDetail().getStoreDto().getChainDto().getBrandId(), TierTypeDto.SERVICE);
-    }
 }

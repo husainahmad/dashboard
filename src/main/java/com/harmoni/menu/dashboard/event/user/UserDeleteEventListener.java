@@ -1,7 +1,7 @@
-package com.harmoni.menu.dashboard.event.store;
+package com.harmoni.menu.dashboard.event.user;
 
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
-import com.harmoni.menu.dashboard.dto.StoreDto;
+import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -12,10 +12,10 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-public class StoreDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
+public class UserDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
-    private final transient StoreDto storeDto;
+    private final transient UserDto userDto;
     private final RestClientOrganizationService restClientOrganizationService;
 
     @Override
@@ -24,14 +24,14 @@ public class StoreDeleteEventListener implements ComponentEventListener<ClickEve
     }
 
     private void callRemoveAPI() {
-        restClientOrganizationService.deleteStore(storeDto)
+        restClientOrganizationService.deleteUser(userDto)
                 .subscribe(this::accept);
     }
 
     private void setConfirmDialogDelete() {
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Confirmation");
-        confirmDialog.setText("Do you want to remove this product ".concat(storeDto.getName()).concat("?"));
+        confirmDialog.setText("Do you want to remove this user ".concat(userDto.getUsername()).concat("?"));
         confirmDialog.setCancelable(true);
         confirmDialog.addConfirmListener(_ -> callRemoveAPI());
         confirmDialog.open();

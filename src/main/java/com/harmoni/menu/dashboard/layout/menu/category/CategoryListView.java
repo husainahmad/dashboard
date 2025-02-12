@@ -7,9 +7,10 @@ import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.event.category.CategoryDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
-import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
@@ -37,6 +38,7 @@ public class CategoryListView extends VerticalLayout {
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
+    private final AccessService accessService;
 
     TextField filterText = new TextField();
     CategoryForm categoryForm;
@@ -162,6 +164,6 @@ public class CategoryListView extends VerticalLayout {
 
     private void fetchCategories() {
         asyncRestClientMenuService.getAllCategoryAsync(result -> ui.access(()->
-                categoryDtoGrid.setItems(result)), 1);
+                categoryDtoGrid.setItems(result)), accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
     }
 }

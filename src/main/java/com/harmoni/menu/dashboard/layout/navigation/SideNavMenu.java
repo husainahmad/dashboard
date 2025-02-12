@@ -4,6 +4,8 @@ import com.harmoni.menu.dashboard.layout.menu.product.ProductLayout;
 import com.harmoni.menu.dashboard.layout.organization.store.StoreLayout;
 import com.harmoni.menu.dashboard.layout.organization.tier.menu.TierMenuListView;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceListView;
+import com.harmoni.menu.dashboard.layout.organization.user.UserLayout;
+import com.harmoni.menu.dashboard.layout.organization.user.UserListView;
 import com.harmoni.menu.dashboard.layout.setting.service.ServiceListView;
 import com.harmoni.menu.dashboard.layout.organization.brand.BrandListView;
 import com.harmoni.menu.dashboard.layout.menu.category.CategoryListView;
@@ -19,11 +21,6 @@ import com.vaadin.flow.router.Route;
 @Route("side-nav-labelled")
 public class SideNavMenu extends Div {
     public SideNavMenu() {
-        SideNav sideNavMenu = new SideNav();
-        sideNavMenu.setLabel("Menu");
-        sideNavMenu.setCollapsible(true);
-        sideNavMenu.addItem(new SideNavItem("Category", CategoryListView.class));
-        sideNavMenu.addItem(new SideNavItem("Product", ProductLayout.class));
 
         SideNav sideNavAdmin = new SideNav();
         sideNavAdmin.setLabel("Admin");
@@ -38,13 +35,20 @@ public class SideNavMenu extends Div {
 
         sideNavAdmin.addItem(sideNavTier);
         sideNavAdmin.addItem(new SideNavItem("Store", StoreLayout.class));
+        sideNavAdmin.addItem(new SideNavItem("User", UserLayout.class));
+
+        SideNav sideNavMenu = new SideNav();
+        sideNavMenu.setLabel("Menu");
+        sideNavMenu.setCollapsible(true);
+        sideNavMenu.addItem(new SideNavItem("Category", CategoryListView.class));
+        sideNavMenu.addItem(new SideNavItem("Product", ProductLayout.class));
 
         SideNav sideNavSetting = new SideNav();
         sideNavSetting.setLabel("Setting");
         sideNavSetting.setCollapsible(true);
         sideNavSetting.addItem(new SideNavItem("Service", ServiceListView.class));
 
-        VerticalLayout navWrapper = new VerticalLayout(sideNavMenu, sideNavAdmin, sideNavSetting);
+        VerticalLayout navWrapper = new VerticalLayout(sideNavAdmin, sideNavMenu, sideNavSetting);
         navWrapper.setSpacing(true);
         navWrapper.setSizeUndefined();
         sideNavMenu.setWidthFull();

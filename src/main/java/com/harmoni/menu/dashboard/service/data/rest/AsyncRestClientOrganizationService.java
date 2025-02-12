@@ -1,4 +1,4 @@
-package com.harmoni.menu.dashboard.rest.data;
+package com.harmoni.menu.dashboard.service.data.rest;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -100,7 +100,7 @@ public class AsyncRestClientOrganizationService implements Serializable {
         }, callback);
     }
 
-    public void getAllStoreAsync(AsyncRestCallback<Map<String, Object>> callback, Long chainId, int page, int size, String search) {
+    public void getAllStoreAsync(AsyncRestCallback<Map<String, Object>> callback, Integer chainId, int page, int size, String search) {
         String uri = menuProperties.getUrl().getStore();
         uri = uri
                 .concat("?chainId=").concat(String.valueOf(chainId))
@@ -111,6 +111,14 @@ public class AsyncRestClientOrganizationService implements Serializable {
                 .concat("&search=")
                 .concat(search);
 
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback);
+    }
+
+    public void getAllUserByChainAsync(AsyncRestCallback<Map<String, Object>> callback, Integer chainId, int page, int size, String search) {
+        String uri = String.format("%s/%d?page=%d&size=%d&search=%s",
+                menuProperties.getUrl().getUsers().getChain(),
+                chainId, page, size, search);
         makeAsyncRequest(uri, new TypeReference<>() {
         }, callback);
     }

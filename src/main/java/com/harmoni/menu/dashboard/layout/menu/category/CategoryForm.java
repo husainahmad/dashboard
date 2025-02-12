@@ -7,8 +7,8 @@ import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.event.category.CategorySaveEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
-import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
@@ -161,7 +161,10 @@ public class CategoryForm extends FormLayout  {
 
         closeButton.addClickListener(_ -> this.setVisible(false));
 
-        return new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
+        HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
+        horizontalLayout.setPadding(true);
+
+        return horizontalLayout;
     }
 
     public void restructureButton(FormAction formAction) {

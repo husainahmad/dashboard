@@ -8,8 +8,9 @@ import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
-import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
@@ -36,9 +37,11 @@ public class TierPriceListView extends VerticalLayout {
     Registration broadcasterRegistration;
     private final Grid<TierDto> tierDtoGrid = new Grid<>(TierDto.class);
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
+    private final RestClientOrganizationService restClientOrganizationService;
+    private final AccessService accessService;
+
     private final TextField filterText = new TextField();
     private UI ui;
-    private final RestClientOrganizationService restClientOrganizationService;
     private TierPriceForm tierForm;
 
     private void renderLayout() {
@@ -121,7 +124,7 @@ public class TierPriceListView extends VerticalLayout {
             closeEditor();
         } else {
 
-            tierDto.setBrandId(1);
+            tierDto.setBrandId(accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
             tierForm.changeTierDto(tierDto);
             tierForm.restructureButton(formAction);
             tierForm.setVisible(true);
@@ -164,6 +167,7 @@ public class TierPriceListView extends VerticalLayout {
 
     private void fetchTier() {
         asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> ui.access(()->
-                tierDtoGrid.setItems(result)), 1, TierTypeDto.PRICE);
+                tierDtoGrid.setItems(result)),
+                accessService.getUserDetail().getStoreDto().getChainDto().getBrandId(), TierTypeDto.PRICE);
     }
 }

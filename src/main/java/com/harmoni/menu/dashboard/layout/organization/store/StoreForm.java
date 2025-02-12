@@ -9,8 +9,8 @@ import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.store.StoreSaveEventListener;
 import com.harmoni.menu.dashboard.event.store.StoreUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
-import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.accordion.Accordion;
@@ -214,7 +214,10 @@ public class StoreForm extends FormLayout  {
                 new StoreSaveEventListener(this, restClientOrganizationService));
         closeButton.addClickListener(_ -> removeFromSheet());
 
-        return new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
+        HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
+        horizontalLayout.setPadding(true);
+
+        return horizontalLayout;
     }
 
     private void restructureAddOrEdit() {

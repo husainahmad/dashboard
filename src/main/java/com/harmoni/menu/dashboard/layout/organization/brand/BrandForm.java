@@ -7,7 +7,7 @@ import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.event.brand.BrandSaveEventListener;
 import com.harmoni.menu.dashboard.event.brand.BrandUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
@@ -118,7 +118,10 @@ public class BrandForm extends FormLayout  {
                 new BrandSaveEventListener(this, restClientOrganizationService));
         closeButton.addClickListener(_ -> this.setVisible(false));
 
-        return new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
+        HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
+        horizontalLayout.setPadding(true);
+
+        return horizontalLayout;
     }
 
     public void restructureButton(FormAction formAction) {

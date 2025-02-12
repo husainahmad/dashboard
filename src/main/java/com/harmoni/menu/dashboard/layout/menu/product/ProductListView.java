@@ -9,9 +9,10 @@ import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.event.product.ProductDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
-import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
-import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
+import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
@@ -55,6 +56,8 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
+    private final AccessService accessService;
+
     @Getter
     private final Tab defaultTab;
 
@@ -64,7 +67,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     ComboBox<CategoryDto> categoryDtoComboBox = new ComboBox<>();
     transient List<CategoryDto> categoryDtos = new ArrayList<>();
     UI ui;
-    static final Integer TEMP_BRAND_ID = 1;
+
     transient List<BrandDto> brandDtos = new ArrayList<>();
     transient List<TierDto> tierDtos = new ArrayList<>();
     int totalPages;
@@ -179,7 +182,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         brandDtoComboBox.setItemLabelGenerator(BrandDto::getName);
         brandDtoComboBox.addValueChangeListener(valueChangeEvent -> {
             if (valueChangeEvent.isFromClient()) {
-                fetchCategories(TEMP_BRAND_ID);
+                fetchCategories(accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
             }
         });
 

@@ -2,8 +2,8 @@ package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.harmoni.menu.dashboard.dto.ImageDto;
 import com.harmoni.menu.dashboard.dto.ProductImageDto;
-import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
-import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ImageUtil;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;

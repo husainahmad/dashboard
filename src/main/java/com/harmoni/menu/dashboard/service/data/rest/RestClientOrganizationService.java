@@ -1,7 +1,8 @@
-package com.harmoni.menu.dashboard.rest.data;
+package com.harmoni.menu.dashboard.service.data.rest;
 
 import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -77,5 +78,25 @@ public class RestClientOrganizationService extends RestClientService {
 
     public Mono<RestAPIResponse> deleteStore(StoreDto storeDto) {
         return delete(URL_FORMAT.formatted(menuProperties.getUrl().getStore(), storeDto.getId()));
+    }
+
+    public Mono<RestAPIResponse> getStore(Integer chainId, int page, int size, String search) {
+        String uri = String.format("%s?chainId=%d&page=%d&size=%d&search=%s",
+                menuProperties.getUrl().getStore(),
+                chainId, page, size, search);
+        return get(uri);
+    }
+
+    public Mono<RestAPIResponse> createUser(UserDto userDto) {
+        return post(menuProperties.getUrl().getUser(), Mono.just(userDto), UserDto.class);
+    }
+
+    public Mono<RestAPIResponse> deleteUser(UserDto userDto) {
+        return delete(menuProperties.getUrl().getUser().concat("/").concat(userDto.getId().toString()));
+    }
+
+    public Mono<RestAPIResponse> updateUser(UserDto userDto) {
+        return put(menuProperties.getUrl().getUser().concat("/").concat(userDto.getId().toString()),
+                Mono.just(userDto), UserDto.class);
     }
 }

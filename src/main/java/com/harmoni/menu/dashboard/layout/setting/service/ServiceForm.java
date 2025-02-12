@@ -5,7 +5,7 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.ServiceDto;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientSettingService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
@@ -102,7 +102,9 @@ public class ServiceForm extends FormLayout  {
 
         closeButton.addClickListener(_ -> this.setVisible(false));
 
-        return new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
+        HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
+        horizontalLayout.setPadding(true);
+        return horizontalLayout;
     }
 
     public void restructureButton(FormAction formAction) {

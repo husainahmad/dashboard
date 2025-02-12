@@ -5,7 +5,7 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.ServiceDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientSettingService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;

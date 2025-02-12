@@ -1,4 +1,4 @@
-package com.harmoni.menu.dashboard.rest.data;
+package com.harmoni.menu.dashboard.service.data.rest;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;

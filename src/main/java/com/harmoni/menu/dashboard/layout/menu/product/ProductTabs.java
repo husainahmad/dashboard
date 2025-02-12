@@ -1,7 +1,8 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
-import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -17,12 +18,14 @@ public class ProductTabs extends VerticalLayout {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
+    private final AccessService accessService;
 
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
         browseTab.setLabel("Browse");
-        tabSheet.add(browseTab, new ProductListView(asyncRestClientMenuService, restClientMenuService, browseTab));
+        tabSheet.add(browseTab, new ProductListView(asyncRestClientMenuService, restClientMenuService,
+                accessService, browseTab));
         tabSheet.setSizeFull();
         add(tabSheet);
         setSizeFull();

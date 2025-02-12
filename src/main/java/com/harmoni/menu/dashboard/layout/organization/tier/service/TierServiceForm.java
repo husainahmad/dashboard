@@ -2,8 +2,8 @@ package com.harmoni.menu.dashboard.layout.organization.tier.service;
 
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
-import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

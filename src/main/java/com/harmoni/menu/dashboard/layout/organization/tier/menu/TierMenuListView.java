@@ -10,9 +10,10 @@ import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientMenuService;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
-import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
@@ -49,6 +50,7 @@ public class TierMenuListView extends VerticalLayout {
     private final TreeGrid<TierMenuTreeItem> tierMenuTreeGrid = new TreeGrid<>(TierMenuTreeItem.class);
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final AsyncRestClientMenuService asyncRestClientMenuService;
+    private final AccessService accessService;
 
     private final TextField filterText = new TextField();
     @Getter
@@ -60,14 +62,14 @@ public class TierMenuListView extends VerticalLayout {
     @Getter
     @Setter
     private transient BrandDto brandDto = new BrandDto();
-    private static final Integer TEMP_BRAND_ID = 1;
+
     private Button[] buttonUpdates;
     private Button[] buttonEdits;
     private Button[] buttonDeletes;
     private final Map<String, Checkbox> checkBoxes = new HashMap<>();
 
     private void renderLayout() {
-        brandDto.setId(TEMP_BRAND_ID);
+        brandDto.setId(accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
         addClassName("list-view");
         setSizeFull();
         configureGrid();

@@ -57,7 +57,7 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         navbar.setPadding(true);
         navbar.setSpacing(true);
         navbar.setAlignItems(FlexComponent.Alignment.CENTER);
-        navbar.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN); // Push profile section to the right
+        navbar.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
         addToNavbar(navbar);
     }

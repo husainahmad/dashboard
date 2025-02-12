@@ -3,7 +3,7 @@ package com.harmoni.menu.dashboard.event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
-import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
+import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 
 public interface BroadcastMessageService {

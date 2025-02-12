@@ -4,11 +4,12 @@ import com.vaadin.flow.server.VaadinSession;
 
 public class VaadinSessionUtil {
 
+    public static final String JWT_TOKEN = "JWT_TOKEN";
+    public static final String USER_DETAIL = "USER_DETAIL";
+
     private VaadinSessionUtil() {
         throw new IllegalStateException("Util class");
     }
-
-    public static final String JWT_TOKEN = "JWT_TOKEN";
 
     public static void setAttribute(String key, Object value) {
         VaadinSession session = VaadinSession.getCurrent();

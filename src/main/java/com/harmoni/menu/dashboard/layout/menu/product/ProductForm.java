@@ -7,7 +7,7 @@ import com.harmoni.menu.dashboard.event.product.ProductUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.menu.ProductFormLayout;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
-import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ImageUtil;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
@@ -279,6 +279,7 @@ public class ProductForm extends ProductFormLayout {
         HorizontalLayout toolbar = new HorizontalLayout((this.productTreeItem != null ? updateButton : saveButton), closeButton);
         toolbar.addClassName("toolbar");
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
+        toolbar.setPadding(true);
 
         return toolbar;
     }

@@ -7,8 +7,9 @@ import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.event.chain.ChainDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.rest.data.AsyncRestClientOrganizationService;
-import com.harmoni.menu.dashboard.rest.data.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
@@ -44,7 +45,7 @@ public class ChainListView extends VerticalLayout  {
     private final TextField filterText = new TextField();
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
-    private static final int BRAND_ID = 1;
+    private final AccessService accessService;
 
     private void renderLayout() {
         addClassName("list-view");
@@ -140,7 +141,8 @@ public class ChainListView extends VerticalLayout  {
 
     private void fetchChains() {
         asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result ->
-                ui.access(()-> chainDtoGrid.setItems(result)), BRAND_ID);
+                ui.access(()-> chainDtoGrid.setItems(result)),
+                accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
     }
 
     public void editChain(ChainDto chainDto, FormAction formAction) {

@@ -1,8 +1,8 @@
 package com.harmoni.menu.dashboard.event.product;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductForm;
-import com.harmoni.menu.dashboard.rest.data.RestAPIResponse;
-import com.harmoni.menu.dashboard.rest.data.RestClientMenuService;
+import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
