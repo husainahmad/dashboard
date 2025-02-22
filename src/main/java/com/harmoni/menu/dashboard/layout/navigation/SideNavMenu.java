@@ -5,7 +5,6 @@ import com.harmoni.menu.dashboard.layout.organization.store.StoreLayout;
 import com.harmoni.menu.dashboard.layout.organization.tier.menu.TierMenuListView;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceListView;
 import com.harmoni.menu.dashboard.layout.organization.user.UserLayout;
-import com.harmoni.menu.dashboard.layout.organization.user.UserListView;
 import com.harmoni.menu.dashboard.layout.setting.service.ServiceListView;
 import com.harmoni.menu.dashboard.layout.organization.brand.BrandListView;
 import com.harmoni.menu.dashboard.layout.menu.category.CategoryListView;

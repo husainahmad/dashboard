@@ -38,7 +38,7 @@ public class ProductImageUploadView extends HorizontalLayout {
     private void renderLayout() {
         MemoryBuffer buffer = new MemoryBuffer();
         Upload upload = new Upload(buffer);
-        upload.setAcceptedFileTypes(MimeTypeUtils.IMAGE_JPEG_VALUE, MimeTypeUtils.IMAGE_PNG_VALUE);
+        upload.setAcceptedFileTypes(MimeTypeUtils.IMAGE_JPEG_VALUE, MimeTypeUtils.IMAGE_GIF_VALUE, MimeTypeUtils.IMAGE_PNG_VALUE);
         add(upload);
 
         add(image);
