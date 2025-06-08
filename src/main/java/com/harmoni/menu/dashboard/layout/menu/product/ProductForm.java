@@ -249,13 +249,13 @@ public class ProductForm extends ProductFormLayout {
 
     private void addValidation() {
 
-        categoryBox.addValueChangeListener(_ -> binder.validate());
+        categoryBox.addValueChangeListener(event -> binder.validate());
         binder.forField(categoryBox)
                         .withValidator(value -> (value==null || value.getId() > 0), "Category not allow to be empty"
                         ).bind(ProductDto::getCategoryDto, ProductDto::setCategoryDto);
         productNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextField, String>>) _ -> binder.validate());
+                        .ComponentValueChangeEvent<TextField, String>>) event -> binder.validate());
 
         binder.forField(productNameField)
                 .withValidator(value -> value.length() > 2,
@@ -287,7 +287,7 @@ public class ProductForm extends ProductFormLayout {
     private Button applyButtonDelete(SkuTreeItem skuTreeItem) {
         if (skuTreeItem.getTreeLevel().equals(TreeLevel.ROOT)) {
             Button button = new Button("Delete");
-            button.addClickListener(_ -> onDeleteSku(skuTreeItem));
+            button.addClickListener(event -> onDeleteSku(skuTreeItem));
             return button;
         }
         return null;

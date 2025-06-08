@@ -106,7 +106,7 @@ public class UserListView extends VerticalLayout {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
 
         Button editButton = new Button("Edit");
-        editButton.addClickListener(_ -> showAddEditUser(userDto, "Edit User", FormAction.EDIT));
+        editButton.addClickListener(event -> showAddEditUser(userDto, "Edit User", FormAction.EDIT));
 
         horizontalLayout.add(editButton);
 
@@ -149,7 +149,7 @@ public class UserListView extends VerticalLayout {
         });
 
         Button addChainButton = new Button("Add User");
-        addChainButton.addClickListener(_ -> showAddEditUser(new UserDto(), "New User", FormAction.CREATE));
+        addChainButton.addClickListener(event -> showAddEditUser(new UserDto(), "New User", FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -157,13 +157,13 @@ public class UserListView extends VerticalLayout {
 
     private HorizontalLayout getPaginationFooter() {
         HorizontalLayout paginationFooter = new HorizontalLayout();
-        Button previousButton = new Button("Previous", _ -> {
+        Button previousButton = new Button("Previous", event -> {
             if (currentPage > 1) {
                 currentPage--;
                 fetchUsers();
             }
         });
-        Button nextButton = new Button("Next", _ -> {
+        Button nextButton = new Button("Next", event -> {
             if (currentPage < totalPages) {
                 currentPage++;
                 fetchUsers();

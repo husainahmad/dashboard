@@ -93,7 +93,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         if (productTreeItem.getProductItemType().equals(ProductItemType.PRODUCT)) {
             HorizontalLayout horizontalLayout = new HorizontalLayout();
             Button editButton = new Button("Edit");
-            editButton.addClickListener(_ -> editProduct(productTreeItem));
+            editButton.addClickListener(event -> editProduct(productTreeItem));
             Button deleteButton = new Button("Delete");
             deleteButton.addClickListener(new ProductDeleteEventListener(restClientMenuService, productTreeItem));
             horizontalLayout.add(editButton, deleteButton);
@@ -104,13 +104,13 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
     private HorizontalLayout getPaginationFooter() {
         HorizontalLayout paginationFooter = new HorizontalLayout();
-        Button previousButton = new Button("Previous", _ -> {
+        Button previousButton = new Button("Previous", event -> {
             if (currentPage > 1) {
                 currentPage--;
                 fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
             }
         });
-        Button nextButton = new Button("Next", _ -> {
+        Button nextButton = new Button("Next", event -> {
             if (currentPage < totalPages) {
                 currentPage++;
                 fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());

@@ -110,7 +110,7 @@ public class StoreListView extends VerticalLayout {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
 
         Button editButton = new Button("Edit");
-        editButton.addClickListener(_ -> showAddEditStore(storeDto, "Edit Store", FormAction.EDIT));
+        editButton.addClickListener(event -> showAddEditStore(storeDto, "Edit Store", FormAction.EDIT));
 
         horizontalLayout.add(editButton);
 
@@ -153,7 +153,7 @@ public class StoreListView extends VerticalLayout {
         });
 
         Button addChainButton = new Button("Add Store");
-        addChainButton.addClickListener(_ -> showAddEditStore(null, "New Store", FormAction.CREATE));
+        addChainButton.addClickListener(event -> showAddEditStore(null, "New Store", FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -161,13 +161,13 @@ public class StoreListView extends VerticalLayout {
 
     private HorizontalLayout getPaginationFooter() {
         HorizontalLayout paginationFooter = new HorizontalLayout();
-        Button previousButton = new Button("Previous", _ -> {
+        Button previousButton = new Button("Previous", event -> {
             if (currentPage > 1) {
                 currentPage--;
                 fetchStores();
             }
         });
-        Button nextButton = new Button("Next", _ -> {
+        Button nextButton = new Button("Next", event -> {
             if (currentPage < totalPages) {
                 currentPage++;
                 fetchStores();

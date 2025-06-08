@@ -75,7 +75,7 @@ public class UserForm extends FormLayout  {
         storeDtoComboBox.setDataProvider(
             DataProvider.fromFilteringCallbacks(
                     query -> fetchStores(query.getFilter().orElse(""), query.getOffset(), query.getLimit()).stream(),
-                    _ -> countStores()
+                    event -> countStores()
             ),
             filter -> filter
         );
@@ -131,10 +131,10 @@ public class UserForm extends FormLayout  {
     }
 
     private void addValidation() {
-        storeDtoComboBox.addValueChangeListener(_ -> binder.validate());
+        storeDtoComboBox.addValueChangeListener(event -> binder.validate());
         userNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>)
-                        _ -> binder.validate());
+                        event -> binder.validate());
         binder.forField(userNameField)
                 .withValidator(value -> value.length()>2,
                         "Name must contain at least three characters")
@@ -150,7 +150,7 @@ public class UserForm extends FormLayout  {
         updateButton.addClickShortcut(Key.ENTER);
 
         closeButton.addClickShortcut(Key.ESCAPE);
-        closeButton.addClickListener(_ -> removeFromSheet());
+        closeButton.addClickListener(event -> removeFromSheet());
 
         saveButton.addClickListener(new UserSaveEventListener(this, restClientOrganizationService));
         updateButton.addClickListener(new UserUpdateEventListener(this, restClientOrganizationService));

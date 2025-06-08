@@ -40,7 +40,7 @@ public class TierDeleteEventListener implements ComponentEventListener<ClickEven
         confirmDialog.setHeader("Confirmation");
         confirmDialog.setText("Do you want to remove this Tier ".concat("?"));
         confirmDialog.setCancelable(true);
-        confirmDialog.addConfirmListener(_ -> executeDelete());
+        confirmDialog.addConfirmListener(event -> executeDelete());
         confirmDialog.open();
     }
 

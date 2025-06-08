@@ -33,7 +33,7 @@ public class UserDeleteEventListener implements ComponentEventListener<ClickEven
         confirmDialog.setHeader("Confirmation");
         confirmDialog.setText("Do you want to remove this user ".concat(userDto.getUsername()).concat("?"));
         confirmDialog.setCancelable(true);
-        confirmDialog.addConfirmListener(_ -> callRemoveAPI());
+        confirmDialog.addConfirmListener(event -> callRemoveAPI());
         confirmDialog.open();
     }
 

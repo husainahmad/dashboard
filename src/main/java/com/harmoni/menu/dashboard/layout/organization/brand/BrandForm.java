@@ -89,7 +89,7 @@ public class BrandForm extends FormLayout  {
 
     private void addValidation() {
         brandNameField.addValueChangeListener(
-                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>) _ -> binder.validate());
+                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>) event -> binder.validate());
 
         binder.forField(brandNameField)
                 .withValidator(value -> value.length()>2,
@@ -116,7 +116,7 @@ public class BrandForm extends FormLayout  {
 
         saveButton.addClickListener(
                 new BrandSaveEventListener(this, restClientOrganizationService));
-        closeButton.addClickListener(_ -> this.setVisible(false));
+        closeButton.addClickListener(event -> this.setVisible(false));
 
         HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
         horizontalLayout.setPadding(true);

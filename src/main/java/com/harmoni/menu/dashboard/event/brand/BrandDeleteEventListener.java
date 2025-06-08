@@ -29,7 +29,7 @@ public class BrandDeleteEventListener implements ComponentEventListener<ClickEve
         confirmDialog.setHeader("Confirmation");
         confirmDialog.setText("Do you want to remove this brand ".concat(brandDto.getName()).concat("?"));
         confirmDialog.setCancelable(true);
-        confirmDialog.addConfirmListener(_ -> callRemoveAPI());
+        confirmDialog.addConfirmListener(event -> callRemoveAPI());
         confirmDialog.open();
     }
 

@@ -87,7 +87,7 @@ public class ChainForm extends FormLayout  {
 
     private void addValidation() {
         chainNameField.addValueChangeListener(
-                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>) _ ->
+                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>) event ->
                         binder.validate());
         binder.forField(brandComboBox)
                 .withValidator(value -> value.getId()>0,
@@ -124,7 +124,7 @@ public class ChainForm extends FormLayout  {
 
         updateButton.addClickListener(new ChainUpdateEventListener(this, restClientOrganizationService));
         saveButton.addClickListener(new ChainSaveEventListener(this, restClientOrganizationService));
-        closeButton.addClickListener(_ -> this.setVisible(false));
+        closeButton.addClickListener(event -> this.setVisible(false));
 
         return new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
     }

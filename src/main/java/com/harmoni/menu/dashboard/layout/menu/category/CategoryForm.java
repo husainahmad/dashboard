@@ -102,13 +102,13 @@ public class CategoryForm extends FormLayout  {
 
     private void addValidation() {
 
-        brandBox.addValueChangeListener(_ -> binder.validate());
+        brandBox.addValueChangeListener(event -> binder.validate());
         binder.forField(brandBox)
                         .withValidator(value -> value.getId() > 0, "Brand not allow to be empty"
                         ).bind(CategoryDto::getBrandDto, CategoryDto::setBrandDto);
         categoryNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextField, String>>) _ -> binder.validate());
+                        .ComponentValueChangeEvent<TextField, String>>) event -> binder.validate());
 
         binder.forField(categoryNameField)
                 .withValidator(value -> value.length() > 2,
@@ -117,7 +117,7 @@ public class CategoryForm extends FormLayout  {
 
         categoryDescArea.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextArea, String>>) _ -> binder.validate());
+                        .ComponentValueChangeEvent<TextArea, String>>) event -> binder.validate());
         binder.forField(categoryDescArea)
                 .withValidator(value -> value.length() > 2,
                         "Name must contain at least three characters")
@@ -159,7 +159,7 @@ public class CategoryForm extends FormLayout  {
         saveButton.addClickListener(
                 new CategorySaveEventListener(this, restClientMenuService));
 
-        closeButton.addClickListener(_ -> this.setVisible(false));
+        closeButton.addClickListener(event -> this.setVisible(false));
 
         HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
         horizontalLayout.setPadding(true);

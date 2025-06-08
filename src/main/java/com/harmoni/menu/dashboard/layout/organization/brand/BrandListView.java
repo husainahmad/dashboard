@@ -84,7 +84,7 @@ public class BrandListView extends VerticalLayout {
 
     private Button applyButtonEdit(BrandDto brandDto) {
         Button editButton = new Button("Edit");
-        editButton.addClickListener(_ -> editBrand(brandDto, FormAction.EDIT));
+        editButton.addClickListener(event -> editBrand(brandDto, FormAction.EDIT));
         return editButton;
     }
 
@@ -102,7 +102,7 @@ public class BrandListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addBrandButton = new Button("Add Brand");
-        addBrandButton.addClickListener(_ -> addBrand());
+        addBrandButton.addClickListener(event -> addBrand());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");
         return toolbar;

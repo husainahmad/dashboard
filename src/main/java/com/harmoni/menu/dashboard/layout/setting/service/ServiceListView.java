@@ -76,7 +76,7 @@ public class ServiceListView extends VerticalLayout {
 
     private HorizontalLayout getToolbar() {
         Button addServiceButton = new Button("Add Service");
-        addServiceButton.addClickListener(_ -> addService());
+        addServiceButton.addClickListener(event -> addService());
         HorizontalLayout toolbar = new HorizontalLayout( addServiceButton);
         toolbar.addClassName("toolbar");
         return toolbar;

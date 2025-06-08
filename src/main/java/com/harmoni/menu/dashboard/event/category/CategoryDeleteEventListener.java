@@ -35,7 +35,7 @@ public class CategoryDeleteEventListener implements ComponentEventListener<Click
         confirmDialog.setHeader("Confirmation");
         confirmDialog.setText("Do you want to remove this category ".concat(categoryDto.getName()).concat("?"));
         confirmDialog.setCancelable(true);
-        confirmDialog.addConfirmListener(_ -> callRemoveAPI());
+        confirmDialog.addConfirmListener(event -> callRemoveAPI());
         confirmDialog.open();
     }
 

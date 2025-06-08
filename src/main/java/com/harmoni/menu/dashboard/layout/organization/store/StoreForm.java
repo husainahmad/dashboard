@@ -138,22 +138,22 @@ public class StoreForm extends FormLayout  {
     }
 
     private void addValidation() {
-        chainDtoComboBox.addValueChangeListener(_ -> binder.validate());
+        chainDtoComboBox.addValueChangeListener(event -> binder.validate());
         binder.forField(chainDtoComboBox)
                 .withValidator(value -> value.getId() > 0, "Chain not allow to be empty"
                 ).bind(StoreDto::getChainDto, StoreDto::setChainDto);
 
-        tierPriceBox.addValueChangeListener(_ -> binder.validate());
+        tierPriceBox.addValueChangeListener(event -> binder.validate());
 
         binder.forField(storeAddressArea)
                 .withValidator(value -> !value.isEmpty(), "Address not allow to be empty"
                 ).bind(StoreDto::getAddress, StoreDto::setAddress);
 
-        tierPriceBox.addValueChangeListener(_ -> binder.validate());
+        tierPriceBox.addValueChangeListener(event -> binder.validate());
 
         storeNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>)
-                        _ -> binder.validate());
+                        event -> binder.validate());
         binder.forField(storeNameField)
                 .withValidator(value -> value.length()>2,
                         "Name must contain at least three characters")
@@ -212,7 +212,7 @@ public class StoreForm extends FormLayout  {
                 new StoreUpdateEventListener(this, restClientOrganizationService));
         saveButton.addClickListener(
                 new StoreSaveEventListener(this, restClientOrganizationService));
-        closeButton.addClickListener(_ -> removeFromSheet());
+        closeButton.addClickListener(event -> removeFromSheet());
 
         HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
         horizontalLayout.setPadding(true);

@@ -101,7 +101,7 @@ public class ChainListView extends VerticalLayout  {
 
     private Button applyButtonEdit(ChainDto chainDto) {
         Button editButton = new Button("Edit");
-        editButton.addClickListener(_ -> editChain(chainDto, FormAction.EDIT));
+        editButton.addClickListener(event -> editChain(chainDto, FormAction.EDIT));
         return editButton;
     }
 
@@ -133,7 +133,7 @@ public class ChainListView extends VerticalLayout  {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addChainButton = new Button("Add Chain");
-        addChainButton.addClickListener(_ -> addChain());
+        addChainButton.addClickListener(event -> addChain());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;

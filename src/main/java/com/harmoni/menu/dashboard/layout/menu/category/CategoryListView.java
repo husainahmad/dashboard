@@ -75,7 +75,7 @@ public class CategoryListView extends VerticalLayout {
 
     private Button applyButtonEdit(CategoryDto categoryDto) {
         Button editButton = new Button("Edit");
-        editButton.addClickListener(_ -> editCategory(categoryDto, FormAction.EDIT));
+        editButton.addClickListener(event -> editCategory(categoryDto, FormAction.EDIT));
         return editButton;
     }
 
@@ -109,7 +109,7 @@ public class CategoryListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addBrandButton = new Button("Add Category");
-        addBrandButton.addClickListener((ComponentEventListener<ClickEvent<Button>>) _ -> CategoryListView.this.addCategory());
+        addBrandButton.addClickListener((ComponentEventListener<ClickEvent<Button>>) event -> CategoryListView.this.addCategory());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");
         return toolbar;

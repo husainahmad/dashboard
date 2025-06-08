@@ -161,7 +161,7 @@ public class TierMenuListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addTierServiceButton = new Button("Add Tier Menu");
-        addTierServiceButton.addClickListener(_ -> addTier());
+        addTierServiceButton.addClickListener(event -> addTier());
 
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addTierServiceButton);
         toolbar.addClassName("toolbar");
@@ -235,7 +235,7 @@ public class TierMenuListView extends VerticalLayout {
         buttonEdits[tierMenuTreeItem.getRootIndex()] = new Button("Edit Name");
 
         buttonEdits[tierMenuTreeItem.getRootIndex()]
-                .addClickListener(_ -> editTier(getTierDto(tierMenuTreeItem), FormAction.EDIT));
+                .addClickListener(event -> editTier(getTierDto(tierMenuTreeItem), FormAction.EDIT));
         return buttonEdits[tierMenuTreeItem.getRootIndex()];
     }
 

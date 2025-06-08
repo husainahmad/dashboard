@@ -101,7 +101,7 @@ public class TierPriceListView extends VerticalLayout {
 
     private Button applyEditButton(TierDto tierDto) {
         Button buttonEdit = new Button("Edit Name");
-        buttonEdit.addClickListener(_ -> editTier(tierDto, FormAction.EDIT));
+        buttonEdit.addClickListener(event -> editTier(tierDto, FormAction.EDIT));
         return buttonEdit;
     }
 
@@ -152,7 +152,7 @@ public class TierPriceListView extends VerticalLayout {
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
         Button addChainButton = new Button("Add Tier");
-        addChainButton.addClickListener(_ -> addTier());
+        addChainButton.addClickListener(event -> addTier());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;

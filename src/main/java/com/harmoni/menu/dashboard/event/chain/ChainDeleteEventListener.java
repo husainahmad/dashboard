@@ -28,7 +28,7 @@ public class ChainDeleteEventListener implements ComponentEventListener<ClickEve
         confirmDialog.setHeader("Confirmation");
         confirmDialog.setText("Do you want to remove this chain ".concat(chainDto.getName()).concat("?"));
         confirmDialog.setCancelable(true);
-        confirmDialog.addConfirmListener(_ -> callRemoveAPI());
+        confirmDialog.addConfirmListener(event -> callRemoveAPI());
         confirmDialog.open();
     }
 

@@ -115,13 +115,13 @@ public class TierForm extends FormLayout {
 
     public void addValidation() {
 
-        brandBox.addValueChangeListener(_ -> getBinder().validate());
+        brandBox.addValueChangeListener(event -> getBinder().validate());
         getBinder().forField(brandBox)
                 .withValidator(value -> value.getId() > 0, "Brand not allow to be empty"
                 ).bind(TierDto::getBrandDto, TierDto::setBrandDto);
         tierNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextField, String>>) _ -> getBinder().validate());
+                        .ComponentValueChangeEvent<TextField, String>>) event -> getBinder().validate());
 
         getBinder().forField(tierNameField)
                 .withValidator(value -> value.length() > 2,
@@ -157,7 +157,7 @@ public class TierForm extends FormLayout {
                 new TierSaveEventListener(this, this.getRestClientOrganizationService()));
         updateButton.addClickListener(new TierUpdateEventListener(this, this.getRestClientOrganizationService()));
 
-        closeButton.addClickListener(_ -> this.setVisible(false));
+        closeButton.addClickListener(event -> this.setVisible(false));
 
         if (enableSave) {
             horizontalLayout.add(saveButton);

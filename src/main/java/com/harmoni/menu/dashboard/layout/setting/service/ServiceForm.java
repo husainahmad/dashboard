@@ -76,7 +76,7 @@ public class ServiceForm extends FormLayout  {
     private void addValidation() {
         serviceNameField.addValueChangeListener(
                 (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextField, String>>) _ -> binder.validate());
+                        .ComponentValueChangeEvent<TextField, String>>) event -> binder.validate());
 
         binder.forField(serviceNameField)
                 .withValidator(value -> value.length() > 2,
@@ -100,7 +100,7 @@ public class ServiceForm extends FormLayout  {
 
         closeButton.addClickShortcut(Key.ESCAPE);
 
-        closeButton.addClickListener(_ -> this.setVisible(false));
+        closeButton.addClickListener(event -> this.setVisible(false));
 
         HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, updateButton, deleteButton, closeButton);
         horizontalLayout.setPadding(true);
