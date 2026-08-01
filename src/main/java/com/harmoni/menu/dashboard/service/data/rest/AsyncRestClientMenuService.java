@@ -86,6 +86,21 @@ public class AsyncRestClientMenuService implements Serializable {
         }, callback);
     }
 
+    public void getAllCustomizationAsync(AsyncRestCallback<Map<String, Object>> callback,
+                                         Integer brandId, int page, int size, String search) {
+        String url = menuProperties.getUrl().getCustomization()
+                .concat("?brandId=")
+                .concat(String.valueOf(brandId))
+                .concat("&page=")
+                .concat(String.valueOf(page))
+                .concat("&size=")
+                .concat(String.valueOf(size))
+                .concat("&search=")
+                .concat(search);
+
+        makeAsyncRequest(url, new TypeReference<>() {}, callback);
+    }
+
     public void getAllSkuAsync(AsyncRestCallback<List<SkuDto>> callback) {
         String url = menuProperties.getUrl().getSku();
         makeAsyncRequest(url, new TypeReference<>() {

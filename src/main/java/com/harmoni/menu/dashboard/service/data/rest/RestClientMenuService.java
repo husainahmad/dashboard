@@ -69,4 +69,8 @@ public class RestClientMenuService extends RestClientService implements Serializ
         return delete(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getCategory(), categoryDto.getId()));
     }
 
+    public Mono<RestAPIResponse> saveCustomization(CustomizationDto customizationDto) {
+        return post(urlMenuProperties.getUrl().getCustomization(), Mono.just(customizationDto), CustomizationDto.class);
+    }
+
 }

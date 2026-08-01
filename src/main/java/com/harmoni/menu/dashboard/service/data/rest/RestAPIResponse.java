@@ -3,9 +3,11 @@ package com.harmoni.menu.dashboard.service.data.rest;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @Builder
+@ToString
 public class RestAPIResponse {
     private long timeStamp;
     private int httpStatus;

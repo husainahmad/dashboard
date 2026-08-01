@@ -35,33 +35,52 @@ public class RestClientService implements Serializable {
     private static final WebClient webClient = WebClient.builder().build();
 
     public Mono<RestAPIResponse> post(String url, Publisher<?> publisher, Class<?> className) {
+        return post(url, publisher, className, RestAPIResponse.class);
+    }
+
+    public <T> Mono<T> post(String url, Publisher<?> publisher, Class<?> bodyClass, Class<T> responseClass) {
+        log.debug("POST {} auth={}", url, ObjectUtils.isNotEmpty(getTokenString()));
         return
                 webClient.post()
                         .uri(url)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .header(HttpHeaders.AUTHORIZATION, getTokenString())
-                        .body(publisher, className)
+                        .headers(headers -> applyDefaultHeaders(headers, sessionToken()))
+                        .body(publisher, bodyClass)
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(RestAPIResponse.class);
+                        .bodyToMono(responseClass);
     }
 
     private static String getTokenString() {
-        String token = VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);
+        return getTokenString(VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class));
+    }
+
+    private static String getTokenString(String token) {
+        return ObjectUtils.isNotEmpty(token) ? BEARER.concat(token) : token;
+    }
+
+    private static String sessionToken() {
+        return VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);
+    }
+
+    private static void applyDefaultHeaders(HttpHeaders httpHeaders, String token) {
+        httpHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
         if (ObjectUtils.isNotEmpty(token)) {
-            return BEARER.concat(token);
+            httpHeaders.set(HttpHeaders.AUTHORIZATION, BEARER.concat(token));
         }
-        return token;
     }
 
     public Mono<RestAPIResponse> get(String url) {
+        return get(url, null);
+    }
+
+    public Mono<RestAPIResponse> get(String url, String token) {
+        log.debug("GET {} auth={}", url, ObjectUtils.isNotEmpty(getTokenString(token)));
         WebClient.ResponseSpec retrieve = webClient.get()
                 .uri(url)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header(HttpHeaders.AUTHORIZATION, getTokenString())
+                .headers(headers -> applyDefaultHeaders(headers, token))
                 .retrieve();
         retrieve.onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent);
         retrieve.onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest);
@@ -74,8 +93,7 @@ public class RestClientService implements Serializable {
         return
                 webClient.put()
                         .uri(url)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .header(HttpHeaders.AUTHORIZATION, getTokenString())
+                        .headers(headers -> applyDefaultHeaders(headers, sessionToken()))
                         .body(publisher, className)
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
@@ -91,8 +109,7 @@ public class RestClientService implements Serializable {
         return
                 webClient.post()
                         .uri(url)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .header(HttpHeaders.AUTHORIZATION, getTokenString())
+                        .headers(headers -> applyDefaultHeaders(headers, sessionToken()))
                         .contentType(MediaType.MULTIPART_FORM_DATA)
                         .body(BodyInserters.fromMultipartData(body))
                         .retrieve()
@@ -110,8 +127,7 @@ public class RestClientService implements Serializable {
         return
                 webClient.put()
                         .uri(url)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .header(HttpHeaders.AUTHORIZATION, getTokenString())
+                        .headers(headers -> applyDefaultHeaders(headers, sessionToken()))
                         .contentType(MediaType.MULTIPART_FORM_DATA)
                         .body(BodyInserters.fromMultipartData(body))
                         .retrieve()
@@ -127,8 +143,7 @@ public class RestClientService implements Serializable {
         return
                 webClient.delete()
                         .uri(url)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .header(HttpHeaders.AUTHORIZATION, getTokenString())
+                        .headers(headers -> applyDefaultHeaders(headers, sessionToken()))
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)

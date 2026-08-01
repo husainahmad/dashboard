@@ -18,6 +18,7 @@ public final class ObjectUtil {
     private static final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+
     public static String objectToJsonString(Object object) throws JsonProcessingException {
         return objectMapper.writeValueAsString(object);
     }

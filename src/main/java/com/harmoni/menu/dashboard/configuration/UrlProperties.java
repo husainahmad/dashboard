@@ -8,6 +8,7 @@ import java.io.Serializable;
 public class UrlProperties implements Serializable {
     private String store;
     private String category;
+    private String customization;
     private String sku;
     private String skutierprice;
     private String brand;

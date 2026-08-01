@@ -1,11 +1,11 @@
-server.port=8081
+server.port=8282
 server.servlet.session.timeout=1440m
 spring.application.name=dashboard
 menu.title=example
 
 menu.url=http://localhost:8080
 setting.url=http://localhost:8080
-auth.url=http://localhost:8282
+auth.url=http://localhost:8080
 
 auth.url.login=${auth.url}/api/v1/auth/login
 
@@ -27,6 +27,7 @@ menu.url.users.chain=${menu.url}/api/v1/user/chain
 
 menu.url.store=${menu.url}/api/v1/store
 menu.url.category=${menu.url}/api/v1/category
+menu.url.customization=${menu.url}/api/v1/customization
 menu.url.categories.brand=${menu.url}/api/v1/category/brand
 menu.url.product=${menu.url}/api/v1/product
 

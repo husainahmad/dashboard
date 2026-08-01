@@ -8,11 +8,11 @@ import com.harmoni.menu.dashboard.util.ObjectUtil;
 
 public interface BroadcastMessageService {
 
-    default void broadcastMessage(String type, RestAPIResponse restAPIResponse) {
+    default void broadcastMessage(String type, Object data) {
         try {
             Broadcaster.broadcast(ObjectUtil.objectToJsonString(BroadcastMessage.builder()
                     .type(type)
-                    .data(restAPIResponse).build()));
+                    .data(data).build()));
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e);
         }
