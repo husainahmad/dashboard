@@ -1,7 +1,7 @@
 package com.harmoni.menu.dashboard.service.data.rest;
 
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
-import com.harmoni.menu.dashboard.exception.UnAuthorizedServerRequestException;
+import com.harmoni.menu.dashboard.exception.TokenRefreshRequiredException;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,17 +40,17 @@ public class RestClientService implements Serializable {
 
     public <T> Mono<T> post(String url, Publisher<?> publisher, Class<?> bodyClass, Class<T> responseClass) {
         log.debug("POST {} auth={}", url, ObjectUtils.isNotEmpty(getTokenString()));
-        return
+        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
                 webClient.post()
                         .uri(url)
-                        .headers(headers -> applyDefaultHeaders(headers, sessionToken()))
+                        .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, null)))
                         .body(publisher, bodyClass)
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(responseClass);
+                        .bodyToMono(responseClass));
     }
 
     private static String getTokenString() {
@@ -63,6 +63,13 @@ public class RestClientService implements Serializable {
 
     private static String sessionToken() {
         return VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);
+    }
+
+    private static String resolveToken(String accessToken, String explicitToken) {
+        if (ObjectUtils.isNotEmpty(accessToken)) {
+            return accessToken;
+        }
+        return ObjectUtils.isNotEmpty(explicitToken) ? explicitToken : sessionToken();
     }
 
     private static void applyDefaultHeaders(HttpHeaders httpHeaders, String token) {
@@ -78,38 +85,39 @@ public class RestClientService implements Serializable {
 
     public Mono<RestAPIResponse> get(String url, String token) {
         log.debug("GET {} auth={}", url, ObjectUtils.isNotEmpty(getTokenString(token)));
-        WebClient.ResponseSpec retrieve = webClient.get()
-                .uri(url)
-                .headers(headers -> applyDefaultHeaders(headers, token))
-                .retrieve();
-        retrieve.onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent);
-        retrieve.onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest);
-        retrieve.onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError);
-        retrieve.onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized);
-        return retrieve.bodyToMono(RestAPIResponse.class);
+        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
+                webClient.get()
+                        .uri(url)
+                        .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, token)))
+                        .retrieve()
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
+                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
+                        .bodyToMono(RestAPIResponse.class));
     }
 
     public Mono<RestAPIResponse> put(String url, Publisher<?> publisher, Class<?> className) {
-        return
+        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
                 webClient.put()
                         .uri(url)
-                        .headers(headers -> applyDefaultHeaders(headers, sessionToken()))
+                        .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, null)))
                         .body(publisher, className)
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(RestAPIResponse.class);
+                        .bodyToMono(RestAPIResponse.class));
     }
 
     public Mono<RestAPIResponse> upload(String url, File file) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new FileSystemResource(file)); // "file" should match the expected request parameter name
-        return
+        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
                 webClient.post()
                         .uri(url)
-                        .headers(headers -> applyDefaultHeaders(headers, sessionToken()))
+                        .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, null)))
                         .contentType(MediaType.MULTIPART_FORM_DATA)
                         .body(BodyInserters.fromMultipartData(body))
                         .retrieve()
@@ -117,17 +125,17 @@ public class RestClientService implements Serializable {
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(RestAPIResponse.class);
+                        .bodyToMono(RestAPIResponse.class));
 
     }
 
     public Mono<RestAPIResponse> uploadUpdate(String url, File file) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new FileSystemResource(file)); // "file" should match the expected request parameter name
-        return
+        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
                 webClient.put()
                         .uri(url)
-                        .headers(headers -> applyDefaultHeaders(headers, sessionToken()))
+                        .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, null)))
                         .contentType(MediaType.MULTIPART_FORM_DATA)
                         .body(BodyInserters.fromMultipartData(body))
                         .retrieve()
@@ -135,21 +143,21 @@ public class RestClientService implements Serializable {
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(RestAPIResponse.class);
+                        .bodyToMono(RestAPIResponse.class));
 
     }
 
     public Mono<RestAPIResponse> delete(String url) {
-        return
+        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
                 webClient.delete()
                         .uri(url)
-                        .headers(headers -> applyDefaultHeaders(headers, sessionToken()))
+                        .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, null)))
                         .retrieve()
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
                         .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(RestAPIResponse.class);
+                        .bodyToMono(RestAPIResponse.class));
     }
 
     private static void logError(String s, RestAPIResponse restAPIResponse) {
@@ -176,7 +184,7 @@ public class RestClientService implements Serializable {
         return clientResponse.bodyToMono(RestAPIResponse.class)
                 .handle(((restAPIResponse, throwableSynchronousSink) -> {
                     logError(LOG_UN_AUTHORIZED, restAPIResponse);
-                    throwableSynchronousSink.error(new UnAuthorizedServerRequestException(restAPIResponse));
+                    throwableSynchronousSink.error(new TokenRefreshRequiredException(restAPIResponse.toString()));
                 }));
     }
 

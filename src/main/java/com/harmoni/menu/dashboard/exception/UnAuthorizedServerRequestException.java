@@ -11,10 +11,14 @@ import lombok.extern.slf4j.Slf4j;
 public class UnAuthorizedServerRequestException extends RuntimeException {
     public UnAuthorizedServerRequestException(RestAPIResponse restAPIResponse) {
         log.warn("Serve Response : {}", restAPIResponse);
+        broadcast();
+    }
+
+    public static void broadcast() {
         try {
             Broadcaster.broadcast(ObjectUtil.objectToJsonString(BroadcastMessage.builder()
                     .type(BroadcastMessage.UN_AUTHORIZED)
-                    .data(restAPIResponse).build()));
+                    .data(null).build()));
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e);
         }

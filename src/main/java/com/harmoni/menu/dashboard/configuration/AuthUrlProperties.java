@@ -7,4 +7,5 @@ import java.io.Serializable;
 @Data
 public class AuthUrlProperties implements Serializable {
     private String login;
+    private String refreshToken;
 }

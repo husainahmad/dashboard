@@ -8,6 +8,7 @@ setting.url=http://localhost:8080
 auth.url=http://localhost:8080
 
 auth.url.login=${auth.url}/api/v1/auth/login
+auth.url.refresh-token=${auth.url}/api/v1/auth/refresh-token
 
 menu.url.brand=${menu.url}/api/v1/brand
 menu.url.chain=${menu.url}/api/v1/chain
