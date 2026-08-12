@@ -14,7 +14,10 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationServic
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -109,12 +112,17 @@ public class StoreListView extends VerticalLayout {
     private Component applyGroupButton(StoreDto storeDto) {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
 
-        Button editButton = new Button("Edit");
+        Button editButton = new Button(new Icon(VaadinIcon.EDIT));
+        editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
+        editButton.setTooltipText("Edit");
         editButton.addClickListener(event -> showAddEditStore(storeDto, "Edit Store", FormAction.EDIT));
 
         horizontalLayout.add(editButton);
 
-        Button deleteButton = new Button("Delete");
+        Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
+        deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
+                ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        deleteButton.setTooltipText("Delete");
         deleteButton.addClickListener(new StoreDeleteEventListener(storeDto, this.restClientOrganizationService));
         horizontalLayout.add(deleteButton);
 
@@ -152,7 +160,8 @@ public class StoreListView extends VerticalLayout {
             }
         });
 
-        Button addChainButton = new Button("Add Store");
+        Button addChainButton = new Button("Add Store", new Icon(VaadinIcon.PLUS));
+        addChainButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addChainButton.addClickListener(event -> showAddEditStore(null, "New Store", FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");

@@ -15,7 +15,10 @@ import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -105,12 +108,17 @@ public class UserListView extends VerticalLayout {
     private Component applyGroupButton(UserDto userDto) {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
 
-        Button editButton = new Button("Edit");
+        Button editButton = new Button(new Icon(VaadinIcon.EDIT));
+        editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
+        editButton.setTooltipText("Edit");
         editButton.addClickListener(event -> showAddEditUser(userDto, "Edit User", FormAction.EDIT));
 
         horizontalLayout.add(editButton);
 
-        Button deleteButton = new Button("Delete");
+        Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
+        deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
+                ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        deleteButton.setTooltipText("Delete");
         deleteButton.addClickListener(new UserDeleteEventListener(userDto, this.restClientOrganizationService));
         horizontalLayout.add(deleteButton);
 
@@ -148,7 +156,8 @@ public class UserListView extends VerticalLayout {
             }
         });
 
-        Button addChainButton = new Button("Add User");
+        Button addChainButton = new Button("Add User", new Icon(VaadinIcon.PLUS));
+        addChainButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addChainButton.addClickListener(event -> showAddEditUser(new UserDto(), "New User", FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");

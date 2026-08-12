@@ -5,10 +5,15 @@ import com.harmoni.menu.dashboard.event.user.LoginEventListener;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientLoginService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -24,36 +29,78 @@ public class LoginView extends VerticalLayout {
 
     TextField usernameField = new TextField("Username");
     PasswordField passwordField = new PasswordField("Password");
-    Button loginButton = new Button("Login");
+    Button loginButton = new Button("Sign in");
     Span messageSpan = new Span("");
 
     private void drawLayout() {
+        removeAll();
         setSizeFull();
-        setAlignItems(Alignment.CENTER);
-        setJustifyContentMode(JustifyContentMode.CENTER);
+        setPadding(false);
+        setSpacing(false);
+        setAlignItems(FlexComponent.Alignment.STRETCH);
 
-        H2 welcomeMessage = new H2("Welcome to POSHarmoni");
-        welcomeMessage.getStyle()
-                .set("margin-bottom", "10px")
-                .set("font-size", "20px")
-                .set("color", "#fffff");
+        HorizontalLayout root = new HorizontalLayout();
+        root.setSizeFull();
+        root.setSpacing(false);
+        root.setPadding(false);
+        root.addClassName("login-view");
+        root.setAlignItems(FlexComponent.Alignment.STRETCH);
 
-        VerticalLayout formLayout = new VerticalLayout(welcomeMessage, usernameField, passwordField, loginButton, messageSpan);
-        formLayout.setWidth("300px");
-        formLayout.setAlignItems(Alignment.CENTER);
-
-        Div panel = new Div();
-        panel.getStyle()
-                .set("padding", "20px")
-                .set("border", "1px solid #ccc")
-                .set("border-radius", "10px")
-                .set("box-shadow", "2px 2px 10px rgba(0,0,0,0.1)")
-                .set("width", "320px")
-                .set("text-align", "center");
-        panel.add(formLayout);
-        add(panel);
+        root.add(createBrandPanel());
+        root.add(createFormPanel());
+        add(root);
 
         loginButton.addClickListener(new LoginEventListener(restClientLoginService, this));
+    }
+
+    private VerticalLayout createBrandPanel() {
+        Div badge = new Div("P");
+        badge.addClassName("app-logo-icon");
+
+        H1 title = new H1("POSHarmoni");
+        Paragraph tagline = new Paragraph("The all-in-one menu management platform for your stores.");
+
+        VerticalLayout content = new VerticalLayout(badge, title, tagline);
+        content.addClassName("login-brand-content");
+        content.setSpacing(true);
+        content.setAlignItems(FlexComponent.Alignment.START);
+
+        VerticalLayout brand = new VerticalLayout(content);
+        brand.addClassName("login-brand");
+        brand.setWidth("42%");
+        brand.setHeightFull();
+        brand.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        brand.setAlignItems(FlexComponent.Alignment.START);
+        return brand;
+    }
+
+    private VerticalLayout createFormPanel() {
+        H2 welcome = new H2("Sign in");
+        welcome.getStyle().set("margin", "0");
+        Paragraph subtitle = new Paragraph("Welcome back — enter your credentials to continue.");
+        subtitle.addClassName("login-subtitle");
+
+        usernameField.setWidthFull();
+        passwordField.setWidthFull();
+        messageSpan.addClassName("login-message");
+
+        loginButton.setWidthFull();
+        loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
+        loginButton.setAutofocus(true);
+
+        VerticalLayout panel = new VerticalLayout(
+                welcome, subtitle, usernameField, passwordField, loginButton, messageSpan);
+        panel.addClassName("login-panel");
+        panel.setSpacing(true);
+        panel.setPadding(true);
+
+        VerticalLayout formSide = new VerticalLayout(panel);
+        formSide.addClassName("login-form-side");
+        formSide.setWidth("58%");
+        formSide.setHeightFull();
+        formSide.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        formSide.setAlignItems(FlexComponent.Alignment.CENTER);
+        return formSide;
     }
 
     public LoginDto getLoginDto() {

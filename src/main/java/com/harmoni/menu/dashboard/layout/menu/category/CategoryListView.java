@@ -16,6 +16,8 @@ import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -74,14 +76,18 @@ public class CategoryListView extends VerticalLayout {
     }
 
     private Button applyButtonEdit(CategoryDto categoryDto) {
-        Button editButton = new Button("Edit");
+        Button editButton = new Button(new Icon(VaadinIcon.EDIT));
+        editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
+        editButton.setTooltipText("Edit");
         editButton.addClickListener(event -> editCategory(categoryDto, FormAction.EDIT));
         return editButton;
     }
 
     private Button applyButtonDelete(CategoryDto categoryDto) {
-        Button deleteButton = new Button("Delete");
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
+        deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
+                ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        deleteButton.setTooltipText("Delete");
         deleteButton.addClickListener(
                 new CategoryDeleteEventListener(categoryDto, restClientMenuService));
         return deleteButton;
@@ -108,7 +114,8 @@ public class CategoryListView extends VerticalLayout {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addBrandButton = new Button("Add Category");
+        Button addBrandButton = new Button("Add Category", new Icon(VaadinIcon.PLUS));
+        addBrandButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addBrandButton.addClickListener((ComponentEventListener<ClickEvent<Button>>) event -> CategoryListView.this.addCategory());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");

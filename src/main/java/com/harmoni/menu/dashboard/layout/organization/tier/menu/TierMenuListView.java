@@ -20,7 +20,10 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -160,7 +163,8 @@ public class TierMenuListView extends VerticalLayout {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addTierServiceButton = new Button("Add Tier Menu");
+        Button addTierServiceButton = new Button("Add Tier Menu", new Icon(VaadinIcon.PLUS));
+        addTierServiceButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addTierServiceButton.addClickListener(event -> addTier());
 
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addTierServiceButton);
@@ -224,7 +228,11 @@ public class TierMenuListView extends VerticalLayout {
     }
 
     private Button applyButtonDelete(TierMenuTreeItem tierMenuTreeItem) {
-        buttonDeletes[tierMenuTreeItem.getRootIndex()] = new Button("Delete");
+        buttonDeletes[tierMenuTreeItem.getRootIndex()] = new Button(new Icon(VaadinIcon.TRASH));
+        buttonDeletes[tierMenuTreeItem.getRootIndex()]
+                .addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
+                        ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        buttonDeletes[tierMenuTreeItem.getRootIndex()].setTooltipText("Delete");
         buttonDeletes[tierMenuTreeItem.getRootIndex()].addClickListener(new TierDeleteEventListener(this.ui,
                 tierMenuTreeItem.getTierDto().getId(),
                 restClientOrganizationService));
@@ -232,7 +240,10 @@ public class TierMenuListView extends VerticalLayout {
     }
 
     private Button applyButtonEdit(TierMenuTreeItem tierMenuTreeItem) {
-        buttonEdits[tierMenuTreeItem.getRootIndex()] = new Button("Edit Name");
+        buttonEdits[tierMenuTreeItem.getRootIndex()] = new Button(new Icon(VaadinIcon.EDIT));
+        buttonEdits[tierMenuTreeItem.getRootIndex()]
+                .addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
+        buttonEdits[tierMenuTreeItem.getRootIndex()].setTooltipText("Edit Name");
 
         buttonEdits[tierMenuTreeItem.getRootIndex()]
                 .addClickListener(event -> editTier(getTierDto(tierMenuTreeItem), FormAction.EDIT));
@@ -242,6 +253,8 @@ public class TierMenuListView extends VerticalLayout {
     private Button applyButtonUpdate(TierMenuTreeItem tierMenuTreeItem) {
         buttonUpdates[tierMenuTreeItem.getRootIndex()] = new Button("Update");
         buttonUpdates[tierMenuTreeItem.getRootIndex()].setEnabled(false);
+        buttonUpdates[tierMenuTreeItem.getRootIndex()]
+                .addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         buttonUpdates[tierMenuTreeItem.getRootIndex()].addClickListener(new TierMenuUpdateEventListener(this.ui,
                 restClientOrganizationService, tierMenuTreeGrid, tierMenuTreeItem, getTierDto(tierMenuTreeItem)));
         return buttonUpdates[tierMenuTreeItem.getRootIndex()];

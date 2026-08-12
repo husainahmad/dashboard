@@ -16,7 +16,10 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -92,9 +95,14 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     private HorizontalLayout applyButton(ProductTreeItem productTreeItem) {
         if (productTreeItem.getProductItemType().equals(ProductItemType.PRODUCT)) {
             HorizontalLayout horizontalLayout = new HorizontalLayout();
-            Button editButton = new Button("Edit");
+            Button editButton = new Button(new Icon(VaadinIcon.EDIT));
+            editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
+            editButton.setTooltipText("Edit");
             editButton.addClickListener(event -> editProduct(productTreeItem));
-            Button deleteButton = new Button("Delete");
+            Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
+            deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
+                    ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+            deleteButton.setTooltipText("Delete");
             deleteButton.addClickListener(new ProductDeleteEventListener(restClientMenuService, productTreeItem));
             horizontalLayout.add(editButton, deleteButton);
             return horizontalLayout;
@@ -205,7 +213,8 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         });
         Button searchProduct = new Button("Search");
         searchProduct.addClickListener(this::onSearchProductListener);
-        Button addProduct = new Button("Add Product");
+        Button addProduct = new Button("Add Product", new Icon(VaadinIcon.PLUS));
+        addProduct.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addProduct.addClickListener(this::onAddProductListener);
 
         HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, categoryDtoComboBox,

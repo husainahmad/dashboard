@@ -17,6 +17,8 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -83,14 +85,18 @@ public class BrandListView extends VerticalLayout {
     }
 
     private Button applyButtonEdit(BrandDto brandDto) {
-        Button editButton = new Button("Edit");
+        Button editButton = new Button(new Icon(VaadinIcon.EDIT));
+        editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
+        editButton.setTooltipText("Edit");
         editButton.addClickListener(event -> editBrand(brandDto, FormAction.EDIT));
         return editButton;
     }
 
     private Button applyButtonDelete(BrandDto brandDto) {
-        Button deleteButton = new Button("Delete");
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
+        deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
+                ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        deleteButton.setTooltipText("Delete");
         deleteButton.addClickListener(
                 new BrandDeleteEventListener(brandDto, restClientOrganizationService));
         return deleteButton;
@@ -101,7 +107,8 @@ public class BrandListView extends VerticalLayout {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addBrandButton = new Button("Add Brand");
+        Button addBrandButton = new Button("Add Brand", new Icon(VaadinIcon.PLUS));
+        addBrandButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addBrandButton.addClickListener(event -> addBrand());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");

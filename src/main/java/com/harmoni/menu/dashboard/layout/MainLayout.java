@@ -10,16 +10,23 @@ import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.Lumo;
 import org.apache.commons.lang3.ObjectUtils;
 
 @CssImport("./styles/shared-styles.css")
@@ -35,31 +42,63 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
 
     private void createHeader() {
         DrawerToggle toggle = new DrawerToggle();
+        toggle.setTooltipText("Toggle navigation");
 
-        H2 logo = new H2(TITLE);
-        HorizontalLayout header = new HorizontalLayout(logo);
-        header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
-        header.expand(logo);
-        header.setWidth("100%");
-        header.addClassNames("py-0", "px-m");
+        H2 logo = createLogo();
 
-        Button logoutButton = new Button("Logout", event -> {
+        HorizontalLayout actions = new HorizontalLayout(createThemeToggle(), createLogoutButton());
+        actions.setSpacing(true);
+        actions.setPadding(false);
+        actions.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        HorizontalLayout navbar = new HorizontalLayout(toggle, logo, actions);
+        navbar.setWidthFull();
+        navbar.setPadding(false);
+        navbar.setSpacing(false);
+        navbar.setAlignItems(FlexComponent.Alignment.CENTER);
+        navbar.setFlexGrow(1, logo);
+        navbar.addClassName("app-navbar");
+
+        addToNavbar(navbar);
+    }
+
+    private H2 createLogo() {
+        Div badge = new Div("P");
+        badge.addClassName("app-logo-icon");
+        H2 logo = new H2(badge, new Span("POSHarmoni"));
+        logo.addClassName("app-logo");
+        return logo;
+    }
+
+    private Button createThemeToggle() {
+        Icon moon = new Icon(VaadinIcon.MOON);
+        Icon sun = new Icon(VaadinIcon.SUN_O);
+        Button toggle = new Button(moon);
+        toggle.addClassName("app-theme-toggle");
+        toggle.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
+        toggle.setTooltipText("Toggle light/dark mode");
+        toggle.addClickListener(event -> {
+            boolean dark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+            if (dark) {
+                UI.getCurrent().getElement().getThemeList().remove(Lumo.DARK);
+                toggle.setIcon(sun);
+            } else {
+                UI.getCurrent().getElement().getThemeList().add(Lumo.DARK);
+                toggle.setIcon(moon);
+            }
+        });
+        return toggle;
+    }
+
+    private Button createLogoutButton() {
+        Button logoutButton = new Button("Logout", new Icon(VaadinIcon.SIGN_OUT));
+        logoutButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        logoutButton.setTooltipText("Sign out");
+        logoutButton.addClickListener(event -> {
             getUI().ifPresent(ui -> ui.getSession().close());
             getUI().ifPresent(ui -> ui.navigate(LoginView.class));
         });
-
-        HorizontalLayout profileLayout = new HorizontalLayout(logoutButton);
-        profileLayout.setSpacing(true);
-        profileLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        HorizontalLayout navbar = new HorizontalLayout(toggle, logo, profileLayout);
-        navbar.setWidthFull();
-        navbar.setPadding(true);
-        navbar.setSpacing(true);
-        navbar.setAlignItems(FlexComponent.Alignment.CENTER);
-        navbar.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-
-        addToNavbar(navbar);
+        return logoutButton;
     }
 
     private void createDrawer() {

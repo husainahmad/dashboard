@@ -17,7 +17,10 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -100,13 +103,18 @@ public class TierPriceListView extends VerticalLayout {
     }
 
     private Button applyEditButton(TierDto tierDto) {
-        Button buttonEdit = new Button("Edit Name");
+        Button buttonEdit = new Button(new Icon(VaadinIcon.EDIT));
+        buttonEdit.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
+        buttonEdit.setTooltipText("Edit Name");
         buttonEdit.addClickListener(event -> editTier(tierDto, FormAction.EDIT));
         return buttonEdit;
     }
 
     private Button applyDeleteButton(TierDto tierDto) {
-        Button buttonDelete = new Button("Delete");
+        Button buttonDelete = new Button(new Icon(VaadinIcon.TRASH));
+        buttonDelete.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
+                ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        buttonDelete.setTooltipText("Delete");
         buttonDelete.addClickListener(new TierDeleteEventListener(this.ui, tierDto.getId(),
                 this.restClientOrganizationService));
         return buttonDelete;
@@ -151,7 +159,8 @@ public class TierPriceListView extends VerticalLayout {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addChainButton = new Button("Add Tier");
+        Button addChainButton = new Button("Add Tier", new Icon(VaadinIcon.PLUS));
+        addChainButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addChainButton.addClickListener(event -> addTier());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");

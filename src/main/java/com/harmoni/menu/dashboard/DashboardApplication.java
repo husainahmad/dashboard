@@ -8,7 +8,7 @@ import com.vaadin.flow.theme.lumo.Lumo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@Theme(variant = Lumo.DARK)
+@Theme(value = "dashboard", variant = Lumo.DARK)
 @Push(transport = Transport.LONG_POLLING)
 @SpringBootApplication
 public class DashboardApplication implements AppShellConfigurator {

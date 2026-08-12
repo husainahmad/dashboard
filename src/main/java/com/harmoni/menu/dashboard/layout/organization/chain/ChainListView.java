@@ -18,6 +18,8 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -100,14 +102,18 @@ public class ChainListView extends VerticalLayout  {
     }
 
     private Button applyButtonEdit(ChainDto chainDto) {
-        Button editButton = new Button("Edit");
+        Button editButton = new Button(new Icon(VaadinIcon.EDIT));
+        editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
+        editButton.setTooltipText("Edit");
         editButton.addClickListener(event -> editChain(chainDto, FormAction.EDIT));
         return editButton;
     }
 
     private Button applyButtonDelete(ChainDto chainDto) {
-        Button deleteButton = new Button("Delete");
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
+        deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
+                ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
+        deleteButton.setTooltipText("Delete");
         deleteButton.addClickListener(
                 new ChainDeleteEventListener(chainDto, restClientOrganizationService));
         return deleteButton;
@@ -132,7 +138,8 @@ public class ChainListView extends VerticalLayout  {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addChainButton = new Button("Add Chain");
+        Button addChainButton = new Button("Add Chain", new Icon(VaadinIcon.PLUS));
+        addChainButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addChainButton.addClickListener(event -> addChain());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
