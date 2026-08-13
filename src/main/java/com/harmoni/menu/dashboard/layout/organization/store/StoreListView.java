@@ -8,16 +8,15 @@ import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.event.store.StoreDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -61,12 +60,13 @@ public class StoreListView extends VerticalLayout {
     int totalPages;
     int currentPage = 1;
     final transient Map<String, Object> objectParams = new HashMap<>();
+    private final LoadingBar loadingBar = new LoadingBar();
 
     private void renderLayout() {
         addClassName("list-view");
         setSizeFull();
         configureGrid();
-        add(getToolbar(), getContent(), getPaginationFooter());
+        add(loadingBar, getToolbar(), getContent(), getPaginationFooter());
     }
 
     @Override
@@ -102,6 +102,7 @@ public class StoreListView extends VerticalLayout {
     private void configureGrid() {
         storeDtoGrid.setSizeFull();
         storeDtoGrid.removeAllColumns();
+        storeDtoGrid.setEmptyStateText(UiUtil.NO_RECORDS);
         storeDtoGrid.addColumn(StoreDto::getName).setHeader("Name");
         storeDtoGrid.addColumn(StoreDto::getAddress).setHeader("Address");
         storeDtoGrid.addColumn("chainDto.name").setHeader("Chain");
@@ -111,21 +112,9 @@ public class StoreListView extends VerticalLayout {
 
     private Component applyGroupButton(StoreDto storeDto) {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
-
-        Button editButton = new Button(new Icon(VaadinIcon.EDIT));
-        editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
-        editButton.setTooltipText("Edit");
-        editButton.addClickListener(event -> showAddEditStore(storeDto, "Edit Store", FormAction.EDIT));
-
-        horizontalLayout.add(editButton);
-
-        Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
-                ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
-        deleteButton.setTooltipText("Delete");
-        deleteButton.addClickListener(new StoreDeleteEventListener(storeDto, this.restClientOrganizationService));
-        horizontalLayout.add(deleteButton);
-
+        horizontalLayout.add(UiUtil.editButton(event -> showAddEditStore(storeDto, "Edit Store", FormAction.EDIT)));
+        horizontalLayout.add(UiUtil.deleteButton(
+                new StoreDeleteEventListener(storeDto, this.restClientOrganizationService)));
         return horizontalLayout;
     }
 
@@ -160,9 +149,7 @@ public class StoreListView extends VerticalLayout {
             }
         });
 
-        Button addChainButton = new Button("Add Store", new Icon(VaadinIcon.PLUS));
-        addChainButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addChainButton.addClickListener(event -> showAddEditStore(null, "New Store", FormAction.CREATE));
+        Button addChainButton = UiUtil.addButton("Add Store", event -> showAddEditStore(null, "New Store", FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -170,6 +157,7 @@ public class StoreListView extends VerticalLayout {
 
     private HorizontalLayout getPaginationFooter() {
         HorizontalLayout paginationFooter = new HorizontalLayout();
+        paginationFooter.addClassName("pagination");
         Button previousButton = new Button("Previous", event -> {
             if (currentPage > 1) {
                 currentPage--;
@@ -199,7 +187,9 @@ public class StoreListView extends VerticalLayout {
 
     private void fetchStores() {
         int pageSize = 10;
-        asyncRestClientOrganizationService.getAllStoreAsync(result -> {
+        loadingBar.start();
+        asyncRestClientOrganizationService.getAllStoreAsync(result -> ui.access(() -> {
+            loadingBar.stop();
             if (ObjectUtils.isNotEmpty(result.get("data"))
                     && result.get("data") instanceof List<?> dataList && !dataList.isEmpty()) {
                 totalPages = Integer.parseInt(result.get("page") == null ? "0" :result.get("page").toString());
@@ -210,12 +200,10 @@ public class StoreListView extends VerticalLayout {
                     storeDtos.add(storeDto);
                 });
 
-                ui.access(()-> {
-                    storeDtoGrid.setItems(storeDtos);
-                    pageInfoText.setText(getPaginationInfo());
-                });
+                storeDtoGrid.setItems(storeDtos);
+                pageInfoText.setText(getPaginationInfo());
             }
-        }, accessService.getUserDetail().getStoreDto().getChainDto().getId(), currentPage, pageSize, filterText.getValue());
+        }), accessService.getUserDetail().getStoreDto().getChainDto().getId(), currentPage, pageSize, filterText.getValue());
     }
 
     private void fetchChains() {

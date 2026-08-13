@@ -8,6 +8,8 @@ import com.harmoni.menu.dashboard.event.user.UserDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.enums.RoleType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -15,10 +17,7 @@ import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -55,12 +54,13 @@ public class UserListView extends VerticalLayout {
     int totalPages;
     int currentPage = 1;
     static final int TEMP_BRAND_ID = 1;
+    private final LoadingBar loadingBar = new LoadingBar();
 
-    private void renderLayout() {
+private void renderLayout() {
         addClassName("list-view");
         setSizeFull();
         configureGrid();
-        add(getToolbar(), getContent(), getPaginationFooter());
+        add(loadingBar, getToolbar(), getContent(), getPaginationFooter());
     }
 
     @Override
@@ -93,6 +93,7 @@ public class UserListView extends VerticalLayout {
     private void configureGrid() {
         userDtoGrid.setSizeFull();
         userDtoGrid.removeAllColumns();
+        userDtoGrid.setEmptyStateText(UiUtil.NO_RECORDS);
         userDtoGrid.addColumn(UserDto::getUsername).setHeader("Name");
         userDtoGrid.addComponentColumn(userDto -> {
             return switch (userDto.getAuthId()) {
@@ -107,21 +108,10 @@ public class UserListView extends VerticalLayout {
 
     private Component applyGroupButton(UserDto userDto) {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
-
-        Button editButton = new Button(new Icon(VaadinIcon.EDIT));
-        editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
-        editButton.setTooltipText("Edit");
-        editButton.addClickListener(event -> showAddEditUser(userDto, "Edit User", FormAction.EDIT));
-
-        horizontalLayout.add(editButton);
-
-        Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
-                ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
-        deleteButton.setTooltipText("Delete");
-        deleteButton.addClickListener(new UserDeleteEventListener(userDto, this.restClientOrganizationService));
-        horizontalLayout.add(deleteButton);
-
+        horizontalLayout.add(UiUtil.editButton(
+                event -> showAddEditUser(userDto, "Edit User", FormAction.EDIT)));
+        horizontalLayout.add(UiUtil.deleteButton(
+                new UserDeleteEventListener(userDto, this.restClientOrganizationService)));
         return horizontalLayout;
     }
 
@@ -156,9 +146,8 @@ public class UserListView extends VerticalLayout {
             }
         });
 
-        Button addChainButton = new Button("Add User", new Icon(VaadinIcon.PLUS));
-        addChainButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addChainButton.addClickListener(event -> showAddEditUser(new UserDto(), "New User", FormAction.CREATE));
+        Button addChainButton = UiUtil.addButton("Add User",
+                event -> showAddEditUser(new UserDto(), "New User", FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -166,6 +155,7 @@ public class UserListView extends VerticalLayout {
 
     private HorizontalLayout getPaginationFooter() {
         HorizontalLayout paginationFooter = new HorizontalLayout();
+        paginationFooter.addClassName("pagination");
         Button previousButton = new Button("Previous", event -> {
             if (currentPage > 1) {
                 currentPage--;
@@ -195,7 +185,9 @@ public class UserListView extends VerticalLayout {
 
     private void fetchUsers() {
         int pageSize = 10;
-        asyncRestClientOrganizationService.getAllUserByChainAsync(result -> {
+        loadingBar.start();
+        asyncRestClientOrganizationService.getAllUserByChainAsync(result -> ui.access(() -> {
+            loadingBar.stop();
             if (ObjectUtils.isNotEmpty(result.get("data"))
                     && result.get("data") instanceof List<?> dataList && !dataList.isEmpty()) {
                 totalPages = Integer.parseInt(result.get("page") == null ? "0" :result.get("page").toString());
@@ -206,12 +198,10 @@ public class UserListView extends VerticalLayout {
                     userDtos.add(userDto);
                 });
 
-                ui.access(()-> {
-                    userDtoGrid.setItems(userDtos);
-                    pageInfoText.setText(getPaginationInfo());
-                });
+                userDtoGrid.setItems(userDtos);
+                pageInfoText.setText(getPaginationInfo());
             }
-        }, accessService.getUserDetail().getStoreDto().getChainId(), currentPage, pageSize, filterText.getValue());
+        }), accessService.getUserDetail().getStoreDto().getChainId(), currentPage, pageSize, filterText.getValue());
     }
 
 }

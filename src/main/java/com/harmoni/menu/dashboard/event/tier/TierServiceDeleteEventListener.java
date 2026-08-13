@@ -10,7 +10,10 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import lombok.RequiredArgsConstructor;
+
+import static com.harmoni.menu.dashboard.component.BroadcastMessage.TIER_DELETED_SUCCESS;
 
 @RequiredArgsConstructor
 public class TierServiceDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
@@ -22,6 +25,17 @@ public class TierServiceDeleteEventListener implements ComponentEventListener<Cl
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
+        ui.access(() -> {
+            ConfirmDialog confirmDialog = new ConfirmDialog();
+            confirmDialog.setHeader("Confirmation");
+            confirmDialog.setText("Do you want to remove this tier service?");
+            confirmDialog.setCancelable(true);
+            confirmDialog.addConfirmListener(event -> deleteTierService());
+            confirmDialog.open();
+        });
+    }
+
+    private void deleteTierService() {
         TierDto tierDto = new TierDto();
         tierDto.setId(this.id);
         restClientOrganizationService.deleteTier(tierDto)
@@ -31,6 +45,6 @@ public class TierServiceDeleteEventListener implements ComponentEventListener<Cl
     }
 
     private void accept(RestAPIResponse restAPIResponse) {
-        broadcastMessage(BroadcastMessage.TIER_UPDATED_SUCCESS, restAPIResponse);
+        broadcastMessage(TIER_DELETED_SUCCESS, restAPIResponse);
     }
 }

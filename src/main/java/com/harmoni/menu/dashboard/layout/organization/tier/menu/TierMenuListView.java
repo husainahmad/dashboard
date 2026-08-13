@@ -10,6 +10,8 @@ import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
+import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
@@ -22,8 +24,6 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -65,6 +65,7 @@ public class TierMenuListView extends VerticalLayout {
     @Getter
     @Setter
     private transient BrandDto brandDto = new BrandDto();
+    private final LoadingBar loadingBar = new LoadingBar();
 
     private Button[] buttonUpdates;
     private Button[] buttonEdits;
@@ -78,7 +79,7 @@ public class TierMenuListView extends VerticalLayout {
         configureGrid();
 
         configureForm();
-        add(getToolbar(), getContent());
+        add(loadingBar, getToolbar(), getContent());
         closeEditor();
     }
 
@@ -118,6 +119,7 @@ public class TierMenuListView extends VerticalLayout {
     private void configureGrid() {
         tierMenuTreeGrid.setSizeFull();
         tierMenuTreeGrid.removeAllColumns();
+        tierMenuTreeGrid.setEmptyStateText(UiUtil.NO_RECORDS);
 
         tierMenuTreeGrid.addHierarchyColumn(TierMenuTreeItem::getName).setHeader("Tier Name");
         tierMenuTreeGrid.addComponentColumn(this::applyCheckbox).setHeader("Selected");
@@ -163,9 +165,7 @@ public class TierMenuListView extends VerticalLayout {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addTierServiceButton = new Button("Add Tier Menu", new Icon(VaadinIcon.PLUS));
-        addTierServiceButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addTierServiceButton.addClickListener(event -> addTier());
+        Button addTierServiceButton = UiUtil.addButton("Add Tier Menu", event -> addTier());
 
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addTierServiceButton);
         toolbar.addClassName("toolbar");
@@ -179,6 +179,7 @@ public class TierMenuListView extends VerticalLayout {
     }
 
     private void fetchTier() {
+        loadingBar.start();
         asyncRestClientOrganizationService.getTierMenuByBrandAsync(this::operationFinished, brandDto.getId());
     }
 
@@ -228,25 +229,16 @@ public class TierMenuListView extends VerticalLayout {
     }
 
     private Button applyButtonDelete(TierMenuTreeItem tierMenuTreeItem) {
-        buttonDeletes[tierMenuTreeItem.getRootIndex()] = new Button(new Icon(VaadinIcon.TRASH));
-        buttonDeletes[tierMenuTreeItem.getRootIndex()]
-                .addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
-                        ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
-        buttonDeletes[tierMenuTreeItem.getRootIndex()].setTooltipText("Delete");
-        buttonDeletes[tierMenuTreeItem.getRootIndex()].addClickListener(new TierDeleteEventListener(this.ui,
-                tierMenuTreeItem.getTierDto().getId(),
-                restClientOrganizationService));
+        buttonDeletes[tierMenuTreeItem.getRootIndex()] = UiUtil.deleteButton(
+                new TierDeleteEventListener(this.ui,
+                        tierMenuTreeItem.getTierDto().getId(),
+                        restClientOrganizationService));
         return buttonDeletes[tierMenuTreeItem.getRootIndex()];
     }
 
     private Button applyButtonEdit(TierMenuTreeItem tierMenuTreeItem) {
-        buttonEdits[tierMenuTreeItem.getRootIndex()] = new Button(new Icon(VaadinIcon.EDIT));
-        buttonEdits[tierMenuTreeItem.getRootIndex()]
-                .addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
-        buttonEdits[tierMenuTreeItem.getRootIndex()].setTooltipText("Edit Name");
-
-        buttonEdits[tierMenuTreeItem.getRootIndex()]
-                .addClickListener(event -> editTier(getTierDto(tierMenuTreeItem), FormAction.EDIT));
+        buttonEdits[tierMenuTreeItem.getRootIndex()] = UiUtil.editButton("Edit Name",
+                event -> editTier(getTierDto(tierMenuTreeItem), FormAction.EDIT));
         return buttonEdits[tierMenuTreeItem.getRootIndex()];
     }
 
@@ -288,7 +280,10 @@ public class TierMenuListView extends VerticalLayout {
             extractedCategoryName(tierMenuTreeItemTreeData, tierMenuTreeItem, tierMenuDtos);
         });
 
-        ui.access(() -> tierMenuTreeGrid.setTreeData(tierMenuTreeItemTreeData));
+        ui.access(() -> {
+            loadingBar.stop();
+            tierMenuTreeGrid.setTreeData(tierMenuTreeItemTreeData);
+        });
     }
 
     private static TierMenuTreeItem getTierMenuTreeItem(Integer rootIndex, TierDto tierDto, String name,

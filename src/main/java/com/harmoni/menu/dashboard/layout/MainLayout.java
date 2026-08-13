@@ -3,12 +3,15 @@ package com.harmoni.menu.dashboard.layout;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
+import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.navigation.SideNavMenu;
+import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -23,19 +26,23 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
 import org.apache.commons.lang3.ObjectUtils;
 
-@CssImport("./styles/shared-styles.css")
 public class MainLayout extends AppLayout implements BroadcastMessageService, BeforeEnterObserver {
 
     Registration broadcasterRegistration;
     public static final String TITLE = "POSHarmoni";
 
-    public MainLayout() {
+    private final AccessService accessService;
+
+    public MainLayout(AccessService accessService) {
+        this.accessService = accessService;
         createHeader();
         createDrawer();
     }
@@ -46,7 +53,7 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
 
         H2 logo = createLogo();
 
-        HorizontalLayout actions = new HorizontalLayout(createThemeToggle(), createLogoutButton());
+        HorizontalLayout actions = new HorizontalLayout(createThemeToggle(), createUserMenu());
         actions.setSpacing(true);
         actions.setPadding(false);
         actions.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -90,15 +97,30 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         return toggle;
     }
 
-    private Button createLogoutButton() {
-        Button logoutButton = new Button("Logout", new Icon(VaadinIcon.SIGN_OUT));
-        logoutButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        logoutButton.setTooltipText("Sign out");
-        logoutButton.addClickListener(event -> {
-            getUI().ifPresent(ui -> ui.getSession().close());
-            getUI().ifPresent(ui -> ui.navigate(LoginView.class));
-        });
-        return logoutButton;
+    private Component createUserMenu() {
+        UserDto user = accessService.getUserDetail();
+        String name = user != null && ObjectUtils.isNotEmpty(user.getUsername())
+                ? user.getUsername() : "Guest";
+        String initials = name.length() >= 2 ? name.substring(0, 2).toUpperCase() : name.toUpperCase();
+
+        Div avatar = new Div(initials);
+        avatar.addClassName("app-avatar");
+        Span label = new Span(name);
+        label.addClassName("app-user-name");
+        HorizontalLayout chip = new HorizontalLayout(avatar, label);
+        chip.addClassName("app-user-chip");
+
+        MenuBar menuBar = new MenuBar();
+        menuBar.setThemeName("tertiary-inline");
+        MenuItem userItem = menuBar.addItem(chip);
+        userItem.setAriaLabel("User menu");
+        userItem.getSubMenu().addItem("Sign out", event -> logout());
+        return menuBar;
+    }
+
+    private void logout() {
+        getUI().ifPresent(ui -> ui.getSession().close());
+        getUI().ifPresent(ui -> ui.navigate(LoginView.class));
     }
 
     private void createDrawer() {

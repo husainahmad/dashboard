@@ -8,6 +8,8 @@ import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -17,10 +19,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -46,6 +45,7 @@ public class TierPriceListView extends VerticalLayout {
     private final TextField filterText = new TextField();
     private UI ui;
     private TierPriceForm tierForm;
+    private final LoadingBar loadingBar = new LoadingBar();
 
     private void renderLayout() {
         addClassName("list-view");
@@ -53,7 +53,7 @@ public class TierPriceListView extends VerticalLayout {
         configureGrid();
         configureForm();
 
-        add(getToolbar(), getContent());
+        add(loadingBar, getToolbar(), getContent());
         closeEditor();
 
         fetchTier();
@@ -96,6 +96,7 @@ public class TierPriceListView extends VerticalLayout {
     private void configureGrid() {
         tierDtoGrid.setSizeFull();
         tierDtoGrid.removeAllColumns();
+        tierDtoGrid.setEmptyStateText(UiUtil.NO_RECORDS);
         tierDtoGrid.addColumn(TierDto::getName).setHeader("Name");
         tierDtoGrid.addColumn("brandDto.name").setHeader("Brand Name");
         tierDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
@@ -103,21 +104,12 @@ public class TierPriceListView extends VerticalLayout {
     }
 
     private Button applyEditButton(TierDto tierDto) {
-        Button buttonEdit = new Button(new Icon(VaadinIcon.EDIT));
-        buttonEdit.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
-        buttonEdit.setTooltipText("Edit Name");
-        buttonEdit.addClickListener(event -> editTier(tierDto, FormAction.EDIT));
-        return buttonEdit;
+        return UiUtil.editButton("Edit Name", event -> editTier(tierDto, FormAction.EDIT));
     }
 
     private Button applyDeleteButton(TierDto tierDto) {
-        Button buttonDelete = new Button(new Icon(VaadinIcon.TRASH));
-        buttonDelete.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
-                ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
-        buttonDelete.setTooltipText("Delete");
-        buttonDelete.addClickListener(new TierDeleteEventListener(this.ui, tierDto.getId(),
+        return UiUtil.deleteButton(new TierDeleteEventListener(this.ui, tierDto.getId(),
                 this.restClientOrganizationService));
-        return buttonDelete;
     }
 
     private Component applyButton(TierDto tierDto) {
@@ -159,9 +151,7 @@ public class TierPriceListView extends VerticalLayout {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addChainButton = new Button("Add Tier", new Icon(VaadinIcon.PLUS));
-        addChainButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addChainButton.addClickListener(event -> addTier());
+        Button addChainButton = UiUtil.addButton("Add Tier", event -> addTier());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -175,8 +165,11 @@ public class TierPriceListView extends VerticalLayout {
     }
 
     private void fetchTier() {
-        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> ui.access(()->
-                tierDtoGrid.setItems(result)),
+        loadingBar.start();
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> ui.access(() -> {
+            loadingBar.stop();
+            tierDtoGrid.setItems(result);
+        }),
                 accessService.getUserDetail().getStoreDto().getChainDto().getBrandId(), TierTypeDto.PRICE);
     }
 }

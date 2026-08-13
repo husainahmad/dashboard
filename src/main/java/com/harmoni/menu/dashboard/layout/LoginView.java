@@ -6,7 +6,6 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientLoginService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
@@ -22,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Route(value = "login")
-@CssImport("./styles/shared-styles.css")
 public class LoginView extends VerticalLayout {
 
     private final RestClientLoginService restClientLoginService;

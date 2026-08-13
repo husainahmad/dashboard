@@ -7,6 +7,8 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
@@ -61,18 +63,20 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
     int totalPages;
     int currentPage = 1;
     Text pageInfoText;
+    LoadingBar loadingBar = new LoadingBar();
 
     private void renderLayout() {
         addClassName("list-view");
         setSizeFull();
         configureGrid();
-        add(getToolbar(), getContent());
+        add(loadingBar, getToolbar(), getContent());
         fetchBrands();
     }
 
     private void configureGrid() {
         customizationGrid.setSizeFull();
         customizationGrid.removeAllColumns();
+        customizationGrid.setEmptyStateText(UiUtil.NO_RECORDS);
         customizationGrid.addColumn(CustomizationDto::getName).setHeader("Name");
         customizationGrid.addColumn(CustomizationDto::getSelectionType).setHeader("Type");
         customizationGrid.addComponentColumn(this::applyButton).setHeader("Action");
@@ -109,7 +113,7 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
         });
 
         Button searchButton = new Button("Search", this::onSearchCustomizationListener);
-        Button addButton = new Button("Add Customization", this::onAddCustomizationListener);
+        Button addButton = UiUtil.addButton("Add Customization", this::onAddCustomizationListener);
 
         HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, filterText, searchButton, addButton);
         toolbar.addClassName("toolbar");
@@ -128,6 +132,7 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
 
     private HorizontalLayout getPaginationFooter() {
         HorizontalLayout footer = new HorizontalLayout();
+        footer.addClassName("pagination");
         Button prev = new Button("Previous", e -> {
             if (currentPage > 1) {
                 currentPage--;
@@ -158,18 +163,20 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
 
     private void fetchCustomizations(Integer brandId, String search) {
         int pageSize = 15;
+        loadingBar.start();
         asyncRestClientMenuService.getAllCustomizationAsync(result -> {
             Object data = result.get("data");
-            if (ObjectUtils.isNotEmpty(data) && data instanceof List<?> list) {
-                List<CustomizationDto> customizations = new ArrayList<>();
-                list.forEach(o -> customizations.add(ObjectUtil.convertValueToObject(o, CustomizationDto.class)));
-                totalPages = Integer.parseInt(result.get("page") == null ? "0" : result.get("page").toString());
+            ui.access(() -> {
+                loadingBar.stop();
+                if (ObjectUtils.isNotEmpty(data) && data instanceof List<?> list) {
+                    List<CustomizationDto> customizations = new ArrayList<>();
+                    list.forEach(o -> customizations.add(ObjectUtil.convertValueToObject(o, CustomizationDto.class)));
+                    totalPages = Integer.parseInt(result.get("page") == null ? "0" : result.get("page").toString());
 
-                ui.access(() -> {
                     customizationGrid.setItems(customizations);
                     pageInfoText.setText(getPaginationInfo());
-                });
-            }
+                }
+            });
         }, brandId, currentPage, pageSize, search);
     }
 

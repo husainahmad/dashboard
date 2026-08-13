@@ -40,12 +40,18 @@
 :host {
     --app-bg: #f4f6fa;
     --app-surface: var(--lumo-base-color);
+    --lumo-primary-text-color: #067a4c;
+    --lumo-body-text-color: #1f2532;
+    --lumo-secondary-text-color: #526070;
 }
 
 /* Dark mode backdrop */
 :host([theme~="dark"]) {
     --app-bg: #0d1117;
     --lumo-base-color: #151b23;
+    --lumo-body-text-color: #c9d1d9;
+    --lumo-secondary-text-color: #8b949e;
+    --lumo-primary-text-color: var(--app-brand);
     --lumo-contrast-5pct: rgba(255, 255, 255, 0.04);
     --lumo-contrast-10pct: rgba(255, 255, 255, 0.08);
     --lumo-contrast-20pct: rgba(255, 255, 255, 0.12);
@@ -94,6 +100,40 @@ body {
 
 .app-logout-button vaadin-button-container::before {
     display: none;
+}
+
+.app-user-chip {
+    align-items: center;
+    gap: var(--lumo-space-s);
+    padding: var(--lumo-space-xs) var(--lumo-space-s);
+    border-radius: var(--lumo-border-radius-l);
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.app-user-chip:hover {
+    background-color: var(--lumo-contrast-5pct);
+}
+
+.app-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--app-gradient);
+    color: var(--app-brand-contrast);
+    font-size: var(--lumo-font-size-s);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    flex: none;
+}
+
+.app-user-name {
+    font-size: var(--lumo-font-size-s);
+    font-weight: 600;
+    color: var(--lumo-body-text-color);
 }
 
 /* ---------- 3. Navigation ---------- */
@@ -146,6 +186,18 @@ body {
     padding: var(--lumo-space-s) var(--lumo-space-m);
     width: calc(100% - var(--lumo-space-s));
     align-items: center;
+    flex-wrap: wrap;
+    row-gap: var(--lumo-space-s);
+    column-gap: var(--lumo-space-s);
+}
+
+.list-view .toolbar vaadin-text-field,
+.list-view .toolbar vaadin-combo-box {
+    min-width: 180px;
+}
+
+.list-view .toolbar vaadin-text-field {
+    flex-grow: 1;
 }
 
 .list-view .toolbar vaadin-text-field::part(input-field) {
@@ -172,6 +224,23 @@ body {
     box-shadow: var(--app-shadow);
     padding: var(--lumo-space-m);
     align-content: start;
+}
+
+/* Full-width loading bar for async grid fetches */
+.list-view .loading-bar {
+    width: 100%;
+    margin-bottom: var(--lumo-space-s);
+}
+
+/* Card-style pagination footer */
+.list-view .pagination {
+    background: var(--app-surface);
+    border-radius: var(--lumo-border-radius-l);
+    box-shadow: var(--app-shadow);
+    padding: var(--lumo-space-xs) var(--lumo-space-m);
+    margin-top: var(--lumo-space-s);
+    width: calc(100% - var(--lumo-space-s));
+    align-items: center;
 }
 
 /* ---------- 5. Grids & forms ---------- */

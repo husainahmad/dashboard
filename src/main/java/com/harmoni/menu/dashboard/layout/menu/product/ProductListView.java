@@ -9,6 +9,8 @@ import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.event.product.ProductDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
+import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
@@ -16,10 +18,7 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -75,6 +74,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     transient List<TierDto> tierDtos = new ArrayList<>();
     int totalPages;
     int currentPage = 1;
+    LoadingBar loadingBar = new LoadingBar();
 
     Text pageInfoText;
     transient ProductTreeItem expandTreeItem;
@@ -88,23 +88,16 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
         setSizeFull();
         configureGrid();
-        add(getToolbar(), getContent(), getPaginationFooter());
+        add(loadingBar, getToolbar(), getContent(), getPaginationFooter());
         fetchBrands();
     }
 
     private HorizontalLayout applyButton(ProductTreeItem productTreeItem) {
         if (productTreeItem.getProductItemType().equals(ProductItemType.PRODUCT)) {
             HorizontalLayout horizontalLayout = new HorizontalLayout();
-            Button editButton = new Button(new Icon(VaadinIcon.EDIT));
-            editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
-            editButton.setTooltipText("Edit");
-            editButton.addClickListener(event -> editProduct(productTreeItem));
-            Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
-            deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
-                    ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
-            deleteButton.setTooltipText("Delete");
-            deleteButton.addClickListener(new ProductDeleteEventListener(restClientMenuService, productTreeItem));
-            horizontalLayout.add(editButton, deleteButton);
+            horizontalLayout.add(UiUtil.editButton(event -> editProduct(productTreeItem)));
+            horizontalLayout.add(UiUtil.deleteButton(
+                    new ProductDeleteEventListener(restClientMenuService, productTreeItem)));
             return horizontalLayout;
         }
         return null;
@@ -112,6 +105,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
     private HorizontalLayout getPaginationFooter() {
         HorizontalLayout paginationFooter = new HorizontalLayout();
+        paginationFooter.addClassName("pagination");
         Button previousButton = new Button("Previous", event -> {
             if (currentPage > 1) {
                 currentPage--;
@@ -142,6 +136,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     private void configureGrid() {
         productDtoGrid.setSizeFull();
         productDtoGrid.removeAllColumns();
+        productDtoGrid.setEmptyStateText(UiUtil.NO_RECORDS);
         productDtoGrid.addHierarchyColumn(ProductTreeItem::getName).setHeader("Name");
         productDtoGrid.addColumn(ProductTreeItem::getCategoryName).setHeader("Category");
         productDtoGrid.addColumn(ProductTreeItem::getPrice).setHeader("Price");
@@ -213,9 +208,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         });
         Button searchProduct = new Button("Search");
         searchProduct.addClickListener(this::onSearchProductListener);
-        Button addProduct = new Button("Add Product", new Icon(VaadinIcon.PLUS));
-        addProduct.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addProduct.addClickListener(this::onAddProductListener);
+        Button addProduct = UiUtil.addButton("Add Product", this::onAddProductListener);
 
         HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, categoryDtoComboBox,
                 tierDtoComboBox, filterText, searchProduct, addProduct);
@@ -303,7 +296,9 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
     private void fetchProducts(Integer categoryId, Integer brandId, String searchProduct) {
         int pageSize = 15;
-        asyncRestClientMenuService.getAllProductCategoryBrandAsync(result -> {
+        loadingBar.start();
+        asyncRestClientMenuService.getAllProductCategoryBrandAsync(result -> ui.access(() -> {
+            loadingBar.stop();
             if (ObjectUtils.isNotEmpty(result.get("data"))
                 && result.get("data") instanceof List<?> dataList && !dataList.isEmpty()) {
                     TreeData<ProductTreeItem> productDtoTreeData = new TreeData<>();
@@ -315,15 +310,13 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
                     totalPages = Integer.parseInt(result.get("page") == null ? "0" :result.get("page").toString());
 
-                    ui.access(()-> {
-                        productDtoGrid.setTreeData(productDtoTreeData);
-                        if (ObjectUtils.isNotEmpty(expandTreeItem)) {
-                            productDtoGrid.expand(expandTreeItem);
-                        }
-                        pageInfoText.setText(getPaginationInfo());
-                    });
+                    productDtoGrid.setTreeData(productDtoTreeData);
+                    if (ObjectUtils.isNotEmpty(expandTreeItem)) {
+                        productDtoGrid.expand(expandTreeItem);
+                    }
+                    pageInfoText.setText(getPaginationInfo());
                 }
-        }, categoryId, brandId, currentPage, pageSize, searchProduct);
+        }), categoryId, brandId, currentPage, pageSize, searchProduct);
     }
 
     private void extractedProductDtoToItem(ProductDto productDto, TreeData<ProductTreeItem> productDtoTreeData) {

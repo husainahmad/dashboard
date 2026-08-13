@@ -7,6 +7,8 @@ import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.event.chain.ChainDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -16,10 +18,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -48,6 +47,7 @@ public class ChainListView extends VerticalLayout  {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
+    private final LoadingBar loadingBar = new LoadingBar();
 
     private void renderLayout() {
         addClassName("list-view");
@@ -55,7 +55,7 @@ public class ChainListView extends VerticalLayout  {
         configureGrid();
         configureForm();
 
-        add(getToolbar(), getContent());
+        add(loadingBar, getToolbar(), getContent());
         closeEditor();
         fetchChains();
     }
@@ -89,6 +89,7 @@ public class ChainListView extends VerticalLayout  {
 
     private void configureGrid() {
         chainDtoGrid.setSizeFull();
+        chainDtoGrid.setEmptyStateText(UiUtil.NO_RECORDS);
         chainDtoGrid.setColumns("name");
         chainDtoGrid.getColumns().forEach(chainDtoColumn -> chainDtoColumn.setAutoWidth(true));
         chainDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
@@ -102,21 +103,12 @@ public class ChainListView extends VerticalLayout  {
     }
 
     private Button applyButtonEdit(ChainDto chainDto) {
-        Button editButton = new Button(new Icon(VaadinIcon.EDIT));
-        editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
-        editButton.setTooltipText("Edit");
-        editButton.addClickListener(event -> editChain(chainDto, FormAction.EDIT));
-        return editButton;
+        return UiUtil.editButton(event -> editChain(chainDto, FormAction.EDIT));
     }
 
     private Button applyButtonDelete(ChainDto chainDto) {
-        Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
-                ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
-        deleteButton.setTooltipText("Delete");
-        deleteButton.addClickListener(
+        return UiUtil.deleteButton(
                 new ChainDeleteEventListener(chainDto, restClientOrganizationService));
-        return deleteButton;
     }
 
     private void configureForm() {
@@ -138,17 +130,19 @@ public class ChainListView extends VerticalLayout  {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addChainButton = new Button("Add Chain", new Icon(VaadinIcon.PLUS));
-        addChainButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addChainButton.addClickListener(event -> addChain());
+        Button addChainButton = UiUtil.addButton("Add Chain", event -> addChain());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
     }
 
     private void fetchChains() {
+        loadingBar.start();
         asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result ->
-                ui.access(()-> chainDtoGrid.setItems(result)),
+                ui.access(() -> {
+                    loadingBar.stop();
+                    chainDtoGrid.setItems(result);
+                }),
                 accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
     }
 

@@ -5,12 +5,16 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.ServiceDto;
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.treegrid.TreeGrid;
@@ -39,6 +43,7 @@ public class ServiceListView extends VerticalLayout {
 
     ServiceForm serviceForm;
     UI ui;
+    LoadingBar loadingBar = new LoadingBar();
 
     private void renderLayout() {
         addClassName("list-view");
@@ -47,7 +52,7 @@ public class ServiceListView extends VerticalLayout {
         configureGrid();
         configureForm();
 
-        add(getToolbar(), getContent());
+        add(loadingBar, getToolbar(), getContent());
         closeEditor();
     }
 
@@ -75,9 +80,10 @@ public class ServiceListView extends VerticalLayout {
     }
 
     private HorizontalLayout getToolbar() {
-        Button addServiceButton = new Button("Add Service");
+        Button addServiceButton = new Button("Add Service", new Icon(VaadinIcon.PLUS));
+        addServiceButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addServiceButton.addClickListener(event -> addService());
-        HorizontalLayout toolbar = new HorizontalLayout( addServiceButton);
+        HorizontalLayout toolbar = new HorizontalLayout(addServiceButton);
         toolbar.addClassName("toolbar");
         return toolbar;
     }
@@ -122,6 +128,7 @@ public class ServiceListView extends VerticalLayout {
     }
 
     private void fetchServices() {
+        loadingBar.start();
         asyncRestClientSettingService.getAllService(result -> {
             TreeData<ServiceTreeItem> serviceDtoTreeData = new TreeData<>();
             result.forEach(serviceDto -> {
@@ -134,7 +141,10 @@ public class ServiceListView extends VerticalLayout {
                     serviceDtoTreeData.addItems(serviceTreeItem, getSubServices(serviceDto));
                 }
             });
-            ui.access(() -> serviceTreeGrid.setTreeData(serviceDtoTreeData));
+            ui.access(() -> {
+                loadingBar.stop();
+                serviceTreeGrid.setTreeData(serviceDtoTreeData);
+            });
         });
     }
 

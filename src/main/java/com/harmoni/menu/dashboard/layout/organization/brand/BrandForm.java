@@ -118,7 +118,7 @@ public class BrandForm extends FormLayout  {
                 new BrandSaveEventListener(this, restClientOrganizationService));
         closeButton.addClickListener(event -> this.setVisible(false));
 
-        HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
+        HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, closeButton);
         horizontalLayout.setPadding(true);
 
         return horizontalLayout;

@@ -7,6 +7,8 @@ import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.event.category.CategoryDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
@@ -14,10 +16,7 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -44,6 +43,7 @@ public class CategoryListView extends VerticalLayout {
 
     TextField filterText = new TextField();
     CategoryForm categoryForm;
+    LoadingBar loadingBar = new LoadingBar();
 
     UI ui;
 
@@ -54,13 +54,14 @@ public class CategoryListView extends VerticalLayout {
         configureGrid();
         configureForm();
 
-        add(getToolbar(), getContent());
+        add(loadingBar, getToolbar(), getContent());
         closeEditor();
     }
 
     private void configureGrid() {
         categoryDtoGrid.setSizeFull();
         categoryDtoGrid.removeAllColumns();
+        categoryDtoGrid.setEmptyStateText(UiUtil.NO_RECORDS);
         categoryDtoGrid.addColumn(CategoryDto::getName).setHeader("Name");
         categoryDtoGrid.addColumn("brandDto.name").setHeader("Brand Name");
 
@@ -76,21 +77,12 @@ public class CategoryListView extends VerticalLayout {
     }
 
     private Button applyButtonEdit(CategoryDto categoryDto) {
-        Button editButton = new Button(new Icon(VaadinIcon.EDIT));
-        editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
-        editButton.setTooltipText("Edit");
-        editButton.addClickListener(event -> editCategory(categoryDto, FormAction.EDIT));
-        return editButton;
+        return UiUtil.editButton(event -> editCategory(categoryDto, FormAction.EDIT));
     }
 
     private Button applyButtonDelete(CategoryDto categoryDto) {
-        Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
-        deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE,
-                ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_ERROR);
-        deleteButton.setTooltipText("Delete");
-        deleteButton.addClickListener(
+        return UiUtil.deleteButton(
                 new CategoryDeleteEventListener(categoryDto, restClientMenuService));
-        return deleteButton;
     }
 
     private void configureForm() {
@@ -114,9 +106,8 @@ public class CategoryListView extends VerticalLayout {
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addBrandButton = new Button("Add Category", new Icon(VaadinIcon.PLUS));
-        addBrandButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addBrandButton.addClickListener((ComponentEventListener<ClickEvent<Button>>) event -> CategoryListView.this.addCategory());
+        Button addBrandButton = UiUtil.addButton("Add Category",
+                (ComponentEventListener<ClickEvent<Button>>) event -> CategoryListView.this.addCategory());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -170,7 +161,10 @@ public class CategoryListView extends VerticalLayout {
     }
 
     private void fetchCategories() {
-        asyncRestClientMenuService.getAllCategoryAsync(result -> ui.access(()->
-                categoryDtoGrid.setItems(result)), accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
+        loadingBar.start();
+        asyncRestClientMenuService.getAllCategoryAsync(result -> ui.access(() -> {
+            loadingBar.stop();
+            categoryDtoGrid.setItems(result);
+        }), accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
     }
 }
