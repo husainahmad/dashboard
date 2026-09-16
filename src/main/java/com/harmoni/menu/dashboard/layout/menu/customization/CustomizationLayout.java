@@ -6,11 +6,13 @@ import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 @Route(value = "customization", layout = MainLayout.class)
+@PageTitle("Customization | POSHarmoni")
 public class CustomizationLayout extends VerticalLayout {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
@@ -20,6 +22,7 @@ public class CustomizationLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        addClassName("list-view");
         add(new CustomizationTabs(asyncRestClientMenuService, restClientMenuService, accessService));
         setSizeFull();
     }

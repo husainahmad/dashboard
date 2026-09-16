@@ -1,0 +1,121 @@
+/* ============================================================
+   APP SHELL
+
+   Navbar, logo, user chip and avatar used by MainLayout.
+   ============================================================ */
+
+.app-navbar {
+
+    background: var(--app-surface);
+
+    border-bottom:
+        1px solid var(--app-border);
+
+    box-shadow: none;
+}
+
+.app-logo {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: var(--lumo-space-s);
+
+    margin: 0;
+
+    color: var(--app-text);
+
+    font-size: var(--lumo-font-size-xl);
+
+    font-weight: 800;
+
+    letter-spacing: -0.02em;
+}
+
+.app-logo-icon {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 30px;
+    height: 30px;
+
+    border-radius: 8px;
+
+    background: var(--app-gradient);
+
+    color: var(--app-brand-contrast);
+
+    font-size: var(--lumo-font-size-m);
+
+    font-weight: 800;
+
+    box-shadow: var(--app-shadow);
+}
+
+.app-logout-button vaadin-button-container::before {
+    display: none;
+}
+
+.app-user-chip {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: var(--lumo-space-s);
+
+    padding:
+        var(--lumo-space-xs)
+        var(--lumo-space-s);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    cursor: pointer;
+
+    transition:
+        background-color 150ms ease;
+}
+
+.app-user-chip:hover {
+    background-color:
+        var(--lumo-contrast-5pct);
+}
+
+.app-avatar {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+
+    border-radius: 50%;
+
+    background: var(--app-gradient);
+
+    color: #ffffff;
+
+    font-size: var(--lumo-font-size-s);
+
+    font-weight: 700;
+
+    flex-shrink: 0;
+}
+
+.app-user-name {
+
+    color: var(--app-text);
+
+    font-size: var(--lumo-font-size-s);
+
+    font-weight: 600;
+}

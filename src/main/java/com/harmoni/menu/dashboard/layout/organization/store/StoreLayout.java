@@ -20,6 +20,7 @@ public class StoreLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        addClassName("list-view");
         add(new StoreTabs(asyncRestClientOrganizationService, restClientOrganizationService, accessService));
         setSizeFull();
     }

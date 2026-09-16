@@ -45,6 +45,12 @@ public class AsyncRestClientMenuService implements Serializable {
 
     private <T> void makeAsyncRequest(String uri, TypeReference<T> typeReference,
                                       AsyncRestClientMenuService.AsyncRestCallback<T> callback) {
+        makeAsyncRequest(uri, typeReference, callback, null);
+    }
+
+    private <T> void makeAsyncRequest(String uri, TypeReference<T> typeReference,
+                                      AsyncRestClientMenuService.AsyncRestCallback<T> callback,
+                                      AsyncRestClientMenuService.AsyncRestCallback<Throwable> errorCallback) {
         TokenRefreshService.TokenRequest<RestAPIResponse> request = accessToken -> webClient.get()
                 .uri(uri)
                 .header(HttpHeaders.AUTHORIZATION, resolveToken(accessToken))
@@ -66,7 +72,12 @@ public class AsyncRestClientMenuService implements Serializable {
                             typeReference
                     );
                     callback.operationFinished(data);
-                }, error -> log.error("Async request failed uri={}", uri, error));
+                }, error -> {
+                    log.error("Async request failed uri={}", uri, error);
+                    if (errorCallback != null) {
+                        errorCallback.operationFinished(error);
+                    }
+                });
     }
 
     public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback, Integer brandId) {
@@ -89,6 +100,7 @@ public class AsyncRestClientMenuService implements Serializable {
     }
 
     public void getAllCustomizationAsync(AsyncRestCallback<Map<String, Object>> callback,
+                                         AsyncRestCallback<Throwable> errorCallback,
                                          Integer brandId, int page, int size, String search) {
         String url = menuProperties.getUrl().getCustomization()
                 .concat("?brandId=")
@@ -100,7 +112,7 @@ public class AsyncRestClientMenuService implements Serializable {
                 .concat("&search=")
                 .concat(search);
 
-        makeAsyncRequest(url, new TypeReference<>() {}, callback);
+        makeAsyncRequest(url, new TypeReference<>() {}, callback, errorCallback);
     }
 
     public void getAllSkuAsync(AsyncRestCallback<List<SkuDto>> callback) {

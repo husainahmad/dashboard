@@ -7,13 +7,11 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
-import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @AllArgsConstructor
 @Slf4j
-@Route("customization-tabs")
 public class CustomizationTabs extends VerticalLayout {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
@@ -23,11 +21,16 @@ public class CustomizationTabs extends VerticalLayout {
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
-        browseTab.setLabel("Customizations");
-        tabSheet.add(browseTab, new CustomizationListView(asyncRestClientMenuService, restClientMenuService,
-                accessService, tabSheet, browseTab));
+        browseTab.setLabel(CustomizationListView.TAB_LABEL_LIST);
+        CustomizationListView customizationListView = new CustomizationListView(
+                asyncRestClientMenuService, restClientMenuService, accessService);
+        tabSheet.add(browseTab, customizationListView);
         tabSheet.setSizeFull();
+
+        add(customizationListView.getToolbarComponent());
         add(tabSheet);
+        setFlexGrow(1, tabSheet);
+        setPadding(false);
         setSizeFull();
     }
 

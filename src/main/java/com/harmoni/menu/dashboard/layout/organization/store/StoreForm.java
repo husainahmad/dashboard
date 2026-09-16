@@ -9,36 +9,44 @@ import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.store.StoreSaveEventListener;
 import com.harmoni.menu.dashboard.event.store.StoreUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
-import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @RequiredArgsConstructor
-@Route("store-form")
 @Slf4j
-public class StoreForm extends FormLayout  {
+public class StoreForm extends FormLayout {
+
     Registration broadcasterRegistration;
+
+    @Getter
     BeanValidationBinder<StoreDto> binder = new BeanValidationBinder<>(StoreDto.class);
 
     TextField storeNameField = new TextField("Store name");
@@ -52,7 +60,6 @@ public class StoreForm extends FormLayout  {
     Button closeButton = new Button("Cancel");
     Button updateButton = new Button("Update");
 
-    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final Tab storeTab;
     private final FormAction formAction;
@@ -60,7 +67,6 @@ public class StoreForm extends FormLayout  {
     private final transient Map<String, Object> objectParams;
 
     UI ui;
-    static final int TEMP_BRAND_ID = 1;
 
     private void renderLayout() {
         setSizeFull();
@@ -78,30 +84,28 @@ public class StoreForm extends FormLayout  {
         tierServiceBox.setItemLabelGenerator(TierDto::getName);
 
         add(chainDtoComboBox);
-
         add(storeNameField);
         add(storeAddressArea);
 
         Accordion accordion = new Accordion();
         FormLayout tierFormLayout = new FormLayout();
         tierFormLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1),
-                new ResponsiveStep("20cm", 2));
+                new FormLayout.ResponsiveStep("20cm", 2));
         tierFormLayout.add(tierPriceBox);
         tierFormLayout.add(tierMenuBox);
         tierFormLayout.add(tierServiceBox);
 
         AccordionPanel menuPanel = accordion.add("Tier", tierFormLayout);
-
         menuPanel.setOpened(true);
 
         add(accordion);
 
-        add(createButtonsLayout());
-        restructureAddOrEdit();
-
         addValidation();
         binder.bindInstanceFields(this);
-        setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1, ResponsiveStep.LabelsPosition.ASIDE));
+        setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1, FormLayout.ResponsiveStep.LabelsPosition.ASIDE));
+        restructureAddOrEdit();
+
+        add(getButtonBar());
     }
 
     @Override
@@ -113,7 +117,7 @@ public class StoreForm extends FormLayout  {
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
                         && (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
                         broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS))) {
-                        removeFromSheet();
+                        close();
                     }
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
@@ -122,9 +126,9 @@ public class StoreForm extends FormLayout  {
         renderLayout();
     }
 
-    public void removeFromSheet() {
+    public void close() {
         this.ui.access(() -> {
-            if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+            if (!(getParent().orElseThrow() instanceof TabSheet tabSheet)) {
                 return;
             }
             tabSheet.remove(storeTab);
@@ -138,24 +142,16 @@ public class StoreForm extends FormLayout  {
     }
 
     private void addValidation() {
-        chainDtoComboBox.addValueChangeListener(event -> binder.validate());
         binder.forField(chainDtoComboBox)
                 .withValidator(value -> value.getId() > 0, "Chain not allow to be empty"
                 ).bind(StoreDto::getChainDto, StoreDto::setChainDto);
-
-        tierPriceBox.addValueChangeListener(event -> binder.validate());
 
         binder.forField(storeAddressArea)
                 .withValidator(value -> !value.isEmpty(), "Address not allow to be empty"
                 ).bind(StoreDto::getAddress, StoreDto::setAddress);
 
-        tierPriceBox.addValueChangeListener(event -> binder.validate());
-
-        storeNameField.addValueChangeListener(
-                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>)
-                        event -> binder.validate());
         binder.forField(storeNameField)
-                .withValidator(value -> value.length()>2,
+                .withValidator(value -> value.length() > 2,
                         "Name must contain at least three characters")
                 .bind(StoreDto::getName, StoreDto::setName);
     }
@@ -198,8 +194,7 @@ public class StoreForm extends FormLayout  {
         return Collections.emptyList();
     }
 
-    private HorizontalLayout createButtonsLayout() {
-
+    private HorizontalLayout getButtonBar() {
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
@@ -212,12 +207,13 @@ public class StoreForm extends FormLayout  {
                 new StoreUpdateEventListener(this, restClientOrganizationService));
         saveButton.addClickListener(
                 new StoreSaveEventListener(this, restClientOrganizationService));
-        closeButton.addClickListener(event -> removeFromSheet());
+        closeButton.addClickListener(event -> close());
 
-        HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
-        horizontalLayout.setPadding(true);
-
-        return horizontalLayout;
+        HorizontalLayout buttonBar = new HorizontalLayout(saveButton, updateButton, closeButton);
+        buttonBar.addClassName("toolbar");
+        buttonBar.setAlignItems(FlexComponent.Alignment.BASELINE);
+        buttonBar.setPadding(true);
+        return buttonBar;
     }
 
     private void restructureAddOrEdit() {

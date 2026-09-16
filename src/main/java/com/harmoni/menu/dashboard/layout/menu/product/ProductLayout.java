@@ -20,6 +20,7 @@ public class ProductLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        addClassName("list-view");
         add(new ProductTabs(asyncRestClientMenuService, restClientMenuService, accessService));
         setSizeFull();
     }

@@ -19,6 +19,9 @@ public class StoreSaveEventListener implements ComponentEventListener<ClickEvent
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
+        if (storeForm.getBinder().validate().hasErrors()) {
+            return;
+        }
         restClientOrganizationService.createStore(storeForm.getStoreDto())
                 .subscribe(this::accept);
     }

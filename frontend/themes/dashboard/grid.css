@@ -1,0 +1,125 @@
+/* ============================================================
+   GRID
+
+   Global grid parts: header/body cells, rows, density and
+   row action buttons (scoped to list views).
+   ============================================================ */
+
+vaadin-grid {
+
+    color:
+        var(--app-text);
+}
+
+
+/* ---------- Grid header ---------- */
+
+vaadin-grid::part(header-cell) {
+
+    background:
+        var(--lumo-contrast-5pct);
+
+    color:
+        var(--app-text-secondary);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    font-weight: 700;
+
+    text-transform:
+        uppercase;
+
+    letter-spacing:
+        0.04em;
+
+    border-bottom:
+        1px solid var(--app-border);
+}
+
+
+/* ---------- Grid body ---------- */
+
+vaadin-grid::part(body-cell) {
+
+    color:
+        var(--app-text);
+}
+
+
+/* ---------- Grid row ---------- */
+
+vaadin-grid::part(row) {
+
+    border-bottom:
+        1px solid var(--lumo-contrast-10pct);
+}
+
+vaadin-grid::part(row):hover {
+
+    background:
+        var(--lumo-primary-color-10pct);
+}
+
+vaadin-grid::part(selected-row) {
+
+    background:
+        var(--lumo-primary-color-10pct);
+}
+
+
+/* ---------- Row density ---------- */
+
+vaadin-grid::part(cell) {
+
+    padding-block:
+        var(--lumo-space-xs);
+}
+
+
+/* ---------- Row action buttons ---------- */
+
+.list-view
+vaadin-grid vaadin-button[theme~="tertiary-inline"] {
+
+    color:
+        var(--app-text-muted);
+
+    transition:
+        color 120ms ease;
+}
+
+.list-view
+vaadin-grid vaadin-button[theme~="tertiary-inline"]:hover {
+
+    color:
+        var(--lumo-primary-text-color);
+}
+
+.list-view
+vaadin-grid vaadin-button[theme~="error"]:hover {
+
+    color:
+        var(--lumo-error-text-color);
+}
+
+
+/* ============================================================
+   TIER GRIDS
+
+   Tier Price / Tier Menu / Tier Service tables use a tighter
+   left edge: no card padding on the left and smaller cell
+   padding.
+   ============================================================ */
+
+.list-view
+.content vaadin-grid.tier-grid {
+
+    padding-left: 0;
+}
+
+vaadin-grid.tier-grid::part(cell) {
+
+    padding-left:
+        var(--lumo-space-xs);
+}

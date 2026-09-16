@@ -22,10 +22,16 @@ public class UserTabs extends VerticalLayout {
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
-        browseTab.setLabel("Browse");
-        tabSheet.add(browseTab, new UserListView(asyncRestClientOrganizationService, restClientOrganizationService, accessService));
+        browseTab.setLabel("All Users");
+        UserListView userListView = new UserListView(asyncRestClientOrganizationService,
+                restClientOrganizationService, accessService);
+        tabSheet.add(browseTab, userListView);
         tabSheet.setSizeFull();
+
+        add(userListView.getToolbarComponent());
         add(tabSheet);
+        setFlexGrow(1, tabSheet);
+        setPadding(false);
         setSizeFull();
     }
 

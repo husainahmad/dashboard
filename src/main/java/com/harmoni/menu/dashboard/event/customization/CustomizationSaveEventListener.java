@@ -4,13 +4,14 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.dto.CustomizationDto;
 import com.harmoni.menu.dashboard.dto.CustomizationOptionDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
+import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.layout.menu.customization.CustomizationForm;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.data.binder.Binder;
 import lombok.RequiredArgsConstructor;
@@ -57,16 +58,26 @@ public class CustomizationSaveEventListener
 
         // call REST API
         restClientMenuService.saveCustomization(customization)
-                .subscribe(this::accept);
+                .subscribe(this::accept, this::onError);
     }
 
     private void accept(RestAPIResponse response) {
-        customizationForm.getUi().access(() -> broadcastMessage(BroadcastMessage.CUSTOMIZATION_INSERT_SUCCESS, response));
+        // notify other sessions so their grids refresh
+        broadcastMessage(BroadcastMessage.CUSTOMIZATION_INSERT_SUCCESS, response);
+        // handle this session's UI directly: toast + close tab (grid refresh arrives via broadcast)
+        customizationForm.onSaveSuccess();
+    }
+
+    private void onError(Throwable error) {
+        log.error("Save customization failed", error);
+        // BusinessBadRequestException already broadcasts BAD_REQUEST_FAILED which
+        // MainLayout surfaces as an error dialog; avoid double feedback.
+        if (!(error instanceof BusinessBadRequestException)) {
+            customizationForm.onSaveError(error);
+        }
     }
 
     private void showNotification(String text, NotificationVariant variant) {
-        Notification notification = new Notification(text, 3000, Notification.Position.MIDDLE);
-        notification.addThemeVariants(variant);
-        notification.open();
+        UiUtil.show(text, variant, 3000);
     }
 }

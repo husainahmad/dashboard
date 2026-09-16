@@ -19,6 +19,9 @@ public class StoreUpdateEventListener implements ComponentEventListener<ClickEve
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
+        if (storeForm.getBinder().validate().hasErrors()) {
+            return;
+        }
         restClientOrganizationService.updateStore(storeForm.getStoreDto())
                 .subscribe(this::accept);
     }

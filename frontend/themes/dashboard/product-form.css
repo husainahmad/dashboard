@@ -1,0 +1,20 @@
+/* ============================================================
+   PRODUCT FORM OVERLAY
+
+   Surface styling for the product form container.
+   ============================================================ */
+
+.product-form {
+
+    background:
+        var(--app-surface);
+
+    border-left:
+        1px solid var(--app-border);
+
+    box-shadow:
+        var(--app-shadow-lg);
+
+    color:
+        var(--app-text);
+}

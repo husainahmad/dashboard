@@ -1,0 +1,112 @@
+/* ============================================================
+   FONT & DESIGN TOKENS
+
+   Brand palette, light-theme application colors, Lumo
+   variable overrides and shared shadows.
+   ============================================================ */
+
+:root {
+    /* ---------- Typography ---------- */
+
+    --app-font:
+        'Inter',
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        'Helvetica Neue',
+        Arial,
+        sans-serif;
+
+    --lumo-font-family: var(--app-font);
+
+    /* ---------- Brand ---------- */
+
+    --app-brand: #059669;
+    --app-brand-strong: #047857;
+    --app-brand-contrast: #ffffff;
+
+    --app-gradient:
+        linear-gradient(
+            135deg,
+            #34d399 0%,
+            #10b981 45%,
+            #0d9488 100%
+        );
+
+    --app-accent: #f59e0b;
+
+    /* ---------- Light Theme ---------- */
+
+    --app-bg: #f5f7fa;
+
+    --app-surface: #ffffff;
+
+    --app-surface-elevated: #ffffff;
+
+    --app-text: #17202b;
+
+    --app-text-secondary: #374151;
+
+    --app-text-muted: #6b7280;
+
+    --app-border: #d9dee5;
+
+    --app-border-strong: #c3cad3;
+
+    /* ---------- Lumo ---------- */
+
+    --lumo-base-color: #ffffff;
+
+    --lumo-primary-color: var(--app-brand);
+
+    --lumo-primary-color-50pct:
+        rgba(5, 150, 105, 0.5);
+
+    --lumo-primary-color-10pct:
+        rgba(5, 150, 105, 0.10);
+
+    --lumo-primary-text-color: #047857;
+
+    --lumo-body-text-color: #17202b;
+
+    --lumo-secondary-text-color: #374151;
+
+    --lumo-tertiary-text-color: #6b7280;
+
+    --lumo-header-text-color: #111827;
+
+    --lumo-contrast-5pct:
+        rgba(17, 24, 39, 0.04);
+
+    --lumo-contrast-10pct:
+        rgba(17, 24, 39, 0.08);
+
+    --lumo-contrast-20pct:
+        rgba(17, 24, 39, 0.14);
+
+    --lumo-contrast-30pct:
+        rgba(17, 24, 39, 0.22);
+
+    --lumo-border-radius: 8px;
+
+    --lumo-border-radius-s: 6px;
+
+    --lumo-border-radius-m: 8px;
+
+    --lumo-border-radius-l: 12px;
+
+    /* ---------- Shadows ---------- */
+
+    --app-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.04),
+        0 4px 14px rgba(0, 0, 0, 0.06);
+
+    --app-shadow-hover:
+        0 2px 5px rgba(0, 0, 0, 0.06),
+        0 10px 28px rgba(0, 0, 0, 0.12);
+
+    --app-shadow-lg:
+        0 10px 30px rgba(0, 0, 0, 0.10);
+}

@@ -1,15 +1,16 @@
 package com.harmoni.menu.dashboard.event.category;
 
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
+import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.menu.category.CategoryForm;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.notification.Notification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,9 +28,15 @@ public class CategorySaveEventListener implements ComponentEventListener<ClickEv
             return;
         }
 
+        BrandDto brand = this.categoryForm.getBrandBox().getValue();
+        if (brand == null || brand.getId() == null || brand.getId() <= 0) {
+            this.categoryForm.showNotification("Brand not allow to be empty");
+            return;
+        }
+
         CategoryDto categoryDto = this.categoryForm.getCategoryDto();
         categoryDto.setName(this.categoryForm.getCategoryNameField().getValue());
-        categoryDto.setBrandId(this.categoryForm.getBrandBox().getValue().getId());
+        categoryDto.setBrandId(brand.getId());
         categoryDto.setDescription(this.categoryForm.getCategoryDescArea().getValue());
 
         restClientMenuService.createCategory(categoryDto)
@@ -38,10 +45,8 @@ public class CategorySaveEventListener implements ComponentEventListener<ClickEv
 
     private void accept(RestAPIResponse restAPIResponse) {
         this.categoryForm.getUi().access(()->{
-            Notification notification = new Notification("Category created..", 3000, Notification.Position.MIDDLE);
-            notification.open();
-
-            this.categoryForm.setVisible(false);
+            UiUtil.success("Category created..");
+            this.categoryForm.close();
             broadcastMessage(BroadcastMessage.CATEGORY_INSERT_SUCCESS, restAPIResponse);
         });
     }

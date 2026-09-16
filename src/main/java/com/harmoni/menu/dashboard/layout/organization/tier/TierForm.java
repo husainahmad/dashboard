@@ -9,6 +9,7 @@ import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.tier.TierSaveEventListener;
 import com.harmoni.menu.dashboard.event.tier.TierUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -91,11 +92,7 @@ public class TierForm extends FormLayout {
     }
 
     public void showNotification(String text) {
-        ui.access(()->{
-            Notification notification = new Notification(text, 3000,
-                    Notification.Position.MIDDLE);
-            notification.open();
-        });
+        ui.access(() -> UiUtil.success(text));
     }
 
     public void hideForm() {
@@ -114,14 +111,9 @@ public class TierForm extends FormLayout {
     }
 
     public void addValidation() {
-
-        brandBox.addValueChangeListener(event -> getBinder().validate());
         getBinder().forField(brandBox)
                 .withValidator(value -> value.getId() > 0, "Brand not allow to be empty"
                 ).bind(TierDto::getBrandDto, TierDto::setBrandDto);
-        tierNameField.addValueChangeListener(
-                (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextField, String>>) event -> getBinder().validate());
 
         getBinder().forField(tierNameField)
                 .withValidator(value -> value.length() > 2,

@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.event.store.StoreDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -20,8 +21,8 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
@@ -63,10 +64,10 @@ public class StoreListView extends VerticalLayout {
     private final LoadingBar loadingBar = new LoadingBar();
 
     private void renderLayout() {
-        addClassName("list-view");
         setSizeFull();
+        setPadding(false);
         configureGrid();
-        add(loadingBar, getToolbar(), getContent(), getPaginationFooter());
+        add(loadingBar, getContent(), getPaginationFooter());
     }
 
     @Override
@@ -112,22 +113,20 @@ public class StoreListView extends VerticalLayout {
 
     private Component applyGroupButton(StoreDto storeDto) {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.add(UiUtil.editButton(event -> showAddEditStore(storeDto, "Edit Store", FormAction.EDIT)));
+        horizontalLayout.add(UiUtil.editButton(event -> showAddEditStore(storeDto,
+                "Edit ".concat(storeDto.getName()), FormAction.EDIT)));
         horizontalLayout.add(UiUtil.deleteButton(
                 new StoreDeleteEventListener(storeDto, this.restClientOrganizationService)));
         return horizontalLayout;
     }
 
     private void showAddEditStore(StoreDto storeDto, String title, FormAction action) {
-        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+        storeDtoGrid.asSingleSelect().clear();
+        if (!(getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
-        Tab tabNewStore = new Tab();
-        tabNewStore.setLabel(title);
-        tabSheet.add(tabNewStore, new StoreForm(this.asyncRestClientOrganizationService,
-                this.restClientOrganizationService, tabNewStore, action, storeDto, objectParams));
-        tabSheet.setSizeFull();
-        tabSheet.setSelectedTab(tabNewStore);
+        new TabManager(tabSheet).addOrSelect(title, tab ->
+                new StoreForm(this.restClientOrganizationService, tab, action, storeDto, objectParams));
     }
 
     private HorizontalLayout getContent() {
@@ -138,9 +137,10 @@ public class StoreListView extends VerticalLayout {
         return content;
     }
 
-    private HorizontalLayout getToolbar() {
+    public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
+        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
         filterText.addValueChangeListener(changeEvent -> {
             if (!changeEvent.getOldValue().equals(changeEvent.getValue())) {
@@ -149,7 +149,7 @@ public class StoreListView extends VerticalLayout {
             }
         });
 
-        Button addChainButton = UiUtil.addButton("Add Store", event -> showAddEditStore(null, "New Store", FormAction.CREATE));
+        Button addChainButton = UiUtil.addButton("New Store", event -> showAddEditStore(null, "New Store", FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -201,6 +201,10 @@ public class StoreListView extends VerticalLayout {
                 });
 
                 storeDtoGrid.setItems(storeDtos);
+                pageInfoText.setText(getPaginationInfo());
+            } else {
+                storeDtoGrid.setItems(new ArrayList<>());
+                totalPages = 0;
                 pageInfoText.setText(getPaginationInfo());
             }
         }), accessService.getUserDetail().getStoreDto().getChainDto().getId(), currentPage, pageSize, filterText.getValue());

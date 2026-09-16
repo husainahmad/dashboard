@@ -5,7 +5,6 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.event.brand.BrandDeleteEventListener;
-import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -17,28 +16,25 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 @RequiredArgsConstructor
-@Route(value = "brand", layout = MainLayout.class)
-@PageTitle("Brand | POSHarmoni")
 @Slf4j
 public class BrandListView extends VerticalLayout {
 
     Registration broadcasterRegistration;
 
     Grid<BrandDto> brandDtoGrid = new Grid<>(BrandDto.class);
-    BrandForm brandForm;
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
@@ -48,21 +44,18 @@ public class BrandListView extends VerticalLayout {
     LoadingBar loadingBar = new LoadingBar();
 
     private void renderLayout() {
-        addClassName("list-view");
         setSizeFull();
+        setPadding(false);
 
         configureGrid();
-        configureForm();
 
-        add(loadingBar, getToolbar(), getContent());
-        closeEditor();
+        add(loadingBar, getContent());
         fetchBrands();
     }
 
     private HorizontalLayout getContent() {
-        HorizontalLayout content = new HorizontalLayout(brandDtoGrid, brandForm);
-        content.setFlexGrow(2, brandDtoGrid);
-        content.setFlexGrow(1, brandForm);
+        HorizontalLayout content = new HorizontalLayout(brandDtoGrid);
+        content.setFlexGrow(1, brandDtoGrid);
         content.addClassNames("content");
         content.setSizeFull();
         return content;
@@ -94,12 +87,13 @@ public class BrandListView extends VerticalLayout {
                 new BrandDeleteEventListener(brandDto, restClientOrganizationService));
     }
 
-    private HorizontalLayout getToolbar() {
+    public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
+        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addBrandButton = UiUtil.addButton("Add Brand", event -> addBrand());
+        Button addBrandButton = UiUtil.addButton("New Brand", event -> addBrand());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");
         return toolbar;
@@ -130,25 +124,12 @@ public class BrandListView extends VerticalLayout {
         broadcasterRegistration = null;
     }
 
-    private void configureForm() {
-        brandForm = new BrandForm(this.restClientOrganizationService);
-        brandForm.setWidth("25em");
-    }
-
     public void editBrand(BrandDto brandDto, FormAction formAction) {
-        if (brandDto == null) {
-            closeEditor();
-        } else {
-            brandForm.setBrandDto(brandDto);
-            brandForm.restructureButton(formAction);
-            brandForm.setVisible(true);
-            addClassName("editing");
-        }
-    }
-
-    private void closeEditor() {
-        brandForm.setVisible(false);
-        removeClassName("editing");
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle(formAction == FormAction.EDIT ? "Edit Brand" : "Add Brand");
+        dialog.setWidth("400px");
+        dialog.add(new BrandForm(this.restClientOrganizationService, dialog, formAction, brandDto));
+        dialog.open();
     }
 
     private void addBrand() {

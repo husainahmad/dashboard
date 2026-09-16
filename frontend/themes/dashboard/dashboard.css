@@ -1,0 +1,194 @@
+/* ============================================================
+   DASHBOARD
+
+   Hero banner, responsive stat cards and generic panel.
+   ============================================================ */
+
+.dashboard-view {
+
+    background:
+        var(--app-bg);
+
+    color:
+        var(--app-text);
+
+    padding:
+        var(--lumo-space-m) !important;
+}
+
+
+/* ---------- Hero ---------- */
+
+.dashboard-hero {
+
+    background:
+        var(--app-gradient);
+
+    color:
+        #ffffff;
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    padding:
+        var(--lumo-space-l);
+
+    box-shadow:
+        var(--app-shadow);
+}
+
+.dashboard-hero h2 {
+
+    margin:
+        0 0 var(--lumo-space-xs);
+
+    color:
+        #ffffff;
+
+    font-size:
+        var(--lumo-font-size-xxl);
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        -0.02em;
+}
+
+.dashboard-hero p {
+
+    margin: 0;
+
+    color:
+        rgba(255,255,255,0.92);
+}
+
+
+/* ---------- Statistic cards ---------- */
+
+.stat-card {
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow);
+
+    padding:
+        var(--lumo-space-m)
+        var(--lumo-space-l);
+
+    transition:
+        transform 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.stat-card:hover {
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        var(--app-shadow-hover);
+}
+
+
+/* ---------- Responsive card row ---------- */
+
+.dashboard-view .stat-cards {
+
+    flex-wrap: wrap;
+}
+
+.dashboard-view .stat-cards .stat-card {
+
+    flex:
+        1 1 230px;
+
+    min-width: 0;
+}
+
+.stat-icon {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 44px;
+    height: 44px;
+
+    border-radius: 12px;
+
+    color:
+        var(--lumo-primary-text-color);
+
+    background:
+        var(--lumo-primary-color-10pct);
+}
+
+.stat-value {
+
+    margin: 0;
+
+    color:
+        var(--app-text);
+
+    font-size:
+        var(--lumo-font-size-xxl);
+
+    font-weight:
+        800;
+
+    line-height:
+        1.2;
+
+    letter-spacing:
+        -0.02em;
+}
+
+.stat-label {
+
+    margin: 0;
+
+    color:
+        var(--app-text-secondary);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    font-weight:
+        500;
+}
+
+
+/* ---------- Generic panel ---------- */
+
+.panel {
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow);
+
+    padding:
+        var(--lumo-space-m)
+        var(--lumo-space-l);
+
+    color:
+        var(--app-text);
+}

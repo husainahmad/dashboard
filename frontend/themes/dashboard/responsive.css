@@ -1,0 +1,68 @@
+/* ============================================================
+   RESPONSIVE
+
+   Breakpoint overrides. Imported last so these rules win the
+   cascade over the component files above.
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+    .login-view .login-brand {
+        display: none;
+    }
+
+    .login-view .login-form-side {
+
+        width: 100% !important;
+
+        flex-grow: 1;
+
+        padding:
+            var(--lumo-space-m);
+    }
+
+    .login-panel {
+
+        max-width: 100%;
+    }
+
+    .list-view {
+
+        padding:
+            var(--lumo-space-s) !important;
+    }
+
+    .list-view .toolbar {
+
+        padding:
+            var(--lumo-space-s);
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .list-view .toolbar {
+
+        flex-direction:
+            column;
+
+        align-items:
+            stretch;
+    }
+
+    .list-view .toolbar
+    vaadin-text-field,
+
+    .list-view .toolbar
+    vaadin-combo-box {
+
+        width: 100%;
+
+        min-width: 0;
+    }
+
+    .app-user-name {
+        display: none;
+    }
+}

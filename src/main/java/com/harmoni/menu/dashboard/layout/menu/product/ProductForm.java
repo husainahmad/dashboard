@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.event.product.ProductUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.menu.ProductFormLayout;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ImageUtil;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -249,13 +250,9 @@ public class ProductForm extends ProductFormLayout {
 
     private void addValidation() {
 
-        categoryBox.addValueChangeListener(event -> binder.validate());
         binder.forField(categoryBox)
                         .withValidator(value -> (value==null || value.getId() > 0), "Category not allow to be empty"
                         ).bind(ProductDto::getCategoryDto, ProductDto::setCategoryDto);
-        productNameField.addValueChangeListener(
-                (HasValue.ValueChangeListener<AbstractField
-                        .ComponentValueChangeEvent<TextField, String>>) event -> binder.validate());
 
         binder.forField(productNameField)
                 .withValidator(value -> value.length() > 2,
@@ -286,9 +283,7 @@ public class ProductForm extends ProductFormLayout {
 
     private Button applyButtonDelete(SkuTreeItem skuTreeItem) {
         if (skuTreeItem.getTreeLevel().equals(TreeLevel.ROOT)) {
-            Button button = new Button("Delete");
-            button.addClickListener(event -> onDeleteSku(skuTreeItem));
-            return button;
+            return UiUtil.deleteButton(event -> onDeleteSku(skuTreeItem));
         }
         return null;
     }

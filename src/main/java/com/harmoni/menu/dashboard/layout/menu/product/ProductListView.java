@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.event.product.ProductDeleteEventListener;
@@ -24,6 +25,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.ExpandEvent;
 import com.vaadin.flow.component.treegrid.TreeGrid;
@@ -42,6 +44,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @UIScope
@@ -80,16 +83,19 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
     transient ProductTreeItem expandTreeItem;
 
     private void renderLayout() {
-        addClassName("list-view");
-
-        brandDtos.add(getTempBrandDto());
-        categoryDtos.add(getTempCategoryDto());
-        tierDtos.add(getTempTierDtp());
-
         setSizeFull();
+        setPadding(false);
         configureGrid();
-        add(loadingBar, getToolbar(), getContent(), getPaginationFooter());
+        add(loadingBar, getContent(), getPaginationFooter());
         fetchBrands();
+    }
+
+    private void initTempOptions() {
+        if (brandDtos.stream().noneMatch(dto -> Objects.equals(dto.getId(), -1))) {
+            brandDtos.add(getTempBrandDto());
+            categoryDtos.add(getTempCategoryDto());
+            tierDtos.add(getTempTierDtp());
+        }
     }
 
     private HorizontalLayout applyButton(ProductTreeItem productTreeItem) {
@@ -168,15 +174,17 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         return tierDto;
     }
 
-    private HorizontalLayout getToolbar() {
-        filterText.setLabel("Product");
+    public HorizontalLayout getToolbarComponent() {
+        initTempOptions();
+        filterText.setLabel("Search");
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
+        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
         filterText.addValueChangeListener(changeEvent -> {
-            if (changeEvent.getValue().isEmpty()) {
+            if (changeEvent.isFromClient()) {
                 currentPage = 1;
-                fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
+                fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), changeEvent.getValue());
             }
         });
 
@@ -206,12 +214,10 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
                 fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
             }
         });
-        Button searchProduct = new Button("Search");
-        searchProduct.addClickListener(this::onSearchProductListener);
-        Button addProduct = UiUtil.addButton("Add Product", this::onAddProductListener);
+        Button addProduct = UiUtil.addButton("New Product", this::onAddProductListener);
 
         HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, categoryDtoComboBox,
-                tierDtoComboBox, filterText, searchProduct, addProduct);
+                tierDtoComboBox, filterText, addProduct);
         toolbar.addClassName("toolbar");
         toolbar.setAlignItems(Alignment.BASELINE);
         return toolbar;
@@ -250,13 +256,10 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
-        Tab tabNewProduct = new Tab();
-        tabNewProduct.setLabel("New Product");
-        tabSheet.add(tabNewProduct, new ProductForm(this.restClientMenuService,
-                this.brandDtoComboBox.getValue(),
-                this.categoryDtos, this.tierDtos, tabNewProduct, null));
-        tabSheet.setSizeFull();
-        tabSheet.setSelectedTab(tabNewProduct);
+        new TabManager(tabSheet).addOrSelect("New Product", tab ->
+                new ProductForm(this.restClientMenuService,
+                        this.brandDtoComboBox.getValue(),
+                        this.categoryDtos, this.tierDtos, tab, null));
     }
 
     private void editProduct(ProductTreeItem productTreeItem) {
@@ -264,13 +267,10 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
-        Tab tabNewProduct = new Tab();
-        tabNewProduct.setLabel("Edit ".concat(productTreeItem.getName()));
-        tabSheet.add(tabNewProduct, new ProductForm(this.restClientMenuService,
-                this.brandDtoComboBox.getValue(),
-                this.categoryDtos, this.tierDtos, tabNewProduct, productTreeItem));
-        tabSheet.setSizeFull();
-        tabSheet.setSelectedTab(tabNewProduct);
+        new TabManager(tabSheet).addOrSelect("Edit ".concat(productTreeItem.getName()), tab ->
+                new ProductForm(this.restClientMenuService,
+                        this.brandDtoComboBox.getValue(),
+                        this.categoryDtos, this.tierDtos, tab, productTreeItem));
     }
 
     private void fetchCategories(Integer brandId) {
@@ -314,6 +314,11 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
                     if (ObjectUtils.isNotEmpty(expandTreeItem)) {
                         productDtoGrid.expand(expandTreeItem);
                     }
+                    pageInfoText.setText(getPaginationInfo());
+                } else {
+                    productDtoGrid.setTreeData(new TreeData<>());
+                    expandTreeItem = null;
+                    totalPages = 0;
                     pageInfoText.setText(getPaginationInfo());
                 }
         }), categoryId, brandId, currentPage, pageSize, searchProduct);
@@ -444,11 +449,6 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
 
     private void onAddProductListener(ClickEvent<Button> buttonClickEvent) {
         addProduct();
-    }
-
-    private void onSearchProductListener(ClickEvent<Button> buttonClickEvent) {
-        currentPage = 1;
-        fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
     }
 
 }

@@ -20,6 +20,7 @@ public class UserLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        addClassName("list-view");
         add(new UserTabs(asyncRestClientOrganizationService, restClientOrganizationService, accessService));
         setSizeFull();
     }

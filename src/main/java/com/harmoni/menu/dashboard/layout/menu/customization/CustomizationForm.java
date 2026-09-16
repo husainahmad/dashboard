@@ -1,48 +1,49 @@
 package com.harmoni.menu.dashboard.layout.menu.customization;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.harmoni.menu.dashboard.component.BroadcastMessage;
-import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.CustomizationDto;
 import com.harmoni.menu.dashboard.dto.CustomizationOptionDto;
 import com.harmoni.menu.dashboard.event.customization.CustomizationSaveEventListener;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.enums.SelectionType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
-import com.harmoni.menu.dashboard.util.ObjectUtil;
-import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.dataview.GridListDataView;
-import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
-import com.vaadin.flow.router.Route;
-import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-@RequiredArgsConstructor
-@Route("customization-form")
 @Slf4j
 public class CustomizationForm extends VerticalLayout {
 
-    private Registration broadcasterRegistration;
+    private static final String ALL = "All";
+    private static final String ACTIVE = "Active";
+    private static final String INACTIVE = "Inactive";
 
     @Getter
-    private Binder<CustomizationDto> customizationBinder = new Binder<>(CustomizationDto.class);
+    private final Binder<CustomizationDto> customizationBinder = new Binder<>(CustomizationDto.class);
 
     // Form fields
     @Getter private final TextField nameField = new TextField("Name");
@@ -58,12 +59,6 @@ public class CustomizationForm extends VerticalLayout {
     private final Button updateButton = new Button("Update");
     private final Button closeButton = new Button("Cancel");
 
-    private static final String SINGLE = "Single";
-    private static final String MULTIPLE = "Multiple";
-    private static final String ALL = "All";
-    private static final String ACTIVE = "Active";
-    private static final String INACTIVE = "Inactive";
-
     private final Grid<CustomizationOptionDto> optionGrid = new Grid<>(CustomizationOptionDto.class, false);
     private GridListDataView<CustomizationOptionDto> dataView;
     @Getter
@@ -73,55 +68,29 @@ public class CustomizationForm extends VerticalLayout {
     @Getter
     private UI ui;
 
-    @Getter
-    private transient CustomizationDto customizationDto;
-
     private final RestClientMenuService restClientMenuService;
-    private final TabSheet tabSheet;
+    private final TabManager tabManager;
     private final Tab currentTab;
+    private boolean initialized;
+
+    public CustomizationForm(RestClientMenuService restClientMenuService, TabManager tabManager, Tab currentTab) {
+        this.restClientMenuService = restClientMenuService;
+        this.tabManager = tabManager;
+        this.currentTab = currentTab;
+    }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         this.ui = attachEvent.getUI();
-        registerBroadcaster();
+        if (initialized) {
+            return;
+        }
+        initialized = true;
         configureBinder();
         configureForm();
         configureOptionGrid();
+        configureOptionFilters();
         configureButtons();
-        loadSampleData();
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        if (broadcasterRegistration != null) {
-            broadcasterRegistration.remove();
-            broadcasterRegistration = null;
-        }
-    }
-
-    private void registerBroadcaster() {
-        broadcasterRegistration = Broadcaster.register(message -> {
-            try {
-                BroadcastMessage broadcastMessage =
-                        (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (Objects.nonNull(broadcastMessage) && Objects.nonNull(broadcastMessage.getType())) {
-                    if (!broadcastMessage.getType().equals(BroadcastMessage.CUSTOMIZATION_INSERT_SUCCESS)
-                            && !broadcastMessage.getType().equals(BroadcastMessage.CUSTOMIZATION_UPDATED_SUCCESS)) {
-                        return;
-                    }
-                    ui.access(() -> {
-                        showNotification("Customization saved..", NotificationVariant.LUMO_SUCCESS);
-
-                        // Close this tab
-                        if (tabSheet != null && currentTab != null) {
-                            tabSheet.remove(currentTab);
-                        }
-                    });
-                }
-            } catch (JsonProcessingException e) {
-                log.error("Broadcast Handler Error", e);
-            }
-        });
     }
 
     private void configureBinder() {
@@ -166,7 +135,6 @@ public class CustomizationForm extends VerticalLayout {
                 showNotification("Please fill in the previous option before adding another.", NotificationVariant.LUMO_ERROR);
                 return;
             }
-            rowBinders.clear();
             optionList.add(CustomizationOptionDto.builder().status(ACTIVE).build());
             dataView.refreshAll();
         });
@@ -178,12 +146,10 @@ public class CustomizationForm extends VerticalLayout {
         if (optionList.isEmpty()) return true;
 
         CustomizationOptionDto last = optionList.getLast();
-
         Binder<CustomizationOptionDto> binder = rowBinders.get(last);
         if (binder != null) {
-            return binder.validate().isOk(); // uses "Name is required"
+            return binder.validate().isOk();
         }
-        // fallback in case not rendered yet
         return last.getName() != null && !last.getName().trim().isEmpty();
     }
 
@@ -195,14 +161,12 @@ public class CustomizationForm extends VerticalLayout {
         rowBinders.clear();
 
         optionGrid.addColumn(new ComponentRenderer<>(option -> {
-            // reuse the same binder + field if already created
             Binder<CustomizationOptionDto> binder = rowBinders.computeIfAbsent(option, o -> new Binder<>(CustomizationOptionDto.class));
 
             TextField nameField = new TextField();
             nameField.setValue(option.getName() != null ? option.getName() : "");
             nameField.setPlaceholder("Option name");
 
-            // clear previous bindings before binding new
             binder.removeBinding(nameField);
             binder.forField(nameField)
                     .asRequired("Name is required")
@@ -221,15 +185,35 @@ public class CustomizationForm extends VerticalLayout {
         })).setHeader("Status").setAutoWidth(true);
 
         optionGrid.addColumn(new ComponentRenderer<>(option -> {
-            Button deleteButton = new Button("✕", e -> {
+            Button deleteButton = new Button(VaadinIcon.TRASH.create(), e -> {
                 optionList.remove(option);
+                rowBinders.remove(option);
                 dataView.refreshAll();
             });
-            deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
+            deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON);
+            deleteButton.setTooltipText("Remove option");
             return deleteButton;
         })).setHeader("Actions").setAutoWidth(true);
 
         dataView = optionGrid.setItems(optionList);
+    }
+
+    private void configureOptionFilters() {
+        searchField.setValueChangeMode(ValueChangeMode.LAZY);
+        searchField.setClearButtonVisible(true);
+        searchField.addValueChangeListener(event -> applyOptionFilters());
+        statusFilter.addValueChangeListener(event -> applyOptionFilters());
+    }
+
+    private void applyOptionFilters() {
+        String search = searchField.getValue() == null ? "" : searchField.getValue().trim().toLowerCase();
+        String status = statusFilter.getValue();
+        dataView.setFilter(option -> {
+            boolean matchesSearch = search.isEmpty()
+                    || option.getName() != null && option.getName().toLowerCase().contains(search);
+            boolean matchesStatus = status == null || ALL.equals(status) || Objects.equals(status, option.getStatus());
+            return matchesSearch && matchesStatus;
+        });
     }
 
     private void configureButtons() {
@@ -241,12 +225,7 @@ public class CustomizationForm extends VerticalLayout {
         saveButton.addClickListener(
                 new CustomizationSaveEventListener(this, restClientMenuService)
         );
-
-        closeButton.addClickListener(event -> {
-            if (tabSheet != null && currentTab != null) {
-                tabSheet.remove(currentTab);
-            }
-        });
+        closeButton.addClickListener(event -> closeTab());
     }
 
     private HorizontalLayout createButtonsLayout() {
@@ -255,16 +234,34 @@ public class CustomizationForm extends VerticalLayout {
         return horizontalLayout;
     }
 
-    private void loadSampleData() {
-        optionGrid.setItems(optionList);
+    private void closeTab() {
+        if (tabManager != null && currentTab != null) {
+            tabManager.closeAndSelectFirst(currentTab);
+        }
+    }
+
+    public void onSaveSuccess() {
+        if (ui == null) {
+            return;
+        }
+        ui.access(() -> {
+            UiUtil.success("Customization saved successfully");
+            closeTab();
+        });
+    }
+
+    public void onSaveError(Throwable error) {
+        if (ui == null) {
+            return;
+        }
+        ui.access(() -> UiUtil.error("Unable to save customization"));
     }
 
     public void showNotification(String text, NotificationVariant variant) {
-        ui.access(() -> {
-            Notification notification = new Notification(text, 3000, Notification.Position.MIDDLE);
-            notification.addThemeVariants(variant);
-            notification.open();
-        });
+        if (ui == null) {
+            return;
+        }
+        ui.access(() -> UiUtil.show(text, variant, 3000));
     }
 
     public boolean validate() {

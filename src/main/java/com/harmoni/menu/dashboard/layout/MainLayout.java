@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.navigation.SideNavMenu;
+import com.harmoni.menu.dashboard.layout.util.ThemeUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
@@ -41,6 +42,10 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
 
     private final AccessService accessService;
 
+    private final Icon moonIcon = new Icon(VaadinIcon.MOON);
+    private final Icon sunIcon = new Icon(VaadinIcon.SUN_O);
+    private Button themeToggle;
+
     public MainLayout(AccessService accessService) {
         this.accessService = accessService;
         createHeader();
@@ -53,7 +58,7 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
 
         H2 logo = createLogo();
 
-        HorizontalLayout actions = new HorizontalLayout(createThemeToggle(), createUserMenu());
+        HorizontalLayout actions = new HorizontalLayout(createPaletteMenu(), createThemeToggle(), createUserMenu());
         actions.setSpacing(true);
         actions.setPadding(false);
         actions.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -77,10 +82,27 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         return logo;
     }
 
+    private MenuBar createPaletteMenu() {
+        MenuBar palette = new MenuBar();
+        palette.setThemeName("tertiary-inline");
+        MenuItem paletteItem = palette.addItem(new Icon(VaadinIcon.PALETTE));
+        paletteItem.setAriaLabel("Color palette");
+
+        paletteItem.getSubMenu().addItem("Emerald (default)", event -> applyPalette(null));
+        paletteItem.getSubMenu().addItem("Warm Food", event -> applyPalette("preset-warm"));
+        return palette;
+    }
+
+    private void applyPalette(String token) {
+        UI.getCurrent().getElement().getThemeList().removeIf(theme -> theme.startsWith("preset-"));
+        if (token != null) {
+            UI.getCurrent().getElement().getThemeList().add(token);
+        }
+    }
+
     private Button createThemeToggle() {
-        Icon moon = new Icon(VaadinIcon.MOON);
-        Icon sun = new Icon(VaadinIcon.SUN_O);
-        Button toggle = new Button(moon);
+        // App boots in night mode, so the toggle offers light first.
+        Button toggle = new Button(sunIcon);
         toggle.addClassName("app-theme-toggle");
         toggle.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
         toggle.setTooltipText("Toggle light/dark mode");
@@ -88,12 +110,15 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
             boolean dark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
             if (dark) {
                 UI.getCurrent().getElement().getThemeList().remove(Lumo.DARK);
-                toggle.setIcon(sun);
+                toggle.setIcon(moonIcon);
+                ThemeUtil.storeTheme(UI.getCurrent(), false);
             } else {
                 UI.getCurrent().getElement().getThemeList().add(Lumo.DARK);
-                toggle.setIcon(moon);
+                toggle.setIcon(sunIcon);
+                ThemeUtil.storeTheme(UI.getCurrent(), true);
             }
         });
+        themeToggle = toggle;
         return toggle;
     }
 
@@ -129,6 +154,8 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
+        ThemeUtil.applySavedTheme(attachEvent.getUI(),
+                dark -> themeToggle.setIcon(dark ? sunIcon : moonIcon));
         broadcasterRegistration = Broadcaster.register(this::acceptNotification);
     }
 

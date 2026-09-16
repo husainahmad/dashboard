@@ -1,15 +1,10 @@
 package com.harmoni.menu.dashboard.exception;
 
 import com.harmoni.menu.dashboard.layout.organization.chain.ChainForm;
-import com.vaadin.flow.component.notification.Notification;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 
 public class ChainHandler {
     public ChainHandler(ChainForm chainForm, String message) {
-
-        chainForm.getUi().access(()->{
-            Notification notification = new Notification(message, 3000, Notification.Position.MIDDLE);
-            notification.open();
-        });
-
+        chainForm.getUi().access(() -> UiUtil.error(message));
     }
 }

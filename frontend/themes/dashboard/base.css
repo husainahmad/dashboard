@@ -1,0 +1,148 @@
+/* ============================================================
+   GLOBAL BASE
+
+   Host-level typography (Vaadin components use Shadow DOM
+   internally), generic text, scrollbar and accessibility.
+   ============================================================ */
+
+html {
+    background: var(--app-bg);
+
+    font-family: var(--app-font);
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    margin: 0;
+
+    background: var(--app-bg);
+
+    color: var(--app-text);
+
+    font-family: var(--app-font);
+}
+
+
+/*
+ * Explicit typography.
+ *
+ * Vaadin components use Shadow DOM internally, so these rules
+ * primarily establish the host-level typography.
+ */
+
+body,
+vaadin-app-layout,
+vaadin-drawer-toggle,
+vaadin-side-nav,
+vaadin-side-nav-item,
+vaadin-grid,
+vaadin-form-layout,
+vaadin-text-field,
+vaadin-text-area,
+vaadin-combo-box,
+vaadin-select,
+vaadin-date-picker,
+vaadin-number-field,
+vaadin-password-field,
+vaadin-button,
+vaadin-tab,
+vaadin-tabs,
+vaadin-tabsheet {
+    font-family: var(--app-font);
+}
+
+
+/* ---------- Generic text ---------- */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--app-text);
+}
+
+p {
+    color: var(--app-text-secondary);
+}
+
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+
+::-webkit-scrollbar {
+
+    width: 10px;
+
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+
+    background:
+        transparent;
+}
+
+::-webkit-scrollbar-thumb {
+
+    background:
+        var(--lumo-contrast-20pct);
+
+    border:
+        2px solid transparent;
+
+    border-radius:
+        6px;
+
+    background-clip:
+        content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+
+    background:
+        var(--lumo-primary-color-50pct);
+
+    border:
+        2px solid transparent;
+
+    background-clip:
+        content-box;
+}
+
+
+/* ============================================================
+   ACCESSIBILITY
+   ============================================================ */
+
+:focus-visible {
+
+    outline:
+        2px solid
+        var(--lumo-primary-color);
+
+    outline-offset:
+        2px;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+
+        transition-duration:
+            0.01ms !important;
+
+        animation-duration:
+            0.01ms !important;
+
+        animation-iteration-count:
+            1 !important;
+    }
+}

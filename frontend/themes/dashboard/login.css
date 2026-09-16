@@ -1,0 +1,190 @@
+/* ============================================================
+   LOGIN
+
+   Split-screen login: gradient brand panel and form panel.
+   Responsive collapse lives in responsive.css.
+   ============================================================ */
+
+.login-view {
+
+    background:
+        var(--app-bg);
+
+    color:
+        var(--app-text);
+}
+
+.login-view .login-brand,
+.login-view .login-form-side {
+
+    min-width: 0;
+}
+
+.login-view .login-form-side {
+
+    padding:
+        var(--lumo-space-m);
+}
+
+
+/* ---------- Brand panel ---------- */
+
+.login-brand {
+
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+        var(--app-gradient);
+
+    color:
+        #ffffff;
+}
+
+.login-brand::after {
+
+    content: "";
+
+    position: absolute;
+
+    right: -80px;
+
+    bottom: -80px;
+
+    width: 260px;
+
+    height: 260px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255,255,255,0.08);
+}
+
+.login-brand
+.login-brand-content {
+
+    position: relative;
+
+    z-index: 1;
+
+    padding:
+        var(--lumo-space-xl);
+}
+
+.login-brand h1 {
+
+    margin: 0;
+
+    color:
+        #ffffff;
+
+    font-size:
+        var(--lumo-font-size-xxxl);
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        -0.02em;
+}
+
+.login-brand p {
+
+    margin:
+        var(--lumo-space-s) 0 0;
+
+    color:
+        rgba(255,255,255,0.92);
+}
+
+
+/* ---------- Form panel ---------- */
+
+.login-panel {
+
+    width: 100%;
+
+    max-width: 380px;
+
+    padding:
+        var(--lumo-space-xl);
+
+    background:
+        var(--app-surface);
+
+    color:
+        var(--app-text);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        16px;
+
+    box-shadow:
+        var(--app-shadow-lg);
+}
+
+.login-panel h2 {
+
+    margin: 0;
+
+    color:
+        var(--app-text);
+
+    font-weight:
+        800;
+
+    letter-spacing:
+        -0.02em;
+}
+
+.login-panel .login-subtitle {
+
+    margin:
+        var(--lumo-space-xs)
+        0
+        var(--lumo-space-m);
+
+    color:
+        var(--app-text-secondary);
+
+    font-size:
+        var(--lumo-font-size-s);
+}
+
+.login-panel
+vaadin-text-field::part(input-field),
+
+.login-panel
+vaadin-password-field::part(input-field) {
+
+    background:
+        var(--lumo-contrast-5pct);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius);
+}
+
+
+/* ---------- Error message ---------- */
+
+.login-message {
+
+    min-height:
+        1.5em;
+
+    color:
+        var(--lumo-error-text-color);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    text-align:
+        center;
+}

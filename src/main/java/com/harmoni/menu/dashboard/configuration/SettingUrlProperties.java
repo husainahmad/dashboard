@@ -7,4 +7,5 @@ import java.io.Serializable;
 @Data
 public class SettingUrlProperties implements Serializable {
     private String service;
+    private String table;
 }

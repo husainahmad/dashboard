@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.ServiceDto;
-import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -13,14 +13,13 @@ import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,30 +29,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
-@Route(value = "service", layout = MainLayout.class)
-@PageTitle("Service | POSHarmoni")
 @Slf4j
 public class ServiceListView extends VerticalLayout {
 
-    static final String EDITING = "editing";
     Registration broadcasterRegistration;
 
     private final TreeGrid<ServiceTreeItem> serviceTreeGrid = new TreeGrid<>(ServiceTreeItem.class);
     private final AsyncRestClientSettingService asyncRestClientSettingService;
 
-    ServiceForm serviceForm;
     UI ui;
     LoadingBar loadingBar = new LoadingBar();
 
     private void renderLayout() {
-        addClassName("list-view");
         setSizeFull();
+        setPadding(false);
 
         configureGrid();
-        configureForm();
 
-        add(loadingBar, getToolbar(), getContent());
-        closeEditor();
+        add(loadingBar, getContent());
     }
 
     private void configureGrid() {
@@ -74,13 +67,8 @@ public class ServiceListView extends VerticalLayout {
         serviceTreeGrid.getColumns().forEach(productDtoColumn -> productDtoColumn.setAutoWidth(true));
     }
 
-    private void configureForm() {
-        this.serviceForm = new ServiceForm(this.asyncRestClientSettingService);
-        this.serviceForm.setWidth("25em");
-    }
-
-    private HorizontalLayout getToolbar() {
-        Button addServiceButton = new Button("Add Service", new Icon(VaadinIcon.PLUS));
+    public HorizontalLayout getToolbarComponent() {
+        Button addServiceButton = new Button("New Service", new Icon(VaadinIcon.PLUS));
         addServiceButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addServiceButton.addClickListener(event -> addService());
         HorizontalLayout toolbar = new HorizontalLayout(addServiceButton);
@@ -89,9 +77,8 @@ public class ServiceListView extends VerticalLayout {
     }
 
     private HorizontalLayout getContent() {
-        HorizontalLayout content = new HorizontalLayout(serviceTreeGrid, serviceForm);
+        HorizontalLayout content = new HorizontalLayout(serviceTreeGrid);
         content.setFlexGrow(1, serviceTreeGrid);
-        content.setFlexGrow(1, serviceForm);
         content.addClassNames("content");
         content.setSizeFull();
         return content;
@@ -107,10 +94,6 @@ public class ServiceListView extends VerticalLayout {
                         && (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
                             broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS))) {
                         fetchServices();
-                        ui.access(()->{
-                            serviceForm.setVisible(false);
-                            removeClassName(EDITING);
-                        });
                     }
 
             } catch (JsonProcessingException e) {
@@ -162,18 +145,11 @@ public class ServiceListView extends VerticalLayout {
 
     private void addService() {
         serviceTreeGrid.asSingleSelect().clear();
-        editService(new ServiceDto());
-    }
-
-    public void editService(ServiceDto serviceDto) {
-        if (serviceDto == null) {
-            closeEditor();
-        }
-    }
-
-    private void closeEditor() {
-        serviceForm.setVisible(false);
-        removeClassName(EDITING);
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Add Service");
+        dialog.setWidth("400px");
+        dialog.add(new ServiceForm(dialog, FormAction.CREATE, new ServiceDto()));
+        dialog.open();
     }
 
 }

@@ -6,7 +6,6 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.event.tier.TierServiceDeleteEventListener;
 import com.harmoni.menu.dashboard.event.tier.TierSubServiceUpdateEventListener;
-import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -19,12 +18,11 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +35,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-@Route(value = "tier-service", layout = MainLayout.class)
-@PageTitle("Tier | POSHarmoni")
 @Slf4j
 public class TierServiceListView extends VerticalLayout {
 
@@ -63,13 +59,13 @@ public class TierServiceListView extends VerticalLayout {
     private final Map<String, Checkbox> checkBoxes = new HashMap<>();
 
     private void renderLayout() {
-        brandDto.setId(TEMP_BRAND_ID);
-        addClassName("list-view");
         setSizeFull();
+        setPadding(false);
+        brandDto.setId(TEMP_BRAND_ID);
         configureGrid();
 
         configureForm();
-        add(loadingBar, getToolbar(), getContent());
+        add(loadingBar, getContent());
 
         closeEditor();
     }
@@ -153,12 +149,13 @@ public class TierServiceListView extends VerticalLayout {
         return content;
     }
 
-    private HorizontalLayout getToolbar() {
+    public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
+        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addTierServiceButton = UiUtil.addButton("Add Tier Service", event -> addTier());
+        Button addTierServiceButton = UiUtil.addButton("New Tier Service", event -> addTier());
 
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addTierServiceButton);
         toolbar.addClassName("toolbar");
@@ -234,10 +231,8 @@ public class TierServiceListView extends VerticalLayout {
     }
 
     private Button applyButtonUpdate(TierServiceTreeItem tierServiceTreeItem) {
-        buttonUpdates[tierServiceTreeItem.getRootIndex()] = new Button("Update");
+        buttonUpdates[tierServiceTreeItem.getRootIndex()] = UiUtil.updateButton();
         buttonUpdates[tierServiceTreeItem.getRootIndex()].setEnabled(false);
-        buttonUpdates[tierServiceTreeItem.getRootIndex()]
-                .addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
 
         buttonUpdates[tierServiceTreeItem.getRootIndex()].addClickListener(new TierSubServiceUpdateEventListener(tierForm.getUi(),
                 restClientOrganizationService, tierServiceTreeGrid, tierServiceTreeItem, getTierDto(tierServiceTreeItem)));

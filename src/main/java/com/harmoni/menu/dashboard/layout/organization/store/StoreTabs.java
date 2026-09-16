@@ -23,11 +23,16 @@ public class StoreTabs extends VerticalLayout {
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
-        browseTab.setLabel("Browse");
-        tabSheet.add(browseTab, new StoreListView(asyncRestClientOrganizationService,
-                restClientOrganizationService, accessService));
+        browseTab.setLabel("All Stores");
+        StoreListView storeListView = new StoreListView(asyncRestClientOrganizationService,
+                restClientOrganizationService, accessService);
+        tabSheet.add(browseTab, storeListView);
         tabSheet.setSizeFull();
+
+        add(storeListView.getToolbarComponent());
         add(tabSheet);
+        setFlexGrow(1, tabSheet);
+        setPadding(false);
         setSizeFull();
     }
 

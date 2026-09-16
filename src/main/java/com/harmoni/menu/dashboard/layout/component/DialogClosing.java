@@ -1,39 +1,50 @@
 package com.harmoni.menu.dashboard.layout.component;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 public class DialogClosing extends Dialog {
 
     private final String text;
+
     public DialogClosing(String text) {
         this.text = text;
-        getElement().setAttribute("arial-label", "System failed");
-        VerticalLayout dialogLayout = createDialogLayout(this);
-        add(dialogLayout);
-    }
 
-    private VerticalLayout createDialogLayout(Dialog dialog) {
-        H2 headline = new H2("Failed to process");
-        headline.getStyle().set("margin", "var(--lumo-space-m) 0")
-                .set("font-size", "1.5em").set("font-weight", "bold");
+        addClassName("app-error-dialog");
+        setHeaderTitle("Something went wrong");
+        setAriaLabel("System failure notification");
 
-        Paragraph paragraph = new Paragraph(this.text);
+        Icon icon = new Icon(VaadinIcon.WARNING);
+        icon.addClassName("app-error-dialog-icon");
+        icon.getStyle().set("--vaadin-icon-size", "28px");
 
-        Button closeButton = new Button("Close");
-        closeButton.addClickListener(e -> dialog.close());
+        Paragraph message = new Paragraph(this.text);
+        message.addClassName("app-error-dialog-message");
 
-        VerticalLayout dialogLayout = new VerticalLayout(headline, paragraph,
-                closeButton);
+        HorizontalLayout body = new HorizontalLayout(icon, message);
+        body.addClassName("app-error-dialog-body");
+        body.setSpacing(true);
+        body.setPadding(false);
+        body.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        Button closeButton = new Button("Close", event -> close());
+        closeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        closeButton.getElement().setAttribute("autofocus", true);
+
+        HorizontalLayout footer = new HorizontalLayout(closeButton);
+        footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        footer.setWidthFull();
+
+        VerticalLayout dialogLayout = new VerticalLayout(body, footer);
         dialogLayout.setPadding(false);
-        dialogLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
-        dialogLayout.getStyle().set("width", "300px").set("max-width", "100%");
-        dialogLayout.setAlignSelf(FlexComponent.Alignment.END, closeButton);
-
-        return dialogLayout;
+        dialogLayout.setSpacing(false);
+        add(dialogLayout);
     }
 }

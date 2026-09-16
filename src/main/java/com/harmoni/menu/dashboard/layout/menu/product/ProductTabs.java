@@ -23,11 +23,16 @@ public class ProductTabs extends VerticalLayout {
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
-        browseTab.setLabel("Browse");
-        tabSheet.add(browseTab, new ProductListView(asyncRestClientMenuService, restClientMenuService,
-                accessService, browseTab));
+        browseTab.setLabel("All Products");
+        ProductListView productListView = new ProductListView(asyncRestClientMenuService, restClientMenuService,
+                accessService, browseTab);
+        tabSheet.add(browseTab, productListView);
         tabSheet.setSizeFull();
+
+        add(productListView.getToolbarComponent());
         add(tabSheet);
+        setFlexGrow(1, tabSheet);
+        setPadding(false);
         setSizeFull();
     }
 

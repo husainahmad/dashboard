@@ -43,6 +43,15 @@ public class AsyncRestClientSettingService implements Serializable {
         makeAsyncRequest(settingProperties.getUrl().getService(), new TypeReference<List<ServiceDto>>() {}, callback);
     }
 
+    public void getAllTables(AsyncRestCallback<List<TableDto>> callback) {
+        makeAsyncRequest(settingProperties.getUrl().getTable(), new TypeReference<List<TableDto>>() {}, callback);
+    }
+
+    public void getAllTablesByStore(AsyncRestCallback<List<TableDto>> callback, Integer storeId) {
+        String uri = settingProperties.getUrl().getTable().concat("/store/%d".formatted(storeId));
+        makeAsyncRequest(uri, new TypeReference<List<TableDto>>() {}, callback);
+    }
+
     private <T> void makeAsyncRequest(String uri, TypeReference<T> typeReference,
                                       AsyncRestClientSettingService.AsyncRestCallback<T> callback) {
         TokenRefreshService.TokenRequest<RestAPIResponse> request = accessToken -> webClient.get()

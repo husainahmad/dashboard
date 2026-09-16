@@ -1,0 +1,48 @@
+/* ============================================================
+   STATUS
+
+   Text color classes applied to status values in grids.
+   Dark-mode variants at the bottom.
+   ============================================================ */
+
+.Available {
+
+    color:
+        #15803d;
+
+    font-weight:
+        600;
+}
+
+.Coming {
+
+    color:
+        #b45309;
+
+    font-weight:
+        600;
+}
+
+.Discontinued {
+
+    color:
+        #be123c;
+
+    font-weight:
+        600;
+}
+
+
+/* ---------- Dark mode ---------- */
+
+body[theme~="dark"] .Available {
+    color: #4ade80;
+}
+
+body[theme~="dark"] .Coming {
+    color: #fbbf24;
+}
+
+body[theme~="dark"] .Discontinued {
+    color: #fb7185;
+}

@@ -1,0 +1,571 @@
+/* ============================================================
+   LIST VIEW
+
+   Shared structure of every list screen: container, toolbar,
+   tab sheet, content row, grid card, pagination, loading bar.
+   ============================================================ */
+
+
+/* ============================================================
+   CONTAINER
+   ============================================================ */
+
+.list-view {
+
+    background-color:
+        var(--app-bg);
+
+    color:
+        var(--app-text);
+
+    padding:
+        var(--lumo-space-m) !important;
+}
+
+
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+
+.list-view .toolbar {
+
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    width: 100%;
+
+    padding:
+        var(--lumo-space-s)
+        var(--lumo-space-m);
+
+    gap: var(--lumo-space-s);
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow);
+}
+
+.list-view .toolbar vaadin-text-field,
+.list-view .toolbar vaadin-combo-box {
+
+    min-width: 180px;
+}
+
+.list-view .toolbar vaadin-text-field {
+    flex-grow: 1;
+}
+
+
+/* ---------- Toolbar fields ---------- */
+
+.list-view .toolbar
+vaadin-text-field::part(input-field),
+
+.list-view .toolbar
+vaadin-combo-box::part(input-field) {
+
+    background:
+        var(--lumo-contrast-5pct);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-m);
+}
+
+.list-view .toolbar
+vaadin-text-field::part(input-field):hover,
+
+.list-view .toolbar
+vaadin-combo-box::part(input-field):hover {
+
+    border-color:
+        var(--app-border-strong);
+}
+
+
+/* ============================================================
+   TAB SHEET — Google-Chrome-style browser tabs
+   ============================================================ */
+
+/*
+ * DOM / Shadow-DOM map — verified against installed Vaadin 24.6.5:
+ *
+ *   vaadin-tabsheet                   ← ONE word; Flow @Tag("vaadin-tabsheet")
+ *   ├─ #shadow-root
+ *   │   ├─ div[part=tabs-container]   ← strip wrapper (flex row)
+ *   │   └─ vaadin-tabsheet-scroller[part=content]
+ *   │       └─ <slot>                 ← panels = light-DOM children ([hidden] toggle)
+ *   ├─ vaadin-tabs[slot=tabs]         ← document-scope child
+ *   │   └─ #shadow-root > div[part=tabs]  ← the actual strip row
+ *   └─ vaadin-tab[selected?]          ← document scope; host styled directly
+ *
+ * This version exposes NO indicator part. Lumo paints the underline
+ * with each tab's own ::before/::after gated by
+ * --_lumo-tab-marker-display (disabled below). The SAME pseudo-
+ * elements are repurposed on the ACTIVE tab as the two inverted-
+ * corner fillets that weld it to the content panel.
+ */
+
+/* ---------- Host ---------- */
+
+.list-view vaadin-tabsheet {
+
+    /* Kills the Lumo underline marker inside every tab. */
+    --_lumo-tab-marker-display: none;
+
+    /* Selected-tab text stays normal instead of primary color. */
+    --vaadin-selection-color-text: var(--app-text);
+
+    display: flex;
+
+    flex-direction: column;
+
+    background: transparent;
+}
+
+
+/* ---------- Tab strip ---------- */
+
+.list-view vaadin-tabsheet::part(tabs-container) {
+
+    display: flex;
+
+    align-items: stretch;
+
+    gap: 1px;
+
+    padding: var(--lumo-space-xs) var(--lumo-space-s) 0;
+
+    background: transparent;
+
+    border-bottom: none;
+}
+
+.list-view vaadin-tabsheet vaadin-tabs {
+    align-self: stretch;
+}
+
+/* The inner scroller row is the real flex container of the tabs;
+   tabs grow out of the content panel, flush with its top edge. */
+.list-view vaadin-tabsheet vaadin-tabs::part(tabs) {
+
+    display: flex;
+
+    align-items: flex-end;
+
+    gap: 1px;
+
+    padding: 0;
+
+    background: transparent;
+}
+
+/* Overflow scroller arrows (rarely visible): keep them quiet. */
+.list-view vaadin-tabsheet vaadin-tabs::part(back-button),
+.list-view vaadin-tabsheet vaadin-tabs::part(forward-button) {
+
+    color: var(--app-text-muted);
+
+    font-size: 12px;
+}
+
+
+/* ---------- Tab base (inactive) ---------- */
+
+/*
+ * Browser-like rectangle: rounded top corners, completely straight
+ * bottom edge, recessed background. Host element is document scope,
+ * so these declarations win over the component's :host styles.
+ */
+.list-view vaadin-tabsheet vaadin-tab {
+
+    box-sizing: border-box;
+
+    position: relative;
+
+    min-height: 40px;
+
+    min-width: 140px;
+
+    max-width: 220px;
+
+    padding: 0 12px;
+
+    margin: 0;
+
+    background: var(--lumo-contrast-5pct);
+
+    color: var(--app-text-muted);
+
+    border: 1px solid transparent;
+
+    border-radius: 8px 8px 0 0;
+
+    box-shadow: none;
+
+    font-weight: 500;
+
+    cursor: pointer;
+
+    user-select: none;
+
+    -webkit-tap-highlight-color: transparent;
+
+    transition:
+        background-color 120ms ease,
+        color 120ms ease,
+        border-color 120ms ease;
+}
+
+/* Neutralise Lumo's focus-ring inset box-shadow. */
+.list-view vaadin-tabsheet vaadin-tab[focus-ring] {
+    box-shadow: none;
+}
+
+/* Hard-disable Lumo's underline pseudo-elements on inactive tabs
+   (the active tab re-purposes them as corner fillets below). */
+.list-view vaadin-tabsheet vaadin-tab:not([selected])::before,
+.list-view vaadin-tabsheet vaadin-tab:not([selected])::after {
+    display: none !important;
+}
+
+/* Single-line label with ellipsis inside the fixed-width tab. */
+.list-view vaadin-tabsheet vaadin-tab > vaadin-horizontal-layout {
+
+    display: flex;
+
+    align-items: center;
+
+    width: 100%;
+
+    min-width: 0;
+}
+
+.list-view vaadin-tabsheet vaadin-tab span {
+
+    overflow: hidden;
+
+    min-width: 0;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+
+/* ---------- Hover (inactive only) ---------- */
+
+.list-view vaadin-tabsheet vaadin-tab:not([selected]):hover {
+
+    background: var(--lumo-contrast-10pct);
+
+    color: var(--app-text);
+}
+
+
+/* ---------- Active tab ---------- */
+
+/*
+ * Same surface as the content panel, lifted above the panel edge:
+ * its bottom border is painted in the surface colour and the panel
+ * below is pulled up -1px, so no horizontal line crosses under the
+ * active tab. overflow switches to visible so the two corner
+ * fillets (::before / ::after) can reach outside the box.
+ */
+.list-view vaadin-tabsheet vaadin-tab[selected] {
+
+    position: relative;
+
+    z-index: 2;
+
+    overflow: visible;
+
+    background: var(--app-surface);
+
+    color: var(--app-text);
+
+    border: 1px solid var(--app-border);
+
+    border-bottom-color: var(--app-surface);
+
+    border-radius: 8px 8px 0 0;
+
+    font-weight: 600;
+}
+
+
+/* ---------- Active-tab corner fillets (Chrome join) ---------- */
+
+/*
+ * Two 9x9 squares anchored to the active tab's bottom corners.
+ * Each carves a quarter-circle out of the strip background, draws
+ * a 1px arc matching the panel border, and fills towards the tab
+ * with the surface colour — so the panel's straight top border
+ * appears to curve up into the active tab, exactly like Chrome.
+ *
+ *        ┌──────────────────┐
+ *        │      Orders      │
+ *  ──────┘                  └──────
+ *  ┌─────────────────────────────┐
+ */
+.list-view vaadin-tabsheet vaadin-tab[selected]::before,
+.list-view vaadin-tabsheet vaadin-tab[selected]::after {
+
+    content: "";
+
+    /*
+     * Explicit display beats Lumo's shadow rule
+     * (display: var(--_lumo-tab-marker-display)) which we
+     * disabled above for inactive tabs.
+     */
+    display: block;
+
+    position: absolute;
+
+    bottom: -1px;
+
+    width: 9px;
+
+    height: 10px;
+
+    pointer-events: none;
+}
+
+.list-view vaadin-tabsheet vaadin-tab[selected]::before {
+    left: -9px;
+    background: radial-gradient(circle 9px at 100% 0,
+            transparent 7px,
+            var(--app-border) 7px 8px,
+            var(--app-surface) 8px);
+}
+
+.list-view vaadin-tabsheet vaadin-tab[selected]::after {
+    right: -9px;
+    background: radial-gradient(circle 9px at 0 0,
+            transparent 7px,
+            var(--app-border) 7px 8px,
+            var(--app-surface) 8px);
+}
+
+/* No outward fillet when the active tab touches the strip edge. */
+.list-view vaadin-tabsheet vaadin-tab[selected]:first-child::before,
+.list-view vaadin-tabsheet vaadin-tab[selected]:last-child::after {
+    display: none;
+}
+
+
+/* ---------- Focus ---------- */
+
+.list-view vaadin-tabsheet vaadin-tab:focus-visible {
+
+    outline: 2px solid var(--lumo-primary-color);
+
+    outline-offset: -2px;
+}
+
+
+/* ---------- Tab close button ---------- */
+
+/*
+ * Chrome-style close affordance: circular hit area, subtle by
+ * default, revealed on tab hover/selection. (.tab-close is a Flow
+ * Button, i.e. a <vaadin-button> host — styled directly.)
+ */
+.list-view vaadin-tabsheet vaadin-tab .tab-close {
+
+    margin: 0 0 0 6px;
+
+    padding: 0;
+
+    width: 24px;
+
+    height: 24px;
+
+    min-width: 24px;
+
+    border-radius: 50%;
+
+    background: transparent;
+
+    color: var(--app-text-muted);
+
+    opacity: 0.55;
+
+    flex-shrink: 0;
+
+    transition:
+        background-color 120ms ease,
+        color 120ms ease,
+        opacity 120ms ease;
+}
+
+.list-view vaadin-tabsheet vaadin-tab:hover .tab-close,
+
+.list-view vaadin-tabsheet vaadin-tab[selected] .tab-close,
+
+.list-view vaadin-tabsheet vaadin-tab .tab-close:focus-visible {
+
+    opacity: 1;
+}
+
+.list-view vaadin-tabsheet vaadin-tab .tab-close:hover {
+
+    opacity: 1;
+
+    background: var(--lumo-contrast-10pct);
+
+    color: var(--app-text);
+}
+
+
+/* ---------- Content panel ---------- */
+
+/*
+ * Panel frame joined to the active tab: pulled up -1px under the
+ * strip so the active tab (and its fillets) interrupt the top
+ * border; square top-left corner flows into the strip.
+ */
+.list-view vaadin-tabsheet::part(content) {
+
+    flex: 1;
+
+    margin-top: -1px;
+
+    padding: var(--lumo-space-m);
+
+    background: var(--app-surface);
+
+    border: 1px solid var(--app-border);
+
+    border-radius: 0 8px 8px 8px;
+
+    box-shadow: none;
+}
+
+/*
+ * Panels are the view components themselves — direct children of
+ * <vaadin-tabsheet> carrying a tab="<id>" attribute (Flow toggles
+ * visibility via [hidden]). Make them fill the framed area;
+ * vaadin-tabs is excluded, it belongs to the strip above.
+ */
+.list-view vaadin-tabsheet > :not(vaadin-tabs) {
+    height: 100%;
+}
+
+
+/* ============================================================
+   CONTENT ROW
+   ============================================================ */
+
+.list-view .content {
+
+    display: flex;
+
+    gap: var(--lumo-space-m);
+
+    /*
+     * No top margin: spacing comes from ::part(content) padding
+     * of the Chrome-style tab sheet panel.
+     */
+    margin-top: 0;
+
+    padding: 0;
+
+    width: 100% !important;
+}
+
+
+/* ============================================================
+   GRID CARD
+
+   The card surface that wraps grids inside list views.
+   ============================================================ */
+
+.list-view
+.content vaadin-grid {
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow);
+
+    padding:
+        var(--lumo-space-xs);
+
+    color:
+        var(--app-text);
+}
+
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+
+.list-view .pagination {
+
+    display: flex;
+
+    align-items: center;
+
+    width: 100%;
+
+    padding:
+        var(--lumo-space-xs)
+        var(--lumo-space-m);
+
+    margin-top:
+        var(--lumo-space-s);
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow);
+
+    color:
+        var(--app-text-muted);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   LOADING BAR
+   ============================================================ */
+
+.list-view .loading-bar {
+
+    width: 100%;
+
+    margin-bottom:
+        var(--lumo-space-s);
+}

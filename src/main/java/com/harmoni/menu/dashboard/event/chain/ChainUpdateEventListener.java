@@ -4,12 +4,12 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.organization.chain.ChainForm;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.notification.Notification;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -34,10 +34,8 @@ public class ChainUpdateEventListener implements ComponentEventListener<ClickEve
 
     private void accept(RestAPIResponse restAPIResponse) {
         this.chainForm.getUi().access(()->{
-            Notification notification = new Notification("Chain updated..", 3000, Notification.Position.MIDDLE);
-            notification.open();
-
-            this.chainForm.setVisible(false);
+            UiUtil.success("Chain updated..");
+            this.chainForm.close();
             broadcastMessage(BroadcastMessage.CHAIN_SUCCESS_UPDATED, restAPIResponse);
         });
     }

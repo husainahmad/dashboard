@@ -5,7 +5,6 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.event.category.CategoryDeleteEventListener;
-import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -16,21 +15,19 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 @RequiredArgsConstructor
-@Route(value = "category", layout = MainLayout.class)
-@PageTitle("Category | POSHarmoni")
 @Slf4j
 public class CategoryListView extends VerticalLayout {
 
@@ -42,20 +39,17 @@ public class CategoryListView extends VerticalLayout {
     private final AccessService accessService;
 
     TextField filterText = new TextField();
-    CategoryForm categoryForm;
     LoadingBar loadingBar = new LoadingBar();
 
     UI ui;
 
     private void renderLayout() {
-        addClassName("list-view");
         setSizeFull();
+        setPadding(false);
 
         configureGrid();
-        configureForm();
 
-        add(loadingBar, getToolbar(), getContent());
-        closeEditor();
+        add(loadingBar, getContent());
     }
 
     private void configureGrid() {
@@ -85,28 +79,21 @@ public class CategoryListView extends VerticalLayout {
                 new CategoryDeleteEventListener(categoryDto, restClientMenuService));
     }
 
-    private void configureForm() {
-        categoryForm = new CategoryForm(
-                this.asyncRestClientOrganizationService,
-                this.restClientMenuService);
-        categoryForm.setWidth("25em");
-    }
-
     private HorizontalLayout getContent() {
-        HorizontalLayout content = new HorizontalLayout(categoryDtoGrid, categoryForm);
-        content.setFlexGrow(2, categoryDtoGrid);
-        content.setFlexGrow(1, categoryForm);
+        HorizontalLayout content = new HorizontalLayout(categoryDtoGrid);
+        content.setFlexGrow(1, categoryDtoGrid);
         content.addClassNames("content");
         content.setSizeFull();
         return content;
     }
 
-    private HorizontalLayout getToolbar() {
+    public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
+        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addBrandButton = UiUtil.addButton("Add Category",
+        Button addBrandButton = UiUtil.addButton("New Category",
                 (ComponentEventListener<ClickEvent<Button>>) event -> CategoryListView.this.addCategory());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         toolbar.addClassName("toolbar");
@@ -145,19 +132,12 @@ public class CategoryListView extends VerticalLayout {
     }
 
     public void editCategory(CategoryDto categoryDto, FormAction formAction) {
-        if (categoryDto == null) {
-            closeEditor();
-        } else {
-            categoryForm.setCategoryDto(categoryDto);
-            categoryForm.restructureButton(formAction);
-            categoryForm.setVisible(true);
-            addClassName("editing");
-        }
-    }
-
-    private void closeEditor() {
-        categoryForm.setVisible(false);
-        removeClassName("editing");
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle(formAction == FormAction.EDIT ? "Edit Category" : "Add Category");
+        dialog.setWidth("420px");
+        dialog.add(new CategoryForm(this.asyncRestClientOrganizationService,
+                this.restClientMenuService, dialog, formAction, categoryDto));
+        dialog.open();
     }
 
     private void fetchCategories() {

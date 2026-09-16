@@ -1,17 +1,17 @@
 package com.harmoni.menu.dashboard.layout.navigation;
 
 import com.harmoni.menu.dashboard.layout.menu.customization.CustomizationLayout;
-import com.harmoni.menu.dashboard.layout.menu.customization.CustomizationListView;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductLayout;
 import com.harmoni.menu.dashboard.layout.organization.store.StoreLayout;
-import com.harmoni.menu.dashboard.layout.organization.tier.menu.TierMenuListView;
-import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceListView;
+import com.harmoni.menu.dashboard.layout.organization.tier.menu.TierMenuLayout;
+import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceLayout;
 import com.harmoni.menu.dashboard.layout.organization.user.UserLayout;
-import com.harmoni.menu.dashboard.layout.setting.service.ServiceListView;
-import com.harmoni.menu.dashboard.layout.organization.brand.BrandListView;
-import com.harmoni.menu.dashboard.layout.menu.category.CategoryListView;
-import com.harmoni.menu.dashboard.layout.organization.chain.ChainListView;
-import com.harmoni.menu.dashboard.layout.organization.tier.price.TierPriceListView;
+import com.harmoni.menu.dashboard.layout.setting.service.ServiceLayout;
+import com.harmoni.menu.dashboard.layout.setting.table.TableLayout;
+import com.harmoni.menu.dashboard.layout.organization.brand.BrandLayout;
+import com.harmoni.menu.dashboard.layout.menu.category.CategoryLayout;
+import com.harmoni.menu.dashboard.layout.organization.chain.ChainLayout;
+import com.harmoni.menu.dashboard.layout.organization.tier.price.TierPriceLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.Scroller;
@@ -28,14 +28,14 @@ public class SideNavMenu extends Div {
         SideNav sideNavAdmin = new SideNav();
         sideNavAdmin.setLabel("Admin");
         sideNavAdmin.setCollapsible(true);
-        sideNavAdmin.addItem(new SideNavItem("Brand", BrandListView.class, VaadinIcon.SHOP.create()));
-        sideNavAdmin.addItem(new SideNavItem("Chain", ChainListView.class, VaadinIcon.BUILDING_O.create()));
+        sideNavAdmin.addItem(new SideNavItem("Brand", BrandLayout.class, VaadinIcon.SHOP.create()));
+        sideNavAdmin.addItem(new SideNavItem("Chain", ChainLayout.class, VaadinIcon.BUILDING_O.create()));
 
         SideNavItem sideNavTier = new SideNavItem("Tier");
         sideNavTier.setPrefixComponent(VaadinIcon.GRID_BEVEL.create());
-        sideNavTier.addItem(new SideNavItem("Price", TierPriceListView.class, VaadinIcon.DOLLAR.create()));
-        sideNavTier.addItem(new SideNavItem("Service", TierServiceListView.class, VaadinIcon.COG_O.create()));
-        sideNavTier.addItem(new SideNavItem("Menu", TierMenuListView.class, VaadinIcon.LIST.create()));
+        sideNavTier.addItem(new SideNavItem("Price", TierPriceLayout.class, VaadinIcon.DOLLAR.create()));
+        sideNavTier.addItem(new SideNavItem("Service", TierServiceLayout.class, VaadinIcon.COG_O.create()));
+        sideNavTier.addItem(new SideNavItem("Menu", TierMenuLayout.class, VaadinIcon.LIST.create()));
 
         sideNavAdmin.addItem(sideNavTier);
         sideNavAdmin.addItem(new SideNavItem("Store", StoreLayout.class, VaadinIcon.STORAGE.create()));
@@ -44,14 +44,15 @@ public class SideNavMenu extends Div {
         SideNav sideNavMenu = new SideNav();
         sideNavMenu.setLabel("Menu");
         sideNavMenu.setCollapsible(true);
-        sideNavMenu.addItem(new SideNavItem("Category", CategoryListView.class, VaadinIcon.TAGS.create()));
+        sideNavMenu.addItem(new SideNavItem("Category", CategoryLayout.class, VaadinIcon.TAGS.create()));
         sideNavMenu.addItem(new SideNavItem("Customization", CustomizationLayout.class, VaadinIcon.SLIDERS.create()));
         sideNavMenu.addItem(new SideNavItem("Product", ProductLayout.class, VaadinIcon.COFFEE.create()));
 
         SideNav sideNavSetting = new SideNav();
         sideNavSetting.setLabel("Setting");
         sideNavSetting.setCollapsible(true);
-        sideNavSetting.addItem(new SideNavItem("Service", ServiceListView.class, VaadinIcon.COG.create()));
+        sideNavSetting.addItem(new SideNavItem("Service", ServiceLayout.class, VaadinIcon.COG.create()));
+        sideNavSetting.addItem(new SideNavItem("Table", TableLayout.class, VaadinIcon.TABLE.create()));
 
         VerticalLayout navWrapper = new VerticalLayout(sideNavAdmin, sideNavMenu, sideNavSetting);
         navWrapper.setSpacing(true);

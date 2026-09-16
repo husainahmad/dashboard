@@ -41,6 +41,7 @@ public class DashboardView extends VerticalLayout {
         StatCard services = new StatCard(VaadinIcon.COG, "Services", "Setup & rates");
 
         HorizontalLayout cards = new HorizontalLayout(brands, products, users, services);
+        cards.addClassName("stat-cards");
         cards.setWidthFull();
         cards.setSpacing(true);
         cards.setPadding(false);
@@ -82,8 +83,6 @@ public class DashboardView extends VerticalLayout {
             setAlignItems(FlexComponent.Alignment.CENTER);
             setSpacing(true);
             addClassName("stat-card");
-            setWidth("25%");
-            setFlexGrow(1);
         }
     }
 }

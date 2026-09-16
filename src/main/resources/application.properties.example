@@ -44,6 +44,7 @@ menu.url.sku=${menu.url}/api/v1/sku
 menu.url.skutierprice=${menu.url}/api/v1/skutier
 
 setting.url.service=${menu.url}/api/v1/service
+setting.url.table=${menu.url}/api/v1/table
 
 logging.level.org.springframework=DEBUG
 logging.level.com.harmoni=DEBUG

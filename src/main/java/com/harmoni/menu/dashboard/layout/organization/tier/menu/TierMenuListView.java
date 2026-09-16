@@ -6,7 +6,6 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
 import com.harmoni.menu.dashboard.event.tier.TierMenuUpdateEventListener;
-import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
@@ -24,14 +23,13 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -44,8 +42,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-@Route(value = "tier-menu", layout = MainLayout.class)
-@PageTitle("Tier | POSHarmoni")
 @Slf4j
 public class TierMenuListView extends VerticalLayout {
 
@@ -73,13 +69,12 @@ public class TierMenuListView extends VerticalLayout {
     private final Map<String, Checkbox> checkBoxes = new HashMap<>();
 
     private void renderLayout() {
-        brandDto.setId(accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
-        addClassName("list-view");
         setSizeFull();
+        setPadding(false);
+        brandDto.setId(accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
         configureGrid();
-
         configureForm();
-        add(loadingBar, getToolbar(), getContent());
+        add(loadingBar, getContent());
         closeEditor();
     }
 
@@ -160,12 +155,13 @@ public class TierMenuListView extends VerticalLayout {
         return content;
     }
 
-    private HorizontalLayout getToolbar() {
+    public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
+        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addTierServiceButton = UiUtil.addButton("Add Tier Menu", event -> addTier());
+        Button addTierServiceButton = UiUtil.addButton("New Tier Menu", event -> addTier());
 
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addTierServiceButton);
         toolbar.addClassName("toolbar");
@@ -243,10 +239,8 @@ public class TierMenuListView extends VerticalLayout {
     }
 
     private Button applyButtonUpdate(TierMenuTreeItem tierMenuTreeItem) {
-        buttonUpdates[tierMenuTreeItem.getRootIndex()] = new Button("Update");
+        buttonUpdates[tierMenuTreeItem.getRootIndex()] = UiUtil.updateButton();
         buttonUpdates[tierMenuTreeItem.getRootIndex()].setEnabled(false);
-        buttonUpdates[tierMenuTreeItem.getRootIndex()]
-                .addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         buttonUpdates[tierMenuTreeItem.getRootIndex()].addClickListener(new TierMenuUpdateEventListener(this.ui,
                 restClientOrganizationService, tierMenuTreeGrid, tierMenuTreeItem, getTierDto(tierMenuTreeItem)));
         return buttonUpdates[tierMenuTreeItem.getRootIndex()];

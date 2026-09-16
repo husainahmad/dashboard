@@ -1,0 +1,101 @@
+/* ============================================================
+   NAVIGATION
+
+   Drawer side navigation (SideNavMenu) and the generic
+   clickable .menu-button component.
+   ============================================================ */
+
+.side-nav-sample {
+    padding-top: var(--lumo-space-s);
+}
+
+.side-nav-sample vaadin-side-nav {
+    margin-bottom: var(--lumo-space-m);
+}
+
+.side-nav-sample vaadin-side-nav::part(label) {
+
+    color: var(--app-text-muted);
+
+    font-size: var(--lumo-font-size-xs);
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.08em;
+}
+
+.side-nav-sample vaadin-side-nav-item::part(label) {
+
+    color: var(--app-text-secondary);
+
+    font-weight: 600;
+}
+
+.side-nav-sample vaadin-side-nav-item::part(item) {
+
+    margin:
+        2px var(--lumo-space-s);
+
+    padding:
+        0 var(--lumo-space-m);
+
+    border-radius: 8px;
+
+    transition:
+        background-color 150ms ease,
+        color 150ms ease;
+}
+
+.side-nav-sample
+vaadin-side-nav-item::part(item):hover {
+
+    background-color:
+        var(--lumo-primary-color-10pct);
+}
+
+.side-nav-sample
+vaadin-side-nav-item[active]::part(item) {
+
+    background-color:
+        var(--lumo-primary-color-10pct);
+
+    color:
+        var(--lumo-primary-text-color);
+
+    font-weight: 700;
+}
+
+.side-nav-sample
+vaadin-side-nav-item[active]::part(label) {
+
+    color:
+        var(--lumo-primary-text-color);
+}
+
+
+/* ============================================================
+   MENU BUTTON
+   ============================================================ */
+
+.menu-button {
+
+    cursor: pointer;
+
+    color:
+        var(--app-text-secondary);
+}
+
+.menu-button:hover {
+
+    color:
+        var(--app-text);
+}
+
+.menu-button
+vaadin-button-container {
+
+    justify-content:
+        flex-start;
+}

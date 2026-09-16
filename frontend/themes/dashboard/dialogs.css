@@ -1,0 +1,57 @@
+/* ============================================================
+   DIALOGS
+
+   Shared vaadin-dialog-overlay polish and the error dialog
+   used by DialogClosing.
+   ============================================================ */
+
+vaadin-dialog-overlay::part(overlay) {
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow-lg);
+}
+
+vaadin-dialog-overlay::part(header) {
+
+    border-bottom:
+        1px solid var(--lumo-contrast-10pct);
+}
+
+
+/* ---------- Error dialog ---------- */
+
+.app-error-dialog {
+
+    max-width: 440px;
+}
+
+.app-error-dialog-icon {
+
+    color:
+        var(--lumo-error-text-color);
+
+    flex-shrink: 0;
+}
+
+.app-error-dialog-message {
+
+    margin: 0;
+
+    color:
+        var(--app-text-secondary);
+
+    overflow-wrap: anywhere;
+
+    white-space: pre-wrap;
+}
+
+.app-error-dialog-body {
+
+    width: 100%;
+}

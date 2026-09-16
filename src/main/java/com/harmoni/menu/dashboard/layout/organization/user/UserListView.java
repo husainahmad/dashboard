@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.event.user.UserDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.enums.RoleType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
@@ -23,6 +24,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
@@ -57,10 +59,10 @@ public class UserListView extends VerticalLayout {
     private final LoadingBar loadingBar = new LoadingBar();
 
 private void renderLayout() {
-        addClassName("list-view");
         setSizeFull();
+        setPadding(false);
         configureGrid();
-        add(loadingBar, getToolbar(), getContent(), getPaginationFooter());
+        add(loadingBar, getContent(), getPaginationFooter());
     }
 
     @Override
@@ -119,12 +121,9 @@ private void renderLayout() {
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
-        Tab tabNewStore = new Tab();
-        tabNewStore.setLabel(title);
-        tabSheet.add(tabNewStore, new UserForm(this.asyncRestClientOrganizationService,
-                this.restClientOrganizationService, this.accessService, tabNewStore, action, userDto));
-        tabSheet.setSizeFull();
-        tabSheet.setSelectedTab(tabNewStore);
+        new TabManager(tabSheet).addOrSelect(title, tab ->
+                new UserForm(this.asyncRestClientOrganizationService,
+                        this.restClientOrganizationService, this.accessService, tab, action, userDto));
     }
 
     private HorizontalLayout getContent() {
@@ -135,9 +134,10 @@ private void renderLayout() {
         return content;
     }
 
-    private HorizontalLayout getToolbar() {
+    public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
+        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
         filterText.addValueChangeListener(changeEvent -> {
             if (!changeEvent.getOldValue().equals(changeEvent.getValue())) {
@@ -146,7 +146,7 @@ private void renderLayout() {
             }
         });
 
-        Button addChainButton = UiUtil.addButton("Add User",
+        Button addChainButton = UiUtil.addButton("New User",
                 event -> showAddEditUser(new UserDto(), "New User", FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
@@ -199,6 +199,10 @@ private void renderLayout() {
                 });
 
                 userDtoGrid.setItems(userDtos);
+                pageInfoText.setText(getPaginationInfo());
+            } else {
+                userDtoGrid.setItems(new ArrayList<>());
+                totalPages = 0;
                 pageInfoText.setText(getPaginationInfo());
             }
         }), accessService.getUserDetail().getStoreDto().getChainId(), currentPage, pageSize, filterText.getValue());

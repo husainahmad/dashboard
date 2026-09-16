@@ -1,11 +1,11 @@
 package com.harmoni.menu.dashboard.layout.menu;
 
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import lombok.Getter;
@@ -35,11 +35,7 @@ public class ProductFormLayout extends FormLayout  {
     }
 
     public void showNotification(String text) {
-        ui.access(()->{
-            Notification notification = new Notification(text, 3000,
-                    Notification.Position.MIDDLE);
-            notification.open();
-        });
+        ui.access(() -> UiUtil.success(text));
     }
 
     public void showErrorDialog(String message) {

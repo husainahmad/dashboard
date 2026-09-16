@@ -31,6 +31,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.Getter;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.*;
@@ -41,6 +42,7 @@ import java.util.*;
 @Slf4j
 public class UserForm extends FormLayout  {
     Registration broadcasterRegistration;
+    @Getter
     BeanValidationBinder<StoreDto> binder = new BeanValidationBinder<>(StoreDto.class);
 
     TextField userNameField = new TextField("User Name");
@@ -131,10 +133,6 @@ public class UserForm extends FormLayout  {
     }
 
     private void addValidation() {
-        storeDtoComboBox.addValueChangeListener(event -> binder.validate());
-        userNameField.addValueChangeListener(
-                (HasValue.ValueChangeListener<AbstractField.ComponentValueChangeEvent<TextField, String>>)
-                        event -> binder.validate());
         binder.forField(userNameField)
                 .withValidator(value -> value.length()>2,
                         "Name must contain at least three characters")

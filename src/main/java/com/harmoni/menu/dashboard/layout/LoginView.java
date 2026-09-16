@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.layout;
 import com.harmoni.menu.dashboard.dto.LoginDto;
 import com.harmoni.menu.dashboard.event.user.LoginEventListener;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientLoginService;
+import com.harmoni.menu.dashboard.layout.util.ThemeUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -17,6 +18,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.theme.lumo.Lumo;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -44,15 +46,18 @@ public class LoginView extends VerticalLayout {
         root.addClassName("login-view");
         root.setAlignItems(FlexComponent.Alignment.STRETCH);
 
-        root.add(createBrandPanel());
-        root.add(createFormPanel());
+        VerticalLayout brandPanel = createBrandPanel();
+        VerticalLayout formSidePanel = createFormPanel();
+        root.add(brandPanel, formSidePanel);
+        root.setFlexGrow(2, brandPanel);
+        root.setFlexGrow(3, formSidePanel);
         add(root);
 
         loginButton.addClickListener(new LoginEventListener(restClientLoginService, this));
     }
 
     private VerticalLayout createBrandPanel() {
-        Div badge = new Div("P");
+        Div badge = new Div("");
         badge.addClassName("app-logo-icon");
 
         H1 title = new H1("POSHarmoni");
@@ -65,7 +70,6 @@ public class LoginView extends VerticalLayout {
 
         VerticalLayout brand = new VerticalLayout(content);
         brand.addClassName("login-brand");
-        brand.setWidth("42%");
         brand.setHeightFull();
         brand.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         brand.setAlignItems(FlexComponent.Alignment.START);
@@ -94,7 +98,6 @@ public class LoginView extends VerticalLayout {
 
         VerticalLayout formSide = new VerticalLayout(panel);
         formSide.addClassName("login-form-side");
-        formSide.setWidth("58%");
         formSide.setHeightFull();
         formSide.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         formSide.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -110,6 +113,7 @@ public class LoginView extends VerticalLayout {
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
+        ThemeUtil.applySavedTheme(attachEvent.getUI());
         drawLayout();
     }
 }

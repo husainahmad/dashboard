@@ -1,0 +1,59 @@
+/* ============================================================
+   BUTTONS
+
+   Global button styling: primary gradient, tertiary states.
+   ============================================================ */
+
+vaadin-button {
+
+    font-family:
+        var(--app-font);
+
+    font-weight:
+        600;
+}
+
+
+/* ---------- Primary ---------- */
+
+vaadin-button[theme~="primary"] {
+
+    background:
+        var(--app-gradient);
+
+    color:
+        #ffffff;
+
+    border:
+        none;
+
+    font-weight:
+        600;
+
+    box-shadow:
+        var(--app-shadow);
+}
+
+vaadin-button[theme~="primary"]:hover {
+
+    box-shadow:
+        var(--app-shadow-hover);
+
+    filter:
+        brightness(1.03);
+}
+
+
+/* ---------- Tertiary ---------- */
+
+vaadin-button[theme~="tertiary"] {
+
+    color:
+        var(--app-text-secondary);
+}
+
+vaadin-button[theme~="tertiary"]:hover {
+
+    color:
+        var(--app-text);
+}

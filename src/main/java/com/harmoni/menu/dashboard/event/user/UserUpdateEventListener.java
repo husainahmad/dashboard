@@ -19,6 +19,9 @@ public class UserUpdateEventListener implements ComponentEventListener<ClickEven
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
+        if (userForm.getBinder().validate().hasErrors()) {
+            return;
+        }
         restClientOrganizationService.updateUser(userForm.getUserDto())
                 .subscribe(this::accept);
     }

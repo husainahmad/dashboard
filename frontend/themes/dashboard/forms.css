@@ -1,0 +1,149 @@
+/* ============================================================
+   FORMS
+
+   Form card surface and field input states inside
+   vaadin-form-layout.
+   ============================================================ */
+
+
+/* ============================================================
+   FORM CARD
+   ============================================================ */
+
+.list-view
+.content > vaadin-form-layout {
+
+    box-sizing: border-box;
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow);
+
+    padding:
+        var(--lumo-space-m);
+
+    align-content:
+        start;
+
+    color:
+        var(--app-text);
+}
+
+
+/* ============================================================
+   FORM FIELDS
+   ============================================================ */
+
+vaadin-form-layout {
+
+    color:
+        var(--app-text);
+}
+
+
+/* ---------- Field input ---------- */
+
+vaadin-form-layout
+vaadin-text-field::part(input-field),
+
+vaadin-form-layout
+vaadin-text-area::part(input-field),
+
+vaadin-form-layout
+vaadin-select::part(input-field),
+
+vaadin-form-layout
+vaadin-combo-box::part(input-field),
+
+vaadin-form-layout
+vaadin-date-picker::part(input-field),
+
+vaadin-form-layout
+vaadin-number-field::part(input-field),
+
+vaadin-form-layout
+vaadin-password-field::part(input-field) {
+
+    background:
+        var(--lumo-contrast-5pct);
+
+    border:
+        1px solid var(--app-border);
+
+    color:
+        var(--app-text);
+
+    border-radius:
+        var(--lumo-border-radius-m);
+}
+
+
+/* ---------- Input hover ---------- */
+
+vaadin-form-layout
+vaadin-text-field::part(input-field):hover,
+
+vaadin-form-layout
+vaadin-text-area::part(input-field):hover,
+
+vaadin-form-layout
+vaadin-select::part(input-field):hover,
+
+vaadin-form-layout
+vaadin-combo-box::part(input-field):hover,
+
+vaadin-form-layout
+vaadin-date-picker::part(input-field):hover,
+
+vaadin-form-layout
+vaadin-number-field::part(input-field):hover,
+
+vaadin-form-layout
+vaadin-password-field::part(input-field):hover {
+
+    border-color:
+        var(--app-border-strong);
+}
+
+
+/* ---------- Input focus ---------- */
+
+vaadin-form-layout
+vaadin-text-field:focus-within::part(input-field),
+
+vaadin-form-layout
+vaadin-text-area:focus-within::part(input-field),
+
+vaadin-form-layout
+vaadin-select:focus-within::part(input-field),
+
+vaadin-form-layout
+vaadin-combo-box:focus-within::part(input-field),
+
+vaadin-form-layout
+vaadin-date-picker:focus-within::part(input-field),
+
+vaadin-form-layout
+vaadin-number-field:focus-within::part(input-field),
+
+vaadin-form-layout
+vaadin-password-field:focus-within::part(input-field) {
+
+    background:
+        var(--app-surface);
+
+    border-color:
+        var(--lumo-primary-color);
+
+    box-shadow:
+        0 0 0 1px
+        var(--lumo-primary-color-50pct);
+}

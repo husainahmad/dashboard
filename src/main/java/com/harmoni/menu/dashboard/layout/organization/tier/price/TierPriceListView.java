@@ -6,7 +6,6 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
-import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -20,19 +19,16 @@ import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
-@Route(value = "tier-price", layout = MainLayout.class)
-@PageTitle("Tier | POSHarmoni")
 @Slf4j
 public class TierPriceListView extends VerticalLayout {
 
@@ -48,12 +44,12 @@ public class TierPriceListView extends VerticalLayout {
     private final LoadingBar loadingBar = new LoadingBar();
 
     private void renderLayout() {
-        addClassName("list-view");
         setSizeFull();
+        setPadding(false);
         configureGrid();
         configureForm();
 
-        add(loadingBar, getToolbar(), getContent());
+        add(loadingBar, getContent());
         closeEditor();
 
         fetchTier();
@@ -97,6 +93,7 @@ public class TierPriceListView extends VerticalLayout {
         tierDtoGrid.setSizeFull();
         tierDtoGrid.removeAllColumns();
         tierDtoGrid.setEmptyStateText(UiUtil.NO_RECORDS);
+        tierDtoGrid.addClassName("tier-grid");
         tierDtoGrid.addColumn(TierDto::getName).setHeader("Name");
         tierDtoGrid.addColumn("brandDto.name").setHeader("Brand Name");
         tierDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
@@ -146,12 +143,13 @@ public class TierPriceListView extends VerticalLayout {
         return content;
     }
 
-    private HorizontalLayout getToolbar() {
+    public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
+        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
 
-        Button addChainButton = UiUtil.addButton("Add Tier", event -> addTier());
+        Button addChainButton = UiUtil.addButton("New Tier", event -> addTier());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
         toolbar.addClassName("toolbar");
         return toolbar;

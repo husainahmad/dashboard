@@ -7,6 +7,7 @@
     "@remix-run/router": "^1.6.2",
     "@vaadin/bundles": "24.6.4",
     "@vaadin/common-frontend": "0.0.19",
+    "@vaadin/hilla-frontend": "^24.6.4",
     "@vaadin/polymer-legacy-adapter": "24.6.4",
     "@vaadin/react-components": "24.6.4",
     "@vaadin/router": "^2.0.0",
@@ -84,7 +85,7 @@
       "workbox-core": "7.3.0",
       "workbox-precaching": "7.3.0"
     },
-    "hash": "9cc7c2575fca9fc717cdf0c752852c59cf2e3b9fb16748c8cc55246ff3b24703"
+    "hash": "d67eb7b63a214229b83ef7b6d275dbf5f4659920ec54da707a6a5c9c520dab89"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -105,6 +106,7 @@
     "react": "$react",
     "@vaadin/router": "$@vaadin/router",
     "react-router": "$react-router",
-    "@remix-run/router": "$@remix-run/router"
+    "@remix-run/router": "$@remix-run/router",
+    "@vaadin/hilla-frontend": "$@vaadin/hilla-frontend"
   }
 }

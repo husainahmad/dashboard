@@ -29,11 +29,6 @@
 			<groupId>com.vaadin</groupId>
 			<artifactId>vaadin-spring-boot-starter</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.vaadin</groupId>
-			<artifactId>vaadin-themes</artifactId>
-			<version>8.25.2</version>
-		</dependency>
 
 		<!-- Jackson (force latest to fix Vaadin error) -->
 		<dependency>
@@ -135,20 +130,9 @@
 				<groupId>com.vaadin</groupId>
 				<artifactId>vaadin-maven-plugin</artifactId>
 				<version>24.6.5</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>build-frontend</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<!-- To always force an optimized production bundle build set this configuration to 'true' -->
-					<!-- To possibly use the pre-compiled production bundle remove or set to 'false' -->
-					<forceProductionBuild>true</forceProductionBuild>
-					<!-- To have reproducible build by running 'npm ci' -->
-					<ciBuild>true</ciBuild>
-				</configuration>
+				<!-- No executions here: dev runs (`mvn spring-boot:run`) use the live
+				     Vite dev server so frontend changes appear on browser refresh.
+				     Production bundles are built by the `production` profile below. -->
 			</plugin>
 		</plugins>
 	</build>

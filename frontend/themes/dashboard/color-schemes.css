@@ -1,0 +1,159 @@
+/* ============================================================
+   COLOR SCHEMES
+
+   Dark mode and the "preset-warm" palette. These override the
+   light-theme tokens defined in tokens.css via body[theme].
+   ============================================================ */
+
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+
+body[theme~="dark"] {
+
+    --app-bg: #0d1117;
+
+    --app-surface: #151b23;
+
+    --app-surface-elevated: #1b222c;
+
+    --app-text: #f0f3f6;
+
+    --app-text-secondary: #c3ccd6;
+
+    --app-text-muted: #8b949e;
+
+    --app-border: #30363d;
+
+    --app-border-strong: #444c56;
+
+    --lumo-base-color: #151b23;
+
+    --lumo-body-text-color: #f0f3f6;
+
+    --lumo-secondary-text-color: #c3ccd6;
+
+    --lumo-tertiary-text-color: #8b949e;
+
+    --lumo-header-text-color: #ffffff;
+
+    --lumo-primary-color: #10b981;
+
+    --lumo-primary-color-50pct:
+        rgba(16, 185, 129, 0.5);
+
+    --lumo-primary-color-10pct:
+        rgba(16, 185, 129, 0.12);
+
+    --lumo-primary-text-color: #34d399;
+
+    --lumo-contrast-5pct:
+        rgba(255, 255, 255, 0.04);
+
+    --lumo-contrast-10pct:
+        rgba(255, 255, 255, 0.08);
+
+    --lumo-contrast-20pct:
+        rgba(255, 255, 255, 0.14);
+
+    --lumo-contrast-30pct:
+        rgba(255, 255, 255, 0.22);
+
+    --app-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.25),
+        0 5px 18px rgba(0, 0, 0, 0.30);
+
+    --app-shadow-hover:
+        0 3px 8px rgba(0, 0, 0, 0.35),
+        0 12px 30px rgba(0, 0, 0, 0.40);
+}
+
+
+/* ============================================================
+   WARM THEME
+   ============================================================ */
+
+body[theme~="preset-warm"] {
+
+    --app-brand: #ea580c;
+
+    --app-brand-strong: #c2410c;
+
+    --app-brand-contrast: #ffffff;
+
+    --app-gradient:
+        linear-gradient(
+            135deg,
+            #fbbf24 0%,
+            #ea580c 45%,
+            #c2410c 100%
+        );
+
+    --app-accent: #f59e0b;
+
+    --lumo-primary-color: #ea580c;
+
+    --lumo-primary-color-50pct:
+        rgba(234, 88, 12, 0.5);
+
+    --lumo-primary-color-10pct:
+        rgba(234, 88, 12, 0.10);
+
+    --lumo-primary-text-color: #c2410c;
+
+    --app-bg: #faf7f3;
+
+    --app-surface: #ffffff;
+
+    --app-text: #2d241f;
+
+    --app-text-secondary: #5f5148;
+
+    --app-text-muted: #78695e;
+
+    --app-border: #e6ddd5;
+
+    --app-border-strong: #d5c8bd;
+
+    --lumo-body-text-color: #2d241f;
+
+    --lumo-secondary-text-color: #5f5148;
+
+    --lumo-tertiary-text-color: #78695e;
+}
+
+
+body[theme~="preset-warm"][theme~="dark"] {
+
+    --app-bg: #1b120c;
+
+    --app-surface: #271c13;
+
+    --app-surface-elevated: #312318;
+
+    --app-text: #f7eee5;
+
+    --app-text-secondary: #d8c5b5;
+
+    --app-text-muted: #ad9684;
+
+    --app-border: #4a3728;
+
+    --app-border-strong: #604936;
+
+    --lumo-base-color: #271c13;
+
+    --lumo-body-text-color: #f7eee5;
+
+    --lumo-secondary-text-color: #d8c5b5;
+
+    --lumo-tertiary-text-color: #ad9684;
+
+    --lumo-primary-color: #f97316;
+
+    --lumo-primary-text-color: #fb923c;
+
+    --lumo-primary-color-10pct:
+        rgba(249, 115, 22, 0.12);
+}

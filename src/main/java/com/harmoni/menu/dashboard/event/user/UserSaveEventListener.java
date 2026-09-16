@@ -19,6 +19,9 @@ public class UserSaveEventListener implements ComponentEventListener<ClickEvent<
 
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
+        if (userForm.getBinder().validate().hasErrors()) {
+            return;
+        }
         restClientOrganizationService.createUser(userForm.getUserDto())
                 .subscribe(this::accept);
     }

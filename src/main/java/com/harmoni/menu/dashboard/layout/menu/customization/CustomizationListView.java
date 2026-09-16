@@ -4,20 +4,28 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
-import com.harmoni.menu.dashboard.dto.*;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
+import com.harmoni.menu.dashboard.dto.BrandDto;
+import com.harmoni.menu.dashboard.dto.CustomizationDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
-import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
+import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
-import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
-import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -25,214 +33,281 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.PreserveOnRefresh;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.shared.Registration;
-import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RequiredArgsConstructor
-@UIScope
-@PreserveOnRefresh
-@Route(value = "customization-list", layout = MainLayout.class)
-@PageTitle("Customization | POSHarmoni")
-@Component
 @Slf4j
 public class CustomizationListView extends VerticalLayout implements BroadcastMessageService {
 
-    Registration broadcasterRegistration;
+    static final String TAB_LABEL_LIST = "All Customizations";
+    static final String TAB_LABEL_NEW = "New Customization";
+
+    private static final int PAGE_SIZE = 15;
+    private static final long SEARCH_TIMEOUT_MS = 400;
+
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
     private final AccessService accessService;
-    private final TabSheet tabSheet;
-    private final Tab tab;
 
-    Grid<CustomizationDto> customizationGrid = new Grid<>(CustomizationDto.class);
-    TextField filterText = new TextField();
-    ComboBox<BrandDto> brandDtoComboBox = new ComboBox<>();
-    transient List<BrandDto> brandDtos = new ArrayList<>();
+    private final Grid<CustomizationDto> customizationGrid = new Grid<>();
+    private final TextField filterText = new TextField();
+    private final ComboBox<BrandDto> brandDtoComboBox = new ComboBox<>();
+    private final Text pageInfoText = new Text("");
+    private final LoadingBar loadingBar = new LoadingBar();
+    private final Button previousButton = new Button("Previous");
+    private final Button nextButton = new Button("Next");
+    private final AtomicInteger requestGeneration = new AtomicInteger();
 
-    UI ui;
-    int totalPages;
-    int currentPage = 1;
-    Text pageInfoText;
-    LoadingBar loadingBar = new LoadingBar();
+    private transient List<BrandDto> brandDtos = new ArrayList<>();
+    private Registration broadcasterRegistration;
+    private transient UI ui;
+    private int totalPages;
+    private int currentPage = 1;
 
-    private void renderLayout() {
-        addClassName("list-view");
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        ui = attachEvent.getUI();
+        if (broadcasterRegistration == null) {
+            broadcasterRegistration = Broadcaster.register(this::acceptNotification);
+        }
+        buildLayout();
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (broadcasterRegistration != null) {
+            broadcasterRegistration.remove();
+            broadcasterRegistration = null;
+        }
+    }
+
+    private void buildLayout() {
         setSizeFull();
+        setPadding(false);
+
         configureGrid();
-        add(loadingBar, getToolbar(), getContent());
+        configureSearch();
+        configureBrandSelector();
+        configurePagination();
+
+        VerticalLayout browsePanel = new VerticalLayout(loadingBar, getContent(), getPaginationFooter());
+        browsePanel.setSizeFull();
+        browsePanel.setPadding(false);
+        browsePanel.setSpacing(false);
+
+        add(browsePanel);
+        setFlexGrow(1, browsePanel);
+
         fetchBrands();
     }
 
     private void configureGrid() {
         customizationGrid.setSizeFull();
-        customizationGrid.removeAllColumns();
         customizationGrid.setEmptyStateText(UiUtil.NO_RECORDS);
-        customizationGrid.addColumn(CustomizationDto::getName).setHeader("Name");
-        customizationGrid.addColumn(CustomizationDto::getSelectionType).setHeader("Type");
-        customizationGrid.addComponentColumn(this::applyButton).setHeader("Action");
-        customizationGrid.getColumns().forEach(c -> c.setAutoWidth(true));
+        customizationGrid.addColumn(CustomizationDto::getName).setHeader("Name").setAutoWidth(true);
+        customizationGrid.addColumn(customization -> customization.getSelectionType() != null
+                        ? customization.getSelectionType().getLabel() : "-")
+                .setHeader("Type").setAutoWidth(true);
+        customizationGrid.getColumns().forEach(column -> column.setResizable(true));
     }
 
-    private Button applyButton(CustomizationDto dto) {
-        Button button = new Button("Apply");
-        button.addClickListener(e -> {
-            // Do something with dto
-        });
-        return button;
-    }
-
-    private HorizontalLayout getToolbar() {
-        filterText.setLabel("Customization");
+    private void configureSearch() {
+        filterText.setLabel("Search");
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
+        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
         filterText.addValueChangeListener(change -> {
             if (change.isFromClient()) {
                 currentPage = 1;
-                fetchCustomizations(brandDtoComboBox.getValue().getId(), filterText.getValue());
+                fetchCustomizations();
             }
         });
+    }
 
-        brandDtoComboBox.setItems(brandDtos);
+    private void configureBrandSelector() {
         brandDtoComboBox.setLabel("Brand");
+        brandDtoComboBox.setPlaceholder("Select brand");
+        brandDtoComboBox.setClearButtonVisible(true);
         brandDtoComboBox.setItemLabelGenerator(BrandDto::getName);
-        brandDtoComboBox.addValueChangeListener(valueChangeEvent -> {
-            if (valueChangeEvent.isFromClient()) {
-                fetchCustomizations(valueChangeEvent.getValue().getId(), filterText.getValue());
+        brandDtoComboBox.setItems(Collections.emptyList());
+        brandDtoComboBox.addValueChangeListener(change -> {
+            if (change.isFromClient()) {
+                currentPage = 1;
+                fetchCustomizations();
             }
         });
+    }
 
-        Button searchButton = new Button("Search", this::onSearchCustomizationListener);
-        Button addButton = UiUtil.addButton("Add Customization", this::onAddCustomizationListener);
+    private void configurePagination() {
+        previousButton.addClickListener(event -> {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchCustomizations();
+            }
+        });
+        nextButton.addClickListener(event -> {
+            if (currentPage < totalPages) {
+                currentPage++;
+                fetchCustomizations();
+            }
+        });
+    }
 
-        HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, filterText, searchButton, addButton);
+    public HorizontalLayout getToolbarComponent() {
+        Button addButton = UiUtil.addButton("New Customization", this::onAddCustomizationListener);
+        HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, filterText, addButton);
         toolbar.addClassName("toolbar");
-        toolbar.setAlignItems(Alignment.BASELINE);
+        toolbar.setWidthFull();
+        toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
         return toolbar;
     }
 
     private VerticalLayout getContent() {
         VerticalLayout content = new VerticalLayout(customizationGrid);
-        content.setFlexGrow(1, customizationGrid);
-        content.addClassNames("content");
         content.setSizeFull();
-        content.add(getPaginationFooter());
+        content.addClassNames("content");
+        content.setFlexGrow(1, customizationGrid);
         return content;
     }
 
     private HorizontalLayout getPaginationFooter() {
-        HorizontalLayout footer = new HorizontalLayout();
+        HorizontalLayout footer = new HorizontalLayout(previousButton, pageInfoText, nextButton);
         footer.addClassName("pagination");
-        Button prev = new Button("Previous", e -> {
-            if (currentPage > 1) {
-                currentPage--;
-                fetchCustomizations(brandDtoComboBox.getValue().getId(), filterText.getValue());
-            }
-        });
-        Button next = new Button("Next", e -> {
-            if (currentPage < totalPages) {
-                currentPage++;
-                fetchCustomizations(brandDtoComboBox.getValue().getId(), filterText.getValue());
-            }
-        });
-        pageInfoText = new Text(getPaginationInfo());
-        footer.add(prev, pageInfoText, next);
-        footer.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         footer.setWidthFull();
+        footer.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         footer.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         return footer;
     }
 
-    private String getPaginationInfo() {
-        return "Page " + currentPage + " of " + totalPages;
-    }
-
-    private void fetchBrands() {
-        restClientMenuService.getAllBrand().subscribe(this::acceptBrands);
-    }
-
-    private void fetchCustomizations(Integer brandId, String search) {
-        int pageSize = 15;
-        loadingBar.start();
-        asyncRestClientMenuService.getAllCustomizationAsync(result -> {
-            Object data = result.get("data");
-            ui.access(() -> {
-                loadingBar.stop();
-                if (ObjectUtils.isNotEmpty(data) && data instanceof List<?> list) {
-                    List<CustomizationDto> customizations = new ArrayList<>();
-                    list.forEach(o -> customizations.add(ObjectUtil.convertValueToObject(o, CustomizationDto.class)));
-                    totalPages = Integer.parseInt(result.get("page") == null ? "0" : result.get("page").toString());
-
-                    customizationGrid.setItems(customizations);
-                    pageInfoText.setText(getPaginationInfo());
-                }
-            });
-        }, brandId, currentPage, pageSize, search);
-    }
-
-    private void acceptBrands(RestAPIResponse restAPIResponse) {
-        if (!ObjectUtils.isEmpty(restAPIResponse.getData())) {
-            brandDtos = ObjectUtil.convertObjectToObject(restAPIResponse.getData(), new TypeReference<>() {});
-            if (!brandDtos.isEmpty()) {
-                ui.access(() -> {
-                    brandDtoComboBox.setItems(brandDtos);
-                    brandDtoComboBox.setValue(brandDtos.getFirst());
-                    fetchCustomizations(brandDtoComboBox.getValue().getId(), filterText.getValue());
-                });
-            }
-        }
+    private void updatePaginationState() {
+        pageInfoText.setText("Page " + currentPage + " of " + Math.max(totalPages, 1));
+        previousButton.setEnabled(currentPage > 1);
+        nextButton.setEnabled(currentPage < totalPages);
     }
 
     private void onAddCustomizationListener(ClickEvent<Button> event) {
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
-        Tab tabNewCustomization = new Tab();
-        tabNewCustomization.setLabel("New Customization");
-        tabSheet.add(tabNewCustomization, new CustomizationForm(this.restClientMenuService,
-                tabSheet, tabNewCustomization));
-        tabSheet.setSizeFull();
-        tabSheet.setSelectedTab(tabNewCustomization);
-
+        TabManager tabManager = new TabManager(tabSheet);
+        tabManager.addOrSelect(TAB_LABEL_NEW, tab -> {
+            CustomizationForm form = new CustomizationForm(restClientMenuService, tabManager, tab);
+            form.restructureButton(FormAction.CREATE);
+            return form;
+        });
     }
 
-    private void onSearchCustomizationListener(ClickEvent<Button> event) {
-        currentPage = 1;
-        fetchCustomizations(brandDtoComboBox.getValue().getId(), filterText.getValue());
+    private void fetchBrands() {
+        restClientMenuService.getAllBrand()
+                .subscribe(this::acceptBrands, error -> log.error("Failed to load brands", error));
     }
 
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        ui = attachEvent.getUI();
-        broadcasterRegistration = Broadcaster.register(this::acceptNotification);
-        renderLayout();
+    private void acceptBrands(RestAPIResponse response) {
+        if (ObjectUtils.isEmpty(response.getData())) {
+            return;
+        }
+        brandDtos = ObjectUtil.convertObjectToObject(response.getData(), new TypeReference<>() {
+        });
+        if (brandDtos.isEmpty() || ui == null) {
+            return;
+        }
+        ui.access(() -> {
+            brandDtoComboBox.setItems(brandDtos);
+            brandDtoComboBox.setValue(defaultBrand());
+            fetchCustomizations();
+        });
     }
 
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        broadcasterRegistration.remove();
-        broadcasterRegistration = null;
+    private BrandDto defaultBrand() {
+        try {
+            Integer brandId = accessService.getUserDetail().getStoreDto().getChainDto().getBrandId();
+            return brandDtos.stream()
+                    .filter(brand -> brandId != null && brandId.equals(brand.getId()))
+                    .findFirst()
+                    .orElse(brandDtos.getFirst());
+        } catch (NullPointerException e) {
+            return brandDtos.getFirst();
+        }
+    }
+
+    private void fetchCustomizations() {
+        if (ui == null) {
+            return;
+        }
+        ui.access(() -> {
+            BrandDto brand = brandDtoComboBox.getValue();
+            if (brand == null) {
+                customizationGrid.setItems(Collections.emptyList());
+                totalPages = 0;
+                updatePaginationState();
+                return;
+            }
+            int generation = requestGeneration.incrementAndGet();
+            loadingBar.start();
+            asyncRestClientMenuService.getAllCustomizationAsync(
+                    result -> ui.access(() -> {
+                        if (generation != requestGeneration.get()) {
+                            return;
+                        }
+                        loadingBar.stop();
+                        applyCustomizations(result);
+                    }),
+                    error -> ui.access(() -> {
+                        if (generation != requestGeneration.get()) {
+                            return;
+                        }
+                        loadingBar.stop();
+                        handleLoadError(error);
+                    }),
+                    brand.getId(), currentPage, PAGE_SIZE, normalizeSearch(filterText.getValue()));
+        });
+    }
+
+    private void applyCustomizations(Map<String, Object> result) {
+        Object data = result.get("data");
+        if (data instanceof List<?> list && !list.isEmpty()) {
+            List<CustomizationDto> customizations = new ArrayList<>();
+            list.forEach(object -> customizations.add(ObjectUtil.convertValueToObject(object, CustomizationDto.class)));
+            totalPages = result.get("page") == null ? 0 : Integer.parseInt(result.get("page").toString());
+            customizationGrid.setItems(customizations);
+        } else {
+            customizationGrid.setItems(Collections.emptyList());
+            totalPages = 0;
+        }
+        updatePaginationState();
+    }
+
+    private void handleLoadError(Throwable error) {
+        log.error("Failed to load customizations", error);
+        if (!(error instanceof BusinessBadRequestException)) {
+            UiUtil.error("Unable to load customizations");
+        }
+    }
+
+    private String normalizeSearch(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private void acceptNotification(String message) {
         try {
             BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-            if (broadcastMessage != null && (broadcastMessage.getType().equals(BroadcastMessage.CUSTOMIZATION_INSERT_SUCCESS)
-                    || broadcastMessage.getType().equals(BroadcastMessage.CUSTOMIZATION_UPDATED_SUCCESS))) {
-                    fetchCustomizations(brandDtoComboBox.getValue().getId(), filterText.getValue());
-                }
+            if (broadcastMessage != null
+                    && (BroadcastMessage.CUSTOMIZATION_INSERT_SUCCESS.equals(broadcastMessage.getType())
+                    || BroadcastMessage.CUSTOMIZATION_UPDATED_SUCCESS.equals(broadcastMessage.getType()))) {
+                fetchCustomizations();
+            }
         } catch (JsonProcessingException e) {
-            log.error("Broadcast Handler Error", e);
+            log.error("Broadcast handler error", e);
         }
     }
 }
