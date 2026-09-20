@@ -20,8 +20,17 @@ import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Route;
 
+/**
+ * Side navigation rendered in the main layout drawer. Groups the Admin, Menu
+ * and Setting sections into collapsible entries that navigate to their
+ * respective routes; also reachable directly at {@code /side-nav-labelled}.
+ */
 @Route("side-nav-labelled")
 public class SideNavMenu extends Div {
+
+    /**
+     * Builds the collapsible Admin, Menu and Setting navigation groups.
+     */
     public SideNavMenu() {
         this.addClassName("side-nav-sample");
 

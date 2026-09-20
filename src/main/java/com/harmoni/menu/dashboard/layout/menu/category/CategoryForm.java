@@ -33,21 +33,36 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Dialog form for creating or editing a {@link CategoryDto}.
+ *
+ * <p>
+ * Backed by a {@link BeanValidationBinder} over the name and description fields
+ * with an optional {@link BrandDto} selection; persistence is handled by
+ * {@link CategorySaveEventListener} against the injected {@code restClientMenuService}.
+ * The dialog closes itself when the category-insert or category-updated broadcast
+ * arrives via {@link Broadcaster}.
+ * </p>
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class CategoryForm extends FormLayout {
 
     Registration broadcasterRegistration;
 
+    /** Binder driving validation of the category fields. */
     @Getter
     BeanValidationBinder<CategoryDto> binder = new BeanValidationBinder<>(CategoryDto.class);
 
+    /** Category name input. */
     @Getter
     TextField categoryNameField = new TextField("Category name");
 
+    /** Free-text category description input. */
     @Getter
     TextArea categoryDescArea = new TextArea("Description");
 
+    /** Optional brand selection, populated from the injected brand list. */
     @Getter
     ComboBox<BrandDto> brandBox = new ComboBox<>("Brand");
 
@@ -55,6 +70,7 @@ public class CategoryForm extends FormLayout {
     Button closeButton = new Button("Cancel");
     Button updateButton = new Button("Update");
 
+    /** Captured on attach; used to marshal notifications and dialog close onto the UI thread. */
     @Getter
     UI ui;
 
@@ -63,8 +79,11 @@ public class CategoryForm extends FormLayout {
     private final Dialog dialog;
     private final FormAction formAction;
 
+    /** The category being edited, or {@code null} when creating a new one. */
     @Getter
     private final transient CategoryDto categoryDto;
+
+    private final List<BrandDto> brands;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
@@ -94,18 +113,32 @@ public class CategoryForm extends FormLayout {
         binder.bindInstanceFields(this);
         restructureButton(formAction);
 
-        if (formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(categoryDto)) {
-            binder.readBean(categoryDto);
+        if (ObjectUtils.isNotEmpty(brands)) {
+            brandBox.setItems(brands);
         }
 
-        fetchBrands();
+        if (formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(categoryDto)) {
+            binder.readBean(categoryDto);
+            if (ObjectUtils.isNotEmpty(brands)) {
+                restoreSelectedBrand(brands);
+            }
+        }
+
         addFooterButtons();
     }
 
+    /**
+     * Shows a success notification on the UI thread.
+     *
+     * @param text the message to display
+     */
     public void showNotification(String text) {
         ui.access(() -> UiUtil.success(text));
     }
 
+    /**
+     * Closes the hosting dialog on the UI thread.
+     */
     public void close() {
         ui.access(() -> dialog.close());
     }
@@ -129,14 +162,6 @@ public class CategoryForm extends FormLayout {
                 .bind(CategoryDto::getDescription, CategoryDto::setDescription);
     }
 
-    private void fetchBrands() {
-        asyncRestClientOrganizationService.getAllBrandAsync(result ->
-                ui.access(() -> {
-                    brandBox.setItems(result);
-                    restoreSelectedBrand(result);
-                }));
-    }
-
     private void restoreSelectedBrand(List<BrandDto> brands) {
         if (formAction != FormAction.EDIT || ObjectUtils.isEmpty(categoryDto)) {
             return;
@@ -148,22 +173,16 @@ public class CategoryForm extends FormLayout {
         brands.stream()
                 .filter(brand -> brandId.equals(brand.getId()))
                 .findFirst()
-                .ifPresentOrElse(brandBox::setValue,
-                        () -> fetchDetailBrands(brandId.longValue()));
+                .ifPresent(brandBox::setValue);
     }
 
     private Integer resolveBrandId() {
-        if (categoryDto.getBrandId() != null) {
+        if (categoryDto.getBrandId() != null && categoryDto.getBrandId() > 0) {
             return categoryDto.getBrandId();
         }
         return Optional.ofNullable(categoryDto.getBrandDto())
                 .map(BrandDto::getId)
                 .orElse(null);
-    }
-
-    private void fetchDetailBrands(Long id) {
-        asyncRestClientOrganizationService.getDetailBrandAsync(result ->
-                ui.access(() -> brandBox.setValue(result)), id);
     }
 
     private void addFooterButtons() {
@@ -185,6 +204,11 @@ public class CategoryForm extends FormLayout {
         dialog.getFooter().add(saveButton, updateButton, closeButton);
     }
 
+    /**
+     * Toggles the Save / Update buttons for the given action; Cancel is always visible.
+     *
+     * @param formAction the action driving which buttons are shown
+     */
     public void restructureButton(FormAction formAction) {
         if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
             saveButton.setVisible(true);

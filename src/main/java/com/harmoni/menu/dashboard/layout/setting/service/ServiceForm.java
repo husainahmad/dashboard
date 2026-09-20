@@ -19,13 +19,22 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Objects;
 
+/**
+ * Dialog form for creating or editing a service, binding the single
+ * service-name field through a {@link BeanValidationBinder}. The footer
+ * buttons are laid out from the {@link FormAction} (save for CREATE,
+ * update/delete for EDIT) and success/close feedback is marshalled back onto
+ * the UI thread.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class ServiceForm extends FormLayout {
 
+    /** Binder that drives field validation and reads/writes the {@link ServiceDto}. */
     @Getter
     BeanValidationBinder<ServiceDto> binder = new BeanValidationBinder<>(ServiceDto.class);
 
+    /** Text field holding the service name. */
     @Getter
     TextField serviceNameField = new TextField("Service name");
 
@@ -34,12 +43,14 @@ public class ServiceForm extends FormLayout {
     Button closeButton = new Button("Cancel");
     Button updateButton = new Button("Update");
 
+    /** UI this form was attached to, used to marshal callbacks onto the UI thread. */
     @Getter
     UI ui;
 
     private final Dialog dialog;
     private final FormAction formAction;
 
+    /** The service being edited, empty when creating a new one. */
     @Getter
     private final transient ServiceDto serviceDto;
 
@@ -58,10 +69,18 @@ public class ServiceForm extends FormLayout {
         addFooterButtons();
     }
 
+    /**
+     * Shows a success notification on the UI thread.
+     *
+     * @param text the message to display
+     */
     public void showNotification(String text) {
         ui.access(() -> UiUtil.success(text));
     }
 
+    /**
+     * Closes the hosting dialog on the UI thread.
+     */
     public void close() {
         ui.access(() -> dialog.close());
     }
@@ -88,6 +107,12 @@ public class ServiceForm extends FormLayout {
         dialog.getFooter().add(saveButton, updateButton, deleteButton, closeButton);
     }
 
+    /**
+     * Toggles the footer button visibility for the given action: the save
+     * button for CREATE, update/delete for EDIT.
+     *
+     * @param formAction whether the form creates or edits
+     */
     public void restructureButton(FormAction formAction) {
         if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
             saveButton.setVisible(true);

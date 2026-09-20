@@ -10,6 +10,10 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Tab sheet hosting the tier-price browse view. Adds the "All Tier Prices" tab
+ * with the {@link TierPriceListView} and its toolbar.
+ */
 @AllArgsConstructor
 @Slf4j
 public class TierPriceTabs extends VerticalLayout {

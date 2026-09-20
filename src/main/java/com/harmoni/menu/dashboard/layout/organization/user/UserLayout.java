@@ -9,6 +9,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
+/**
+ * Main route ({@code /users}) for the user administration domain. Hosts the
+ * {@link UserTabs} component inside the {@link MainLayout} shell.
+ */
 @AllArgsConstructor
 @Route(value = "users", layout = MainLayout.class)
 public class UserLayout extends VerticalLayout {

@@ -12,6 +12,11 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Called when the user clicks Delete on the brand form: shows a confirmation
+ * dialog and, once confirmed, removes the brand via the REST API and broadcasts
+ * the result so every open grid refreshes.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class BrandDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>, BroadcastMessageService {
@@ -19,6 +24,11 @@ public class BrandDeleteEventListener implements ComponentEventListener<ClickEve
     private final transient BrandDto brandDto;
     private final RestClientOrganizationService restClientOrganizationService;
 
+    /**
+     * Opens the delete confirmation dialog when the delete button is clicked.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         setConfirmDialogDelete();

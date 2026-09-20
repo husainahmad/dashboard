@@ -11,6 +11,10 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
+/**
+ * Main route ({@code /tier-menu}) for the tier-menu administration domain.
+ * Hosts the {@link TierMenuTabs} component inside the {@link MainLayout} shell.
+ */
 @AllArgsConstructor
 @Route(value = "tier-menu", layout = MainLayout.class)
 @PageTitle("Tier Menu | POSHarmoni")

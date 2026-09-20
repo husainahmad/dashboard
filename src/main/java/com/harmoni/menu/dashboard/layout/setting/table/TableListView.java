@@ -32,6 +32,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * List of tables shown inside the table tab sheet: a {@link Grid} with name,
+ * capacity, store and action columns, a filterable toolbar and a "New Table"
+ * button. Refreshes on {@link Broadcaster} messages and scopes the fetch to
+ * the current store when one is available.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class TableListView extends VerticalLayout {
@@ -124,6 +130,12 @@ public class TableListView extends VerticalLayout {
         return content;
     }
 
+    /**
+     * Toolbar with a name filter and a "New Table" button that opens the
+     * create dialog.
+     *
+     * @return the toolbar layout
+     */
     public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
@@ -166,6 +178,13 @@ public class TableListView extends VerticalLayout {
         }
     }
 
+    /**
+     * Opens a dialog with a {@link TableForm} for creating or editing the
+     * given table, seeding the store from the current user for new rows.
+     *
+     * @param tableDto   the table to edit, or an empty one to create
+     * @param formAction whether the form creates or edits
+     */
     public void editTable(TableDto tableDto, FormAction formAction) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle(formAction == FormAction.EDIT ? "Edit Table" : "Add Table");

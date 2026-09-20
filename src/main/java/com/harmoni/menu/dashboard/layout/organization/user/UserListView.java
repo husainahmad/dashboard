@@ -37,6 +37,11 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Vaadin grid view listing the users of the current user's chain with
+ * pagination. Shows the role of each user, opens add/edit {@link UserForm}s in
+ * tabs via {@link TabManager}, and refreshes on BROADCAST insert/update.
+ */
 @RequiredArgsConstructor
 @Route(value = "users-list", layout = MainLayout.class)
 @PageTitle("User | POSHarmoni")
@@ -121,7 +126,10 @@ private void renderLayout() {
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
-        new TabManager(tabSheet).addOrSelect(title, tab ->
+        String tabLabel = action == FormAction.EDIT
+                && ObjectUtils.isNotEmpty(userDto.getUsername())
+                ? "Edit ".concat(userDto.getUsername()) : title;
+        new TabManager(tabSheet).addOrSelect(tabLabel, tab ->
                 new UserForm(this.asyncRestClientOrganizationService,
                         this.restClientOrganizationService, this.accessService, tab, action, userDto));
     }
@@ -134,11 +142,17 @@ private void renderLayout() {
         return content;
     }
 
+    /**
+     * Builds the toolbar with a lazy name filter and a "New User" button.
+     *
+     * @return the toolbar layout to place above the grid
+     */
     public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
         filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
+        filterText.getElement().setAttribute("autocomplete", "off");
         filterText.addValueChangeListener(changeEvent -> {
             if (!changeEvent.getOldValue().equals(changeEvent.getValue())) {
                 currentPage = 1;

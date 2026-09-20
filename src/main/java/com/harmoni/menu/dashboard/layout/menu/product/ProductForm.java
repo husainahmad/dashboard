@@ -1,34 +1,39 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.harmoni.menu.dashboard.dto.*;
+import com.harmoni.menu.dashboard.dto.BrandDto;
+import com.harmoni.menu.dashboard.dto.CategoryDto;
+import com.harmoni.menu.dashboard.dto.ProductDto;
+import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.product.ProductSaveEventListener;
 import com.harmoni.menu.dashboard.event.product.ProductUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.menu.ProductFormLayout;
-import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
-import com.harmoni.menu.dashboard.layout.util.UiUtil;
+import com.harmoni.menu.dashboard.layout.util.AsyncUtil;
+import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
+import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ImageUtil;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
-import com.vaadin.flow.component.*;
-import com.vaadin.flow.component.accordion.Accordion;
-import com.vaadin.flow.component.accordion.AccordionPanel;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
-import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
-import com.vaadin.flow.data.provider.hierarchy.TreeData;
-import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
@@ -36,95 +41,127 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
 
+/**
+ * Thin orchestrator for the product editor tab.
+ *
+ * <p>
+ * This view only wires the shared pieces together (binder, category / naming
+ * fields, image upload, the save/update button bar) and delegates the real
+ * editing to its sections:
+ * </p>
+ *
+ * <ul>
+ *     <li>{@link SkuSection} — SKU rows and per-tier prices</li>
+ *     <li>{@link CustomizationSection} — customization attachments and overrides</li>
+ * </ul>
+ *
+ * <p>
+ * Persistence is handled by {@link ProductSaveEventListener} and
+ * {@link ProductUpdateEventListener}; the associations to exchanged services,
+ * brand and tiers are injected through the constructor.
+ * </p>
+ *
+ * <p>
+ * When the tab is opened for an existing product (a non-null
+ * {@link ProductTreeItem}), {@link #fetchProduct()} loads the details and
+ * populates the fields; for a new product a single empty SKU row is shown.
+ * </p>
+ */
 @RequiredArgsConstructor
 @Route(value = "product-form", layout = MainLayout.class)
 @Slf4j
-public class ProductForm extends ProductFormLayout {
+public class ProductForm extends ProductFormLayout implements ProductFormDelegate {
 
+    /** Binder driving validation for the whole form; button state follows its status. */
     @Getter
     BeanValidationBinder<ProductDto> binder = new BeanValidationBinder<>(ProductDto.class);
+    /** Product display name. */
     @Getter
     TextField productNameField = new TextField();
+    /** Free-text product description. */
     @Getter
     TextArea productDescTextArea = new TextArea();
-    @Getter
-    TreeGrid<SkuTreeItem> skuDtoGrid = new TreeGrid<>(SkuTreeItem.class);
-    TreeData<SkuTreeItem> skuTreeItemTreeData = new TreeData<>();
-    TreeDataProvider<SkuTreeItem> skuDataProvider;
-
+    /** Category selection populated from {@link #categoryDtos}. */
     @Getter
     ComboBox<CategoryDto> categoryBox = new ComboBox<>();
+    /** Image upload / preview tile. */
+    @Getter
+    ProductImageUploadView productImageUploadView;
+    /** Editor for the SKU and tier-price grid. */
+    @Getter
+    SkuSection skuSection;
+    /** Editor for the customization attachments. */
+    @Getter
+    CustomizationSection customizationSection;
+
     Button saveButton = new Button("Save");
     Button updateButton = new Button("Update");
     Button closeButton = new Button("Cancel");
-    AccordionPanel menuPanel;
-    @Getter
-    ProductImageUploadView productImageUploadView;
-    @Getter
-    transient Map<String, String> skuNames = new HashMap<>();
-    @Getter
-    transient Map<String, String> skuDescs = new HashMap<>();
-    @Getter
-    transient Map<String, Double> skuTierPrices = new HashMap<>();
+    private final LoadingBar savingBar = new LoadingBar();
+    private boolean saving;
 
     private final RestClientMenuService restClientMenuService;
+    private final transient AsyncRestClientMenuService asyncRestClientMenuService;
     private final transient BrandDto brandDto;
     private final transient List<CategoryDto> categoryDtos;
     private final transient List<TierDto> tierDtos;
     private final Tab productTab;
     private final transient ProductTreeItem productTreeItem;
 
+    /** The product being edited; {@code null} until loaded for existing products. */
     @Getter
     transient ProductDto productDto;
 
-    private void renderLayout() {
+    private Span sectionCaption(String text) {
+        Span caption = new Span(text.toUpperCase());
+        caption.addClassName("section-caption");
+        return caption;
+    }
 
+    private void renderLayout() {
         categoryBox.setLabel("Category");
         categoryBox.setItems(categoryDtos);
         categoryBox.setValue(categoryDtos.getLast());
         categoryBox.setItemLabelGenerator(CategoryDto::getName);
-
-        add(categoryBox);
+        categoryBox.setWidth("100%");
 
         productNameField.setLabel("Product name");
         productNameField.setPlaceholder("Enter Product name...");
         productNameField.setClearButtonVisible(true);
         productNameField.setValueChangeMode(ValueChangeMode.LAZY);
-        add(productNameField);
+        productNameField.setWidth("100%");
 
         productDescTextArea.setLabel("Description");
         productDescTextArea.setPlaceholder("Enter Description");
-        productNameField.setValueChangeMode(ValueChangeMode.LAZY);
+        productDescTextArea.setValueChangeMode(ValueChangeMode.LAZY);
+        productDescTextArea.setWidth("100%");
+        productDescTextArea.getElement().setProperty("rows", 3);
 
-        add(productDescTextArea);
-
-        Accordion accordion = new Accordion();
         productImageUploadView = new ProductImageUploadView(restClientMenuService, getUi(), productTreeItem);
-        menuPanel = accordion.add("Upload Image", productImageUploadView);
 
-        add(accordion);
+        skuSection = new SkuSection(tierDtos, this);
+        skuSection.addSku(null);
+        customizationSection = new CustomizationSection(restClientMenuService, asyncRestClientMenuService,
+                brandDto, tierDtos, skuSection, this);
+
+        add(savingBar, 2);
+        add(sectionCaption("Product Info"), 2);
+        add(categoryBox, productNameField);
+        add(productDescTextArea, productImageUploadView);
+
         setSizeFull();
+        setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("760px", 2));
 
-        skuDataProvider = new TreeDataProvider<>(skuTreeItemTreeData);
+        add(sectionCaption("SKU & Pricing"), 2);
+        add(skuSection.getToolbar(), 2);
+        add(getContent(skuSection.getGrid()), 2);
+        add(customizationSection.getLayout(), 2);
+        add(getButtonBar(), 2);
 
-        skuDtoGrid.setDataProvider(skuDataProvider);
-        skuDtoGrid.setSelectionMode(Grid.SelectionMode.NONE);
-
-        populateSkuTreeItemTreeData(null);
-
-        configureGrid();
         addValidation();
-
-        Button addButton = new Button("Add SKU");
-        add(getToolbar(addButton), getContent(skuDtoGrid), getButtonBar());
-        addButton.addClickListener(this::onButtonAddEvent);
-
-        setResponsiveSteps(new ResponsiveStep("0", 1, ResponsiveStep.LabelsPosition.ASIDE));
-
-        binder.bindInstanceFields(this);
+        bindButtonState();
     }
 
     @Override
@@ -132,113 +169,49 @@ public class ProductForm extends ProductFormLayout {
         super.onAttach(attachEvent);
         renderLayout();
         fetchProduct();
+        productNameField.focus();
     }
 
     private void fetchProduct() {
-        if (ObjectUtils.isNotEmpty(productTreeItem)) {
-            this.restClientMenuService.getProduct(productTreeItem.getProductId())
-                .subscribe(restAPIResponse -> {
-                    if (ObjectUtils.isNotEmpty(restAPIResponse.getData())) {
-                        productDto = ObjectUtil.convertObjectToObject(restAPIResponse.getData(), new TypeReference<>() {
-                        });
+        if (ObjectUtils.isEmpty(productTreeItem)) {
+            return;
+        }
+        AsyncUtil.subscribe(restClientMenuService.getProduct(productTreeItem.getProductId()),
+                getUi(), "Failed to load product",
+                this::applyProduct);
+    }
 
-                        skuDataProvider.getTreeData().clear();
-
-                        getUi().access(() -> {
-                            categoryBox.setValue(productDto.getCategoryDto());
-                            productNameField.setValue(productDto.getName());
-                            productDescTextArea.setValue(productDto.getDescription()==null ? "" : productDto.getDescription());
-                            productDto.getSkuDtos().forEach(this::populateSkuTreeItemTreeData);
-                            refreshImage();
-                        });
-                    }
-                });
+    private void applyProduct(RestAPIResponse restAPIResponse) {
+        if (ObjectUtils.isEmpty(restAPIResponse.getData())) {
+            return;
+        }
+        productDto = ObjectUtil.convertObjectToObject(restAPIResponse.getData(), new TypeReference<>() {
+        });
+        categoryBox.setValue(productDto.getCategoryDto());
+        productNameField.setValue(productDto.getName());
+        productDescTextArea.setValue(productDto.getDescription() == null ? "" : productDto.getDescription());
+        skuSection.load(productDto.getSkuDtos());
+        refreshImage();
+        binder.validate();
+        updateButtonStates();
+        if (ObjectUtils.isNotEmpty(productDto.getId())) {
+            customizationSection.load(productDto.getId());
         }
     }
 
     private void refreshImage() {
         if (ObjectUtils.isNotEmpty(productDto.getProductImageDto()) &&
                 ObjectUtils.isNotEmpty(productDto.getProductImageDto().getImageBlob())) {
-
-            this.productImageUploadView.image.setSrc(ImageUtil.createStreamResource(productDto.getProductImageDto().getImageBlob(),
+            this.productImageUploadView.setImage(ImageUtil.createStreamResource(
+                    productDto.getProductImageDto().getImageBlob(),
                     productDto.getProductImageDto().getFileName()));
-            this.productImageUploadView.image.setMaxWidth("300px");
         }
     }
 
-    private void configureGrid() {
-        skuDtoGrid.removeAllColumns();
-        skuDtoGrid.addComponentHierarchyColumn(this::applySkuNameTextField).setHeader("Name");
-        skuDtoGrid.addComponentColumn(this::applySkuDescTextArea).setHeader("Description");
-        skuDtoGrid.addColumn(SkuTreeItem::getTierName).setHeader("Tier");
-        skuDtoGrid.addComponentColumn(this::applySkuPriceNumberField).setHeader("Price");
-        skuDtoGrid.addComponentColumn(this::applyButtonDelete);
-    }
-
-    private void populateSkuTreeItemTreeData(SkuDto skuDto) {
-
-        TierDto firstTierDto = tierDtos.getFirst();
-        if (firstTierDto==null) return;
-
-        SkuTreeItem rootSkuTreeItem = SkuTreeItem.builder()
-                .id(String.valueOf(UUID.randomUUID()))
-                .skuId(Optional.ofNullable(skuDto)
-                        .map(SkuDto::getId)
-                        .orElse(null))
-                .skuName(Optional.ofNullable(skuDto)
-                        .map(SkuDto::getName)
-                        .orElse(""))
-                .skuDesc(Optional.ofNullable(skuDto)
-                        .map(SkuDto::getDescription)
-                        .orElse(""))
-                .tierId(firstTierDto.getId())
-                .tierName(firstTierDto.getName())
-                .price(getPriceBySkuAndTier(skuDto, firstTierDto))
-                .treeLevel(TreeLevel.ROOT)
-                .build();
-
-        skuNames.put(rootSkuTreeItem.getId(), rootSkuTreeItem.getSkuName());
-
-        skuTreeItemTreeData.addItem(null, rootSkuTreeItem);
-
-        AtomicInteger i = new AtomicInteger();
-        tierDtos.forEach(tierDto -> {
-            if (!tierDto.equals(tierDtos.getFirst())) {
-                SkuTreeItem skuTreeItemTier = getChildSkuTreeItem(skuDto, tierDto, i);
-                skuTreeItemTreeData.addItems(rootSkuTreeItem, skuTreeItemTier);
-            }
-        });
-
-        skuDataProvider.refreshItem(rootSkuTreeItem, true);
-        skuDataProvider.refreshAll();
-    }
-
-    private static SkuTreeItem getChildSkuTreeItem(SkuDto skuDto, TierDto tierDto, AtomicInteger i) {
-        return SkuTreeItem.builder()
-            .id(UUID.randomUUID().toString()
-                    .concat(String.valueOf(i.getAndIncrement())))
-            .skuId(Optional.ofNullable(skuDto)
-                    .map(SkuDto::getId)
-                    .orElse(null))
-            .tierName(tierDto.getName())
-            .tierId(tierDto.getId())
-            .price(getPriceBySkuAndTier(skuDto, tierDto))
-            .treeLevel(TreeLevel.PARENT)
-            .build();
-    }
-
-    private static Double getPriceBySkuAndTier(SkuDto skuDto, TierDto tierDto) {
-        if (skuDto == null || tierDto == null || skuDto.getSkuTierPriceDtos() == null) {
-            return 0.0;
-        }
-
-        return skuDto.getSkuTierPriceDtos().stream()
-                .filter(skuTierPriceDto -> tierDto.getId().equals(skuTierPriceDto.getTierId()))
-                .map(SkuTierPriceDto::getPrice)
-                .findFirst()
-                .orElse(0.0);
-    }
-
+    /**
+     * Closes the editor tab by removing this form's tab from the parent
+     * {@link TabSheet}. Called after a successful save as well as on cancel.
+     */
     public void removeFromSheet() {
         getUi().access(() -> {
             if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
@@ -249,15 +222,27 @@ public class ProductForm extends ProductFormLayout {
     }
 
     private void addValidation() {
-
         binder.forField(categoryBox)
-                        .withValidator(value -> (value==null || value.getId() > 0), "Category not allow to be empty"
-                        ).bind(ProductDto::getCategoryDto, ProductDto::setCategoryDto);
-
+                .withValidator(value -> (value == null || value.getId() > 0), "Category not allow to be empty")
+                .bind(ProductDto::getCategoryDto, ProductDto::setCategoryDto);
         binder.forField(productNameField)
                 .withValidator(value -> value.length() > 2,
                         "Name must contain at least three characters")
                 .bind(ProductDto::getName, ProductDto::setName);
+    }
+
+    private void bindButtonState() {
+        binder.addStatusChangeListener(event -> updateButtonStates());
+        updateButtonStates();
+    }
+
+    private void updateButtonStates() {
+        if (saving) {
+            return;
+        }
+        boolean valid = binder.validate().isOk();
+        saveButton.setEnabled(valid);
+        updateButton.setEnabled(valid);
     }
 
     private HorizontalLayout getButtonBar() {
@@ -265,76 +250,66 @@ public class ProductForm extends ProductFormLayout {
         updateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
+        saveButton.setIcon(new Icon(VaadinIcon.CHECK));
+        updateButton.setIcon(new Icon(VaadinIcon.REFRESH));
+        closeButton.setIcon(new Icon(VaadinIcon.CLOSE_SMALL));
+
         saveButton.addClickShortcut(Key.ENTER);
         updateButton.addClickShortcut(Key.ENTER);
+        closeButton.addClickShortcut(Key.ESCAPE);
 
         updateButton.addClickListener(new ProductUpdateEventListener(this, restClientMenuService));
         saveButton.addClickListener(new ProductSaveEventListener(this, restClientMenuService));
-        closeButton.addClickShortcut(Key.ESCAPE);
-
         closeButton.addClickListener(this::onButtonClose);
+
         HorizontalLayout toolbar = new HorizontalLayout((this.productTreeItem != null ? updateButton : saveButton), closeButton);
         toolbar.addClassName("toolbar");
-        toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
-        toolbar.setPadding(true);
+        toolbar.addClassName("form-actions");
+        toolbar.setWidthFull();
+        toolbar.setAlignItems(FlexComponent.Alignment.CENTER);
+        toolbar.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
 
         return toolbar;
     }
 
-    private Button applyButtonDelete(SkuTreeItem skuTreeItem) {
-        if (skuTreeItem.getTreeLevel().equals(TreeLevel.ROOT)) {
-            return UiUtil.deleteButton(event -> onDeleteSku(skuTreeItem));
+    /**
+     * Invoked by the save/update listeners right before the REST call: disables
+     * the action buttons and shows the loading bar.
+     */
+    public void onSaveStart() {
+        saving = true;
+        UI ui = getUi();
+        if (ui != null) {
+            ui.access(() -> {
+                saveButton.setEnabled(false);
+                updateButton.setEnabled(false);
+                savingBar.start();
+            });
         }
-        return null;
     }
 
-    private void onDeleteSku(SkuTreeItem skuTreeItem) {
-        if (skuDtoGrid.getTreeData().getRootItems().size() == 1) {
-            showErrorDialog("Delete rejected!. Product should have one SKU!!");
-            return;
+    /**
+     * Invoked by the save/update listeners when the REST call finishes (success
+     * or failure) without closing the tab: re-enables the actions and stops the
+     * loading bar. Also called by the error path.
+     */
+    public void onSaveEnd() {
+        UI ui = getUi();
+        if (ui != null) {
+            ui.access(() -> {
+                saving = false;
+                savingBar.stop();
+                updateButtonStates();
+            });
         }
-        skuDataProvider.getTreeData().removeItem(skuTreeItem);
-        skuDataProvider.refreshAll();
-    }
-
-    private TextField applySkuNameTextField(SkuTreeItem skuTreeItem) {
-        if (skuTreeItem.getTreeLevel().equals(TreeLevel.ROOT)) {
-            TextField textField = new TextField();
-            textField.setValue(Optional.ofNullable(skuNames.get(skuTreeItem.getId()))
-                    .orElse(skuTreeItem.getSkuName()));
-            textField.addValueChangeListener(changeEvent ->
-                    skuNames.put(skuTreeItem.getId(), changeEvent.getValue()));
-            return textField;
-        }
-        return null;
-    }
-
-    private TextArea applySkuDescTextArea(SkuTreeItem skuTreeItem) {
-        if (skuTreeItem.getTreeLevel().equals(TreeLevel.ROOT)) {
-            TextArea textArea = new TextArea();
-            textArea.setValue(Optional.ofNullable(skuDescs.get(skuTreeItem.getId()))
-                    .orElse(skuTreeItem.getSkuDesc()));
-            textArea.addValueChangeListener(changeEvent -> skuDescs.put(skuTreeItem.getId(), changeEvent.getValue()));
-            return textArea;
-        }
-        return null;
-    }
-
-    private NumberField applySkuPriceNumberField(SkuTreeItem skuTreeItem) {
-        NumberField numberField = new NumberField();
-        numberField.setValue(Optional.ofNullable(skuTierPrices.get(skuTreeItem.getId()))
-                .orElse(skuTreeItem.getPrice()));
-        numberField.addValueChangeListener(changeEvent ->
-                skuTierPrices.put(skuTreeItem.getId(), changeEvent.getValue()));
-        skuTierPrices.put(skuTreeItem.getId(), numberField.getValue());
-        return numberField;
     }
 
     private void onButtonClose(ClickEvent<Button> buttonClickEvent) {
         removeFromSheet();
     }
 
-    private void onButtonAddEvent(ClickEvent<Button> buttonClickEvent) {
-        populateSkuTreeItemTreeData(null);
+    @Override
+    public Integer getProductId() {
+        return productDto != null ? productDto.getId() : null;
     }
 }

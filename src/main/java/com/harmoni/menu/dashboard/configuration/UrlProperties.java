@@ -4,6 +4,17 @@ import lombok.Data;
 
 import java.io.Serializable;
 
+/**
+ * Holds the REST URLs of the menu resource endpoints.
+ *
+ * <p>
+ * Binds the {@code menu.url.*} keys for the flat resources (store, category,
+ * branding, tier, product, service, user, ...) and groups the more complex
+ * paths into the nested {@link TierProperties}, {@link CategoryProperties},
+ * {@link ProductProperties} and {@link UserProperties}.
+ * </p>
+ */
+
 @Data
 public class UrlProperties implements Serializable {
     private String store;

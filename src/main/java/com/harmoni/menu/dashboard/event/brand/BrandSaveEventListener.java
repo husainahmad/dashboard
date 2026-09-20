@@ -12,6 +12,10 @@ import com.vaadin.flow.component.button.Button;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Called when the user clicks Save on the brand form: validates the binder,
+ * posts the new brand and broadcasts the result.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class BrandSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
@@ -20,6 +24,11 @@ public class BrandSaveEventListener implements ComponentEventListener<ClickEvent
     private final BrandForm brandForm;
     private final RestClientOrganizationService restClientOrganizationService;
 
+    /**
+     * Validates the brand form and, if valid, posts the new brand.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         if (this.brandForm.getBinder().validate().hasErrors()) {

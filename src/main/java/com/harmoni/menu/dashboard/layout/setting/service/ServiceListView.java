@@ -28,6 +28,12 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * List of services shown inside the service tab sheet: a {@link TreeGrid} of
+ * services with their sub-services, a toolbar to add a new service and live
+ * refresh driven by {@link Broadcaster} messages. Fetches data through the
+ * injected {@link AsyncRestClientSettingService}.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class ServiceListView extends VerticalLayout {
@@ -67,6 +73,11 @@ public class ServiceListView extends VerticalLayout {
         serviceTreeGrid.getColumns().forEach(productDtoColumn -> productDtoColumn.setAutoWidth(true));
     }
 
+    /**
+     * Toolbar with a "New Service" button that opens the create dialog.
+     *
+     * @return the toolbar layout
+     */
     public HorizontalLayout getToolbarComponent() {
         Button addServiceButton = new Button("New Service", new Icon(VaadinIcon.PLUS));
         addServiceButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);

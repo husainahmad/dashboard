@@ -19,6 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import reactor.core.publisher.Mono;
 
+/**
+ * Called when the user clicks Login on the login view: authenticates against
+ * the REST API, stores the session tokens and user detail and navigates to the
+ * dashboard, broadcasting the login success to other sessions.
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class LoginEventListener implements ComponentEventListener<ClickEvent<Button>>,
@@ -27,6 +32,12 @@ public class LoginEventListener implements ComponentEventListener<ClickEvent<But
     private final RestClientLoginService restClientLoginService;
     private final LoginView loginView;
 
+    /**
+     * Submits the entered credentials and, on success, stores the session
+     * tokens, fetches the user detail and navigates to the dashboard.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         log.debug("Login button clicked username={}", loginView.getLoginDto().getUsername());

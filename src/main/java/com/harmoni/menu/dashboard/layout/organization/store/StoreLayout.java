@@ -9,6 +9,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
+/**
+ * Main route ({@code /store}) for the store administration domain. Hosts the
+ * {@link StoreTabs} component inside the {@link MainLayout} shell.
+ */
 @AllArgsConstructor
 @Route(value = "store", layout = MainLayout.class)
 public class StoreLayout extends VerticalLayout {

@@ -29,8 +29,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
+import java.util.List;
 import java.util.Objects;
 
+/**
+ * Vaadin form for editing a {@link ChainDto} inside a {@link Dialog}. Renders a
+ * brand {@link ComboBox} and a chain-name field bound with a
+ * {@link BeanValidationBinder}, wires the save/update buttons to
+ * {@link ChainSaveEventListener} / {@link ChainUpdateEventListener}, and
+ * closes the dialog on a successful BROADCAST insert or update.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class ChainForm extends FormLayout {
@@ -61,6 +69,8 @@ public class ChainForm extends FormLayout {
     @Getter
     private final transient ChainDto chainDto;
 
+    private final List<BrandDto> brands;
+
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         this.ui = attachEvent.getUI();
@@ -71,13 +81,16 @@ public class ChainForm extends FormLayout {
         add(brandComboBox);
         add(chainNameField);
         binder.bindInstanceFields(this);
-        fetchBrands();
         restructureButton(formAction);
+
+        if (ObjectUtils.isNotEmpty(brands)) {
+            brandComboBox.setItems(brands);
+        }
 
         if (formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(chainDto)) {
             binder.readBean(chainDto);
-            if (ObjectUtils.isNotEmpty(chainDto.getBrandId())) {
-                fetchDetailBrands(chainDto.getBrandId().longValue());
+            if (ObjectUtils.isNotEmpty(brands)) {
+                restoreSelectedBrand(brands);
             }
         }
 
@@ -94,24 +107,22 @@ public class ChainForm extends FormLayout {
         ui.access(() -> UiUtil.success("Chain created.."));
     }
 
+    /**
+     * Closes the wrapped dialog on the UI thread.
+     */
     public void close() {
         ui.access(() -> dialog.close());
     }
 
     private void addValidation() {
         binder.forField(brandComboBox)
-                .withValidator(value -> value.getId() > 0,
+                .withValidator(value -> value != null && value.getId() > 0,
                         "Brand must be not empty")
                 .bind(ChainDto::getBrandDto, ChainDto::setBrandDto);
         binder.forField(chainNameField)
                 .withValidator(value -> value.length() > 2,
                         "Name must contain at least three characters")
                 .bind(ChainDto::getName, ChainDto::setName);
-    }
-
-    private void fetchDetailBrands(Long id) {
-        asyncRestClientOrganizationService.getDetailBrandAsync(result ->
-                ui.access(() -> brandComboBox.setValue(result)), id);
     }
 
     private void addFooterButtons() {
@@ -130,6 +141,13 @@ public class ChainForm extends FormLayout {
         dialog.getFooter().add(saveButton, updateButton, closeButton);
     }
 
+    /**
+     * Shows or hides the save, update and cancel buttons depending on the form
+     * action (only save for create, only update for edit; cancel always
+     * visible).
+     *
+     * @param formAction the mode the form was opened in
+     */
     public void restructureButton(FormAction formAction) {
         if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
             saveButton.setVisible(true);
@@ -142,8 +160,26 @@ public class ChainForm extends FormLayout {
         }
     }
 
-    private void fetchBrands() {
-        asyncRestClientOrganizationService.getAllBrandAsync(result -> ui.access(() -> brandComboBox.setItems(result)));
+    private void restoreSelectedBrand(List<BrandDto> brands) {
+        if (formAction != FormAction.EDIT || ObjectUtils.isEmpty(chainDto)) {
+            return;
+        }
+        Integer brandId = resolveBrandId();
+        if (ObjectUtils.isEmpty(brandId)) {
+            return;
+        }
+        brands.stream()
+                .filter(brand -> brandId.equals(brand.getId()))
+                .findFirst()
+                .ifPresent(brandComboBox::setValue);
+    }
+
+    private Integer resolveBrandId() {
+        if (chainDto.getBrandId() != null && chainDto.getBrandId() > 0) {
+            return chainDto.getBrandId();
+        }
+        return ObjectUtils.isNotEmpty(chainDto.getBrandDto()) && chainDto.getBrandDto().getId() != null
+                ? chainDto.getBrandDto().getId() : null;
     }
 
     private void receiptBroadcast(String message) {

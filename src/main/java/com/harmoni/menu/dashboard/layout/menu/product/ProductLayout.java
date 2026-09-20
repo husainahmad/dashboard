@@ -9,6 +9,14 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
+/**
+ * The main layout for the product page.
+ *
+ * <p>
+ * Renders a {@link ProductTabs} component inside a {@link VerticalLayout}.
+ * </p>
+ */
+
 @AllArgsConstructor
 @Route(value = "product", layout = MainLayout.class)
 public class ProductLayout extends VerticalLayout {

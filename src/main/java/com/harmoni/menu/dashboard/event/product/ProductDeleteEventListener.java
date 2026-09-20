@@ -13,6 +13,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 
+/**
+ * Called when the user clicks Delete on the product form: shows a confirmation
+ * dialog and, once confirmed, removes the product via the REST API and
+ * broadcasts the result so every open grid refreshes.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class ProductDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
@@ -21,6 +26,11 @@ public class ProductDeleteEventListener implements ComponentEventListener<ClickE
     private final RestClientMenuService restClientMenuService;
     private final transient ProductTreeItem productTreeItem;
 
+    /**
+     * Opens the delete confirmation dialog when the delete button is clicked.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         setConfirmDialogDelete();

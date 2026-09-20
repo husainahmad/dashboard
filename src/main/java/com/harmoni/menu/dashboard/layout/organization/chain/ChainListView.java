@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.layout.organization.chain;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
+import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.event.chain.ChainDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
@@ -29,6 +30,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * Vaadin grid view listing the chains of the current user's brand. Resolves the
+ * brand name of each chain for display, refreshes on BROADCAST insert/update,
+ * and opens a {@link ChainForm} dialog for add/edit.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class ChainListView extends VerticalLayout  {
@@ -85,8 +94,13 @@ public class ChainListView extends VerticalLayout  {
         chainDtoGrid.setSizeFull();
         chainDtoGrid.setEmptyStateText(UiUtil.NO_RECORDS);
         chainDtoGrid.setColumns("name");
+        chainDtoGrid.addColumn(this::brandName).setHeader("Brand").setSortable(true);
         chainDtoGrid.getColumns().forEach(chainDtoColumn -> chainDtoColumn.setAutoWidth(true));
         chainDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
+    }
+
+    private String brandName(ChainDto chainDto) {
+        return chainDto.getBrandDto() == null ? "" : chainDto.getBrandDto().getName();
     }
 
     private Component applyButton(ChainDto chainDto) {
@@ -113,6 +127,11 @@ public class ChainListView extends VerticalLayout  {
         return content;
     }
 
+    /**
+     * Builds the toolbar with a lazy name filter and a "New Chain" button.
+     *
+     * @return the toolbar layout to place above the grid
+     */
     public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
@@ -127,21 +146,50 @@ public class ChainListView extends VerticalLayout  {
 
     private void fetchChains() {
         loadingBar.start();
-        asyncRestClientOrganizationService.getAllChainByBrandIdAsync(result ->
+        Integer brandId = accessService.getUserDetail().getStoreDto().getChainDto().getBrandId();
+        asyncRestClientOrganizationService.getAllBrandAsync(brands ->
                 ui.access(() -> {
-                    loadingBar.stop();
-                    chainDtoGrid.setItems(result);
-                }),
-                accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
+                    Map<Integer, String> brandNames = brands.stream()
+                            .collect(Collectors.toMap(BrandDto::getId, BrandDto::getName, (a, b) -> a));
+                    asyncRestClientOrganizationService.getAllChainByBrandIdAsync(chains ->
+                            ui.access(() -> {
+                                loadingBar.stop();
+                                chains.forEach(chain -> applyBrandName(chain, brandNames));
+                                chainDtoGrid.setItems(chains);
+                            }), brandId);
+                }));
     }
 
+    private void applyBrandName(ChainDto chain, Map<Integer, String> brandNames) {
+        String name = brandNames.get(chain.getBrandId());
+        if (name != null) {
+            BrandDto brandDto = new BrandDto();
+            brandDto.setId(chain.getBrandId());
+            brandDto.setName(name);
+            chain.setBrandDto(brandDto);
+        }
+    }
+
+    /**
+     * Loads the brands for the current user's brand, then opens a dialog
+     * containing a {@link ChainForm} for the given chain.
+     *
+     * @param chainDto   the chain to edit, or a new empty one to create
+     * @param formAction whether the dialog is in create or edit mode
+     */
     public void editChain(ChainDto chainDto, FormAction formAction) {
-        Dialog dialog = new Dialog();
-        dialog.setHeaderTitle(formAction == FormAction.EDIT ? "Edit Chain" : "Add Chain");
-        dialog.setWidth("400px");
-        dialog.add(new ChainForm(this.restClientOrganizationService,
-                this.asyncRestClientOrganizationService, dialog, formAction, chainDto));
-        dialog.open();
+        loadingBar.start();
+        asyncRestClientOrganizationService.getAllBrandAsync(brands ->
+                ui.access(() -> {
+                    loadingBar.stop();
+                    Dialog dialog = new Dialog();
+                    dialog.setHeaderTitle(formAction == FormAction.EDIT ? "Edit Chain" : "Add Chain");
+                    dialog.setWidth("400px");
+                    ChainForm chainForm = new ChainForm(this.restClientOrganizationService,
+                            this.asyncRestClientOrganizationService, dialog, formAction, chainDto, brands);
+                    dialog.add(chainForm);
+                    dialog.open();
+                }));
     }
 
     private void addChain() {

@@ -37,6 +37,13 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.*;
 
 
+/**
+ * Vaadin form for editing a {@link UserDto} inside a user tab. Renders the
+ * user name, email, password, store and auth role fields; the store combo box
+ * is loaded lazily through a callback data provider. Wires the save/update
+ * buttons to {@link UserSaveEventListener} / {@link UserUpdateEventListener}
+ * and removes the tab when a store BROADCAST message arrives.
+ */
 @RequiredArgsConstructor
 @Route("users-form")
 @Slf4j
@@ -73,6 +80,9 @@ public class UserForm extends FormLayout  {
         setSizeFull();
         storeDtoComboBox.setAllowCustomValue(false);
         storeDtoComboBox.setItemLabelGenerator(StoreDto::getName); // Display store name
+        userNameField.getElement().setAttribute("autocomplete", "off");
+        userEmailField.getElement().setAttribute("autocomplete", "off");
+        userPassField.getElement().setAttribute("autocomplete", "off");
 
         storeDtoComboBox.setDataProvider(
             DataProvider.fromFilteringCallbacks(
@@ -117,6 +127,9 @@ public class UserForm extends FormLayout  {
         renderLayout();
     }
 
+    /**
+     * Removes the user tab from the parent {@link TabSheet} on the UI thread.
+     */
     public void removeFromSheet() {
         this.ui.access(() -> {
             if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
@@ -152,7 +165,7 @@ public class UserForm extends FormLayout  {
 
         saveButton.addClickListener(new UserSaveEventListener(this, restClientOrganizationService));
         updateButton.addClickListener(new UserUpdateEventListener(this, restClientOrganizationService));
-        HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, updateButton, closeButton);
+        HorizontalLayout horizontalLayout = new HorizontalLayout(saveButton, updateButton, closeButton);
         horizontalLayout.setPadding(true);
         return horizontalLayout;
     }
@@ -175,6 +188,11 @@ public class UserForm extends FormLayout  {
         restructureButton();
     }
 
+    /**
+     * Shows or hides the save, update and cancel buttons depending on the form
+     * action (only save for create, only update for edit; cancel always
+     * visible).
+     */
     public void restructureButton() {
         if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
             saveButton.setVisible(true);
@@ -224,6 +242,11 @@ public class UserForm extends FormLayout  {
         return List.of(RoleType.ADMIN, RoleType.MANAGER, RoleType.USER);
     }
 
+    /**
+     * Copies the field values into the wrapped user DTO and returns it.
+     *
+     * @return the populated user DTO for saving or updating
+     */
     public UserDto getUserDto() {
         userDto.setUsername(userNameField.getValue());
         userDto.setEmail(userEmailField.getValue());

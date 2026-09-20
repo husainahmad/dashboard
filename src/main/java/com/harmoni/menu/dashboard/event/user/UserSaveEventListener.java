@@ -10,6 +10,10 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import lombok.AllArgsConstructor;
 
+/**
+ * Called when the user clicks Save on the user form: validates the binder,
+ * posts the new user and broadcasts the result.
+ */
 @AllArgsConstructor
 public class UserSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
@@ -17,6 +21,11 @@ public class UserSaveEventListener implements ComponentEventListener<ClickEvent<
     private final transient UserForm userForm;
     private final RestClientOrganizationService restClientOrganizationService;
 
+    /**
+     * Validates the user form and, if valid, posts the new user.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         if (userForm.getBinder().validate().hasErrors()) {

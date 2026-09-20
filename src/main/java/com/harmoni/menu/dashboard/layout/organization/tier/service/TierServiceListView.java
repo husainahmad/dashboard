@@ -34,6 +34,12 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+/**
+ * Vaadin tree-grid view listing service tiers. Renders a {@link TreeGrid} of
+ * {@link TierServiceTreeItem} nodes (tier roots with service parents and
+ * sub-service children), each root carrying the tier with checkboxes per
+ * sub-service, and an inline {@link TierServiceForm} editor for add/edit.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class TierServiceListView extends VerticalLayout {
@@ -149,6 +155,12 @@ public class TierServiceListView extends VerticalLayout {
         return content;
     }
 
+    /**
+     * Builds the toolbar with a lazy name filter and a "New Tier Service"
+     * button.
+     *
+     * @return the toolbar layout to place above the tree grid
+     */
     public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);

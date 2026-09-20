@@ -6,6 +6,11 @@ import lombok.Data;
 
 import java.util.List;
 
+/**
+ * Tree node rendered in the {@link ServiceListView} grid: a service row with
+ * an optional nested sub-service child. Plain data holder populated from the
+ * service REST responses via the {@code @Builder}.
+ */
 @Data
 @Builder
 public class ServiceTreeItem {

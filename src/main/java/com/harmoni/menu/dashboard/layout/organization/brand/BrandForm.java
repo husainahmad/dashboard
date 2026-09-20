@@ -28,6 +28,13 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Objects;
 
+/**
+ * Vaadin form for editing a {@link BrandDto} inside a {@link Dialog}. Renders a
+ * brand-name field bound with a {@link BeanValidationBinder}, wires the
+ * save/update buttons to {@link BrandSaveEventListener} /
+ * {@link BrandUpdateEventListener}, and closes the dialog on a successful
+ * BROADCAST insert or update.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class BrandForm extends FormLayout {
@@ -84,10 +91,18 @@ public class BrandForm extends FormLayout {
         addFooterButtons();
     }
 
+    /**
+     * Shows a success notification with the given text on the UI thread.
+     *
+     * @param text the message to display
+     */
     public void showNotification(String text) {
         ui.access(() -> UiUtil.success(text));
     }
 
+    /**
+     * Closes the wrapped dialog on the UI thread.
+     */
     public void close() {
         ui.access(() -> dialog.close());
     }
@@ -121,6 +136,13 @@ public class BrandForm extends FormLayout {
         dialog.getFooter().add(saveButton, updateButton, closeButton);
     }
 
+    /**
+     * Shows or hides the save, update and cancel buttons depending on the form
+     * action (only save for create, only update for edit; cancel always
+     * visible).
+     *
+     * @param formAction the mode the form was opened in
+     */
     public void restructureButton(FormAction formAction) {
         if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
             saveButton.setVisible(true);

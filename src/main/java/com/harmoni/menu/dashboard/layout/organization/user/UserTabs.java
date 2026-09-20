@@ -11,6 +11,10 @@ import com.vaadin.flow.router.Route;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Tab sheet hosting the user browse view. Adds the "All Users" tab with the
+ * {@link UserListView} and its toolbar.
+ */
 @RequiredArgsConstructor
 @Slf4j
 @Route("users-tabs")

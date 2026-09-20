@@ -9,6 +9,10 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Tab sheet hosting the tier-service browse view. Adds the "All Tier Services"
+ * tab with the {@link TierServiceListView} and its toolbar.
+ */
 @AllArgsConstructor
 @Slf4j
 public class TierServiceTabs extends VerticalLayout {

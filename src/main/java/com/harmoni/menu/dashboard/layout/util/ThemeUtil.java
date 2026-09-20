@@ -22,10 +22,22 @@ public final class ThemeUtil {
         throw new IllegalStateException("Utility class");
     }
 
+    /**
+     * Applies the dark theme synchronously and then corrects the mode from the
+     * persisted localStorage preference.
+     *
+     * @param ui the UI to apply the theme to
+     */
     public static void applySavedTheme(UI ui) {
         applySavedTheme(ui, null);
     }
 
+    /**
+     * Applies the saved theme and reports the resolved mode once known.
+     *
+     * @param ui            the UI to apply the theme to
+     * @param onDarkApplied invoked with {@code true} when dark mode wins
+     */
     public static void applySavedTheme(UI ui, Consumer<Boolean> onDarkApplied) {
         ui.getElement().getThemeList().add(Lumo.DARK);
         ui.getElement()
@@ -45,6 +57,12 @@ public final class ThemeUtil {
                 }));
     }
 
+    /**
+     * Persists the user's theme choice so it survives page reloads.
+     *
+     * @param ui   the UI hosting the persisted preference
+     * @param dark {@code true} to remember dark mode
+     */
     public static void storeTheme(UI ui, boolean dark) {
         ui.getElement().executeJs(
                 "window.localStorage.setItem($0, $1)",

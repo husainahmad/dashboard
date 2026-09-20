@@ -41,6 +41,7 @@ public class BroadcastMessage {
 
     public static final String CUSTOMIZATION_INSERT_SUCCESS = "CUSTOMIZATION_INSERT_SUCCESS";
     public static final String CUSTOMIZATION_UPDATED_SUCCESS = "CUSTOMIZATION_UPDATED_SUCCESS";
+    public static final String CUSTOMIZATION_DELETE_SUCCESS = "CUSTOMIZATION_DELETE_SUCCESS";
 
     public static final String TABLE_INSERT_SUCCESS = "TABLE_INSERT_SUCCESS";
     public static final String TABLE_UPDATED_SUCCESS = "TABLE_UPDATED_SUCCESS";

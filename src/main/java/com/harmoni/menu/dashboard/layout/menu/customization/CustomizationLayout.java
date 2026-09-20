@@ -10,6 +10,16 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
+/**
+ * Main route for the customization administration page.
+ *
+ * <p>
+ * Embeds a single {@link CustomizationTabs} tab sheet inside the shared
+ * {@link MainLayout}; the page title is {@code Customization | POSHarmoni} and
+ * all data access flows through the injected (async) menu REST clients plus
+ * {@link AccessService}.
+ * </p>
+ */
 @AllArgsConstructor
 @Route(value = "customization", layout = MainLayout.class)
 @PageTitle("Customization | POSHarmoni")

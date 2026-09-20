@@ -41,6 +41,12 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+/**
+ * Vaadin tree-grid view listing menu tiers. Renders a {@link TreeGrid} of
+ * {@link TierMenuTreeItem} nodes (tier roots with category children), each root
+ * carrying the tier with checkboxes per child category, and an inline
+ * {@link TierMenuForm} editor for add/edit of tiers.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class TierMenuListView extends VerticalLayout {
@@ -155,6 +161,11 @@ public class TierMenuListView extends VerticalLayout {
         return content;
     }
 
+    /**
+     * Builds the toolbar with a lazy name filter and a "New Tier Menu" button.
+     *
+     * @return the toolbar layout to place above the tree grid
+     */
     public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);

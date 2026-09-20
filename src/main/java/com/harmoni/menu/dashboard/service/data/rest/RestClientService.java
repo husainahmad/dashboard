@@ -22,6 +22,14 @@ import reactor.core.publisher.Mono;
 import java.io.File;
 import java.io.Serializable;
 
+/**
+ * Base blocking REST client for the POSHarmoni backend, built on Spring
+ * {@link WebClient}. Provides post / get / put / multipart upload / delete
+ * primitives that inject the JWT bearer token, transparently refresh it on a
+ * 401 via {@link TokenRefreshService} and map error statuses to typed
+ * exceptions. Every call returns a reactive {@link Mono} subscribed by the
+ * caller.
+ */
 @RequiredArgsConstructor
 @Service
 @Slf4j
@@ -34,10 +42,28 @@ public class RestClientService implements Serializable {
     private static final String BEARER = "Bearer ";
     private static final WebClient webClient = WebClient.builder().build();
 
+    /**
+     * POSTs a payload and expects the standard {@link RestAPIResponse} body.
+     *
+     * @param url       the target endpoint
+     * @param publisher the reactive body to publish
+     * @param className the body element class
+     * @return a {@link Mono} with the server response
+     */
     public Mono<RestAPIResponse> post(String url, Publisher<?> publisher, Class<?> className) {
         return post(url, publisher, className, RestAPIResponse.class);
     }
 
+    /**
+     * POSTs a payload and decodes the response into the given class.
+     *
+     * @param url           the target endpoint
+     * @param publisher     the reactive body to publish
+     * @param bodyClass     the body element class
+     * @param responseClass the expected response type
+     * @param <T>           the response type
+     * @return a {@link Mono} with the decoded response
+     */
     public <T> Mono<T> post(String url, Publisher<?> publisher, Class<?> bodyClass, Class<T> responseClass) {
         log.debug("POST {} auth={}", url, ObjectUtils.isNotEmpty(getTokenString()));
         return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
@@ -79,10 +105,24 @@ public class RestClientService implements Serializable {
         }
     }
 
+    /**
+     * GETs a resource using the default session token.
+     *
+     * @param url the target endpoint
+     * @return a {@link Mono} with the server response
+     */
     public Mono<RestAPIResponse> get(String url) {
         return get(url, null);
     }
 
+    /**
+     * GETs a resource with an explicit bearer token, falling back to the
+     * session token when {@code token} is {@code null}.
+     *
+     * @param url   the target endpoint
+     * @param token the token to use, or {@code null} for the session token
+     * @return a {@link Mono} with the server response
+     */
     public Mono<RestAPIResponse> get(String url, String token) {
         log.debug("GET {} auth={}", url, ObjectUtils.isNotEmpty(getTokenString(token)));
         return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
@@ -97,6 +137,14 @@ public class RestClientService implements Serializable {
                         .bodyToMono(RestAPIResponse.class));
     }
 
+    /**
+     * PUTs a payload, replacing the resource at the URL.
+     *
+     * @param url       the target endpoint
+     * @param publisher the reactive body to publish
+     * @param className the body element class
+     * @return a {@link Mono} with the server response
+     */
     public Mono<RestAPIResponse> put(String url, Publisher<?> publisher, Class<?> className) {
         return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
                 webClient.put()
@@ -111,6 +159,13 @@ public class RestClientService implements Serializable {
                         .bodyToMono(RestAPIResponse.class));
     }
 
+    /**
+     * Uploads a file with a multipart POST.
+     *
+     * @param url  the upload endpoint
+     * @param file the file to attach
+     * @return a {@link Mono} with the server response
+     */
     public Mono<RestAPIResponse> upload(String url, File file) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new FileSystemResource(file)); // "file" should match the expected request parameter name
@@ -129,6 +184,13 @@ public class RestClientService implements Serializable {
 
     }
 
+    /**
+     * Uploads a replacement file with a multipart PUT.
+     *
+     * @param url  the update endpoint
+     * @param file the file to attach
+     * @return a {@link Mono} with the server response
+     */
     public Mono<RestAPIResponse> uploadUpdate(String url, File file) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new FileSystemResource(file)); // "file" should match the expected request parameter name
@@ -147,6 +209,12 @@ public class RestClientService implements Serializable {
 
     }
 
+    /**
+     * DELETEs the resource at the URL.
+     *
+     * @param url the target endpoint
+     * @return a {@link Mono} with the server response
+     */
     public Mono<RestAPIResponse> delete(String url) {
         return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
                 webClient.delete()

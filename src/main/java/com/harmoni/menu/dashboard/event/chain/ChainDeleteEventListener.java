@@ -11,6 +11,11 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Called when the user clicks Delete on the chain form: shows a confirmation
+ * dialog and, once confirmed, removes the chain via the REST API and broadcasts
+ * the result so every open grid refreshes.
+ */
 @RequiredArgsConstructor
 public class ChainDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
@@ -18,6 +23,11 @@ public class ChainDeleteEventListener implements ComponentEventListener<ClickEve
     private final transient ChainDto chainDto;
     private final RestClientOrganizationService restClientOrganizationService;
 
+    /**
+     * Opens the delete confirmation dialog when the delete button is clicked.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         setConfirmDialogDelete();

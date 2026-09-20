@@ -1,20 +1,306 @@
 /* ============================================================
-   PRODUCT FORM OVERLAY
+   PRODUCT FORM
 
-   Surface styling for the product form container.
+   The form is its own scroll container inside the tab panel:
+   it fills the panel height and scrolls vertically while the
+   action bar stays pinned to the bottom. Spacing is kept tight
+   so the whole form stays compact.
+
+   DOM map
+   -------
+   vaadin-tabsheet
+   └─ product-form  (vaadin-form-layout.form-card + .product-form)
+      ├─ .section-caption                     (span)
+      ├─ vaadin-text-field / combo / textarea
+      ├─ product-image-upload-view  (.upload-tile inside)
+      ├─ .toolbar                    (SKU action bar)
+      ├─ .content > vaadin-grid.sku-grid
+      ├─ .customization-section > vaadin-grid.customization-grid
+      └─ .form-actions               (sticky footer)
    ============================================================ */
 
 .product-form {
 
+    /*
+     * Panels are slotted children of <vaadin-tabsheet-scroller>, so a plain
+     * percentage height resolves against the whole tab sheet host — tab strip
+     * included — and the form ends up taller than the visible panel. Its
+     * bottom, and the pinned action bar, then fall below the fold and can't be
+     * scrolled into view (overscroll-behavior: contain blocks the outer
+     * scroller from chaining). [part=content] is position:relative, so
+     * absolute inset:0 pins the form to the exact visible panel area and the
+     * height:100% below re-resolves against the scroller instead.
+     */
+
+    position:
+        absolute;
+
+    top:
+        0;
+
+    right:
+        0;
+
+    bottom:
+        0;
+
+    left:
+        0;
+
+    height:
+        100%;
+
+    box-sizing:
+        border-box;
+
+    overflow-x:
+        hidden;
+
+    overflow-y:
+        auto;
+
+    overscroll-behavior:
+        contain;
+
+    scrollbar-gutter:
+        stable;
+
     background:
         var(--app-surface);
 
-    border-left:
+    border:
         1px solid var(--app-border);
 
+    border-radius:
+        var(--lumo-border-radius-l);
+
     box-shadow:
-        var(--app-shadow-lg);
+        var(--app-shadow);
 
     color:
         var(--app-text);
+
+    padding:
+        0 var(--lumo-space-m);
+
+    --vaadin-form-layout-column-spacing:
+        var(--lumo-space-m);
+}
+
+
+/* ---------- Tab panel framing ---------- */
+
+/*
+ * The form carries its own surface, so drop the generic panel
+ * padding while the product form tab is visible to keep the
+ * inset compact. When the form tab is hidden (grid tab active)
+ * the default padding is restored. Older browsers without :has()
+ * keep the default padding — graceful fallback.
+ */
+
+.list-view
+vaadin-tabsheet:has(.product-form:not([hidden]))::part(content) {
+
+    padding:
+        var(--lumo-space-s);
+}
+
+
+/* ---------- Section captions ---------- */
+
+.product-form
+.section-caption {
+
+    align-self:
+        stretch;
+
+    margin-top:
+        var(--lumo-space-s);
+
+    font-size:
+        var(--lumo-font-size-xs);
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        0.08em;
+
+    text-transform:
+        uppercase;
+
+    color:
+        var(--app-text-secondary);
+
+    border-bottom:
+        1px solid var(--app-border);
+
+    padding-block:
+        var(--lumo-space-xs);
+}
+
+.product-form
+.section-caption:first-of-type {
+
+    margin-top:
+        var(--lumo-space-m);
+}
+
+
+/* ---------- Toolbars inside the form ---------- */
+
+/*
+ * Remove the standalone toolbar card chrome; the form itself is
+ * the card, toolbars are bare rows (the sticky footer re-adds
+ * its own background/border below).
+ */
+
+.product-form .toolbar {
+
+    background:
+        transparent;
+
+    border:
+        none;
+
+    box-shadow:
+        none;
+
+    padding:
+        var(--lumo-space-xs) 0;
+
+    gap:
+        var(--lumo-space-s);
+}
+
+
+/* ---------- Upload tile ---------- */
+
+.upload-tile {
+
+    background:
+        var(--lumo-contrast-5pct);
+
+    border:
+        1px dashed var(--lumo-contrast-30pct);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    min-height:
+        132px;
+
+    padding:
+        var(--lumo-space-s);
+
+    gap:
+        var(--lumo-space-xs);
+
+    transition:
+        border-color 120ms ease,
+        background 120ms ease;
+}
+
+.upload-tile:hover {
+
+    border-color:
+        var(--lumo-primary-color-50pct);
+
+    background:
+        var(--lumo-primary-color-5pct);
+}
+
+
+/* ---------- SKU grid ---------- */
+
+/*
+ * Unlimited SKUs/tiers would stretch the dialog to the moon;
+ * cap the grid so it scrolls internally while the form stays
+ * a predictable height. The grid is flat inside the form card,
+ * so the generic grid card chrome is removed.
+ */
+
+.product-form
+.content
+vaadin-grid.sku-grid {
+
+    max-height:
+        332px;
+
+    background:
+        transparent;
+
+    border:
+        none;
+
+    box-shadow:
+        none;
+
+    padding:
+        0;
+}
+
+
+/* ---------- Customization grid ---------- */
+
+.product-form
+vaadin-grid.customization-grid {
+
+    max-height:
+        240px;
+}
+
+
+/* ---------- Sticky action bar ---------- */
+
+/*
+ * Pinned to the bottom of the form's own scroll container.
+ * !important on the horizontal negative margins is required:
+ * vaadin-form-layout writes a 0px inline start/end margin on
+ * row-edge items in _updateLayout(), and its shadow ::slotted
+ * rule also adds column-spacing margins.
+ */
+
+.product-form
+.form-actions {
+
+    position:
+        sticky;
+
+    bottom:
+        0;
+
+    z-index:
+        10;
+
+    margin-inline:
+        calc(-1 * var(--lumo-space-m)) !important;
+
+    margin-top:
+        var(--lumo-space-s);
+
+    padding:
+        var(--lumo-space-xs) var(--lumo-space-m);
+
+    background:
+        var(--app-surface);
+
+    border-top:
+        1px solid var(--app-border);
+
+    box-shadow:
+        0 -6px 14px -8px rgba(0, 0, 0, 0.12);
+}
+
+
+/* ---------- SKU tier price alignment ---------- */
+
+vaadin-number-field.tier-price-field
+input[slot="input"] {
+
+    text-align:
+        right;
+
+    font-variant-numeric:
+        tabular-nums;
 }

@@ -8,6 +8,11 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
+/**
+ * Setting view for services at {@code /service}. Hosts the {@link ServiceTabs}
+ * tab sheet and provides the {@link AsyncRestClientSettingService} used to
+ * fetch service data.
+ */
 @AllArgsConstructor
 @Route(value = "service", layout = MainLayout.class)
 @PageTitle("Service | POSHarmoni")

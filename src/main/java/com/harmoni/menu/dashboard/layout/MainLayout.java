@@ -35,9 +35,17 @@ import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
 import org.apache.commons.lang3.ObjectUtils;
 
+/**
+ * Root application shell hosting the header (logo, palette switcher, theme
+ * toggle and user menu) plus the side-navigation drawer. Guards every route by
+ * forwarding unauthenticated users to the login screen and surfaces broadcast
+ * error notifications as dialogs.
+ */
 public class MainLayout extends AppLayout implements BroadcastMessageService, BeforeEnterObserver {
 
     Registration broadcasterRegistration;
+
+    /** Application title displayed in the header logo. */
     public static final String TITLE = "POSHarmoni";
 
     private final AccessService accessService;
@@ -46,6 +54,11 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
     private final Icon sunIcon = new Icon(VaadinIcon.SUN_O);
     private Button themeToggle;
 
+    /**
+     * Creates the app shell, building the header and drawer navigation.
+     *
+     * @param accessService resolves the logged-in user for the header menu
+     */
     public MainLayout(AccessService accessService) {
         this.accessService = accessService;
         createHeader();
@@ -199,6 +212,11 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         }
     }
 
+    /**
+     * Forwards to the login screen when no JWT token is present in the session.
+     *
+     * @param beforeEnterEvent the navigation event carrying the target route
+     */
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
         String token = VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);

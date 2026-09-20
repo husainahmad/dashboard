@@ -10,10 +10,19 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
+/**
+ * Modal error dialog shown when an operation fails. Displays a warning icon,
+ * the failure message and a Close button that dismisses the dialog.
+ */
 public class DialogClosing extends Dialog {
 
     private final String text;
 
+    /**
+     * Creates an error dialog with the given message.
+     *
+     * @param text the error description to show
+     */
     public DialogClosing(String text) {
         this.text = text;
 

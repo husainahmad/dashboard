@@ -10,6 +10,11 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
+/**
+ * Setting view for tables at {@code /table}. Hosts the {@link TableTabs} tab
+ * sheet and hands it the async and blocking REST clients, plus the
+ * {@link AccessService} used to scope tables to the current store.
+ */
 @AllArgsConstructor
 @Route(value = "table", layout = MainLayout.class)
 @PageTitle("Table | POSHarmoni")

@@ -9,6 +9,10 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Tab sheet hosting the brand browse view. Adds the "All Brands" tab with the
+ * {@link BrandListView} and its toolbar.
+ */
 @AllArgsConstructor
 @Slf4j
 public class BrandTabs extends VerticalLayout {

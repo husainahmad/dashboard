@@ -14,6 +14,10 @@ import com.vaadin.flow.component.button.Button;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Called when the user clicks Save on the category form: validates the binder
+ * and the selected brand, posts the new category and broadcasts the result.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class CategorySaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
@@ -22,6 +26,12 @@ public class CategorySaveEventListener implements ComponentEventListener<ClickEv
     private final CategoryForm categoryForm;
     private final RestClientMenuService restClientMenuService;
 
+    /**
+     * Validates the category form and its brand selection and, if valid, posts
+     * the new category.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         if (this.categoryForm.getBinder().validate().hasErrors()) {

@@ -11,6 +11,10 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Tab sheet hosting the tier-menu browse view. Adds the "All Tier Menus" tab
+ * with the {@link TierMenuListView} and its toolbar.
+ */
 @AllArgsConstructor
 @Slf4j
 public class TierMenuTabs extends VerticalLayout {

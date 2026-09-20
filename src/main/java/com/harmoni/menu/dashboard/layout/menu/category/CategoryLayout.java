@@ -11,6 +11,16 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
+/**
+ * Main route for the category administration page.
+ *
+ * <p>
+ * Embeds a single {@link CategoryTabs} tab sheet inside the shared
+ * {@link MainLayout}; the page title is {@code Category | POSHarmoni} and all
+ * data access flows through the injected (async) menu and organization REST
+ * clients plus {@link AccessService}.
+ * </p>
+ */
 @AllArgsConstructor
 @Route(value = "category", layout = MainLayout.class)
 @PageTitle("Category | POSHarmoni")

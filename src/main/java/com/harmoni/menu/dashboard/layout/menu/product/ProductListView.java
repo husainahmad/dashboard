@@ -258,6 +258,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         }
         new TabManager(tabSheet).addOrSelect("New Product", tab ->
                 new ProductForm(this.restClientMenuService,
+                        this.asyncRestClientMenuService,
                         this.brandDtoComboBox.getValue(),
                         this.categoryDtos, this.tierDtos, tab, null));
     }
@@ -269,6 +270,7 @@ public class ProductListView extends VerticalLayout implements BroadcastMessageS
         }
         new TabManager(tabSheet).addOrSelect("Edit ".concat(productTreeItem.getName()), tab ->
                 new ProductForm(this.restClientMenuService,
+                        this.asyncRestClientMenuService,
                         this.brandDtoComboBox.getValue(),
                         this.categoryDtos, this.tierDtos, tab, productTreeItem));
     }

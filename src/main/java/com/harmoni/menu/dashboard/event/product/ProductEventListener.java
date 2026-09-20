@@ -1,22 +1,24 @@
 package com.harmoni.menu.dashboard.event.product;
 
+import com.harmoni.menu.dashboard.dto.ProductCustomizationDto;
 import com.harmoni.menu.dashboard.dto.ProductDto;
 import com.harmoni.menu.dashboard.dto.ProductImageDto;
-import com.harmoni.menu.dashboard.dto.SkuDto;
-import com.harmoni.menu.dashboard.dto.SkuTierPriceDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductForm;
-import com.harmoni.menu.dashboard.layout.menu.product.SkuTreeItem;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
+/**
+ * Shared logic for the product save/update listeners: builds the payload from
+ * the current {@link ProductForm} state and closes the editor tab on success.
+ * The save vs update behaviour itself lives in the concrete listener classes.
+ */
 @Setter
 @Getter
 @RequiredArgsConstructor
@@ -26,6 +28,18 @@ public class ProductEventListener implements
 
     private ProductForm productForm;
 
+    /**
+     * Assembles the {@link ProductDto} that is sent to the product API, reading
+     * sku rows and tier prices from {@code productForm.getSkuSection()} and the
+     * customization attachment ids from {@code productForm.getCustomizationSection()}.
+     *
+     * <p>
+     * Attachment ids are only included for a not-yet-saved product; a persisted
+     * product manages customizations through its own endpoints.
+     * </p>
+     *
+     * @return the payload to persist
+     */
     public ProductDto populatePayload() {
         ProductDto productDto = new ProductDto();
         if (ObjectUtils.isNotEmpty(productForm.getProductDto())) {
@@ -35,12 +49,17 @@ public class ProductEventListener implements
         productDto.setName(productForm.getProductNameField().getValue());
         productDto.setDescription(productForm.getProductDescTextArea().getValue());
 
-        List<SkuDto> skuDtos = new ArrayList<>();
-
-        productForm.getSkuDtoGrid().getTreeData().getRootItems().forEach(skuTreeItem ->
-                skuDtos.add(getSkuDto(skuTreeItem)));
-
+        List<com.harmoni.menu.dashboard.dto.SkuDto> skuDtos = productForm.getSkuSection().toSkuDtos();
         productDto.setSkuDtos(skuDtos);
+
+        // Only a not-yet-saved product carries the customization attachment list;
+        // existing products manage the relationship via the customization endpoints
+        // so per-product settings are never wiped by a plain product update.
+        if (ObjectUtils.isEmpty(productDto.getId())) {
+            productDto.setCustomizationIds(productForm.getCustomizationSection().getProductCustomizations().stream()
+                    .map(ProductCustomizationDto::getCustomizationId)
+                    .collect(Collectors.toList()));
+        }
         if (ObjectUtils.isNotEmpty(productForm.getProductImageUploadView())
                 && ObjectUtils.isNotEmpty(productForm.getProductImageUploadView().getProductImageDto())) {
             ProductImageDto productImageDto = productForm.getProductImageUploadView().getProductImageDto();
@@ -50,45 +69,9 @@ public class ProductEventListener implements
         return productDto;
     }
 
-    private SkuDto getSkuDto(SkuTreeItem skuTreeItem) {
-        SkuDto skuDto = new SkuDto();
-        skuDto.setId(skuTreeItem.getSkuId());
-        skuDto.setName(productForm.getSkuNames().get(skuTreeItem.getId()) != null ?
-                productForm.getSkuNames().get(skuTreeItem.getId()) : "");
-        skuDto.setActive(true);
-        skuDto.setDescription(productForm.getSkuDescs().get(skuTreeItem.getId()) != null ?
-                productForm.getSkuDescs().get(skuTreeItem.getId()) : "");
-        extractedListSkuTierPrice(skuTreeItem, skuDto);
-        return skuDto;
-    }
-
-    private void extractedListSkuTierPrice(SkuTreeItem skuTreeItem, SkuDto skuDto) {
-        List<SkuTierPriceDto> skuTierPriceDtos = new ArrayList<>();
-
-        //get Root value
-        AtomicReference<SkuTierPriceDto> skuTierPriceDto = new AtomicReference<>(new SkuTierPriceDto());
-        skuTierPriceDto.get().setSkuId(skuDto.getId());
-        skuTierPriceDto.get().setTierId(skuTreeItem.getTierId());
-        skuTierPriceDto.get().setPrice(productForm.getSkuTierPrices().get(skuTreeItem.getId()) != null ?
-                productForm.getSkuTierPrices().get(skuTreeItem.getId()) : 0.0);
-        skuTierPriceDtos.add(skuTierPriceDto.get());
-
-        productForm.getSkuDtoGrid().getTreeData().getChildren(skuTreeItem).forEach(childSkuTreeItem ->
-                extractedSkuTierPrice(childSkuTreeItem, skuTierPriceDto, skuTierPriceDtos));
-
-        skuDto.setSkuTierPriceDtos(skuTierPriceDtos);
-    }
-
-    private void extractedSkuTierPrice(SkuTreeItem childSkuTreeItem, AtomicReference<SkuTierPriceDto> skuTierPriceDto,
-                                       List<SkuTierPriceDto> skuTierPriceDtos) {
-        skuTierPriceDto.set(new SkuTierPriceDto());
-        skuTierPriceDto.get().setSkuId(childSkuTreeItem.getSkuId());
-        skuTierPriceDto.get().setTierId(childSkuTreeItem.getTierId());
-        skuTierPriceDto.get().setPrice(productForm.getSkuTierPrices().get(childSkuTreeItem.getId()) != null ?
-                productForm.getSkuTierPrices().get(childSkuTreeItem.getId()) : 0.0);
-        skuTierPriceDtos.add(skuTierPriceDto.get());
-    }
-
+    /**
+     * Closes the editor tab after a successful save/update broadcast.
+     */
     public void acceptResponse() {
         this.getProductForm().removeFromSheet();
     }

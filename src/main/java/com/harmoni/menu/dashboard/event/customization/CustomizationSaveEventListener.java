@@ -13,13 +13,16 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.data.binder.Binder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Called when the user clicks Save on the customization form: validates the
+ * main form and every option row, posts the customization with tier-based
+ * prices and broadcasts the result.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class CustomizationSaveEventListener
@@ -28,6 +31,12 @@ public class CustomizationSaveEventListener
     private final CustomizationForm customizationForm;
     private final RestClientMenuService restClientMenuService;
 
+    /**
+     * Validates the main customization form and its option rows and, if valid,
+     * posts the new customization.
+     *
+     * @param event the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> event) {
         CustomizationDto customization = CustomizationDto.builder().build();
@@ -38,22 +47,20 @@ public class CustomizationSaveEventListener
             return;
         }
 
+        // validate each option row and attach tier-based prices
+        List<CustomizationOptionDto> options = customizationForm.buildOptions();
+        if (options == null) {
+            showNotification("Please fill all required option fields.", NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
         // must have at least one option
-        if (customizationForm.getOptionList().isEmpty()) {
+        if (options.isEmpty()) {
             showNotification("A customization must have at least one customization option.", NotificationVariant.LUMO_ERROR);
             return;
         }
 
-        // validate each option row
-        List<CustomizationOptionDto> options = new ArrayList<>();
-        for (Binder<CustomizationOptionDto> rowBinder : customizationForm.getRowBinders().values()) {
-            if (!rowBinder.writeBeanIfValid(rowBinder.getBean())) {
-                showNotification("Please fill all required option fields.", NotificationVariant.LUMO_ERROR);
-                return;
-            }
-            options.add(rowBinder.getBean());
-        }
-
+        customization.setId(customizationForm.getCustomizationId());
         customization.setCustomizationOptions(options);
 
         // call REST API

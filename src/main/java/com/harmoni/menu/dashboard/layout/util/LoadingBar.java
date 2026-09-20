@@ -25,12 +25,19 @@ public class LoadingBar extends ProgressBar {
 
     private final AtomicInteger generation = new AtomicInteger();
 
+    /**
+     * Creates the bar hidden and in indeterminate mode.
+     */
     public LoadingBar() {
         setIndeterminate(true);
         setVisible(false);
         addClassName("loading-bar");
     }
 
+    /**
+     * Shows the bar. A background task hides it again automatically after the
+     * timeout unless {@link #stop()} is called first.
+     */
     public void start() {
         int current = generation.incrementAndGet();
         getUI().ifPresent(ui -> {
@@ -45,6 +52,9 @@ public class LoadingBar extends ProgressBar {
         });
     }
 
+    /**
+     * Hides the bar immediately and cancels any pending auto-hide.
+     */
     public void stop() {
         generation.incrementAndGet();
         getUI().ifPresent(ui -> ui.access(() -> setVisible(false)));

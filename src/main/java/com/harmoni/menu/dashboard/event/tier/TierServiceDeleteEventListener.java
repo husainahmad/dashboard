@@ -15,6 +15,11 @@ import lombok.RequiredArgsConstructor;
 
 import static com.harmoni.menu.dashboard.component.BroadcastMessage.TIER_DELETED_SUCCESS;
 
+/**
+ * Called when the user clicks Delete on a tier service: shows a confirmation
+ * dialog and, once confirmed, removes the tier service via the REST API and
+ * broadcasts the result so every open grid refreshes.
+ */
 @RequiredArgsConstructor
 public class TierServiceDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
@@ -23,6 +28,11 @@ public class TierServiceDeleteEventListener implements ComponentEventListener<Cl
     private final RestClientOrganizationService restClientOrganizationService;
     private final UI ui;
 
+    /**
+     * Opens the delete confirmation dialog when the delete button is clicked.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         ui.access(() -> {

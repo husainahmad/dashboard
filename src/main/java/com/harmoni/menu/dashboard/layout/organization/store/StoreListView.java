@@ -37,6 +37,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Vaadin grid view listing the stores of the current user's chain with
+ * pagination. Preloads the chains and tier lists (price, menu, service) into
+ * {@code objectParams} for the {@link StoreForm}, opens add/edit forms in tabs
+ * via {@link TabManager}, and refreshes on BROADCAST insert/update.
+ */
 @RequiredArgsConstructor
 @Route(value = "store-list", layout = MainLayout.class)
 @PageTitle("Store | POSHarmoni")
@@ -137,6 +143,11 @@ public class StoreListView extends VerticalLayout {
         return content;
     }
 
+    /**
+     * Builds the toolbar with a lazy name filter and a "New Store" button.
+     *
+     * @return the toolbar layout to place above the grid
+     */
     public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);

@@ -10,6 +10,14 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Tab sheet host for the customization page.
+ *
+ * <p>
+ * Adds a single "All Customizations" tab holding a {@link CustomizationListView}
+ * and places the list's toolbar above the sheet.
+ * </p>
+ */
 @AllArgsConstructor
 @Slf4j
 public class CustomizationTabs extends VerticalLayout {

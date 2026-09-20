@@ -3,6 +3,11 @@ package com.harmoni.menu.dashboard.layout.organization.tier.service;
 import lombok.Builder;
 import lombok.Data;
 
+/**
+ * Tree-grid item for the service-tier view. Carries the tier, service and
+ * sub-service identities plus the activation flag and parent/level so the
+ * {@code TreeGrid} can bind the hierarchy, checkboxes and per-row actions.
+ */
 @Data
 @Builder
 public class TierServiceTreeItem {

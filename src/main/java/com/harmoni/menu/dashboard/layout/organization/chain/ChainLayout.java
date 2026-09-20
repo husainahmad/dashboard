@@ -10,6 +10,10 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
+/**
+ * Main route ({@code /chain}) for the chain administration domain. Hosts the
+ * {@link ChainTabs} component inside the {@link MainLayout} shell.
+ */
 @AllArgsConstructor
 @Route(value = "chain", layout = MainLayout.class)
 @PageTitle(MainLayout.TITLE)

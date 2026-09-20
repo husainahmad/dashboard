@@ -19,6 +19,11 @@ import lombok.RequiredArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Called when the user clicks Update on the tier menu tree grid: reads the
+ * selected/active categories from the tree, posts the tier-menu mappings and
+ * broadcasts the result.
+ */
 @RequiredArgsConstructor
 public class TierMenuUpdateEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
@@ -53,6 +58,12 @@ public class TierMenuUpdateEventListener implements ComponentEventListener<Click
         return tierServiceDto;
     }
 
+    /**
+     * Extracts the tier-menu payload from the tree grid and posts it via the
+     * REST API, broadcasting the result on success.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         restClientOrganizationService.updateTierMenu(this.tierDto, extractedPayload(this.tierMenuTreeItem))

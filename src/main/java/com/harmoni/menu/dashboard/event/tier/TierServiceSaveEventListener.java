@@ -13,6 +13,10 @@ import com.vaadin.flow.component.button.Button;
 import lombok.RequiredArgsConstructor;
 
 
+/**
+ * Called when the user clicks Save on the tier service form: validates the
+ * binder, posts the new tier service and broadcasts the result.
+ */
 @RequiredArgsConstructor
 public class TierServiceSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
@@ -20,6 +24,11 @@ public class TierServiceSaveEventListener implements ComponentEventListener<Clic
     private final TierServiceForm tierForm;
     private final RestClientOrganizationService restClientOrganizationService;
 
+    /**
+     * Validates the tier service form and, if valid, posts the new tier service.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         if (this.tierForm.getBinder().validate().hasErrors()) {

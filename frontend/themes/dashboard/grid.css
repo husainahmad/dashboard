@@ -17,7 +17,8 @@ vaadin-grid {
 vaadin-grid::part(header-cell) {
 
     background:
-        var(--lumo-contrast-5pct);
+        var(--lumo-contrast-5pct),
+        var(--app-surface);
 
     color:
         var(--app-text-secondary);

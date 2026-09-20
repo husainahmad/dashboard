@@ -10,6 +10,10 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import lombok.AllArgsConstructor;
 
+/**
+ * Called when the user clicks Save on the store form: validates the binder,
+ * posts the new store and broadcasts the result.
+ */
 @AllArgsConstructor
 public class StoreSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
@@ -17,6 +21,11 @@ public class StoreSaveEventListener implements ComponentEventListener<ClickEvent
     private final transient StoreForm storeForm;
     private final RestClientOrganizationService restClientOrganizationService;
 
+    /**
+     * Validates the store form and, if valid, posts the new store.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         if (storeForm.getBinder().validate().hasErrors()) {

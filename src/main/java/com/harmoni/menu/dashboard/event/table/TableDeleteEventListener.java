@@ -13,6 +13,11 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Called when the user clicks Delete on the table form: shows a confirmation
+ * dialog and, once confirmed, removes the table via the REST API, shows a
+ * success toast and broadcasts the result.
+ */
 @RequiredArgsConstructor
 public class TableDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
@@ -21,6 +26,11 @@ public class TableDeleteEventListener implements ComponentEventListener<ClickEve
     private final RestClientSettingService restClientSettingService;
     private final UI ui;
 
+    /**
+     * Opens the delete confirmation dialog when the delete button is clicked.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         setConfirmDialogDelete();

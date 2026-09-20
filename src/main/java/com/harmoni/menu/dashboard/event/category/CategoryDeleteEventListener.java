@@ -12,6 +12,11 @@ import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Called when the user clicks Delete on the category form: shows a confirmation
+ * dialog and, once confirmed, removes the category via the REST API and
+ * broadcasts the result so every open grid refreshes.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class CategoryDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
@@ -20,6 +25,11 @@ public class CategoryDeleteEventListener implements ComponentEventListener<Click
     private final transient CategoryDto categoryDto;
     private final RestClientMenuService restClientMenuService;
 
+    /**
+     * Opens the delete confirmation dialog when the delete button is clicked.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         setConfirmDialogDelete();

@@ -11,6 +11,14 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Tab sheet host for the category page.
+ *
+ * <p>
+ * Adds a single "All Categories" tab holding a {@link CategoryListView} and
+ * places the list's toolbar above the sheet.
+ * </p>
+ */
 @AllArgsConstructor
 @Slf4j
 public class CategoryTabs extends VerticalLayout {
@@ -20,6 +28,10 @@ public class CategoryTabs extends VerticalLayout {
     private final RestClientMenuService restClientMenuService;
     private final AccessService accessService;
 
+    /**
+     * Renders the tab sheet with a single "All Categories" tab and the list's
+     * toolbar above it.
+     */
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();

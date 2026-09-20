@@ -10,10 +10,18 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+/**
+ * Landing page rendered at the root of the app after login. Shows a welcome
+ * hero, stat cards summarising the main administration areas and quick
+ * guidance for the initial setup.
+ */
 @Route(value = "", layout = MainLayout.class)
 @PageTitle("Dashboard | POSHarmoni")
 public class DashboardView extends VerticalLayout {
 
+    /**
+     * Builds the hero, stat cards and quick-guidance panels in order.
+     */
     public DashboardView() {
         addClassName("dashboard-view");
         setSizeFull();

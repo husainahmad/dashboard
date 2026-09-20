@@ -11,6 +11,10 @@ import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Called when the user clicks Update on the table form: validates the binder,
+ * posts the updated table and broadcasts the result.
+ */
 @RequiredArgsConstructor
 public class TableUpdateEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
@@ -18,6 +22,11 @@ public class TableUpdateEventListener implements ComponentEventListener<ClickEve
     private final TableForm tableForm;
     private final RestClientSettingService restClientSettingService;
 
+    /**
+     * Validates the table form and, if valid, posts the updated table.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         if (this.tableForm.getBinder().validate().hasErrors()) {

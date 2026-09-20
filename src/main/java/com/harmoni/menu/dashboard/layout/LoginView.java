@@ -21,6 +21,12 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.Lumo;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * The sign-in screen at {@code /login}. Shows the POSHarmoni branding next to
+ * a username/password form and delegates authentication to
+ * {@link RestClientLoginService}. The layout is re-drawn entirely on every
+ * attach to apply the persisted theme, so a browser reload rebuilds the page.
+ */
 @RequiredArgsConstructor
 @Route(value = "login")
 public class LoginView extends VerticalLayout {
@@ -104,6 +110,11 @@ public class LoginView extends VerticalLayout {
         return formSide;
     }
 
+    /**
+     * Reads the credentials currently entered in the form fields.
+     *
+     * @return the username and password as entered
+     */
     public LoginDto getLoginDto() {
         LoginDto loginDto = new LoginDto();
         loginDto.setUsername(usernameField.getValue());

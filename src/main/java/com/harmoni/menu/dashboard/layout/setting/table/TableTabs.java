@@ -10,6 +10,12 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Tab sheet for the table setting, hosting the {@link TableListView} as its
+ * "All Tables" tab together with the shared toolbar. Delegates data access to
+ * the async client and persistence to the blocking
+ * {@link RestClientSettingService}.
+ */
 @AllArgsConstructor
 @Slf4j
 public class TableTabs extends VerticalLayout {

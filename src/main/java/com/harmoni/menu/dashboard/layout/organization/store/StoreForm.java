@@ -40,6 +40,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Vaadin form for editing a {@link StoreDto} inside a store tab. Renders chain
+ * and tier (price, menu, service) {@link ComboBox}es plus store name/address
+ * fields bound with a {@link BeanValidationBinder}, pre-loaded from
+ * {@code objectParams}. Wires the save/update buttons to
+ * {@link StoreSaveEventListener} / {@link StoreUpdateEventListener}, and
+ * removes the tab on a successful BROADCAST insert or update.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class StoreForm extends FormLayout {
@@ -126,6 +134,9 @@ public class StoreForm extends FormLayout {
         renderLayout();
     }
 
+    /**
+     * Removes the store tab from the parent {@link TabSheet} on the UI thread.
+     */
     public void close() {
         this.ui.access(() -> {
             if (!(getParent().orElseThrow() instanceof TabSheet tabSheet)) {
@@ -156,6 +167,11 @@ public class StoreForm extends FormLayout {
                 .bind(StoreDto::getName, StoreDto::setName);
     }
 
+    /**
+     * Copies the field values into the wrapped store DTO and returns it.
+     *
+     * @return the populated store DTO for saving or updating
+     */
     public StoreDto getStoreDto() {
         storeDto.setName(this.storeNameField.getValue());
         storeDto.setChainId(this.chainDtoComboBox.getValue().getId());
@@ -243,6 +259,11 @@ public class StoreForm extends FormLayout {
         restructureButton();
     }
 
+    /**
+     * Shows or hides the save, update and cancel buttons depending on the form
+     * action (only save for create, only update for edit; cancel always
+     * visible).
+     */
     public void restructureButton() {
         if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
             saveButton.setVisible(true);

@@ -27,6 +27,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
+/**
+ * The "All Categories" grid view inside {@link CategoryTabs}.
+ *
+ * <p>
+ * Renders the category list in a {@link Grid} with a name filter and per-row
+ * edit and delete actions; deletion is delegated to
+ * {@link CategoryDeleteEventListener} and editing opens a {@link CategoryForm}
+ * in a dialog. The list refreshes itself whenever a category-insert or
+ * category-updated broadcast is received via {@link Broadcaster}.
+ * </p>
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class CategoryListView extends VerticalLayout {
@@ -87,6 +98,11 @@ public class CategoryListView extends VerticalLayout {
         return content;
     }
 
+    /**
+     * Builds the list toolbar containing the name filter and the "New Category" button.
+     *
+     * @return the toolbar row for this list view
+     */
     public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
@@ -126,20 +142,39 @@ public class CategoryListView extends VerticalLayout {
         broadcasterRegistration = null;
     }
 
+    /**
+     * Opens the {@link CategoryForm} dialog for a new category after loading the
+     */
     private void addCategory() {
         categoryDtoGrid.asSingleSelect().clear();
         editCategory(new CategoryDto(), FormAction.CREATE);
     }
 
+    /**
+     * Opens the {@link CategoryForm} dialog for the given category — create or
+     * edit depending on {@code formAction} — after loading the available brands.
+     *
+     * @param categoryDto the category to bind, or an empty DTO for a new one
+     * @param formAction  whether the dialog should create or update
+     */
     public void editCategory(CategoryDto categoryDto, FormAction formAction) {
-        Dialog dialog = new Dialog();
-        dialog.setHeaderTitle(formAction == FormAction.EDIT ? "Edit Category" : "Add Category");
-        dialog.setWidth("420px");
-        dialog.add(new CategoryForm(this.asyncRestClientOrganizationService,
-                this.restClientMenuService, dialog, formAction, categoryDto));
-        dialog.open();
+        loadingBar.start();
+        asyncRestClientOrganizationService.getAllBrandAsync(brands ->
+                ui.access(() -> {
+                    loadingBar.stop();
+                    Dialog dialog = new Dialog();
+                    dialog.setHeaderTitle(formAction == FormAction.EDIT ? "Edit Category" : "Add Category");
+                    dialog.setWidth("420px");
+                    CategoryForm categoryForm = new CategoryForm(this.asyncRestClientOrganizationService,
+                            this.restClientMenuService, dialog, formAction, categoryDto, brands);
+                    dialog.add(categoryForm);
+                    dialog.open();
+                }));
     }
 
+    /**
+     * Fetches the list of categories from the REST API and updates the grid.
+     */
     private void fetchCategories() {
         loadingBar.start();
         asyncRestClientMenuService.getAllCategoryAsync(result -> ui.access(() -> {

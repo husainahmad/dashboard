@@ -28,6 +28,11 @@ import com.vaadin.flow.shared.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Vaadin grid view listing the price tiers (type {@code PRICE}) of the current
+ * user's brand. Refreshes on TIER BROADCAST insert/update/delete and hosts an
+ * inline {@link TierPriceForm} editor for add/edit.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class TierPriceListView extends VerticalLayout {
@@ -143,6 +148,11 @@ public class TierPriceListView extends VerticalLayout {
         return content;
     }
 
+    /**
+     * Builds the toolbar with a lazy name filter and a "New Tier" button.
+     *
+     * @return the toolbar layout to place above the grid
+     */
     public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);

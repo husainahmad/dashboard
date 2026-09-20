@@ -28,6 +28,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
+/**
+ * Vaadin grid view listing all brands. Refreshes on BROADCAST insert/update,
+ * exposes edit/delete actions per row, and opens a {@link BrandForm} dialog
+ * for add/edit.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class BrandListView extends VerticalLayout {
@@ -87,6 +92,11 @@ public class BrandListView extends VerticalLayout {
                 new BrandDeleteEventListener(brandDto, restClientOrganizationService));
     }
 
+    /**
+     * Builds the toolbar with a lazy name filter and a "New Brand" button.
+     *
+     * @return the toolbar layout to place above the grid
+     */
     public HorizontalLayout getToolbarComponent() {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
@@ -124,6 +134,12 @@ public class BrandListView extends VerticalLayout {
         broadcasterRegistration = null;
     }
 
+    /**
+     * Opens a dialog containing a {@link BrandForm} for the given brand.
+     *
+     * @param brandDto   the brand to edit, or a new empty one to create
+     * @param formAction whether the dialog is in create or edit mode
+     */
     public void editBrand(BrandDto brandDto, FormAction formAction) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle(formAction == FormAction.EDIT ? "Edit Brand" : "Add Brand");

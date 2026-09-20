@@ -11,6 +11,11 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import lombok.AllArgsConstructor;
 
+/**
+ * Called when the user clicks Delete on the store form: shows a confirmation
+ * dialog and, once confirmed, removes the store via the REST API and broadcasts
+ * the result so every open grid refreshes.
+ */
 @AllArgsConstructor
 public class StoreDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
@@ -18,6 +23,11 @@ public class StoreDeleteEventListener implements ComponentEventListener<ClickEve
     private final transient StoreDto storeDto;
     private final RestClientOrganizationService restClientOrganizationService;
 
+    /**
+     * Opens the delete confirmation dialog when the delete button is clicked.
+     *
+     * @param buttonClickEvent the click event that triggered the listener
+     */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         setConfirmDialogDelete();

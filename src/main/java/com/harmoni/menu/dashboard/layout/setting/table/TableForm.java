@@ -29,18 +29,28 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Objects;
 
+/**
+ * Dialog form for creating or editing a table, binding the name and capacity
+ * fields through a {@link BeanValidationBinder}. The footer buttons are wired
+ * to {@link TableSaveEventListener} / {@link TableUpdateEventListener}, which
+ * persist through the injected {@link RestClientSettingService}; success is
+ * awaited from {@link Broadcaster} receipts before the dialog closes.
+ */
 @RequiredArgsConstructor
 @Slf4j
 public class TableForm extends FormLayout {
 
     Registration broadcasterRegistration;
 
+    /** Binder that drives field validation and reads/writes the {@link TableDto}. */
     @Getter
     BeanValidationBinder<TableDto> binder = new BeanValidationBinder<>(TableDto.class);
 
+    /** Text field holding the table name. */
     @Getter
     TextField nameField = new TextField("Table name");
 
+    /** Integer field holding the seating capacity (1-999). */
     @Getter
     IntegerField capacityField = new IntegerField("Capacity");
 
@@ -51,9 +61,11 @@ public class TableForm extends FormLayout {
     private final Dialog dialog;
     private final FormAction formAction;
 
+    /** UI this form was attached to, used to marshal callbacks onto the UI thread. */
     @Getter
     UI ui;
 
+    /** The table being edited, empty when creating a new one. */
     @Getter
     private final transient TableDto tableDto;
 
@@ -87,6 +99,9 @@ public class TableForm extends FormLayout {
         broadcasterRegistration = null;
     }
 
+    /**
+     * Closes the hosting dialog on the UI thread.
+     */
     public void close() {
         ui.access(() -> dialog.close());
     }
@@ -122,6 +137,12 @@ public class TableForm extends FormLayout {
         dialog.getFooter().add(saveButton, updateButton, closeButton);
     }
 
+    /**
+     * Toggles the footer button visibility for the given action: the save
+     * button for CREATE, update/delete for EDIT.
+     *
+     * @param formAction whether the form creates or edits
+     */
     public void restructureButton(FormAction formAction) {
         if (Objects.requireNonNull(formAction) == FormAction.CREATE) {
             saveButton.setVisible(true);

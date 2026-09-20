@@ -9,6 +9,11 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
+/**
+ * Main route ({@code /tier-service}) for the tier-service administration
+ * domain. Hosts the {@link TierServiceTabs} component inside the
+ * {@link MainLayout} shell.
+ */
 @AllArgsConstructor
 @Route(value = "tier-service", layout = MainLayout.class)
 @PageTitle("Tier Service | POSHarmoni")

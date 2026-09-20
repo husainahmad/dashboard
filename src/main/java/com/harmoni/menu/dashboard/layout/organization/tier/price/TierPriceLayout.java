@@ -10,6 +10,10 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 
+/**
+ * Main route ({@code /tier-price}) for the tier-price administration domain.
+ * Hosts the {@link TierPriceTabs} component inside the {@link MainLayout} shell.
+ */
 @AllArgsConstructor
 @Route(value = "tier-price", layout = MainLayout.class)
 @PageTitle("Tier Price | POSHarmoni")

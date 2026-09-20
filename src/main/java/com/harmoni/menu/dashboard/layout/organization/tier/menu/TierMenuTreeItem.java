@@ -6,6 +6,12 @@ import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
 import lombok.Builder;
 import lombok.Data;
 
+/**
+ * Tree-grid item for the menu-tier view. Carries the owning {@link TierDto},
+ * an optional {@link CategoryDto} child node, the activation flag and the
+ * parent/level so the {@code TreeGrid} can bind the hierarchy, checkboxes and
+ * per-row actions.
+ */
 @Data
 @Builder
 public class TierMenuTreeItem {

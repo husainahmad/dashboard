@@ -10,6 +10,10 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Tab sheet hosting the chain browse view. Adds the "All Chains" tab with the
+ * {@link ChainListView} and its toolbar.
+ */
 @AllArgsConstructor
 @Slf4j
 public class ChainTabs extends VerticalLayout {

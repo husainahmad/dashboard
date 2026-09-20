@@ -11,6 +11,10 @@ import com.vaadin.flow.router.Route;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Tab sheet hosting the store browse view. Adds the "All Stores" tab with the
+ * {@link StoreListView} and its toolbar.
+ */
 @RequiredArgsConstructor
 @Slf4j
 @Route("store-tabs")
