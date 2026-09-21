@@ -16,6 +16,12 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+/**
+ * Refreshes an expired access token using the stored refresh token.
+ *
+ * <p>Exposed as a singleton so the reactive REST clients can trigger a refresh
+ * from anywhere; the refreshed {@link JwtDto} replaces the session token.
+ */
 @RequiredArgsConstructor
 @Component
 @Slf4j

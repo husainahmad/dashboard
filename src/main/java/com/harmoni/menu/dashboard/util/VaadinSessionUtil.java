@@ -2,6 +2,13 @@ package com.harmoni.menu.dashboard.util;
 
 import com.vaadin.flow.server.VaadinSession;
 
+/**
+ * Type-safe accessors for the current {@link VaadinSession}.
+ *
+ * <p>Holds the authentication material (JWT and refresh tokens) and the signed-in
+ * user details under the keys declared below. All methods tolerate a missing
+ * session and return {@code null} then.
+ */
 public class VaadinSessionUtil {
 
     public static final String JWT_TOKEN = "JWT_TOKEN";

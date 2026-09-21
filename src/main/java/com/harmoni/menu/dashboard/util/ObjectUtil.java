@@ -10,6 +10,14 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Objects;
 
+/**
+ * JSON/object conversion helpers built on a lenient Jackson
+ * {@link ObjectMapper}.
+ *
+ * <p>The shared mapper ignores unknown properties and allows unquoted field
+ * names, so it can convert arbitrary backend payloads without failing on
+ * fields the DTOs do not model.
+ */
 public final class ObjectUtil {
 
     private ObjectUtil() {

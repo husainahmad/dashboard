@@ -23,6 +23,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Reactive client for the organization backend endpoints (chains, stores and
+ * tables).
+ *
+ * <p>Each getter performs an asynchronous {@link WebClient} request and returns
+ * the result through an {@link AsyncRestCallback}. A missing or expired token
+ * is refreshed transparently via {@link TokenRefreshService}; business
+ * failures are reported through {@link BusinessBadRequestException} or
+ * {@link BusinessServerRequestException}.
+ */
 @RequiredArgsConstructor
 @Service
 @Slf4j

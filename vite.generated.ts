@@ -36,7 +36,7 @@ import { createRequire } from 'module';
 import { visualizer } from 'rollup-plugin-visualizer';
 import reactPlugin from '@vitejs/plugin-react';
 
-
+import vitePluginFileSystemRouter from '@vaadin/hilla-file-router/vite-plugin.js';
 
 // Make `require` compatible with ES modules
 const require = createRequire(import.meta.url);
@@ -273,7 +273,7 @@ function statsExtracterPlugin(): PluginOption {
       const frontendFiles: Record<string, string> = {};
       frontendFiles['index.html'] = createHash('sha256').update(customIndexData.replace(/\r\n/g, '\n'), 'utf8').digest('hex');
 
-      const projectFileExtensions = ['.js', '.js.map', '.ts', '.ts.map', '.tsx', '.tsx.map', '.css', '.css.map'];
+      const projectFileExtensions = ['.js', '.js.map', '.ts', '.ts.map', '.tsx', '.tsx.map', '.css', '.css.map', '.'];
 
       const isThemeComponentsResource = (id: string) =>
           id.startsWith(themeOptions.frontendGeneratedFolder.replace(/\\/g, '/'))
@@ -829,7 +829,7 @@ export const vaadinConfig: UserConfigFn = (env) => {
         typescript: true
       }),
       productionMode && visualizer({ brotliSize: true, filename: bundleSizeFile })
-      
+      , vitePluginFileSystemRouter({isDevMode: devMode})
     ]
   };
 };

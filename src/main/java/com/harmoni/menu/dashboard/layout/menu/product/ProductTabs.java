@@ -11,6 +11,12 @@ import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Hosts the product management tab sheet.
+ *
+ * <p>Renders an "All Products" tab backed by {@link ProductListView}, sharing
+ * the list toolbar and the injected menu/state services.
+ */
 @AllArgsConstructor
 @Slf4j
 @Route("product-tabs")

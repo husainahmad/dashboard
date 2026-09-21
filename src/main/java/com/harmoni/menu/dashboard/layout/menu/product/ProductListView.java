@@ -46,6 +46,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Product browsing and management view.
+ *
+ * <p>Shows products as a hierarchical {@link TreeGrid} (product rows expanded
+ * into their SKUs), with category, brand and tier filters, pagination,
+ * search and per-product edit/delete actions. Opens the edit form in the tab
+ * supplied by the hosting {@link ProductTabs} view and refreshes the tree from
+ * the menu service.
+ */
 @RequiredArgsConstructor
 @UIScope
 @PreserveOnRefresh

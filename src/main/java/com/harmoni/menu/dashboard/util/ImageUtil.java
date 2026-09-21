@@ -6,6 +6,13 @@ import com.vaadin.flow.server.StreamResource;
 import java.io.*;
 import java.util.UUID;
 
+/**
+ * File and stream helpers for product images.
+ *
+ * <p>Converts an uploaded {@link ImageDto} into a temp file for the upload
+ * request and exposes raw image bytes as a Vaadin {@link StreamResource} for
+ * previewing.
+ */
 public class ImageUtil {
 
     private ImageUtil() {

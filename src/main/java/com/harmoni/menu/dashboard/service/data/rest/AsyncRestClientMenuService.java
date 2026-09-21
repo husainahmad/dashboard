@@ -26,6 +26,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * Reactive client for the menu-related backend endpoints (brands, categories,
+ * products, SKUs, customizations and prices).
+ *
+ * <p>Each getter performs an asynchronous {@link WebClient} request and returns
+ * the result through an {@link AsyncRestCallback}. A missing or expired token
+ * is refreshed transparently via {@link TokenRefreshService}; business
+ * failures are reported through {@link BusinessBadRequestException} or
+ * {@link BusinessServerRequestException}.
+ */
 @RequiredArgsConstructor
 @Service
 @Slf4j

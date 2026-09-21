@@ -22,6 +22,15 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Reactive client for the settings backend endpoints (services).
+ *
+ * <p>Each getter performs an asynchronous {@link WebClient} request and returns
+ * the result through an {@link AsyncRestCallback}. A missing or expired token
+ * is refreshed transparently via {@link TokenRefreshService}; business
+ * failures are reported through {@link BusinessBadRequestException} or
+ * {@link BusinessServerRequestException}.
+ */
 @RequiredArgsConstructor
 @Service
 @Slf4j
