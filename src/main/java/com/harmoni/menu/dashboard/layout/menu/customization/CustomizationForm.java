@@ -375,7 +375,7 @@ public class CustomizationForm extends VerticalLayout {
         if (ui == null) {
             return;
         }
-        ui.access(() -> {
+        UiUtil.safeAccess(ui, () -> {
             if (ObjectUtils.isEmpty(response.getData())) {
                 ensureEditData();
                 return;
@@ -402,7 +402,7 @@ public class CustomizationForm extends VerticalLayout {
     private void handleTierLoadFailure(Throwable error) {
         log.error("Failed to load price tiers", error);
         if (ui != null) {
-            ui.access(this::ensureEditData);
+            UiUtil.safeAccess(ui, this::ensureEditData);
         }
     }
 
@@ -410,7 +410,7 @@ public class CustomizationForm extends VerticalLayout {
         if (ui == null) {
             return;
         }
-        ui.access(() -> {
+        UiUtil.safeAccess(ui, () -> {
             if (!ObjectUtils.isEmpty(response.getData())) {
                 tierDtos = ObjectUtil.convertObjectToObject(response.getData(), new TypeReference<>() {
                 });
@@ -637,7 +637,7 @@ public class CustomizationForm extends VerticalLayout {
         if (ui == null) {
             return;
         }
-        ui.access(() -> {
+        UiUtil.safeAccess(ui, () -> {
             UiUtil.success("Customization saved successfully");
             closeTab();
         });
@@ -651,7 +651,7 @@ public class CustomizationForm extends VerticalLayout {
         if (ui == null) {
             return;
         }
-        ui.access(() -> {
+        UiUtil.safeAccess(ui, () -> {
             UiUtil.success("Customization updated successfully");
             closeTab();
         });
@@ -666,7 +666,7 @@ public class CustomizationForm extends VerticalLayout {
         if (ui == null) {
             return;
         }
-        ui.access(() -> UiUtil.error("Unable to save customization"));
+        UiUtil.safeAccess(ui, () -> UiUtil.error("Unable to save customization"));
     }
 
     /**
@@ -679,7 +679,7 @@ public class CustomizationForm extends VerticalLayout {
         if (ui == null) {
             return;
         }
-        ui.access(() -> UiUtil.show(text, variant, 3000));
+        UiUtil.safeAccess(ui, () -> UiUtil.show(text, variant, 3000));
     }
 
     /**

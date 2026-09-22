@@ -6,14 +6,16 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * A node of the product tree grid.
  *
  * <p>Each node represents either a product or one of its SKUs. Product nodes
  * carry {@link #productId}, {@link #categoryId}, the name and the full SKU
- * list; SKU nodes carry {@link #skuId} and the tier price. The tree data is
- * used directly to seed the {@link ProductForm} editor.
+ * list; SKU nodes carry {@link #skuId} and the per-tier prices in
+ * {@link #tierPrices}. The tree data is used directly to seed the
+ * {@link ProductForm} editor.
  */
 @Data
 @Builder
@@ -39,4 +41,6 @@ public class ProductTreeItem {
     private String tierName;
     /** The product's SKUs, used to seed the edit form. */
     private List<SkuDto> skus;
+    /** Per-tier selling prices keyed by tier id, populated on SKU rows. */
+    private Map<Integer, Double> tierPrices;
 }

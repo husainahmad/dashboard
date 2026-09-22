@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.event.category.CategorySaveEventListener;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
@@ -18,8 +19,9 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
@@ -34,13 +36,13 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Dialog form for creating or editing a {@link CategoryDto}.
+ * Tab form for creating or editing a {@link CategoryDto}.
  *
  * <p>
  * Backed by a {@link BeanValidationBinder} over the name and description fields
  * with an optional {@link BrandDto} selection; persistence is handled by
  * {@link CategorySaveEventListener} against the injected {@code restClientMenuService}.
- * The dialog closes itself when the category-insert or category-updated broadcast
+ * The tab closes itself when the category-insert or category-updated broadcast
  * arrives via {@link Broadcaster}.
  * </p>
  */
@@ -76,7 +78,8 @@ public class CategoryForm extends FormLayout {
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
-    private final Dialog dialog;
+    private final TabManager tabManager;
+    private final Tab currentTab;
     private final FormAction formAction;
 
     /** The category being edited, or {@code null} when creating a new one. */
@@ -133,14 +136,14 @@ public class CategoryForm extends FormLayout {
      * @param text the message to display
      */
     public void showNotification(String text) {
-        ui.access(() -> UiUtil.success(text));
+        UiUtil.safeAccess(ui, () -> UiUtil.success(text));
     }
 
     /**
-     * Closes the hosting dialog on the UI thread.
+     * Closes the hosting tab on the UI thread.
      */
     public void close() {
-        ui.access(() -> dialog.close());
+        UiUtil.safeAccess(ui, () -> tabManager.closeAndSelectFirst(currentTab));
     }
 
     @Override
@@ -149,6 +152,12 @@ public class CategoryForm extends FormLayout {
         broadcasterRegistration = null;
     }
 
+    /**
+     * Adds validation rules to the binder for the category name and description fields.
+     * <p>
+     * The name and description must each contain at least three characters.
+     * </p>
+     */
     private void addValidation() {
 
         binder.forField(categoryNameField)
@@ -162,6 +171,13 @@ public class CategoryForm extends FormLayout {
                 .bind(CategoryDto::getDescription, CategoryDto::setDescription);
     }
 
+    /**
+     * Restores the selected brand in the brand combo box based on the category's
+     * associated brand ID or brand DTO. This is only applicable when editing an
+     * existing category.
+     *
+     * @param brands the list of available brands to search for the selected one
+     */
     private void restoreSelectedBrand(List<BrandDto> brands) {
         if (formAction != FormAction.EDIT || ObjectUtils.isEmpty(categoryDto)) {
             return;
@@ -176,6 +192,13 @@ public class CategoryForm extends FormLayout {
                 .ifPresent(brandBox::setValue);
     }
 
+    /**
+     * Resolves the brand ID for the category being edited. It first checks if the
+     * category DTO has a direct brand ID; if not, it attempts to retrieve the ID
+     * from the associated brand DTO.
+     *
+     * @return the resolved brand ID, or {@code null} if not found
+     */
     private Integer resolveBrandId() {
         if (categoryDto.getBrandId() != null && categoryDto.getBrandId() > 0) {
             return categoryDto.getBrandId();
@@ -201,7 +224,9 @@ public class CategoryForm extends FormLayout {
 
         closeButton.addClickListener(event -> close());
 
-        dialog.getFooter().add(saveButton, updateButton, closeButton);
+        HorizontalLayout footer = new HorizontalLayout(saveButton, updateButton, closeButton);
+        footer.setWidthFull();
+        add(footer);
     }
 
     /**

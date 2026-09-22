@@ -91,6 +91,13 @@ public class CustomizationAddDialog extends Dialog {
         getFooter().add(cancelButton, addSelectedButton);
     }
 
+    /**
+     * Builds the metadata string for a customization, showing its selection type,
+     * required/optional status, and min/max selection range.
+     *
+     * @param customization the customization to build metadata for
+     * @return a formatted string with the customization's metadata
+     */
     private String buildAddMeta(CustomizationDto customization) {
         String type = customization.getSelectionType() == null ? ""
                 : customization.getSelectionType().getLabel();

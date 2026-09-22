@@ -135,6 +135,18 @@ public class RestClientMenuService extends RestClientService implements Serializ
     }
 
     /**
+     * Inserts or updates the price of a single SKU under a price tier, used by
+     * the inline price matrix in the product tree.
+     *
+     * @param skuTierPriceDto the SKU, tier and price to persist
+     * @return a {@link Mono} with the server response
+     */
+    public Mono<RestAPIResponse> updateSkuTierPrice(SkuTierPriceDto skuTierPriceDto) {
+        return post(urlMenuProperties.getUrl().getSkutierprice(),
+                Mono.just(skuTierPriceDto), SkuTierPriceDto.class);
+    }
+
+    /**
      * Deletes a category.
      *
      * @param categoryDto the category to delete

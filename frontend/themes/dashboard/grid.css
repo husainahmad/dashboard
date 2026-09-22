@@ -124,3 +124,75 @@ vaadin-grid.tier-grid::part(cell) {
     padding-left:
         var(--lumo-space-xs);
 }
+
+/* ---------- Inline price matrix cells ---------- */
+
+vaadin-grid .price-dirty {
+    box-shadow: inset 0 0 0 1px var(--lumo-primary-color);
+}
+
+vaadin-grid .price-saving {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+vaadin-grid .price-saved {
+    box-shadow: inset 0 0 0 1px var(--lumo-success-text-color, #16a34a);
+    background: color-mix(in srgb, var(--lumo-success-text-color, #16a34a) 10%, transparent);
+    transition: box-shadow 0.4s ease, background 0.4s ease;
+}
+
+vaadin-grid .price-error {
+    box-shadow: inset 0 0 0 1px var(--lumo-error-color);
+    background: color-mix(in srgb, var(--lumo-error-color) 10%, transparent);
+    transition: box-shadow 0.4s ease, background 0.4s ease;
+}
+
+/* ---------- Grid skeleton overlay ---------- */
+
+.grid-slot {
+    position: relative;
+}
+
+.grid-skeleton-overlay {
+    position: absolute;
+    inset: var(--lumo-space-s);
+    background: color-mix(in srgb, var(--app-surface) 78%, transparent);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 1;
+}
+
+.skeleton-row {
+    border-bottom: 1px solid var(--lumo-contrast-5pct);
+    padding: var(--lumo-space-s) 0;
+}
+
+.skeleton-bar {
+    height: var(--lumo-size-xs);
+    border-radius: var(--lumo-border-radius-m);
+    background: linear-gradient(
+        90deg,
+        var(--lumo-contrast-10pct) 25%,
+        var(--lumo-contrast-5pct) 50%,
+        var(--lumo-contrast-10pct) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s linear infinite;
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ---------- Inline price matrix commit hint ---------- */
+
+.price-commit-hint {
+    color: var(--lumo-primary-color);
+    font-weight: 600;
+}

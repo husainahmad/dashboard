@@ -62,7 +62,7 @@ public class ProductFormLayout extends FormLayout  {
      * @param text the message to display
      */
     public void showNotification(String text) {
-        ui.access(() -> UiUtil.success(text));
+        UiUtil.safeAccess(ui, () -> UiUtil.success(text));
     }
 
     /**
@@ -72,7 +72,7 @@ public class ProductFormLayout extends FormLayout  {
      */
     public void showErrorDialog(String message) {
         DialogClosing dialog = new DialogClosing(message);
-        ui.access(()-> {
+        UiUtil.safeAccess(ui, ()-> {
             add(dialog);
             dialog.open();
         });

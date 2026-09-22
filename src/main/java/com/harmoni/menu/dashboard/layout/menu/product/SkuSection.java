@@ -13,6 +13,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.ListDataProvider;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +33,8 @@ public class SkuSection {
     private final ProductFormDelegate delegate;
     private final List<SkuTreeItem> skuItems = new ArrayList<>();
     private final ListDataProvider<SkuTreeItem> dataProvider;
+
+    @Getter
     private final Grid<SkuTreeItem> grid = new Grid<>();
 
     /**
@@ -95,13 +98,6 @@ public class SkuSection {
         toolbar.setWidthFull();
         toolbar.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         return toolbar;
-    }
-
-    /**
-     * @return the SKU editing grid, rendered inside {@code ProductFormLayout.getContent}
-     */
-    public Grid<SkuTreeItem> getGrid() {
-        return grid;
     }
 
     /**

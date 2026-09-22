@@ -11,6 +11,7 @@ import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.menu.ProductFormLayout;
 import com.harmoni.menu.dashboard.layout.util.AsyncUtil;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
@@ -314,7 +315,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
      * {@link TabSheet}. Called after a successful save as well as on cancel.
      */
     public void removeFromSheet() {
-        getUi().access(() -> {
+        UiUtil.safeAccess(getUi(), () -> {
             if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
                 return;
             }
@@ -422,7 +423,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         saving = true;
         UI ui = getUi();
         if (ui != null) {
-            ui.access(() -> {
+            UiUtil.safeAccess(ui, () -> {
                 saveButton.setEnabled(false);
                 updateButton.setEnabled(false);
                 savingBar.start();
@@ -438,7 +439,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
     public void onSaveEnd() {
         UI ui = getUi();
         if (ui != null) {
-            ui.access(() -> {
+            UiUtil.safeAccess(ui, () -> {
                 saving = false;
                 savingBar.stop();
                 updateButtonStates();

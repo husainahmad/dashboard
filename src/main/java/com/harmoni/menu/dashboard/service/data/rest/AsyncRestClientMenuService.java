@@ -91,12 +91,23 @@ public class AsyncRestClientMenuService implements Serializable {
     }
 
     public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback, Integer brandId) {
+        getAllCategoryAsync(callback, null, brandId);
+    }
+
+    public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback,
+                                    AsyncRestCallback<Throwable> errorCallback, Integer brandId) {
         String url = MenuProperties.CATEGORY.formatted(menuProperties.getUrl().getCategories().getBrand(), brandId);
         makeAsyncRequest(url, new TypeReference<>() {
-        }, callback);
+        }, callback, errorCallback);
     }
 
     public void getAllProductCategoryBrandAsync(AsyncRestCallback<Map<String, Object>> callback,
+                                                Integer categoryId, Integer brandId, int page, int size, String search) {
+        getAllProductCategoryBrandAsync(callback, null, categoryId, brandId, page, size, search);
+    }
+
+    public void getAllProductCategoryBrandAsync(AsyncRestCallback<Map<String, Object>> callback,
+                                                AsyncRestCallback<Throwable> errorCallback,
                                                 Integer categoryId, Integer brandId, int page, int size, String search) {
         String url = MenuProperties.CATEGORY_BRAND.formatted(menuProperties.getUrl().getProducts().getCategory(),
                 categoryId, brandId).concat("?page=")
@@ -106,7 +117,7 @@ public class AsyncRestClientMenuService implements Serializable {
                 .concat("&search=")
                 .concat(search);
         makeAsyncRequest(url, new TypeReference<>() {
-        }, callback);
+        }, callback, errorCallback);
     }
 
     public void getAllCustomizationAsync(AsyncRestCallback<Map<String, Object>> callback,

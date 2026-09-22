@@ -65,11 +65,26 @@ public class TierSubServiceUpdateEventListener implements ComponentEventListener
      */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
+        execute(() -> {
+        });
+    }
+
+    /**
+     * Posts the tier-sub-service payload read from the tree grid, rolling the
+     * given callback back on failure. Used to save immediately from the row
+     * toggles without a dedicated Update button.
+     *
+     * @param rollback the action to run when the update fails (e.g. reverting
+     *                 the toggled checkbox)
+     */
+    public void execute(Runnable rollback) {
         extractedPayload(this.tierServiceTreeItem);
 
         restClientOrganizationService.updateTierService(this.tierDto, this.tierServiceDtos)
-                .doOnError(error -> new BrandHandler(this.ui,
-                        "Error while updating Tier ".concat(error.getMessage())))
+                .doOnError(error -> {
+                    new BrandHandler(this.ui, "Error while updating Tier ".concat(error.getMessage()));
+                    rollback.run();
+                })
                 .subscribe(this::accept);
     }
 

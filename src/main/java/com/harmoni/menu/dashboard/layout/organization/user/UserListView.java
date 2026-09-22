@@ -1,15 +1,14 @@
 package com.harmoni.menu.dashboard.layout.organization.user;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
-import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.event.user.UserDeleteEventListener;
+import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.enums.RoleType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
@@ -21,21 +20,17 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.shared.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Vaadin grid view listing the users of the current user's chain with
@@ -46,61 +41,36 @@ import java.util.List;
 @Route(value = "users-list", layout = MainLayout.class)
 @PageTitle("User | POSHarmoni")
 @Slf4j
-public class UserListView extends VerticalLayout {
+public class UserListView extends AbstractListView {
 
-    Registration broadcasterRegistration;
     private final Grid<UserDto> userDtoGrid = new Grid<>(UserDto.class);
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
 
-    TextField filterText = new TextField();
-    Text pageInfoText;
-
-    UI ui;
-    int totalPages;
-    int currentPage = 1;
-    static final int TEMP_BRAND_ID = 1;
-    private final LoadingBar loadingBar = new LoadingBar();
+    private final GridSkeleton gridSkeleton = new GridSkeleton(10);
 
 private void renderLayout() {
         setSizeFull();
         setPadding(false);
         configureGrid();
-        add(loadingBar, getContent(), getPaginationFooter());
+        add(getContent(), getPaginationFooter());
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        ui = attachEvent.getUI();
-        broadcasterRegistration = Broadcaster.register(message -> {
-            try {
-                BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
-                        && (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
-                    broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS))) {
-                        fetchUsers();
-                    }
-
-            } catch (JsonProcessingException e) {
-                log.error("Broadcast Handler Error", e);
-            }
-        });
+        super.onAttach(attachEvent);
+        refreshOnBroadcast(Set.of(BroadcastMessage.STORE_INSERT_SUCCESS,
+                BroadcastMessage.STORE_UPDATED_SUCCESS), this::fetchUsers);
 
         renderLayout();
         fetchUsers();
     }
 
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        broadcasterRegistration.remove();
-        broadcasterRegistration = null;
-    }
-
     private void configureGrid() {
         userDtoGrid.setSizeFull();
         userDtoGrid.removeAllColumns();
-        userDtoGrid.setEmptyStateText(UiUtil.NO_RECORDS);
+        userDtoGrid.setEmptyStateText("No users yet \u2014 click \u201CNew User\u201D to add one.");
         userDtoGrid.addColumn(UserDto::getUsername).setHeader("Name");
         userDtoGrid.addComponentColumn(userDto -> {
             return switch (userDto.getAuthId()) {
@@ -135,11 +105,7 @@ private void renderLayout() {
     }
 
     private HorizontalLayout getContent() {
-        HorizontalLayout content = new HorizontalLayout(userDtoGrid);
-        content.setFlexGrow(1, userDtoGrid);
-        content.addClassNames("content");
-        content.setSizeFull();
-        return content;
+        return gridSlot(userDtoGrid, gridSkeleton);
     }
 
     /**
@@ -148,10 +114,7 @@ private void renderLayout() {
      * @return the toolbar layout to place above the grid
      */
     public HorizontalLayout getToolbarComponent() {
-        filterText.setPlaceholder("Filter by name...");
-        filterText.setClearButtonVisible(true);
-        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
-        filterText.setValueChangeMode(ValueChangeMode.LAZY);
+        configureSearchFilter();
         filterText.getElement().setAttribute("autocomplete", "off");
         filterText.addValueChangeListener(changeEvent -> {
             if (!changeEvent.getOldValue().equals(changeEvent.getValue())) {
@@ -168,40 +131,24 @@ private void renderLayout() {
     }
 
     private HorizontalLayout getPaginationFooter() {
-        HorizontalLayout paginationFooter = new HorizontalLayout();
-        paginationFooter.addClassName("pagination");
-        Button previousButton = new Button("Previous", event -> {
+        return paginationFooter(() -> {
             if (currentPage > 1) {
                 currentPage--;
                 fetchUsers();
             }
-        });
-        Button nextButton = new Button("Next", event -> {
+        }, () -> {
             if (currentPage < totalPages) {
                 currentPage++;
                 fetchUsers();
             }
         });
-        pageInfoText = new Text(getPaginationInfo());
-        paginationFooter.add(previousButton, pageInfoText, nextButton);
-        paginationFooter.setDefaultVerticalComponentAlignment(Alignment.CENTER);
-        paginationFooter.setWidthFull();
-        paginationFooter.setJustifyContentMode(JustifyContentMode.BETWEEN);
-        return paginationFooter;
-    }
-
-    private String getPaginationInfo() {
-        return "Page "
-                .concat(String.valueOf(currentPage))
-                .concat(" of ")
-                .concat(String.valueOf(totalPages));
     }
 
     private void fetchUsers() {
         int pageSize = 10;
-        loadingBar.start();
-        asyncRestClientOrganizationService.getAllUserByChainAsync(result -> ui.access(() -> {
-            loadingBar.stop();
+        gridSkeleton.show();
+        asyncRestClientOrganizationService.getAllUserByChainAsync(result -> UiUtil.safeAccess(ui, () -> {
+            gridSkeleton.hide();
             if (ObjectUtils.isNotEmpty(result.get("data"))
                     && result.get("data") instanceof List<?> dataList && !dataList.isEmpty()) {
                 totalPages = Integer.parseInt(result.get("page") == null ? "0" :result.get("page").toString());
@@ -213,12 +160,15 @@ private void renderLayout() {
                 });
 
                 userDtoGrid.setItems(userDtos);
-                pageInfoText.setText(getPaginationInfo());
+                updatePagination();
             } else {
                 userDtoGrid.setItems(new ArrayList<>());
                 totalPages = 0;
-                pageInfoText.setText(getPaginationInfo());
+                updatePagination();
             }
+        }), error -> UiUtil.safeAccess(ui, () -> {
+            gridSkeleton.hide();
+            UiUtil.errorWithRetry("Couldn't load users", this::fetchUsers);
         }), accessService.getUserDetail().getStoreDto().getChainId(), currentPage, pageSize, filterText.getValue());
     }
 

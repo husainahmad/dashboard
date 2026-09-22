@@ -49,20 +49,41 @@ public class AsyncRestClientSettingService implements Serializable {
     }
 
     public void getAllService(AsyncRestCallback<List<ServiceDto>> callback) {
-        makeAsyncRequest(settingProperties.getUrl().getService(), new TypeReference<List<ServiceDto>>() {}, callback);
+        getAllService(callback, null);
+    }
+
+    public void getAllService(AsyncRestCallback<List<ServiceDto>> callback,
+                              AsyncRestCallback<Throwable> errorCallback) {
+        makeAsyncRequest(settingProperties.getUrl().getService(), new TypeReference<List<ServiceDto>>() {}, callback, errorCallback);
     }
 
     public void getAllTables(AsyncRestCallback<List<TableDto>> callback) {
-        makeAsyncRequest(settingProperties.getUrl().getTable(), new TypeReference<List<TableDto>>() {}, callback);
+        getAllTables(callback, null);
+    }
+
+    public void getAllTables(AsyncRestCallback<List<TableDto>> callback,
+                             AsyncRestCallback<Throwable> errorCallback) {
+        makeAsyncRequest(settingProperties.getUrl().getTable(), new TypeReference<List<TableDto>>() {}, callback, errorCallback);
     }
 
     public void getAllTablesByStore(AsyncRestCallback<List<TableDto>> callback, Integer storeId) {
+        getAllTablesByStore(callback, null, storeId);
+    }
+
+    public void getAllTablesByStore(AsyncRestCallback<List<TableDto>> callback,
+                                    AsyncRestCallback<Throwable> errorCallback, Integer storeId) {
         String uri = settingProperties.getUrl().getTable().concat("/store/%d".formatted(storeId));
-        makeAsyncRequest(uri, new TypeReference<List<TableDto>>() {}, callback);
+        makeAsyncRequest(uri, new TypeReference<List<TableDto>>() {}, callback, errorCallback);
     }
 
     private <T> void makeAsyncRequest(String uri, TypeReference<T> typeReference,
                                       AsyncRestClientSettingService.AsyncRestCallback<T> callback) {
+        makeAsyncRequest(uri, typeReference, callback, null);
+    }
+
+    private <T> void makeAsyncRequest(String uri, TypeReference<T> typeReference,
+                                      AsyncRestClientSettingService.AsyncRestCallback<T> callback,
+                                      AsyncRestClientSettingService.AsyncRestCallback<Throwable> errorCallback) {
         TokenRefreshService.TokenRequest<RestAPIResponse> request = accessToken -> webClient.get()
                 .uri(uri)
                 .header(HttpHeaders.AUTHORIZATION, resolveToken(accessToken))
@@ -85,7 +106,12 @@ public class AsyncRestClientSettingService implements Serializable {
                             typeReference
                     );
                     callback.operationFinished(data);
-                }, error -> log.error("Async request failed uri={}", uri, error));
+                }, error -> {
+                    log.error("Async request failed uri={}", uri, error);
+                    if (errorCallback != null) {
+                        errorCallback.operationFinished(error);
+                    }
+                });
     }
 
     private static String resolveToken(String accessToken) {

@@ -1,52 +1,42 @@
 package com.harmoni.menu.dashboard.layout.organization.brand;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
-import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.event.brand.BrandDeleteEventListener;
+import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
-import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.component.tabs.TabSheet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
+import java.util.Set;
+
 /**
  * Vaadin grid view listing all brands. Refreshes on BROADCAST insert/update,
- * exposes edit/delete actions per row, and opens a {@link BrandForm} dialog
+ * exposes edit/delete actions per row, and opens a {@link BrandForm} tab
  * for add/edit.
  */
 @RequiredArgsConstructor
 @Slf4j
-public class BrandListView extends VerticalLayout {
-
-    Registration broadcasterRegistration;
+public class BrandListView extends AbstractListView {
 
     Grid<BrandDto> brandDtoGrid = new Grid<>(BrandDto.class);
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
 
-    UI ui;
-    TextField filterText = new TextField();
-    LoadingBar loadingBar = new LoadingBar();
+    private final GridSkeleton gridSkeleton = new GridSkeleton(8);
 
     private void renderLayout() {
         setSizeFull();
@@ -54,22 +44,18 @@ public class BrandListView extends VerticalLayout {
 
         configureGrid();
 
-        add(loadingBar, getContent());
+        add(getContent());
         fetchBrands();
     }
 
     private HorizontalLayout getContent() {
-        HorizontalLayout content = new HorizontalLayout(brandDtoGrid);
-        content.setFlexGrow(1, brandDtoGrid);
-        content.addClassNames("content");
-        content.setSizeFull();
-        return content;
+        return gridSlot(brandDtoGrid, gridSkeleton);
     }
 
     private void configureGrid() {
         brandDtoGrid.setSizeFull();
         brandDtoGrid.removeAllColumns();
-        brandDtoGrid.setEmptyStateText(UiUtil.NO_RECORDS);
+        brandDtoGrid.setEmptyStateText("No brands yet \u2014 click \u201CNew Brand\u201D to add one.");
         brandDtoGrid.addColumn(BrandDto::getName).setHeader("Name");
 
         brandDtoGrid.getColumns().forEach(brandDtoColumn -> brandDtoColumn.setAutoWidth(true));
@@ -98,54 +84,38 @@ public class BrandListView extends VerticalLayout {
      * @return the toolbar layout to place above the grid
      */
     public HorizontalLayout getToolbarComponent() {
-        filterText.setPlaceholder("Filter by name...");
-        filterText.setClearButtonVisible(true);
-        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
-        filterText.setValueChangeMode(ValueChangeMode.LAZY);
+        configureSearchFilter();
 
         Button addBrandButton = UiUtil.addButton("New Brand", event -> addBrand());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
+        registerNewShortcut(this::addBrand);
         toolbar.addClassName("toolbar");
         return toolbar;
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        ui = attachEvent.getUI();
-        broadcasterRegistration = Broadcaster.register(message -> {
-            try {
-                BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
-                        && (broadcastMessage.getType().equals(BroadcastMessage.BRAND_INSERT_SUCCESS) ||
-                            broadcastMessage.getType().equals(BroadcastMessage.BRAND_SUCCESS_UPDATED))) {
-                        fetchBrands();
-                    }
-
-            } catch (JsonProcessingException e) {
-                log.error("Broadcast Handler Error", e);
-            }
-        });
+        super.onAttach(attachEvent);
+        refreshOnBroadcast(Set.of(BroadcastMessage.BRAND_INSERT_SUCCESS,
+                BroadcastMessage.BRAND_SUCCESS_UPDATED), this::fetchBrands);
         renderLayout();
     }
 
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        broadcasterRegistration.remove();
-        broadcasterRegistration = null;
-    }
-
     /**
-     * Opens a dialog containing a {@link BrandForm} for the given brand.
+     * Opens a tab containing a {@link BrandForm} for the given brand.
      *
      * @param brandDto   the brand to edit, or a new empty one to create
-     * @param formAction whether the dialog is in create or edit mode
+     * @param formAction whether the tab is in create or edit mode
      */
     public void editBrand(BrandDto brandDto, FormAction formAction) {
-        Dialog dialog = new Dialog();
-        dialog.setHeaderTitle(formAction == FormAction.EDIT ? "Edit Brand" : "Add Brand");
-        dialog.setWidth("400px");
-        dialog.add(new BrandForm(this.restClientOrganizationService, dialog, formAction, brandDto));
-        dialog.open();
+        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+            return;
+        }
+        TabManager tabManager = new TabManager(tabSheet);
+        String tabLabel = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(brandDto.getName())
+                ? "Edit ".concat(brandDto.getName()) : "New Brand";
+        tabManager.addOrSelect(tabLabel, tab ->
+                new BrandForm(this.restClientOrganizationService, tabManager, tab, formAction, brandDto));
     }
 
     private void addBrand() {
@@ -154,10 +124,13 @@ public class BrandListView extends VerticalLayout {
     }
 
     private void fetchBrands() {
-        loadingBar.start();
-        asyncRestClientOrganizationService.getAllBrandAsync(result -> ui.access(() -> {
-            loadingBar.stop();
+        gridSkeleton.show();
+        asyncRestClientOrganizationService.getAllBrandAsync(result -> UiUtil.safeAccess(ui, () -> {
+            gridSkeleton.hide();
             brandDtoGrid.setItems(result);
+        }), error -> UiUtil.safeAccess(ui, () -> {
+            gridSkeleton.hide();
+            UiUtil.errorWithRetry("Couldn't load brands", this::fetchBrands);
         }));
     }
 }

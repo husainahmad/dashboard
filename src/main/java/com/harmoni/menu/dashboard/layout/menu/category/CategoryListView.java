@@ -1,31 +1,29 @@
 package com.harmoni.menu.dashboard.layout.menu.category;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
-import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.event.category.CategoryDeleteEventListener;
+import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
-import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.tabs.TabSheet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+
+import java.util.Set;
 
 /**
  * The "All Categories" grid view inside {@link CategoryTabs}.
@@ -34,25 +32,22 @@ import org.apache.commons.lang3.ObjectUtils;
  * Renders the category list in a {@link Grid} with a name filter and per-row
  * edit and delete actions; deletion is delegated to
  * {@link CategoryDeleteEventListener} and editing opens a {@link CategoryForm}
- * in a dialog. The list refreshes itself whenever a category-insert or
+ * in a new tab. The list refreshes itself whenever a category-insert or
  * category-updated broadcast is received via {@link Broadcaster}.
  * </p>
  */
 @RequiredArgsConstructor
 @Slf4j
-public class CategoryListView extends VerticalLayout {
+public class CategoryListView extends AbstractListView {
 
-    Registration broadcasterRegistration;
     private final Grid<CategoryDto> categoryDtoGrid = new Grid<>(CategoryDto.class);
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
     private final AccessService accessService;
 
-    TextField filterText = new TextField();
     LoadingBar loadingBar = new LoadingBar();
-
-    UI ui;
+    private final GridSkeleton gridSkeleton = new GridSkeleton(8);
 
     private void renderLayout() {
         setSizeFull();
@@ -66,7 +61,7 @@ public class CategoryListView extends VerticalLayout {
     private void configureGrid() {
         categoryDtoGrid.setSizeFull();
         categoryDtoGrid.removeAllColumns();
-        categoryDtoGrid.setEmptyStateText(UiUtil.NO_RECORDS);
+        categoryDtoGrid.setEmptyStateText("No categories yet \u2014 click \u201CNew Category\u201D to add one.");
         categoryDtoGrid.addColumn(CategoryDto::getName).setHeader("Name");
         categoryDtoGrid.addColumn("brandDto.name").setHeader("Brand Name");
 
@@ -91,11 +86,7 @@ public class CategoryListView extends VerticalLayout {
     }
 
     private HorizontalLayout getContent() {
-        HorizontalLayout content = new HorizontalLayout(categoryDtoGrid);
-        content.setFlexGrow(1, categoryDtoGrid);
-        content.addClassNames("content");
-        content.setSizeFull();
-        return content;
+        return gridSlot(categoryDtoGrid, gridSkeleton);
     }
 
     /**
@@ -104,46 +95,29 @@ public class CategoryListView extends VerticalLayout {
      * @return the toolbar row for this list view
      */
     public HorizontalLayout getToolbarComponent() {
-        filterText.setPlaceholder("Filter by name...");
-        filterText.setClearButtonVisible(true);
-        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
-        filterText.setValueChangeMode(ValueChangeMode.LAZY);
+        configureSearchFilter();
 
         Button addBrandButton = UiUtil.addButton("New Category",
                 (ComponentEventListener<ClickEvent<Button>>) event -> CategoryListView.this.addCategory());
-        HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
+        configureBrandFilter(this::fetchCategories);
+        HorizontalLayout toolbar = new HorizontalLayout(brandFilter, filterText, addBrandButton);
         toolbar.addClassName("toolbar");
+        toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
+        registerNewShortcut(this::addCategory);
         return toolbar;
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        ui = attachEvent.getUI();
-        broadcasterRegistration = Broadcaster.register(message -> {
-            try {
-                BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-                if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
-                        && (broadcastMessage.getType().equals(BroadcastMessage.CATEGORY_INSERT_SUCCESS) ||
-                    broadcastMessage.getType().equals(BroadcastMessage.CATEGORY_UPDATED_SUCCESS))) {
-                        fetchCategories();
-                    }
-
-            } catch (JsonProcessingException e) {
-                log.error("Broadcast Handler Error", e);
-            }
-        });
+        super.onAttach(attachEvent);
+        refreshOnBroadcast(Set.of(BroadcastMessage.CATEGORY_INSERT_SUCCESS,
+                BroadcastMessage.CATEGORY_UPDATED_SUCCESS), this::fetchCategories);
         renderLayout();
-        fetchCategories();
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        broadcasterRegistration.remove();
-        broadcasterRegistration = null;
+        loadBrands(asyncRestClientOrganizationService, accessService, this::fetchCategories);
     }
 
     /**
-     * Opens the {@link CategoryForm} dialog for a new category after loading the
+     * Opens the {@link CategoryForm} for a new category after loading the
      */
     private void addCategory() {
         categoryDtoGrid.asSingleSelect().clear();
@@ -151,35 +125,39 @@ public class CategoryListView extends VerticalLayout {
     }
 
     /**
-     * Opens the {@link CategoryForm} dialog for the given category — create or
-     * edit depending on {@code formAction} — after loading the available brands.
+     * Opens the {@link CategoryForm} in a new tab for the given category — create
+     * or edit depending on {@code formAction} — after loading the available brands.
      *
      * @param categoryDto the category to bind, or an empty DTO for a new one
-     * @param formAction  whether the dialog should create or update
+     * @param formAction  whether the form should create or update
      */
     public void editCategory(CategoryDto categoryDto, FormAction formAction) {
         loadingBar.start();
         asyncRestClientOrganizationService.getAllBrandAsync(brands ->
-                ui.access(() -> {
+                UiUtil.safeAccess(ui, () -> {
                     loadingBar.stop();
-                    Dialog dialog = new Dialog();
-                    dialog.setHeaderTitle(formAction == FormAction.EDIT ? "Edit Category" : "Add Category");
-                    dialog.setWidth("420px");
-                    CategoryForm categoryForm = new CategoryForm(this.asyncRestClientOrganizationService,
-                            this.restClientMenuService, dialog, formAction, categoryDto, brands);
-                    dialog.add(categoryForm);
-                    dialog.open();
+                    if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+                        return;
+                    }
+                    TabManager tabManager = new TabManager(tabSheet);
+                    String tabLabel = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(categoryDto.getName())
+                            ? "Edit ".concat(categoryDto.getName()) : "New Category";
+                    tabManager.addOrSelect(tabLabel, tab -> new CategoryForm(this.asyncRestClientOrganizationService,
+                            this.restClientMenuService, tabManager, tab, formAction, categoryDto, brands));
                 }));
     }
 
     /**
-     * Fetches the list of categories from the REST API and updates the grid.
+     * Fetches the list of categories for the selected brand and updates the grid.
      */
     private void fetchCategories() {
-        loadingBar.start();
-        asyncRestClientMenuService.getAllCategoryAsync(result -> ui.access(() -> {
-            loadingBar.stop();
+        gridSkeleton.show();
+        asyncRestClientMenuService.getAllCategoryAsync(result -> UiUtil.safeAccess(ui, () -> {
+            gridSkeleton.hide();
             categoryDtoGrid.setItems(result);
-        }), accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
+        }), error -> UiUtil.safeAccess(ui, () -> {
+            gridSkeleton.hide();
+            UiUtil.errorWithRetry("Couldn't load categories", this::fetchCategories);
+        }), selectedBrandId(accessService));
     }
 }

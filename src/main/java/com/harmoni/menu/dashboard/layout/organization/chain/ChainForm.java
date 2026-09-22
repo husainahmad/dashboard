@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.event.chain.ChainSaveEventListener;
 import com.harmoni.menu.dashboard.event.chain.ChainUpdateEventListener;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
@@ -19,8 +20,9 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.shared.Registration;
@@ -33,11 +35,11 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Vaadin form for editing a {@link ChainDto} inside a {@link Dialog}. Renders a
- * brand {@link ComboBox} and a chain-name field bound with a
+ * Vaadin form for editing a {@link ChainDto} inside a tab. Renders a brand
+ * {@link ComboBox} and a chain-name field bound with a
  * {@link BeanValidationBinder}, wires the save/update buttons to
  * {@link ChainSaveEventListener} / {@link ChainUpdateEventListener}, and
- * closes the dialog on a successful BROADCAST insert or update.
+ * closes the tab on a successful BROADCAST insert or update.
  */
 @RequiredArgsConstructor
 @Slf4j
@@ -60,7 +62,8 @@ public class ChainForm extends FormLayout {
 
     private final RestClientOrganizationService restClientOrganizationService;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
-    private final Dialog dialog;
+    private final TabManager tabManager;
+    private final Tab currentTab;
     private final FormAction formAction;
 
     @Getter
@@ -104,14 +107,14 @@ public class ChainForm extends FormLayout {
     }
 
     private void showNotification() {
-        ui.access(() -> UiUtil.success("Chain created.."));
+        UiUtil.safeAccess(ui, () -> UiUtil.success("Chain created.."));
     }
 
     /**
-     * Closes the wrapped dialog on the UI thread.
+     * Closes the wrapped tab on the UI thread.
      */
     public void close() {
-        ui.access(() -> dialog.close());
+        UiUtil.safeAccess(ui, () -> tabManager.closeAndSelectFirst(currentTab));
     }
 
     private void addValidation() {
@@ -138,7 +141,9 @@ public class ChainForm extends FormLayout {
         saveButton.addClickListener(new ChainSaveEventListener(this, restClientOrganizationService));
         closeButton.addClickListener(event -> close());
 
-        dialog.getFooter().add(saveButton, updateButton, closeButton);
+        HorizontalLayout footer = new HorizontalLayout(saveButton, updateButton, closeButton);
+        footer.setWidthFull();
+        add(footer);
     }
 
     /**

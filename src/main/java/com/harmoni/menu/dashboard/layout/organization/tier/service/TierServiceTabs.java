@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.organization.tier.service;
 
+import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.vaadin.flow.component.AttachEvent;
@@ -19,13 +20,14 @@ public class TierServiceTabs extends VerticalLayout {
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
+    private final AccessService accessService;
 
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
         browseTab.setLabel("All Tier Services");
         TierServiceListView tierServiceListView = new TierServiceListView(asyncRestClientOrganizationService,
-                restClientOrganizationService);
+                accessService, restClientOrganizationService);
         tabSheet.add(browseTab, tierServiceListView);
         tabSheet.setSizeFull();
 

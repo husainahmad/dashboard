@@ -569,3 +569,37 @@ vaadin-combo-box::part(input-field):hover {
     margin-bottom:
         var(--lumo-space-s);
 }
+
+/* ---------- Tier toggle pending / saved feedback ---------- */
+
+.tier-saved-at {
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-xs);
+}
+
+.tier-saving {
+    color: var(--lumo-primary-color);
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+}
+
+/* ---------- Keyboard shortcut help ---------- */
+
+.shortcut-kbd {
+    min-width: 4.5em;
+    text-align: center;
+    padding: var(--lumo-space-2xs) var(--lumo-space-xs);
+    border: 1px solid var(--lumo-contrast-20pct);
+    border-bottom-width: 2px;
+    border-radius: var(--lumo-border-radius-s);
+    background: var(--lumo-contrast-5pct);
+    color: var(--app-text-secondary);
+    font-family: var(--lumo-font-family-mono);
+    font-size: var(--lumo-font-size-s);
+    font-weight: 600;
+}
+
+.shortcut-desc {
+    color: var(--app-text-secondary);
+    font-size: var(--lumo-font-size-s);
+}

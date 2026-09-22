@@ -1,9 +1,8 @@
 package com.harmoni.menu.dashboard.layout.menu.customization;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
-import com.harmoni.menu.dashboard.component.Broadcaster;
+import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CustomizationDto;
@@ -12,10 +11,9 @@ import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.event.customization.CustomizationDeleteEventListener;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
-import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.layout.enums.CustomizationItemType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
@@ -24,13 +22,9 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.Text;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.treegrid.ExpandEvent;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
@@ -40,9 +34,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
-import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.shared.Registration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -53,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -69,7 +62,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @RequiredArgsConstructor
 @Slf4j
-public class CustomizationListView extends VerticalLayout implements BroadcastMessageService {
+public class CustomizationListView extends AbstractListView implements BroadcastMessageService {
 
     static final String TAB_LABEL_LIST = "All Customizations";
     static final String TAB_LABEL_NEW = "New Customization";
@@ -84,13 +77,9 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
 
     private final TreeGrid<CustomizationTreeItem> customizationGrid = new TreeGrid<>(CustomizationTreeItem.class);
     private final TreeData<CustomizationTreeItem> treeData = new TreeData<>();
-    private final TextField filterText = new TextField();
     private final ComboBox<BrandDto> brandDtoComboBox = new ComboBox<>();
     private final ComboBox<TierDto> tierDtoComboBox = new ComboBox<>();
-    private final Text pageInfoText = new Text("");
-    private final LoadingBar loadingBar = new LoadingBar();
-    private final Button previousButton = new Button("Previous");
-    private final Button nextButton = new Button("Next");
+    private final GridSkeleton gridSkeleton = new GridSkeleton(PAGE_SIZE);
     private final AtomicInteger requestGeneration = new AtomicInteger();
 
     private transient List<BrandDto> brandDtos = new ArrayList<>();
@@ -100,26 +89,14 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
     private transient int pendingTierGeneration;
     private TreeDataProvider<CustomizationTreeItem> treeDataProvider;
     private final Map<Integer, String> tierIdToName = new HashMap<>();
-    private Registration broadcasterRegistration;
-    private transient UI ui;
-    private int totalPages;
-    private int currentPage = 1;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        ui = attachEvent.getUI();
-        if (broadcasterRegistration == null) {
-            broadcasterRegistration = Broadcaster.register(this::acceptNotification);
-        }
+        super.onAttach(attachEvent);
+        refreshOnBroadcast(Set.of(BroadcastMessage.CUSTOMIZATION_INSERT_SUCCESS,
+                BroadcastMessage.CUSTOMIZATION_UPDATED_SUCCESS,
+                BroadcastMessage.CUSTOMIZATION_DELETE_SUCCESS), this::fetchCustomizations);
         buildLayout();
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        if (broadcasterRegistration != null) {
-            broadcasterRegistration.remove();
-            broadcasterRegistration = null;
-        }
     }
 
     private void buildLayout() {
@@ -129,9 +106,8 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
         configureGrid();
         configureSearch();
         configureBrandSelector();
-        configurePagination();
 
-        VerticalLayout browsePanel = new VerticalLayout(loadingBar, getContent(), getPaginationFooter());
+        VerticalLayout browsePanel = new VerticalLayout(getContent(), getPaginationFooter());
         browsePanel.setSizeFull();
         browsePanel.setPadding(false);
         browsePanel.setSpacing(false);
@@ -144,7 +120,7 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
 
     private void configureGrid() {
         customizationGrid.setSizeFull();
-        customizationGrid.setEmptyStateText(UiUtil.NO_RECORDS);
+        customizationGrid.setEmptyStateText("No customizations yet \u2014 click \u201CNew Customization\u201D to add one.");
         customizationGrid.removeAllColumns();
         customizationGrid.addComponentHierarchyColumn(this::applyNameLabel).setHeader("Name").setAutoWidth(true);
         customizationGrid.addColumn(item -> item.getSelectionTypeLabel() == null ? "-" : item.getSelectionTypeLabel())
@@ -184,10 +160,7 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
 
     private void configureSearch() {
         filterText.setLabel("Search");
-        filterText.setPlaceholder("Filter by name...");
-        filterText.setClearButtonVisible(true);
-        filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
-        filterText.setValueChangeMode(ValueChangeMode.LAZY);
+        configureSearchFilter();
         filterText.addValueChangeListener(change -> {
             if (change.isFromClient()) {
                 currentPage = 1;
@@ -215,21 +188,6 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
             currentPage = 1;
             fetchTiersForBrand(change.getValue().getId());
             fetchCustomizations();
-        });
-    }
-
-    private void configurePagination() {
-        previousButton.addClickListener(event -> {
-            if (currentPage > 1) {
-                currentPage--;
-                fetchCustomizations();
-            }
-        });
-        nextButton.addClickListener(event -> {
-            if (currentPage < totalPages) {
-                currentPage++;
-                fetchCustomizations();
-            }
         });
     }
 
@@ -277,27 +235,22 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
         return tier == null || tier.getId() == null || tier.getId() == -1 ? null : tier.getId();
     }
 
-    private VerticalLayout getContent() {
-        VerticalLayout content = new VerticalLayout(customizationGrid);
-        content.setSizeFull();
-        content.addClassNames("content");
-        content.setFlexGrow(1, customizationGrid);
-        return content;
+    private HorizontalLayout getContent() {
+        return gridSlot(customizationGrid, gridSkeleton);
     }
 
     private HorizontalLayout getPaginationFooter() {
-        HorizontalLayout footer = new HorizontalLayout(previousButton, pageInfoText, nextButton);
-        footer.addClassName("pagination");
-        footer.setWidthFull();
-        footer.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
-        footer.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        return footer;
-    }
-
-    private void updatePaginationState() {
-        pageInfoText.setText("Page " + currentPage + " of " + Math.max(totalPages, 1));
-        previousButton.setEnabled(currentPage > 1);
-        nextButton.setEnabled(currentPage < totalPages);
+        return paginationFooter(() -> {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchCustomizations();
+            }
+        }, () -> {
+            if (currentPage < totalPages) {
+                currentPage++;
+                fetchCustomizations();
+            }
+        });
     }
 
     private void onAddCustomizationListener(ClickEvent<Button> event) {
@@ -324,7 +277,7 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
                     }
                     CustomizationDto customization = ObjectUtil.convertValueToObject(
                             response.getData(), CustomizationDto.class);
-                    ui.access(() -> {
+                    UiUtil.safeAccess(ui, () -> {
                         TabManager tabManager = new TabManager(tabSheet);
                         String tabLabel = customization.getName() == null || customization.getName().isBlank()
                                 ? TAB_LABEL_EDIT : "Edit ".concat(customization.getName());
@@ -351,7 +304,7 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
                         }
                         CustomizationDto customization = ObjectUtil.convertValueToObject(
                                 response.getData(), CustomizationDto.class);
-                        ui.access(() -> {
+                        UiUtil.safeAccess(ui, () -> {
                             appendChildren(item, customization);
                             treeDataProvider.refreshAll();
                             customizationGrid.expand(item);
@@ -430,7 +383,7 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
         if (brandDtos.isEmpty() || ui == null) {
             return;
         }
-        ui.access(() -> {
+        UiUtil.safeAccess(ui, () -> {
             BrandDto previous = brandDtoComboBox.getValue();
             brandDtoComboBox.setItems(brandDtos);
             brandDtoComboBox.setValue(previous == null
@@ -458,7 +411,7 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
             return;
         }
         int generation = pendingTierGeneration;
-        ui.access(() -> {
+        UiUtil.safeAccess(ui, () -> {
             if (generation != pendingTierGeneration) {
                 return;
             }
@@ -495,31 +448,31 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
         if (ui == null) {
             return;
         }
-        ui.access(() -> {
+        UiUtil.safeAccess(ui, () -> {
             BrandDto brand = brandDtoComboBox.getValue();
             if (brand == null) {
                 treeData.clear();
                 treeDataProvider.refreshAll();
                 totalPages = 0;
-                updatePaginationState();
+                updatePagination();
                 return;
             }
             int generation = requestGeneration.incrementAndGet();
-            loadingBar.start();
+            gridSkeleton.show();
             asyncRestClientMenuService.getAllCustomizationAsync(
-                    result -> ui.access(() -> {
+                    result -> UiUtil.safeAccess(ui, () -> {
                         if (generation != requestGeneration.get()) {
                             return;
                         }
-                        loadingBar.stop();
+                        gridSkeleton.hide();
                         applyCustomizations(result);
                     }),
-                    error -> ui.access(() -> {
+                    error -> UiUtil.safeAccess(ui, () -> {
                         if (generation != requestGeneration.get()) {
                             return;
                         }
-                        loadingBar.stop();
-                        handleLoadError(error);
+                        gridSkeleton.hide();
+                        UiUtil.errorWithRetry("Couldn't load customizations", this::fetchCustomizations);
                     }),
                     brand.getId(), currentPage, PAGE_SIZE, normalizeSearch(filterText.getValue()));
         });
@@ -542,31 +495,10 @@ public class CustomizationListView extends VerticalLayout implements BroadcastMe
             totalPages = 0;
         }
         treeDataProvider.refreshAll();
-        updatePaginationState();
-    }
-
-    private void handleLoadError(Throwable error) {
-        log.error("Failed to load customizations", error);
-        if (!(error instanceof BusinessBadRequestException)) {
-            UiUtil.error("Unable to load customizations");
-        }
+        updatePagination();
     }
 
     private String normalizeSearch(String value) {
         return value == null ? "" : value.trim();
-    }
-
-    private void acceptNotification(String message) {
-        try {
-            BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
-            if (broadcastMessage != null
-                    && (BroadcastMessage.CUSTOMIZATION_INSERT_SUCCESS.equals(broadcastMessage.getType())
-                    || BroadcastMessage.CUSTOMIZATION_UPDATED_SUCCESS.equals(broadcastMessage.getType())
-                    || BroadcastMessage.CUSTOMIZATION_DELETE_SUCCESS.equals(broadcastMessage.getType()))) {
-                fetchCustomizations();
-            }
-        } catch (JsonProcessingException e) {
-            log.error("Broadcast handler error", e);
-        }
     }
 }

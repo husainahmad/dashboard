@@ -51,6 +51,11 @@ public class AsyncRestClientOrganizationService implements Serializable {
     }
 
     private <T> void makeAsyncRequest(String uri, TypeReference<T> typeReference, AsyncRestCallback<T> callback) {
+        makeAsyncRequest(uri, typeReference, callback, null);
+    }
+
+    private <T> void makeAsyncRequest(String uri, TypeReference<T> typeReference, AsyncRestCallback<T> callback,
+                                       AsyncRestCallback<Throwable> errorCallback) {
         TokenRefreshService.TokenRequest<RestAPIResponse> request = accessToken -> webClient.get()
                 .uri(uri)
                 .header(HttpHeaders.AUTHORIZATION, resolveToken(accessToken))
@@ -73,19 +78,34 @@ public class AsyncRestClientOrganizationService implements Serializable {
                             typeReference
                     );
                     callback.operationFinished(data);
-                }, error -> log.error("Async request failed uri={}", uri, error));
+                }, error -> {
+                    log.error("Async request failed uri={}", uri, error);
+                    if (errorCallback != null) {
+                        errorCallback.operationFinished(error);
+                    }
+                });
     }
 
     public void getAllChainByBrandIdAsync(AsyncRestCallback<List<ChainDto>> callback, Integer brandId) {
+        getAllChainByBrandIdAsync(callback, null, brandId);
+    }
+
+    public void getAllChainByBrandIdAsync(AsyncRestCallback<List<ChainDto>> callback,
+                                          AsyncRestCallback<Throwable> errorCallback, Integer brandId) {
         String uri = String.format("%s/brand/%d", menuProperties.getUrl().getChain(), brandId);
         makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
+        }, callback, errorCallback);
     }
 
     public void getAllBrandAsync(AsyncRestCallback<List<BrandDto>> callback) {
+        getAllBrandAsync(callback, null);
+    }
+
+    public void getAllBrandAsync(AsyncRestCallback<List<BrandDto>> callback,
+                                 AsyncRestCallback<Throwable> errorCallback) {
         String uri = menuProperties.getUrl().getBrand();
         makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
+        }, callback, errorCallback);
     }
 
     public void getDetailBrandAsync(AsyncRestCallback<BrandDto> callback, Long id) {
@@ -95,28 +115,48 @@ public class AsyncRestClientOrganizationService implements Serializable {
     }
 
     public void getAllTierByBrandAsync(AsyncRestCallback<List<TierDto>> callback, Integer id, TierTypeDto tierTypeDto) {
+        getAllTierByBrandAsync(callback, null, id, tierTypeDto);
+    }
+
+    public void getAllTierByBrandAsync(AsyncRestCallback<List<TierDto>> callback,
+                                       AsyncRestCallback<Throwable> errorCallback, Integer id, TierTypeDto tierTypeDto) {
         String uri = String.format("%s/brand/%d/type/%s", menuProperties.getUrl().getTier(), id, tierTypeDto);
         makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
+        }, callback, errorCallback);
     }
 
     public void getTierMenuByBrandAsync(AsyncRestCallback<List<TierMenuDto>> callback, Integer id) {
+        getTierMenuByBrandAsync(callback, null, id);
+    }
+
+    public void getTierMenuByBrandAsync(AsyncRestCallback<List<TierMenuDto>> callback,
+                                        AsyncRestCallback<Throwable> errorCallback, Integer id) {
         String uri = menuProperties.getUrl().getTiers().getMenu()
                 .concat("?brandId=")
                 .concat(id.toString());
         makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
+        }, callback, errorCallback);
     }
 
     public void getTierServiceByBrandAsync(AsyncRestCallback<List<TierServiceDto>> callback, Integer id) {
+        getTierServiceByBrandAsync(callback, null, id);
+    }
+
+    public void getTierServiceByBrandAsync(AsyncRestCallback<List<TierServiceDto>> callback,
+                                           AsyncRestCallback<Throwable> errorCallback, Integer id) {
         String uri = menuProperties.getUrl().getTiers().getService()
                 .concat("?brandId=")
                 .concat(id.toString());
         makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
+        }, callback, errorCallback);
     }
 
     public void getAllStoreAsync(AsyncRestCallback<Map<String, Object>> callback, Integer chainId, int page, int size, String search) {
+        getAllStoreAsync(callback, null, chainId, page, size, search);
+    }
+
+    public void getAllStoreAsync(AsyncRestCallback<Map<String, Object>> callback,
+                                 AsyncRestCallback<Throwable> errorCallback, Integer chainId, int page, int size, String search) {
         String uri = menuProperties.getUrl().getStore();
         uri = uri
                 .concat("?chainId=").concat(String.valueOf(chainId))
@@ -128,21 +168,31 @@ public class AsyncRestClientOrganizationService implements Serializable {
                 .concat(search);
 
         makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
+        }, callback, errorCallback);
     }
 
     public void getAllUserByChainAsync(AsyncRestCallback<Map<String, Object>> callback, Integer chainId, int page, int size, String search) {
+        getAllUserByChainAsync(callback, null, chainId, page, size, search);
+    }
+
+    public void getAllUserByChainAsync(AsyncRestCallback<Map<String, Object>> callback,
+                                       AsyncRestCallback<Throwable> errorCallback, Integer chainId, int page, int size, String search) {
         String uri = String.format("%s/%d?page=%d&size=%d&search=%s",
                 menuProperties.getUrl().getUsers().getChain(),
                 chainId, page, size, search);
         makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
+        }, callback, errorCallback);
     }
 
     public void getAllServicesAsync(AsyncRestCallback<List<ServiceDto>> callback) {
+        getAllServicesAsync(callback, null);
+    }
+
+    public void getAllServicesAsync(AsyncRestCallback<List<ServiceDto>> callback,
+                                    AsyncRestCallback<Throwable> errorCallback) {
         String uri = menuProperties.getUrl().getService();
         makeAsyncRequest(uri, new TypeReference<>() {
-        }, callback);
+        }, callback, errorCallback);
     }
 
     private static String resolveToken(String accessToken) {

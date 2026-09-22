@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.layout.setting.service;
 
 import com.harmoni.menu.dashboard.dto.ServiceDto;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.vaadin.flow.component.AttachEvent;
@@ -8,8 +9,9 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import lombok.Getter;
@@ -20,11 +22,10 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.Objects;
 
 /**
- * Dialog form for creating or editing a service, binding the single
- * service-name field through a {@link BeanValidationBinder}. The footer
- * buttons are laid out from the {@link FormAction} (save for CREATE,
- * update/delete for EDIT) and success/close feedback is marshalled back onto
- * the UI thread.
+ * Tab form for creating or editing a service, binding the single service-name
+ * field through a {@link BeanValidationBinder}. The footer buttons are laid out
+ * from the {@link FormAction} (save for CREATE, update/delete for EDIT) and
+ * success/close feedback is marshalled back onto the UI thread.
  */
 @RequiredArgsConstructor
 @Slf4j
@@ -47,7 +48,8 @@ public class ServiceForm extends FormLayout {
     @Getter
     UI ui;
 
-    private final Dialog dialog;
+    private final TabManager tabManager;
+    private final Tab currentTab;
     private final FormAction formAction;
 
     /** The service being edited, empty when creating a new one. */
@@ -75,14 +77,14 @@ public class ServiceForm extends FormLayout {
      * @param text the message to display
      */
     public void showNotification(String text) {
-        ui.access(() -> UiUtil.success(text));
+        UiUtil.safeAccess(ui, () -> UiUtil.success(text));
     }
 
     /**
-     * Closes the hosting dialog on the UI thread.
+     * Closes the hosting tab on the UI thread.
      */
     public void close() {
-        ui.access(() -> dialog.close());
+        UiUtil.safeAccess(ui, () -> tabManager.closeAndSelectFirst(currentTab));
     }
 
     private void addValidation() {
@@ -104,7 +106,9 @@ public class ServiceForm extends FormLayout {
 
         closeButton.addClickListener(event -> close());
 
-        dialog.getFooter().add(saveButton, updateButton, deleteButton, closeButton);
+        HorizontalLayout footer = new HorizontalLayout(saveButton, updateButton, deleteButton, closeButton);
+        footer.setWidthFull();
+        add(footer);
     }
 
     /**

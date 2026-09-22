@@ -2,6 +2,7 @@ package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.harmoni.menu.dashboard.dto.ImageDto;
 import com.harmoni.menu.dashboard.dto.ProductImageDto;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ImageUtil;
@@ -29,6 +30,12 @@ import org.springframework.util.MimeTypeUtils;
 
 import java.io.IOException;
 
+/**
+ * Uploads a product image to the REST API and shows it as a compact thumbnail.
+ * The image is uploaded immediately when the user selects a file, and the
+ * resulting {@link ProductImageDto} is stored in this view for later retrieval
+ * by the owner form.
+ */
 @RequiredArgsConstructor
 @Route("product-image-upload")
 @Slf4j
@@ -116,10 +123,17 @@ public class ProductImageUploadView extends VerticalLayout {
         add(tile);
     }
 
+    /**
+     * Processes the REST API response after uploading an image. If the response
+     * contains image data, it converts it to a {@link ProductImageDto} and updates
+     * the UI to display the uploaded image.
+     *
+     * @param restAPIResponse the response from the REST API after uploading the image
+     */
     private void processResponse(RestAPIResponse restAPIResponse) {
         if (ObjectUtils.isNotEmpty(restAPIResponse.getData())) {
             productImageDto = ObjectUtil.convertValueToObject(restAPIResponse.getData(), ProductImageDto.class);
-            ui.access(() -> setImage(ImageUtil.createStreamResource(productImageDto.getImageBlob(),
+            UiUtil.safeAccess(ui, () -> setImage(ImageUtil.createStreamResource(productImageDto.getImageBlob(),
                     productImageDto.getFileName())));
         }
     }
@@ -141,6 +155,12 @@ public class ProductImageUploadView extends VerticalLayout {
         productImageDto = null;
     }
 
+    /**
+     * Updates the visibility of the image and placeholder elements based on
+     * whether an image is present.
+     *
+     * @param hasImage {@code true} if an image is present, {@code false} otherwise
+     */
     private void showImageState(boolean hasImage) {
         image.setVisible(hasImage);
         placeholderIcon.setVisible(!hasImage);

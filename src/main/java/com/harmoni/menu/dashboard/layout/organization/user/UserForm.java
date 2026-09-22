@@ -10,6 +10,7 @@ import com.harmoni.menu.dashboard.event.user.UserSaveEventListener;
 import com.harmoni.menu.dashboard.event.user.UserUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.enums.RoleType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -73,7 +74,6 @@ public class UserForm extends FormLayout  {
     private final transient UserDto userDto;
 
     UI ui;
-    static final int TEMP_BRAND_ID = 1;
     private int totalRow = 1;
 
     private void renderLayout() {
@@ -131,7 +131,7 @@ public class UserForm extends FormLayout  {
      * Removes the user tab from the parent {@link TabSheet} on the UI thread.
      */
     public void removeFromSheet() {
-        this.ui.access(() -> {
+        UiUtil.safeAccess(this.ui, () -> {
             if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
                 return;
             }

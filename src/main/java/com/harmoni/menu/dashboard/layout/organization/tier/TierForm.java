@@ -8,19 +8,23 @@ import com.harmoni.menu.dashboard.dto.ServiceDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.tier.TierSaveEventListener;
 import com.harmoni.menu.dashboard.event.tier.TierUpdateEventListener;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
-import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
+import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.shared.Registration;
@@ -34,10 +38,11 @@ import java.util.Objects;
 
 /**
  * Base Vaadin form for editing a {@link TierDto} with brand and service
- * selection. Shared by the menu, price and service tier forms; binds the brand
- * and name fields via a {@link BeanValidationBinder}, wires the save/update
- * buttons to {@link TierSaveEventListener} / {@link TierUpdateEventListener},
- * and hides itself on a successful TIER BROADCAST message.
+ * selection, hosted in a {@link TabManager} tab. Shared by the menu, price and
+ * service tier forms; binds the brand and name fields via a
+ * {@link BeanValidationBinder}, wires the save/update buttons to
+ * {@link TierSaveEventListener} / {@link TierUpdateEventListener}, and closes
+ * the tab on a successful TIER BROADCAST message.
  */
 @Slf4j
 public class TierForm extends FormLayout {
@@ -47,9 +52,13 @@ public class TierForm extends FormLayout {
     @Getter
     private AsyncRestClientOrganizationService asyncRestClientOrganizationService;
 
+    private final TabManager tabManager;
+    private final Tab currentTab;
+    private final FormAction formAction;
+
     private Registration broadcasterRegistration;
     @Getter
-    private BeanValidationBinder<TierDto> binder = new BeanValidationBinder<>(TierDto.class);
+    private final BeanValidationBinder<TierDto> binder = new BeanValidationBinder<>(TierDto.class);
     /**
      * Input for the tier's display name.
      */
@@ -72,19 +81,29 @@ public class TierForm extends FormLayout {
     private UI ui;
     @Getter
     private transient TierDto tierDto;
-    @Setter
-    @Getter
-    private transient List<BrandDto> brandDtos;
+
+    private transient List<BrandDto> brands;
 
     /**
-     * Creates a tier form with the given REST clients.
+     * Creates a tier form hosted in a tab.
      *
      * @param restClientOrganizationService     the synchronous REST client
      * @param asyncRestClientOrganizationService the async REST client
+     * @param tabManager                        the manager of the hosting tab sheet
+     * @param currentTab                        the tab showing this form
+     * @param formAction                        whether the form creates or edits
+     * @param tierDto                           the tier to bind, or a new one to create
+     * @param brands                            the brands to offer in the combo box
      */
-    public TierForm(RestClientOrganizationService restClientOrganizationService, AsyncRestClientOrganizationService asyncRestClientOrganizationService) {
+    public TierForm(RestClientOrganizationService restClientOrganizationService, AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+                    TabManager tabManager, Tab currentTab, FormAction formAction, TierDto tierDto, List<BrandDto> brands) {
         this.restClientOrganizationService = restClientOrganizationService;
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
+        this.tabManager = tabManager;
+        this.currentTab = currentTab;
+        this.formAction = formAction;
+        this.tierDto = tierDto;
+        this.brands = brands;
     }
 
     @Override
@@ -98,16 +117,15 @@ public class TierForm extends FormLayout {
                             broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS) ||
                         broadcastMessage.getType().equals(BroadcastMessage.TIER_DELETED_SUCCESS))) {
                         showNotification("Tier updated..");
-                        hideForm();
+                        close();
                     }
 
             } catch (JsonProcessingException e) {
                 log.error("Broadcast Handler Error", e);
             }
         });
-        if (ObjectUtils.isNotEmpty(brandDtos)) {
-            ui.access(() -> brandBox.setItems(brandDtos));
-        }
+        restructureButton(formAction);
+        populateBrands(brands);
     }
 
     /**
@@ -116,14 +134,14 @@ public class TierForm extends FormLayout {
      * @param text the message to display
      */
     public void showNotification(String text) {
-        ui.access(() -> UiUtil.success(text));
+        UiUtil.safeAccess(ui, () -> UiUtil.success(text));
     }
 
     /**
-     * Hides the form on the UI thread.
+     * Closes the hosting tab on the UI thread.
      */
-    public void hideForm() {
-        ui.access(()-> this.setVisible(false));
+    public void close() {
+        UiUtil.safeAccess(ui, () -> tabManager.closeAndSelectFirst(currentTab));
     }
 
     @Override
@@ -132,21 +150,19 @@ public class TierForm extends FormLayout {
         broadcasterRegistration = null;
     }
 
-    protected void setTierDtoAndBind(TierDto tierDto) {
-        this.tierDto = (tierDto);
-        getBinder().readBean(this.getTierDto());
-    }
-
     /**
-     * Registers the brand and tier-name validators on the binder.
+     * Registers the brand and tier-name validators on the binder. Both
+     * validators are null-safe so opening a brand-new form never paints a
+     * spurious error.
      */
     public void addValidation() {
         getBinder().forField(brandBox)
-                .withValidator(value -> value.getId() > 0, "Brand not allow to be empty"
+                .withValidator(value -> ObjectUtils.isNotEmpty(value) && value.getId() > 0,
+                        "Brand not allow to be empty"
                 ).bind(TierDto::getBrandDto, TierDto::setBrandDto);
 
         getBinder().forField(tierNameField)
-                .withValidator(value -> value.length() > 2,
+                .withValidator(value -> ObjectUtils.isNotEmpty(value) && value.length() > 2,
                         "Name must contain at least three characters")
                 .bind(TierDto::getName, TierDto::setName);
 
@@ -186,7 +202,7 @@ public class TierForm extends FormLayout {
                 new TierSaveEventListener(this, this.getRestClientOrganizationService()));
         updateButton.addClickListener(new TierUpdateEventListener(this, this.getRestClientOrganizationService()));
 
-        closeButton.addClickListener(event -> this.setVisible(false));
+        closeButton.addClickListener(event -> close());
 
         if (enableSave) {
             horizontalLayout.add(saveButton);
@@ -202,33 +218,30 @@ public class TierForm extends FormLayout {
     }
 
     /**
-     * Loads all brands into the brand combo box asynchronously.
-     */
-    public void fetchBrands() {
-        this.getAsyncRestClientOrganizationService().getAllBrandAsync(result ->
-                ui.access(()-> brandBox.setItems(result)));
-    }
-
-    /**
-     * Loads a single brand by id and selects it in the brand combo box.
+     * Pre-fills the form from the current tier, populating the brand combo box
+     * and selecting the tier's brand by id. Values are set directly instead of
+     * via {@code binder.readBean} so that opening a form never runs validation
+     * and can never paint a spurious "Brand not allow to be empty" error before
+     * the user enters anything.
      *
-     * @param id the brand id to select
+     * @param brands the brands to offer in the combo box
      */
-    public void fetchDetailBrands(Long id) {
-        this.getAsyncRestClientOrganizationService().getDetailBrandAsync(result ->
-                getUi().access(()-> brandBox.setValue(result)), id);
-    }
-
-    /**
-     * Binds the given tier into the form and restores the selected brand.
-     *
-     * @param tierDto the tier to display for editing
-     */
-    public void changeTierDto(TierDto tierDto) {
-        this.setTierDtoAndBind(tierDto);
-
-        if (!ObjectUtils.isEmpty(tierDto) && !ObjectUtils.isEmpty(tierDto.getBrandId())) {
-            fetchDetailBrands(tierDto.getBrandId().longValue());
+    private void populateBrands(List<BrandDto> brands) {
+        brandBox.setItems(brands);
+        if (ObjectUtils.isEmpty(tierDto)) {
+            return;
+        }
+        if (ObjectUtils.isNotEmpty(tierDto.getName())) {
+            tierNameField.setValue(tierDto.getName());
+        }
+        if (ObjectUtils.isNotEmpty(brands) && ObjectUtils.isNotEmpty(tierDto.getBrandId())) {
+            brands.stream()
+                    .filter(brand -> brand.getId().equals(tierDto.getBrandId()))
+                    .findFirst()
+                    .ifPresent(brand -> {
+                        tierDto.setBrandDto(brand);
+                        brandBox.setValue(brand);
+                    });
         }
     }
 

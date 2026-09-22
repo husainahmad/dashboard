@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.layout.organization.tier.service;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.vaadin.flow.component.AttachEvent;
@@ -21,12 +22,13 @@ public class TierServiceLayout extends VerticalLayout {
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
+    private final AccessService accessService;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         addClassName("list-view");
-        add(new TierServiceTabs(asyncRestClientOrganizationService, restClientOrganizationService));
+        add(new TierServiceTabs(asyncRestClientOrganizationService, restClientOrganizationService, accessService));
         setSizeFull();
     }
 }

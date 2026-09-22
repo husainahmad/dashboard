@@ -145,6 +145,7 @@ public class CustomizationConfigureDialog extends Dialog {
                 });
     }
 
+    /** Builds a small status label indicating whether the value is overridden or inherited. */
     private Span buildOverrideStatus(boolean override) {
         Span span = new Span(override ? "Override" : "Inherited");
         span.getStyle().set("font-size", "var(--lumo-font-size-xs)")
@@ -153,6 +154,13 @@ public class CustomizationConfigureDialog extends Dialog {
         return span;
     }
 
+    /**
+     * Builds a read-only grid showing the customization's options, their prices
+     * for the first tier, and whether each option is active.
+     *
+     * @param dto the customization whose options to display
+     * @return a configured grid component
+     */
     private Grid<CustomizationOptionDto> buildConfigureOptionsGrid(ProductCustomizationDto dto) {
         Grid<CustomizationOptionDto> grid = new Grid<>();
         grid.setSelectionMode(Grid.SelectionMode.NONE);
@@ -167,6 +175,13 @@ public class CustomizationConfigureDialog extends Dialog {
         return grid;
     }
 
+    /**
+     * Renders the "Active" column for a customization option. If the option's
+     * status is "ACTIVE", it shows a green checkmark; otherwise, it shows a dash.
+     *
+     * @param option the customization option to render
+     * @return a component representing the active status
+     */
     private Component renderActiveColumn(CustomizationOptionDto option) {
         if ("ACTIVE".equalsIgnoreCase(option.getStatus())) {
             Icon check = new Icon(VaadinIcon.CHECK);
@@ -176,6 +191,13 @@ public class CustomizationConfigureDialog extends Dialog {
         return new Span("-");
     }
 
+    /**
+     * Retrieves the price of a customization option for the first tier. If the
+     * option has no price for the first tier, it returns a dash ("-").
+     *
+     * @param option the customization option whose price to retrieve
+     * @return a formatted price string or "-" if no price is available
+     */
     private String getOptionPrice(CustomizationOptionDto option) {
         TierDto firstTier = ObjectUtils.isEmpty(tierDtos) ? null : tierDtos.getFirst();
         if (firstTier == null || ObjectUtils.isEmpty(option.getTierPrices())) {

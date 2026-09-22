@@ -66,9 +66,24 @@ public class TierMenuUpdateEventListener implements ComponentEventListener<Click
      */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
+        execute(() -> {
+        });
+    }
+
+    /**
+     * Posts the tier-menu payload read from the tree grid, rolling the given
+     * callback back on failure. Used to save immediately from the row toggles
+     * without a dedicated Update button.
+     *
+     * @param rollback the action to run when the update fails (e.g. reverting
+     *                 the toggled checkbox)
+     */
+    public void execute(Runnable rollback) {
         restClientOrganizationService.updateTierMenu(this.tierDto, extractedPayload(this.tierMenuTreeItem))
-                .doOnError(error -> new BrandHandler(this.ui,
-                        "Error while updating Tier ".concat(error.getMessage())))
+                .doOnError(error -> {
+                    new BrandHandler(this.ui, "Error while updating Tier ".concat(error.getMessage()));
+                    rollback.run();
+                })
                 .subscribe(this::accept);
     }
 

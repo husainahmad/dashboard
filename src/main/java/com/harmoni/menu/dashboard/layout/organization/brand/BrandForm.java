@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.event.brand.BrandSaveEventListener;
 import com.harmoni.menu.dashboard.event.brand.BrandUpdateEventListener;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -16,8 +17,9 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.shared.Registration;
@@ -29,10 +31,10 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.Objects;
 
 /**
- * Vaadin form for editing a {@link BrandDto} inside a {@link Dialog}. Renders a
+ * Vaadin form for editing a {@link BrandDto} inside a tab. Renders a
  * brand-name field bound with a {@link BeanValidationBinder}, wires the
  * save/update buttons to {@link BrandSaveEventListener} /
- * {@link BrandUpdateEventListener}, and closes the dialog on a successful
+ * {@link BrandUpdateEventListener}, and closes the tab on a successful
  * BROADCAST insert or update.
  */
 @RequiredArgsConstructor
@@ -55,7 +57,8 @@ public class BrandForm extends FormLayout {
     UI ui;
 
     private final RestClientOrganizationService restClientOrganizationService;
-    private final Dialog dialog;
+    private final TabManager tabManager;
+    private final Tab currentTab;
     private final FormAction formAction;
 
     @Getter
@@ -97,14 +100,14 @@ public class BrandForm extends FormLayout {
      * @param text the message to display
      */
     public void showNotification(String text) {
-        ui.access(() -> UiUtil.success(text));
+        UiUtil.safeAccess(ui, () -> UiUtil.success(text));
     }
 
     /**
-     * Closes the wrapped dialog on the UI thread.
+     * Closes the wrapped tab on the UI thread.
      */
     public void close() {
-        ui.access(() -> dialog.close());
+        UiUtil.safeAccess(ui, () -> tabManager.closeAndSelectFirst(currentTab));
     }
 
     @Override
@@ -133,7 +136,9 @@ public class BrandForm extends FormLayout {
         saveButton.addClickListener(new BrandSaveEventListener(this, restClientOrganizationService));
         closeButton.addClickListener(event -> close());
 
-        dialog.getFooter().add(saveButton, updateButton, closeButton);
+        HorizontalLayout footer = new HorizontalLayout(saveButton, updateButton, closeButton);
+        footer.setWidthFull();
+        add(footer);
     }
 
     /**

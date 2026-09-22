@@ -9,6 +9,7 @@ import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.event.store.StoreSaveEventListener;
 import com.harmoni.menu.dashboard.event.store.StoreUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
@@ -138,7 +139,7 @@ public class StoreForm extends FormLayout {
      * Removes the store tab from the parent {@link TabSheet} on the UI thread.
      */
     public void close() {
-        this.ui.access(() -> {
+        UiUtil.safeAccess(this.ui, () -> {
             if (!(getParent().orElseThrow() instanceof TabSheet tabSheet)) {
                 return;
             }

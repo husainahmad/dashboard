@@ -154,6 +154,31 @@
         -0.02em;
 }
 
+.dashboard-view .stat-value--ok {
+    color:
+        #16a34a;
+}
+
+.dashboard-view .stat-value--warn {
+    color:
+        #dc2626;
+}
+
+.dashboard-view .health-caption {
+    color:
+        var(--app-text-secondary);
+}
+
+.dashboard-view .health-empty {
+    color:
+        #16a34a;
+}
+
+.dashboard-view .health-grid {
+    min-width:
+        0;
+}
+
 .stat-label {
 
     margin: 0;

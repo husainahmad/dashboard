@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.TableDto;
 import com.harmoni.menu.dashboard.event.table.TableSaveEventListener;
 import com.harmoni.menu.dashboard.event.table.TableUpdateEventListener;
+import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientSettingService;
@@ -16,8 +17,9 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
@@ -30,11 +32,11 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.Objects;
 
 /**
- * Dialog form for creating or editing a table, binding the name and capacity
+ * Tab form for creating or editing a table, binding the name and capacity
  * fields through a {@link BeanValidationBinder}. The footer buttons are wired
  * to {@link TableSaveEventListener} / {@link TableUpdateEventListener}, which
  * persist through the injected {@link RestClientSettingService}; success is
- * awaited from {@link Broadcaster} receipts before the dialog closes.
+ * awaited from {@link Broadcaster} receipts before the tab closes.
  */
 @RequiredArgsConstructor
 @Slf4j
@@ -58,7 +60,8 @@ public class TableForm extends FormLayout {
     Button closeButton = new Button("Cancel");
     Button updateButton = UiUtil.updateButton();
 
-    private final Dialog dialog;
+    private final TabManager tabManager;
+    private final Tab currentTab;
     private final FormAction formAction;
 
     /** UI this form was attached to, used to marshal callbacks onto the UI thread. */
@@ -100,10 +103,10 @@ public class TableForm extends FormLayout {
     }
 
     /**
-     * Closes the hosting dialog on the UI thread.
+     * Closes the hosting tab on the UI thread.
      */
     public void close() {
-        ui.access(() -> dialog.close());
+        UiUtil.safeAccess(ui, () -> tabManager.closeAndSelectFirst(currentTab));
     }
 
     private void addValidation() {
@@ -134,7 +137,9 @@ public class TableForm extends FormLayout {
         saveButton.addClickListener(new TableSaveEventListener(this, restClientSettingService));
         closeButton.addClickListener(event -> close());
 
-        dialog.getFooter().add(saveButton, updateButton, closeButton);
+        HorizontalLayout footer = new HorizontalLayout(saveButton, updateButton, closeButton);
+        footer.setWidthFull();
+        add(footer);
     }
 
     /**
@@ -164,9 +169,9 @@ public class TableForm extends FormLayout {
                         broadcastMessage.getType().equals(BroadcastMessage.TABLE_UPDATED_SUCCESS))) {
 
                 boolean isInsert = broadcastMessage.getType().equals(BroadcastMessage.TABLE_INSERT_SUCCESS);
-                ui.access(() -> {
+                UiUtil.safeAccess(ui, () -> {
                     UiUtil.success(isInsert ? "Table created.." : "Table updated..");
-                    dialog.close();
+                    tabManager.closeAndSelectFirst(currentTab);
                 });
             }
         } catch (JsonProcessingException e) {
