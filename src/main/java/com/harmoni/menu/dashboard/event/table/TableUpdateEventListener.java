@@ -29,13 +29,16 @@ public class TableUpdateEventListener implements ComponentEventListener<ClickEve
      */
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
-        if (this.tableForm.getBinder().validate().hasErrors()) {
+        if (this.tableForm.validateOnSave().hasErrors()) {
             return;
         }
 
         TableDto tableDto = this.tableForm.getTableDto();
         tableDto.setName(this.tableForm.getNameField().getValue());
         tableDto.setCapacity(this.tableForm.getCapacityField().getValue());
+        if (this.tableForm.getStoreBox().getValue() != null) {
+            tableDto.setStoreId(this.tableForm.getStoreBox().getValue().getId());
+        }
         restClientSettingService.updateTable(tableDto)
                 .subscribe(this::accept);
     }

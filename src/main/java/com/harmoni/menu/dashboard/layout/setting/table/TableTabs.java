@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.layout.setting.table;
 
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientSettingService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -24,13 +25,15 @@ public class TableTabs extends VerticalLayout {
     private final AsyncRestClientSettingService asyncRestClientSettingService;
     private final RestClientSettingService restClientSettingService;
     private final AccessService accessService;
+    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
 
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
         browseTab.setLabel(Messages.get("tab.tableList"));
         TableListView tableListView = new TableListView(
-                asyncRestClientSettingService, restClientSettingService, accessService);
+                asyncRestClientSettingService, restClientSettingService, accessService,
+                asyncRestClientOrganizationService);
         tabSheet.add(browseTab, tableListView);
         tabSheet.setSizeFull();
 

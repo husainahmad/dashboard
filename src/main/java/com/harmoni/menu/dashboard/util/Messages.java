@@ -69,6 +69,7 @@ public class Messages implements ApplicationContextAware {
         public static final String LABEL_SEARCH = "label.search";
         public static final String LABEL_SELECTION_TYPE = "label.selectionType";
         public static final String LABEL_SERVICE = "label.service";
+        public static final String LABEL_STORE = "label.store";
         public static final String LABEL_TIER = "label.tier";
         public static final String NOTIFICATION_BRAND_CREATED = "notification.brand.created";
         public static final String NOTIFICATION_BRAND_INSERT_ERROR = "notification.brand.insertError";
