@@ -20,6 +20,7 @@ import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.button.Button;
@@ -47,6 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * The "All Customizations" tree view inside {@link CustomizationTabs}.
@@ -63,10 +65,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 @Slf4j
 public class CustomizationListView extends AbstractListView implements BroadcastMessageService {
-
-    static final String TAB_LABEL_LIST = "All Customizations";
-    static final String TAB_LABEL_NEW = "New Customization";
-    static final String TAB_LABEL_EDIT = "Edit Customization";
 
     private static final int PAGE_SIZE = 15;
     private static final long SEARCH_TIMEOUT_MS = 400;
@@ -120,18 +118,18 @@ public class CustomizationListView extends AbstractListView implements Broadcast
 
     private void configureGrid() {
         customizationGrid.setSizeFull();
-        customizationGrid.setEmptyStateText("No customizations yet \u2014 click \u201CNew Customization\u201D to add one.");
+        customizationGrid.setEmptyStateText(Messages.get("grid.empty.customizationList"));
         customizationGrid.removeAllColumns();
-        customizationGrid.addComponentHierarchyColumn(this::applyNameLabel).setHeader("Name").setAutoWidth(true);
+        customizationGrid.addComponentHierarchyColumn(this::applyNameLabel).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME)).setAutoWidth(true);
         customizationGrid.addColumn(item -> item.getSelectionTypeLabel() == null ? "-" : item.getSelectionTypeLabel())
-                .setHeader("Type").setAutoWidth(true);
+                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_TYPE)).setAutoWidth(true);
         customizationGrid.addColumn(item -> item.getTierName() == null ? "-" : item.getTierName())
-                .setHeader("Tier").setAutoWidth(true);
+                .setHeader(Messages.get("grid.header.tier")).setAutoWidth(true);
         customizationGrid.addColumn(item -> item.getPrice() == null ? "-"
-                        : String.format("%,.2f", item.getPrice())).setHeader("Price").setAutoWidth(true);
+                        : String.format("%,.2f", item.getPrice())).setHeader(Messages.get(Messages.Keys.GRID_HEADER_PRICE)).setAutoWidth(true);
         customizationGrid.addColumn(item -> item.getOptionStatus() == null ? "-" : item.getOptionStatus())
-                .setHeader("Active").setAutoWidth(true);
-        customizationGrid.addComponentColumn(this::applyActionButtons).setHeader("Actions").setAutoWidth(true);
+                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTIVE)).setAutoWidth(true);
+        customizationGrid.addComponentColumn(this::applyActionButtons).setHeader(Messages.get("grid.header.actions")).setAutoWidth(true);
         customizationGrid.getColumns().forEach(column -> column.setResizable(true));
         customizationGrid.addExpandListener(this::onComponentEventExpandListener);
         treeDataProvider = new TreeDataProvider<>(treeData);
@@ -141,7 +139,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
     private Span applyNameLabel(CustomizationTreeItem item) {
         Span label = new Span(item.getName());
         if (CustomizationItemType.CUSTOMIZATION.equals(item.getType())) {
-            label.getElement().getStyle().set("font-weight", "bold");
+            label.getElement().getStyle().set(Css.FONT_WEIGHT, "bold");
         }
         return label;
     }
@@ -150,7 +148,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
         if (!CustomizationItemType.CUSTOMIZATION.equals(item.getType())) {
             return new HorizontalLayout(new Span());
         }
-        Button editButton = UiUtil.editButton("Edit", event -> onEditCustomization(item));
+        Button editButton = UiUtil.editButton(Messages.get(Messages.Keys.ACTION_EDIT), event -> onEditCustomization(item));
         Button deleteButton = UiUtil.deleteButton(
                 event -> new CustomizationDeleteEventListener(item.getCustomizationDto(), restClientMenuService).onComponentEvent(event));
         HorizontalLayout actions = new HorizontalLayout(editButton, deleteButton);
@@ -159,7 +157,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
     }
 
     private void configureSearch() {
-        filterText.setLabel("Search");
+        filterText.setLabel(Messages.get(Messages.Keys.LABEL_SEARCH));
         configureSearchFilter();
         filterText.addValueChangeListener(change -> {
             if (change.isFromClient()) {
@@ -170,8 +168,8 @@ public class CustomizationListView extends AbstractListView implements Broadcast
     }
 
     private void configureBrandSelector() {
-        brandDtoComboBox.setLabel("Brand");
-        brandDtoComboBox.setPlaceholder("Select brand");
+        brandDtoComboBox.setLabel(Messages.get(Messages.Keys.LABEL_BRAND));
+        brandDtoComboBox.setPlaceholder(Messages.get("placeholder.selectBrand"));
         brandDtoComboBox.setClearButtonVisible(true);
         brandDtoComboBox.setItemLabelGenerator(BrandDto::getName);
         brandDtoComboBox.setItems(Collections.emptyList());
@@ -199,17 +197,17 @@ public class CustomizationListView extends AbstractListView implements Broadcast
      */
     public HorizontalLayout getToolbarComponent() {
         configureTierSelector();
-        Button addButton = UiUtil.addButton("New Customization", this::onAddCustomizationListener);
+        Button addButton = UiUtil.addButton(Messages.get("action.newCustomization"), this::onAddCustomizationListener);
         HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, tierDtoComboBox, filterText, addButton);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         toolbar.setWidthFull();
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
         return toolbar;
     }
 
     private void configureTierSelector() {
-        tierDtoComboBox.setLabel("Tier");
-        tierDtoComboBox.setPlaceholder("Select tier");
+        tierDtoComboBox.setLabel(Messages.get(Messages.Keys.LABEL_TIER));
+        tierDtoComboBox.setPlaceholder(Messages.get("placeholder.selectTier"));
         tierDtoComboBox.setClearButtonVisible(true);
         tierDtoComboBox.setItemLabelGenerator(TierDto::getName);
         tierDtoComboBox.setItems(Collections.emptyList());
@@ -225,7 +223,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
         if (tempTier == null) {
             tempTier = new TierDto();
             tempTier.setId(-1);
-            tempTier.setName("All");
+            tempTier.setName(Messages.get(Messages.Keys.LABEL_ALL));
         }
         return tempTier;
     }
@@ -258,7 +256,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
             return;
         }
         TabManager tabManager = new TabManager(tabSheet);
-        tabManager.addOrSelect(TAB_LABEL_NEW, tab -> {
+        tabManager.addOrSelect(Messages.get("tab.customizationNew"), tab -> {
             CustomizationForm form = new CustomizationForm(restClientMenuService, tabManager, tab,
                     currentBrandId(), null);
             form.restructureButton(FormAction.CREATE);
@@ -280,7 +278,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
                     UiUtil.safeAccess(ui, () -> {
                         TabManager tabManager = new TabManager(tabSheet);
                         String tabLabel = customization.getName() == null || customization.getName().isBlank()
-                                ? TAB_LABEL_EDIT : "Edit ".concat(customization.getName());
+                                ? Messages.get("tab.customizationEdit") : Messages.get(Messages.Keys.ACTION_EDIT_NAME, customization.getName());
                         tabManager.addOrSelect(tabLabel, tab -> {
                             CustomizationForm form = new CustomizationForm(restClientMenuService, tabManager, tab,
                                     currentBrandId(), customization);
@@ -472,7 +470,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
                             return;
                         }
                         gridSkeleton.hide();
-                        UiUtil.errorWithRetry("Couldn't load customizations", this::fetchCustomizations);
+                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_LOAD_FAILED), this::fetchCustomizations);
                     }),
                     brand.getId(), currentPage, PAGE_SIZE, normalizeSearch(filterText.getValue()));
         });

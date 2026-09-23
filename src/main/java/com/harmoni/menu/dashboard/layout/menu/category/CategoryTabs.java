@@ -4,6 +4,7 @@ import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -35,7 +36,7 @@ public class CategoryTabs extends VerticalLayout {
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
-        browseTab.setLabel("All Categories");
+        browseTab.setLabel(Messages.get("tab.categoryList"));
         CategoryListView categoryListView = new CategoryListView(asyncRestClientMenuService,
                 asyncRestClientOrganizationService, restClientMenuService, accessService);
         tabSheet.add(browseTab, categoryListView);

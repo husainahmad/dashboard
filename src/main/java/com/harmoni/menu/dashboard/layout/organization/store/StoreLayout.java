@@ -8,6 +8,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Main route ({@code /store}) for the store administration domain. Hosts the
@@ -24,7 +25,7 @@ public class StoreLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        addClassName("list-view");
+        addClassName(Css.LIST_VIEW);
         add(new StoreTabs(asyncRestClientOrganizationService, restClientOrganizationService, accessService));
         setSizeFull();
     }

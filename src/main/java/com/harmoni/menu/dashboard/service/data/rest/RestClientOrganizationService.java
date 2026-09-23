@@ -3,7 +3,6 @@ package com.harmoni.menu.dashboard.service.data.rest;
 import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -16,13 +15,17 @@ import java.util.List;
  * and users. Builds URLs from {@link MenuProperties}, extends
  * {@link RestClientService} and returns {@link Mono} responses.
  */
-@RequiredArgsConstructor
 @Service
 @Slf4j
 public class RestClientOrganizationService extends RestClientService {
 
     private final MenuProperties menuProperties;
-    private static final String URL_FORMAT = "%s/%d";
+
+    public RestClientOrganizationService(MenuProperties menuProperties,
+                                         TokenRefreshService tokenRefreshService) {
+        super(tokenRefreshService);
+        this.menuProperties = menuProperties;
+    }
 
     /**
      * Creates a chain.
@@ -167,9 +170,7 @@ public class RestClientOrganizationService extends RestClientService {
     }
 
     public Mono<RestAPIResponse> getStore(Integer chainId, int page, int size, String search) {
-        String uri = String.format("%s?chainId=%d&page=%d&size=%d&search=%s",
-                menuProperties.getUrl().getStore(),
-                chainId, page, size, search);
+        String uri = String.format(menuProperties.getUrl().getStoreQuery(), chainId, page, size, search);
         return get(uri);
     }
 
@@ -178,11 +179,11 @@ public class RestClientOrganizationService extends RestClientService {
     }
 
     public Mono<RestAPIResponse> deleteUser(UserDto userDto) {
-        return delete(menuProperties.getUrl().getUser().concat("/").concat(userDto.getId().toString()));
+        return delete(String.format(menuProperties.getUrl().getUsers().getById(), userDto.getId()));
     }
 
     public Mono<RestAPIResponse> updateUser(UserDto userDto) {
-        return put(menuProperties.getUrl().getUser().concat("/").concat(userDto.getId().toString()),
+        return put(String.format(menuProperties.getUrl().getUsers().getById(), userDto.getId()),
                 Mono.just(userDto), UserDto.class);
     }
 }

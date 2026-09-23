@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.layout.util.AsyncUtil;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -38,15 +39,15 @@ public class CustomizationAddDialog extends Dialog {
     public CustomizationAddDialog(CustomizationSection section, ProductFormDelegate delegate,
                                   AsyncRestClientMenuService asyncRestClientMenuService,
                                   BrandDto brandDto) {
-        setHeaderTitle("Add Customization");
+        setHeaderTitle(Messages.get("label.addCustomization"));
 
-        TextField searchField = new TextField("Search");
-        searchField.setPlaceholder("Search customizations...");
+        TextField searchField = new TextField(Messages.get(Messages.Keys.LABEL_SEARCH));
+        searchField.setPlaceholder(Messages.get("placeholder.searchCustomizations"));
         searchField.setClearButtonVisible(true);
         searchField.setValueChangeMode(ValueChangeMode.LAZY);
 
         CheckboxGroup<CustomizationDto> group = new CheckboxGroup<>();
-        group.setLabel("Available Customizations");
+        group.setLabel(Messages.get("label.availableCustomizations"));
         group.setItemLabelGenerator(CustomizationDto::getName);
         group.setItemHelperGenerator(this::buildAddMeta);
 
@@ -70,7 +71,7 @@ public class CustomizationAddDialog extends Dialog {
                     });
                 },
                 throwable -> AsyncUtil.onUi(delegate.getUi(),
-                        () -> delegate.showErrorDialog("Failed to load customizations")),
+                        () -> delegate.showErrorDialog(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_LOAD_FAILED))),
                 brandDto.getId(), 1, 500, "");
 
         searchField.addValueChangeListener(event -> {
@@ -78,12 +79,12 @@ public class CustomizationAddDialog extends Dialog {
             List<CustomizationDto> filtered = allCustomizations.get().stream()
                     .filter(customization -> customization.getName() == null
                             || customization.getName().toLowerCase().contains(filter))
-                    .collect(Collectors.toList());
+                    .toList();
             group.setItems(filtered);
         });
 
-        Button cancelButton = new Button("Cancel", event -> close());
-        Button addSelectedButton = UiUtil.addButton("Add Selected",
+        Button cancelButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL), event -> close());
+        Button addSelectedButton = UiUtil.addButton(Messages.get("action.addSelected"),
                 event -> section.onAddSelected(group.getSelectedItems(), this));
 
         VerticalLayout dialogContent = new VerticalLayout(searchField, group);
@@ -101,11 +102,12 @@ public class CustomizationAddDialog extends Dialog {
     private String buildAddMeta(CustomizationDto customization) {
         String type = customization.getSelectionType() == null ? ""
                 : customization.getSelectionType().getLabel();
-        String required = Boolean.TRUE.equals(customization.getRequired()) ? "Required" : "Optional";
+        String required = Boolean.TRUE.equals(customization.getRequired())
+                ? Messages.get(Messages.Keys.LABEL_REQUIRED) : Messages.get("label.optional");
         String min = customization.getMinimumSelection() == null ? "0"
                 : String.valueOf(customization.getMinimumSelection());
         String max = customization.getMaximumSelection() == null ? "n"
                 : String.valueOf(customization.getMaximumSelection());
-        return (type + " \u00b7 " + required + " \u00b7 Select " + min + "-" + max).trim();
+        return Messages.get("label.customizationMeta", type, required, min, max);
     }
 }

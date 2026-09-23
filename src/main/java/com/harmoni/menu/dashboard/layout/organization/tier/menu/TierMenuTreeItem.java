@@ -2,6 +2,7 @@ package com.harmoni.menu.dashboard.layout.organization.tier.menu;
 
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
+import com.harmoni.menu.dashboard.layout.organization.tier.TierTreeItem;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,7 @@ import lombok.Data;
  */
 @Data
 @Builder
-public class TierMenuTreeItem {
+public class TierMenuTreeItem implements TierTreeItem {
     private Integer rootIndex;
     private TierDto tierDto;
     private String id;

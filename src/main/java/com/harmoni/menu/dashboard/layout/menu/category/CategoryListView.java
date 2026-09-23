@@ -13,6 +13,7 @@ import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Set;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * The "All Categories" grid view inside {@link CategoryTabs}.
@@ -61,12 +63,12 @@ public class CategoryListView extends AbstractListView {
     private void configureGrid() {
         categoryDtoGrid.setSizeFull();
         categoryDtoGrid.removeAllColumns();
-        categoryDtoGrid.setEmptyStateText("No categories yet \u2014 click \u201CNew Category\u201D to add one.");
-        categoryDtoGrid.addColumn(CategoryDto::getName).setHeader("Name");
-        categoryDtoGrid.addColumn("brandDto.name").setHeader("Brand Name");
+        categoryDtoGrid.setEmptyStateText(Messages.get("grid.empty.categories"));
+        categoryDtoGrid.addColumn(CategoryDto::getName).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
+        categoryDtoGrid.addColumn("brandDto.name").setHeader(Messages.get(Messages.Keys.GRID_HEADER_BRAND_NAME));
 
         categoryDtoGrid.getColumns().forEach(categoryDtoColumn -> categoryDtoColumn.setAutoWidth(true));
-        categoryDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
+        categoryDtoGrid.addComponentColumn(this::applyButton).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
     }
 
     private Component applyButton(CategoryDto categoryDto) {
@@ -97,11 +99,11 @@ public class CategoryListView extends AbstractListView {
     public HorizontalLayout getToolbarComponent() {
         configureSearchFilter();
 
-        Button addBrandButton = UiUtil.addButton("New Category",
+        Button addBrandButton = UiUtil.addButton(Messages.get(Messages.Keys.ACTION_NEW_CATEGORY),
                 (ComponentEventListener<ClickEvent<Button>>) event -> CategoryListView.this.addCategory());
         configureBrandFilter(this::fetchCategories);
         HorizontalLayout toolbar = new HorizontalLayout(brandFilter, filterText, addBrandButton);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
         registerNewShortcut(this::addCategory);
         return toolbar;
@@ -141,7 +143,7 @@ public class CategoryListView extends AbstractListView {
                     }
                     TabManager tabManager = new TabManager(tabSheet);
                     String tabLabel = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(categoryDto.getName())
-                            ? "Edit ".concat(categoryDto.getName()) : "New Category";
+                            ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, categoryDto.getName()) : Messages.get(Messages.Keys.ACTION_NEW_CATEGORY);
                     tabManager.addOrSelect(tabLabel, tab -> new CategoryForm(this.asyncRestClientOrganizationService,
                             this.restClientMenuService, tabManager, tab, formAction, categoryDto, brands));
                 }));
@@ -157,7 +159,7 @@ public class CategoryListView extends AbstractListView {
             categoryDtoGrid.setItems(result);
         }), error -> UiUtil.safeAccess(ui, () -> {
             gridSkeleton.hide();
-            UiUtil.errorWithRetry("Couldn't load categories", this::fetchCategories);
+            UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_CATEGORY_LOAD_FAILED), this::fetchCategories);
         }), selectedBrandId(accessService));
     }
 }

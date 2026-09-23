@@ -14,13 +14,12 @@ import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
-import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -31,6 +30,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Vaadin grid view listing the users of the current user's chain with
@@ -70,23 +70,23 @@ private void renderLayout() {
     private void configureGrid() {
         userDtoGrid.setSizeFull();
         userDtoGrid.removeAllColumns();
-        userDtoGrid.setEmptyStateText("No users yet \u2014 click \u201CNew User\u201D to add one.");
-        userDtoGrid.addColumn(UserDto::getUsername).setHeader("Name");
+        userDtoGrid.setEmptyStateText(Messages.get("grid.empty.users"));
+        userDtoGrid.addColumn(UserDto::getUsername).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
         userDtoGrid.addComponentColumn(userDto -> {
             return switch (userDto.getAuthId()) {
                 case 1 -> new Span(RoleType.ADMIN.name());
                 case 2 -> new Span(RoleType.MANAGER.name());
                 default -> new Span(RoleType.USER.name());
             };
-        }).setHeader("Auth");
-        userDtoGrid.addComponentColumn(this::applyGroupButton).setHeader("Action");
+        }).setHeader(Messages.get("grid.header.auth"));
+        userDtoGrid.addComponentColumn(this::applyGroupButton).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
         userDtoGrid.getColumns().forEach(storeDtoColumn -> storeDtoColumn.setAutoWidth(true));
     }
 
     private Component applyGroupButton(UserDto userDto) {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         horizontalLayout.add(UiUtil.editButton(
-                event -> showAddEditUser(userDto, "Edit User", FormAction.EDIT)));
+                event -> showAddEditUser(userDto, Messages.get("action.editUser"), FormAction.EDIT)));
         horizontalLayout.add(UiUtil.deleteButton(
                 new UserDeleteEventListener(userDto, this.restClientOrganizationService)));
         return horizontalLayout;
@@ -98,7 +98,7 @@ private void renderLayout() {
         }
         String tabLabel = action == FormAction.EDIT
                 && ObjectUtils.isNotEmpty(userDto.getUsername())
-                ? "Edit ".concat(userDto.getUsername()) : title;
+                ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, userDto.getUsername()) : title;
         new TabManager(tabSheet).addOrSelect(tabLabel, tab ->
                 new UserForm(this.asyncRestClientOrganizationService,
                         this.restClientOrganizationService, this.accessService, tab, action, userDto));
@@ -115,7 +115,7 @@ private void renderLayout() {
      */
     public HorizontalLayout getToolbarComponent() {
         configureSearchFilter();
-        filterText.getElement().setAttribute("autocomplete", "off");
+        filterText.getElement().setAttribute(Css.AUTOCOMPLETE, "off");
         filterText.addValueChangeListener(changeEvent -> {
             if (!changeEvent.getOldValue().equals(changeEvent.getValue())) {
                 currentPage = 1;
@@ -123,10 +123,10 @@ private void renderLayout() {
             }
         });
 
-        Button addChainButton = UiUtil.addButton("New User",
-                event -> showAddEditUser(new UserDto(), "New User", FormAction.CREATE));
+        Button addChainButton = UiUtil.addButton(Messages.get(Messages.Keys.ACTION_NEW_USER),
+                event -> showAddEditUser(new UserDto(), Messages.get(Messages.Keys.ACTION_NEW_USER), FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         return toolbar;
     }
 
@@ -168,7 +168,7 @@ private void renderLayout() {
             }
         }), error -> UiUtil.safeAccess(ui, () -> {
             gridSkeleton.hide();
-            UiUtil.errorWithRetry("Couldn't load users", this::fetchUsers);
+            UiUtil.errorWithRetry(Messages.get("notification.user.loadFailed"), this::fetchUsers);
         }), accessService.getUserDetail().getStoreDto().getChainId(), currentPage, pageSize, filterText.getValue());
     }
 

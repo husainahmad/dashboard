@@ -7,6 +7,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Statistic card shown in the dashboard's summary row: an icon, a large value
@@ -42,8 +43,8 @@ public class StatCard extends HorizontalLayout {
     }
 
     public void setWarn(boolean warn) {
-        valueLabel.removeClassName("stat-value--ok");
-        valueLabel.removeClassName("stat-value--warn");
-        valueLabel.addClassName(warn ? "stat-value--warn" : "stat-value--ok");
+        valueLabel.removeClassName(Css.STAT_VALUE_OK);
+        valueLabel.removeClassName(Css.STAT_VALUE_WARN);
+        valueLabel.addClassName(warn ? Css.STAT_VALUE_WARN : Css.STAT_VALUE_OK);
     }
 }

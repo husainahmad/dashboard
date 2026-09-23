@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.layout.util.AsyncUtil;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -24,6 +25,7 @@ import com.vaadin.flow.component.textfield.NumberField;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.List;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Per-product override dialog for one attached customization: required flag,
@@ -58,27 +60,28 @@ public class CustomizationConfigureDialog extends Dialog {
 
         boolean overrideActive = ObjectUtils.anyNotNull(
                 dto.getRequiredOverride(), dto.getMinSelectionOverride(), dto.getMaxSelectionOverride());
-        setHeaderTitle("Configure: " + dto.getName() + (overrideActive ? "  (Override)" : ""));
+        setHeaderTitle(Messages.get("dialog.header.configure", dto.getName(),
+                overrideActive ? Messages.get("dialog.overrideSuffix") : ""));
         setWidth("520px");
 
-        ComboBox<String> typeBox = new ComboBox<>("Selection Type");
-        typeBox.setItems("Single", "Multi");
+        ComboBox<String> typeBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_SELECTION_TYPE));
+        typeBox.setItems(Messages.get("label.single"), Messages.get("label.multi"));
         typeBox.setValue(dto.getSelectionType() == null ? "" : dto.getSelectionType().getLabel());
         typeBox.setEnabled(false);
-        typeBox.setHelperText("Managed in the Customization master");
+        typeBox.setHelperText(Messages.get("helper.customization.managedInMaster"));
 
-        Checkbox requiredCheckbox = new Checkbox("Required");
+        Checkbox requiredCheckbox = new Checkbox(Messages.get(Messages.Keys.LABEL_REQUIRED));
         requiredCheckbox.setValue(Boolean.TRUE.equals(dto.getRequired()));
         Span requiredStatus = buildOverrideStatus(dto.getRequiredOverride() != null);
 
-        NumberField minField = new NumberField("Minimum selection");
+        NumberField minField = new NumberField(Messages.get("label.minimumSelection"));
         minField.setMin(0);
         if (dto.getMinSelection() != null) {
             minField.setValue(dto.getMinSelection().doubleValue());
         }
         Span minStatus = buildOverrideStatus(dto.getMinSelectionOverride() != null);
 
-        NumberField maxField = new NumberField("Maximum selection");
+        NumberField maxField = new NumberField(Messages.get("label.maximumSelection"));
         maxField.setMin(0);
         if (dto.getMaxSelection() != null) {
             maxField.setValue(dto.getMaxSelection().doubleValue());
@@ -98,9 +101,9 @@ public class CustomizationConfigureDialog extends Dialog {
         maxField.setWidthFull();
         maxRow.setFlexGrow(1, maxField);
 
-        Span optionsTitle = new Span("Options (" +
-                (ObjectUtils.isEmpty(dto.getOptions()) ? 0 : dto.getOptions().size()) + ")");
-        optionsTitle.getStyle().set("font-weight", "600");
+        Span optionsTitle = new Span(Messages.get("dialog.optionsTitle",
+                ObjectUtils.isEmpty(dto.getOptions()) ? 0 : dto.getOptions().size()));
+        optionsTitle.getStyle().set(Css.FONT_WEIGHT, "600");
 
         Grid<CustomizationOptionDto> optionsGrid = buildConfigureOptionsGrid(dto);
 
@@ -108,9 +111,9 @@ public class CustomizationConfigureDialog extends Dialog {
         content.setPadding(false);
         add(content);
 
-        Button resetButton = new Button("Reset to master defaults", event -> save(null, null, null));
-        Button cancelButton = new Button("Cancel", event -> close());
-        Button saveButton = new Button("Save", event -> save(
+        Button resetButton = new Button(Messages.get("action.resetToMaster"), event -> save(null, null, null));
+        Button cancelButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL), event -> close());
+        Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE), event -> save(
                 requiredCheckbox.getValue(),
                 minField.isEmpty() ? null : minField.getValue().intValue(),
                 maxField.isEmpty() ? null : maxField.getValue().intValue()));
@@ -138,7 +141,7 @@ public class CustomizationConfigureDialog extends Dialog {
 
         AsyncUtil.subscribe(restClientMenuService.updateProductCustomization(
                         delegate.getProductId(), dto.getId(), config),
-                delegate.getUi(), "Failed to save configuration; check the selection ranges",
+                delegate.getUi(), Messages.get("notification.customization.configureFailed"),
                 response -> {
                     close();
                     onSaved.run();
@@ -147,9 +150,9 @@ public class CustomizationConfigureDialog extends Dialog {
 
     /** Builds a small status label indicating whether the value is overridden or inherited. */
     private Span buildOverrideStatus(boolean override) {
-        Span span = new Span(override ? "Override" : "Inherited");
+        Span span = new Span(override ? Messages.get("label.override") : Messages.get("label.inherited"));
         span.getStyle().set("font-size", "var(--lumo-font-size-xs)")
-                .set("font-weight", "600")
+                .set(Css.FONT_WEIGHT, "600")
                 .set("color", override ? "var(--lumo-primary-color)" : "var(--lumo-secondary-text-color)");
         return span;
     }
@@ -166,9 +169,9 @@ public class CustomizationConfigureDialog extends Dialog {
         grid.setSelectionMode(Grid.SelectionMode.NONE);
         grid.setAllRowsVisible(true);
         grid.removeAllColumns();
-        grid.addColumn(CustomizationOptionDto::getName).setHeader("Option");
-        grid.addColumn(this::getOptionPrice).setHeader("Price");
-        grid.addComponentColumn(this::renderActiveColumn).setHeader("Active").setWidth("90px");
+        grid.addColumn(CustomizationOptionDto::getName).setHeader(Messages.get("grid.header.option"));
+        grid.addColumn(this::getOptionPrice).setHeader(Messages.get(Messages.Keys.GRID_HEADER_PRICE));
+        grid.addComponentColumn(this::renderActiveColumn).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTIVE)).setWidth("90px");
         if (ObjectUtils.isNotEmpty(dto.getOptions())) {
             grid.setItems(dto.getOptions());
         }

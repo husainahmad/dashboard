@@ -22,6 +22,7 @@ import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -49,6 +50,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Landing page rendered at the root of the app after login.
@@ -77,10 +79,10 @@ public class DashboardView extends AbstractListView {
     private final GridSkeleton lowestSkeleton = new GridSkeleton(5);
     private final Grid<UnpricedSku> healthGrid = new Grid<>();
     private final Grid<LowPriceRow> lowestGrid = new Grid<>();
-    private final Span healthSummary = new Span("Analyzing price matrix…");
+    private final Span healthSummary = new Span(Messages.get("dashboard.analyzing"));
     private final Span healthEmpty = new Span();
     private final VerticalLayout activityLines = new VerticalLayout();
-    private final Span lowestSummary = new Span("Loading…");
+    private final Span lowestSummary = new Span(Messages.get("dashboard.loading"));
 
     private StatCard productsCard;
     private StatCard skusCard;
@@ -119,8 +121,8 @@ public class DashboardView extends AbstractListView {
     }
 
     private VerticalLayout createHero() {
-        H2 title = new H2("Store health");
-        Paragraph subtitle = new Paragraph("Live pricing and menu status for your active brand.");
+        H2 title = new H2(Messages.get("dashboard.storeHealth"));
+        Paragraph subtitle = new Paragraph(Messages.get("dashboard.heroSubtitle"));
 
         VerticalLayout hero = new VerticalLayout(title, subtitle);
         hero.addClassName("dashboard-hero");
@@ -130,10 +132,10 @@ public class DashboardView extends AbstractListView {
     }
 
     private HorizontalLayout createStatCards() {
-        productsCard = new StatCard(VaadinIcon.COFFEE, "Products");
-        skusCard = new StatCard(VaadinIcon.TAGS, "SKUs");
-        tiersCard = new StatCard(VaadinIcon.COINS, "Price tiers");
-        missingCard = new StatCard(VaadinIcon.WARNING, "Missing prices");
+        productsCard = new StatCard(VaadinIcon.COFFEE, Messages.get("dashboard.products"));
+        skusCard = new StatCard(VaadinIcon.TAGS, Messages.get("dashboard.skus"));
+        tiersCard = new StatCard(VaadinIcon.COINS, Messages.get("dashboard.priceTiers"));
+        missingCard = new StatCard(VaadinIcon.WARNING, Messages.get("dashboard.missingPrices"));
 
         HorizontalLayout cards = new HorizontalLayout(productsCard, skusCard, tiersCard, missingCard);
         cards.addClassName("stat-cards");
@@ -146,8 +148,8 @@ public class DashboardView extends AbstractListView {
     }
 
     private VerticalLayout createHealthPanel() {
-        H2 title = new H2("Price matrix health");
-        Button review = new Button("Review products", event -> {
+        H2 title = new H2(Messages.get("dashboard.matrixHealth"));
+        Button review = new Button(Messages.get("dashboard.reviewProducts"), event -> {
             if (ui != null) {
                 ui.navigate("product");
             }
@@ -158,15 +160,15 @@ public class DashboardView extends AbstractListView {
         header.setWidthFull();
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        healthSummary.addClassName("health-caption");
+        healthSummary.addClassName(Css.HEALTH_CAPTION);
         healthEmpty.addClassName("health-empty");
         healthEmpty.setVisible(false);
-        healthEmpty.setText("All SKUs are priced — no missing cells.");
+        healthEmpty.setText(Messages.get("dashboard.allPriced"));
 
-        healthGrid.addColumn(UnpricedSku::product).setHeader("Product").setWidth("220px").setFlexGrow(1);
-        healthGrid.addColumn(UnpricedSku::sku).setHeader("SKU").setWidth("180px").setFlexGrow(1);
+        healthGrid.addColumn(UnpricedSku::product).setHeader(Messages.get(Messages.Keys.DASHBOARD_PRODUCT)).setWidth("220px").setFlexGrow(1);
+        healthGrid.addColumn(UnpricedSku::sku).setHeader(Messages.get(Messages.Keys.DASHBOARD_SKU)).setWidth("180px").setFlexGrow(1);
         healthGrid.addColumn(row -> String.join(", ", row.missingTiers()))
-            .setHeader("Missing price in").setFlexGrow(1);
+            .setHeader(Messages.get("dashboard.missingPriceIn")).setFlexGrow(1);
         healthGrid.addClassName("health-grid");
         healthGrid.setHeight("280px");
         healthGrid.setSelectionMode(Grid.SelectionMode.NONE);
@@ -175,13 +177,13 @@ public class DashboardView extends AbstractListView {
     }
 
     private VerticalLayout createPricingPanel() {
-        H2 title = new H2("Lowest priced SKUs");
-        lowestSummary.addClassName("health-caption");
+        H2 title = new H2(Messages.get("dashboard.lowestPriced"));
+        lowestSummary.addClassName(Css.HEALTH_CAPTION);
 
-        lowestGrid.addColumn(LowPriceRow::product).setHeader("Product").setWidth("220px").setFlexGrow(1);
-        lowestGrid.addColumn(LowPriceRow::sku).setHeader("SKU").setWidth("180px").setFlexGrow(1);
-        lowestGrid.addColumn(row -> UiUtil.rupiah(row.price())).setHeader("Price").setFlexGrow(1);
-        lowestGrid.addColumn(LowPriceRow::tier).setHeader("Tier").setFlexGrow(1);
+        lowestGrid.addColumn(LowPriceRow::product).setHeader(Messages.get(Messages.Keys.DASHBOARD_PRODUCT)).setWidth("220px").setFlexGrow(1);
+        lowestGrid.addColumn(LowPriceRow::sku).setHeader(Messages.get(Messages.Keys.DASHBOARD_SKU)).setWidth("180px").setFlexGrow(1);
+        lowestGrid.addColumn(row -> UiUtil.rupiah(row.price())).setHeader(Messages.get(Messages.Keys.GRID_HEADER_PRICE)).setFlexGrow(1);
+        lowestGrid.addColumn(LowPriceRow::tier).setHeader(Messages.get("dashboard.tier")).setFlexGrow(1);
         lowestGrid.addClassName("health-grid");
         lowestGrid.setHeight("280px");
         lowestGrid.setSelectionMode(Grid.SelectionMode.NONE);
@@ -190,9 +192,9 @@ public class DashboardView extends AbstractListView {
     }
 
     private VerticalLayout createActivityPanel() {
-        H2 title = new H2("Recent activity");
-        Span caption = new Span("Changes recorded while the dashboard is open.");
-        caption.addClassName("health-caption");
+        H2 title = new H2(Messages.get("dashboard.recentActivity"));
+        Span caption = new Span(Messages.get("dashboard.activityCaption"));
+        caption.addClassName(Css.HEALTH_CAPTION);
 
         activityLines.setPadding(false);
         activityLines.setSpacing(false);
@@ -244,7 +246,7 @@ public class DashboardView extends AbstractListView {
             productsCard.setValue(0);
             tiersCard.setValue(0);
             missingCard.setValue(0);
-            healthSummary.setText("No active brand found for this store.");
+            healthSummary.setText(Messages.get("dashboard.noBrand"));
         });
     }
 
@@ -301,7 +303,7 @@ public class DashboardView extends AbstractListView {
         }
         UiUtil.safeAccess(ui, () -> {
             skeleton.hide();
-            UiUtil.errorWithRetry("Couldn't refresh dashboard", this::loadDashboard);
+            UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_BRAND_LOAD_FAILED), this::loadDashboard);
         });
     }
 
@@ -402,9 +404,8 @@ public class DashboardView extends AbstractListView {
     private void renderHealthView(MatrixStats stats) {
         boolean healthy = stats.unpriced().isEmpty();
         healthSummary.setText(healthy
-            ? "All %d SKUs are priced in every tier.".formatted(stats.skuCount())
-            : "%d of %d SKUs are missing a price in at least one tier."
-                .formatted(sizeOf(stats.unpriced()), stats.skuCount()));
+            ? Messages.get("dashboard.allPricedCount", stats.skuCount())
+            : Messages.get("dashboard.missingPriceCount", sizeOf(stats.unpriced()), stats.skuCount()));
         healthGrid.setItems(stats.unpriced());
         healthGrid.setVisible(!healthy);
         healthEmpty.setVisible(healthy);
@@ -417,8 +418,8 @@ public class DashboardView extends AbstractListView {
      */
     private void renderLowestView(List<LowPriceRow> top) {
         lowestSummary.setText(top.isEmpty()
-            ? "No priced SKUs found yet."
-            : "%d lowest priced SKUs across tiers.".formatted(top.size()));
+            ? Messages.get("dashboard.noPricedSku")
+            : Messages.get("dashboard.lowestCount", top.size()));
         lowestGrid.setItems(top);
     }
 
@@ -533,12 +534,16 @@ public class DashboardView extends AbstractListView {
 
     private String activityLabel(String type) {
         return switch (type) {
-            case BroadcastMessage.PRODUCT_INSERT_SUCCESS, BroadcastMessage.PRODUCT_UPDATE_SUCCESS -> "Products";
-            case BroadcastMessage.CATEGORY_INSERT_SUCCESS, BroadcastMessage.CATEGORY_UPDATED_SUCCESS -> "Categories";
+            case BroadcastMessage.PRODUCT_INSERT_SUCCESS, BroadcastMessage.PRODUCT_UPDATE_SUCCESS ->
+                    Messages.get("dashboard.activity.products");
+            case BroadcastMessage.CATEGORY_INSERT_SUCCESS, BroadcastMessage.CATEGORY_UPDATED_SUCCESS ->
+                    Messages.get("dashboard.activity.categories");
             case BroadcastMessage.TIER_INSERT_SUCCESS, BroadcastMessage.TIER_UPDATED_SUCCESS,
-                BroadcastMessage.TIER_DELETED_SUCCESS -> "Tiers";
-            case BroadcastMessage.BRAND_INSERT_SUCCESS, BroadcastMessage.BRAND_SUCCESS_UPDATED -> "Brands";
-            case BroadcastMessage.CHAIN_INSERT_SUCCESS, BroadcastMessage.CHAIN_SUCCESS_UPDATED -> "Chains";
+                BroadcastMessage.TIER_DELETED_SUCCESS -> Messages.get("dashboard.activity.tiers");
+            case BroadcastMessage.BRAND_INSERT_SUCCESS, BroadcastMessage.BRAND_SUCCESS_UPDATED ->
+                    Messages.get("dashboard.activity.brands");
+            case BroadcastMessage.CHAIN_INSERT_SUCCESS, BroadcastMessage.CHAIN_SUCCESS_UPDATED ->
+                    Messages.get("dashboard.activity.chains");
             default -> null;
         };
     }
@@ -546,7 +551,7 @@ public class DashboardView extends AbstractListView {
     private void renderActivityLines() {
         activityLines.removeAll();
         if (lastActivity.isEmpty()) {
-            activityLines.add(new Span("No changes recorded yet."));
+            activityLines.add(new Span(Messages.get("dashboard.noActivity")));
             return;
         }
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");

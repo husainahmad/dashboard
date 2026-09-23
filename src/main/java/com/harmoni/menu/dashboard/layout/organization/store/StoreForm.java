@@ -12,6 +12,7 @@ import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Vaadin form for editing a {@link StoreDto} inside a store tab. Renders chain
@@ -58,16 +60,16 @@ public class StoreForm extends FormLayout {
     @Getter
     BeanValidationBinder<StoreDto> binder = new BeanValidationBinder<>(StoreDto.class);
 
-    TextField storeNameField = new TextField("Store name");
-    TextArea storeAddressArea = new TextArea("Address");
-    ComboBox<ChainDto> chainDtoComboBox = new ComboBox<>("Chain");
-    ComboBox<TierDto> tierPriceBox = new ComboBox<>("Price");
-    ComboBox<TierDto> tierMenuBox = new ComboBox<>("Menu");
-    ComboBox<TierDto> tierServiceBox = new ComboBox<>("Service");
+    TextField storeNameField = new TextField(Messages.get("label.field.storeName"));
+    TextArea storeAddressArea = new TextArea(Messages.get("label.address"));
+    ComboBox<ChainDto> chainDtoComboBox = new ComboBox<>(Messages.get("label.chain"));
+    ComboBox<TierDto> tierPriceBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_PRICE));
+    ComboBox<TierDto> tierMenuBox = new ComboBox<>(Messages.get("label.menu"));
+    ComboBox<TierDto> tierServiceBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_SERVICE));
 
-    Button saveButton = new Button("Save");
-    Button closeButton = new Button("Cancel");
-    Button updateButton = new Button("Update");
+    Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
+    Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
+    Button updateButton = new Button(Messages.get(Messages.Keys.ACTION_UPDATE));
 
     private final RestClientOrganizationService restClientOrganizationService;
     private final Tab storeTab;
@@ -104,7 +106,7 @@ public class StoreForm extends FormLayout {
         tierFormLayout.add(tierMenuBox);
         tierFormLayout.add(tierServiceBox);
 
-        AccordionPanel menuPanel = accordion.add("Tier", tierFormLayout);
+        AccordionPanel menuPanel = accordion.add(Messages.get(Messages.Keys.LABEL_TIER), tierFormLayout);
         menuPanel.setOpened(true);
 
         add(accordion);
@@ -155,16 +157,16 @@ public class StoreForm extends FormLayout {
 
     private void addValidation() {
         binder.forField(chainDtoComboBox)
-                .withValidator(value -> value.getId() > 0, "Chain not allow to be empty"
+                .withValidator(value -> value.getId() > 0, Messages.get("validation.chain.required")
                 ).bind(StoreDto::getChainDto, StoreDto::setChainDto);
 
         binder.forField(storeAddressArea)
-                .withValidator(value -> !value.isEmpty(), "Address not allow to be empty"
+                .withValidator(value -> !value.isEmpty(), Messages.get("validation.address.required")
                 ).bind(StoreDto::getAddress, StoreDto::setAddress);
 
         binder.forField(storeNameField)
                 .withValidator(value -> value.length() > 2,
-                        "Name must contain at least three characters")
+                        Messages.get(Messages.Keys.VALIDATION_NAME_MIN_LENGTH))
                 .bind(StoreDto::getName, StoreDto::setName);
     }
 
@@ -227,7 +229,7 @@ public class StoreForm extends FormLayout {
         closeButton.addClickListener(event -> close());
 
         HorizontalLayout buttonBar = new HorizontalLayout(saveButton, updateButton, closeButton);
-        buttonBar.addClassName("toolbar");
+        buttonBar.addClassName(Css.TOOLBAR);
         buttonBar.setAlignItems(FlexComponent.Alignment.BASELINE);
         buttonBar.setPadding(true);
         return buttonBar;

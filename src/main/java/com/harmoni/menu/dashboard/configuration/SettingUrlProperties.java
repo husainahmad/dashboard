@@ -17,4 +17,5 @@ import java.io.Serializable;
 public class SettingUrlProperties implements Serializable {
     private String service;
     private String table;
+    private String tableByStore;
 }

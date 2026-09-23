@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.layout.setting.table;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientSettingService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -27,7 +28,7 @@ public class TableTabs extends VerticalLayout {
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
-        browseTab.setLabel("All Tables");
+        browseTab.setLabel(Messages.get("tab.tableList"));
         TableListView tableListView = new TableListView(
                 asyncRestClientSettingService, restClientSettingService, accessService);
         tabSheet.add(browseTab, tableListView);

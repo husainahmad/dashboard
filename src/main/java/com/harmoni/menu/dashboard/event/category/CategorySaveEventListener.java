@@ -8,6 +8,7 @@ import com.harmoni.menu.dashboard.layout.menu.category.CategoryForm;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -40,7 +41,7 @@ public class CategorySaveEventListener implements ComponentEventListener<ClickEv
 
         BrandDto brand = this.categoryForm.getBrandBox().getValue();
         if (brand == null || brand.getId() == null || brand.getId() <= 0) {
-            this.categoryForm.showNotification("Brand not allow to be empty");
+            this.categoryForm.showNotification(Messages.get(Messages.Keys.VALIDATION_BRAND_REQUIRED));
             return;
         }
 
@@ -55,7 +56,7 @@ public class CategorySaveEventListener implements ComponentEventListener<ClickEv
 
     private void accept(RestAPIResponse restAPIResponse) {
         this.categoryForm.getUi().access(()->{
-            UiUtil.success("Category created..");
+            UiUtil.success(Messages.get(Messages.Keys.NOTIFICATION_CATEGORY_CREATED));
             this.categoryForm.close();
             broadcastMessage(BroadcastMessage.CATEGORY_INSERT_SUCCESS, restAPIResponse);
         });

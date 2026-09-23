@@ -14,6 +14,7 @@ import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Vaadin grid view listing the stores of the current user's chain with
@@ -79,18 +81,18 @@ public class StoreListView extends AbstractListView {
     private void configureGrid() {
         storeDtoGrid.setSizeFull();
         storeDtoGrid.removeAllColumns();
-        storeDtoGrid.setEmptyStateText("No stores yet \u2014 click \u201CNew Store\u201D to add one.");
-        storeDtoGrid.addColumn(StoreDto::getName).setHeader("Name");
-        storeDtoGrid.addColumn(StoreDto::getAddress).setHeader("Address");
-        storeDtoGrid.addColumn("chainDto.name").setHeader("Chain");
-        storeDtoGrid.addComponentColumn(this::applyGroupButton).setHeader("Action");
+        storeDtoGrid.setEmptyStateText(Messages.get("grid.empty.stores"));
+        storeDtoGrid.addColumn(StoreDto::getName).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
+        storeDtoGrid.addColumn(StoreDto::getAddress).setHeader(Messages.get("grid.header.address"));
+        storeDtoGrid.addColumn("chainDto.name").setHeader(Messages.get("grid.header.chain"));
+        storeDtoGrid.addComponentColumn(this::applyGroupButton).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
         storeDtoGrid.getColumns().forEach(storeDtoColumn -> storeDtoColumn.setAutoWidth(true));
     }
 
     private Component applyGroupButton(StoreDto storeDto) {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         horizontalLayout.add(UiUtil.editButton(event -> showAddEditStore(storeDto,
-                "Edit ".concat(storeDto.getName()), FormAction.EDIT)));
+                Messages.get(Messages.Keys.ACTION_EDIT_NAME, storeDto.getName()), FormAction.EDIT)));
         horizontalLayout.add(UiUtil.deleteButton(
                 new StoreDeleteEventListener(storeDto, this.restClientOrganizationService)));
         return horizontalLayout;
@@ -123,9 +125,9 @@ public class StoreListView extends AbstractListView {
             }
         });
 
-        Button addChainButton = UiUtil.addButton("New Store", event -> showAddEditStore(null, "New Store", FormAction.CREATE));
+        Button addChainButton = UiUtil.addButton(Messages.get(Messages.Keys.ACTION_NEW_STORE), event -> showAddEditStore(null, Messages.get(Messages.Keys.ACTION_NEW_STORE), FormAction.CREATE));
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addChainButton);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         return toolbar;
     }
 
@@ -167,7 +169,7 @@ public class StoreListView extends AbstractListView {
             }
         }), error -> UiUtil.safeAccess(ui, () -> {
             gridSkeleton.hide();
-            UiUtil.errorWithRetry("Couldn't load stores", this::fetchStores);
+            UiUtil.errorWithRetry(Messages.get("notification.store.loadFailed"), this::fetchStores);
         }), accessService.getUserDetail().getStoreDto().getChainDto().getId(), currentPage, pageSize, filterText.getValue());
     }
 

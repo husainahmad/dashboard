@@ -7,6 +7,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Setting view for services at {@code /service}. Hosts the {@link ServiceTabs}
@@ -23,7 +24,7 @@ public class ServiceLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        addClassName("list-view");
+        addClassName(Css.LIST_VIEW);
         add(new ServiceTabs(asyncRestClientSettingService));
         setSizeFull();
     }

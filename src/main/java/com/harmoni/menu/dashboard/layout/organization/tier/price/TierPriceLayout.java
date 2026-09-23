@@ -9,6 +9,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Main route ({@code /tier-price}) for the tier-price administration domain.
@@ -26,7 +27,7 @@ public class TierPriceLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        addClassName("list-view");
+        addClassName(Css.LIST_VIEW);
         add(new TierPriceTabs(asyncRestClientOrganizationService, restClientOrganizationService, accessService));
         setSizeFull();
     }

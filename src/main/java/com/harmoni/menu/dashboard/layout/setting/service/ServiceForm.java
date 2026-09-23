@@ -4,6 +4,7 @@ import com.harmoni.menu.dashboard.dto.ServiceDto;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
@@ -37,12 +38,12 @@ public class ServiceForm extends FormLayout {
 
     /** Text field holding the service name. */
     @Getter
-    TextField serviceNameField = new TextField("Service name");
+    TextField serviceNameField = new TextField(Messages.get(Messages.Keys.LABEL_FIELD_SERVICE_NAME));
 
-    Button saveButton = new Button("Save");
-    Button deleteButton = UiUtil.deleteButton("Delete");
-    Button closeButton = new Button("Cancel");
-    Button updateButton = new Button("Update");
+    Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
+    Button deleteButton = UiUtil.deleteButton(Messages.get(Messages.Keys.ACTION_DELETE));
+    Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
+    Button updateButton = new Button(Messages.get(Messages.Keys.ACTION_UPDATE));
 
     /** UI this form was attached to, used to marshal callbacks onto the UI thread. */
     @Getter
@@ -90,7 +91,7 @@ public class ServiceForm extends FormLayout {
     private void addValidation() {
         binder.forField(serviceNameField)
                 .withValidator(value -> value.length() > 2,
-                        "Name must contain at least three characters")
+                        Messages.get(Messages.Keys.VALIDATION_NAME_MIN_LENGTH))
                 .bind(ServiceDto::getName, ServiceDto::setName);
     }
 

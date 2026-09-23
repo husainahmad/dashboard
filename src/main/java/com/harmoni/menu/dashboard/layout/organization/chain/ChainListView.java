@@ -13,6 +13,7 @@ import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -27,6 +28,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Vaadin grid view listing the chains of the current user's brand. Resolves the
@@ -65,11 +67,11 @@ public class ChainListView extends AbstractListView {
 
     private void configureGrid() {
         chainDtoGrid.setSizeFull();
-        chainDtoGrid.setEmptyStateText("No chains yet \u2014 click \u201CNew Chain\u201D to add one.");
+        chainDtoGrid.setEmptyStateText(Messages.get("grid.empty.chains"));
         chainDtoGrid.setColumns("name");
-        chainDtoGrid.addColumn(this::brandName).setHeader("Brand").setSortable(true);
+        chainDtoGrid.addColumn(this::brandName).setHeader(Messages.get("grid.header.brand")).setSortable(true);
         chainDtoGrid.getColumns().forEach(chainDtoColumn -> chainDtoColumn.setAutoWidth(true));
-        chainDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
+        chainDtoGrid.addComponentColumn(this::applyButton).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
     }
 
     private String brandName(ChainDto chainDto) {
@@ -104,11 +106,11 @@ public class ChainListView extends AbstractListView {
     public HorizontalLayout getToolbarComponent() {
         configureSearchFilter();
 
-        Button addChainButton = UiUtil.addButton("New Chain", event -> addChain());
+        Button addChainButton = UiUtil.addButton(Messages.get(Messages.Keys.ACTION_NEW_CHAIN), event -> addChain());
         configureBrandFilter(this::fetchChains);
         HorizontalLayout toolbar = new HorizontalLayout(brandFilter, filterText, addChainButton);
         registerNewShortcut(this::addChain);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
         return toolbar;
     }
@@ -127,11 +129,11 @@ public class ChainListView extends AbstractListView {
                                 chainDtoGrid.setItems(chains);
                             }), error -> UiUtil.safeAccess(ui, () -> {
                                 gridSkeleton.hide();
-                                UiUtil.errorWithRetry("Couldn't load chains", this::fetchChains);
+                                UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_CHAIN_LOAD_FAILED), this::fetchChains);
                             }), brandId);
                 }), error -> UiUtil.safeAccess(ui, () -> {
                     gridSkeleton.hide();
-                    UiUtil.errorWithRetry("Couldn't load chains", this::fetchChains);
+                    UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_CHAIN_LOAD_FAILED), this::fetchChains);
                 }));
     }
 
@@ -162,7 +164,7 @@ public class ChainListView extends AbstractListView {
                     }
                     TabManager tabManager = new TabManager(tabSheet);
                     String tabLabel = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(chainDto.getName())
-                            ? "Edit ".concat(chainDto.getName()) : "New Chain";
+                            ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, chainDto.getName()) : Messages.get(Messages.Keys.ACTION_NEW_CHAIN);
                     tabManager.addOrSelect(tabLabel, tab -> new ChainForm(this.restClientOrganizationService,
                             this.asyncRestClientOrganizationService, tabManager, tab, formAction, chainDto, brands));
                 }));

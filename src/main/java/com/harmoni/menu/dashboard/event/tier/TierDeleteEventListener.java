@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.exception.BrandHandler;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.UI;
@@ -41,14 +42,14 @@ public class TierDeleteEventListener implements ComponentEventListener<ClickEven
         tierDto.setId(this.id);
         restClientOrganizationService.deleteTier(tierDto)
                 .doOnError(error -> new BrandHandler(this.ui,
-                        "Error while deleting Tier ".concat(error.getMessage())))
+                        Messages.get(Messages.Keys.NOTIFICATION_TIER_DELETE_ERROR, error.getMessage())))
                 .subscribe(this::accept);
     }
 
     private void setConfirmDialogDelete() {
         ConfirmDialog confirmDialog = new ConfirmDialog();
-        confirmDialog.setHeader("Confirmation");
-        confirmDialog.setText("Do you want to remove this Tier ".concat("?"));
+        confirmDialog.setHeader(Messages.get(Messages.Keys.DIALOG_CONFIRM_TITLE));
+        confirmDialog.setText(Messages.get("dialog.confirmDeleteTier"));
         confirmDialog.setCancelable(true);
         confirmDialog.addConfirmListener(event -> executeDelete());
         confirmDialog.open();

@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ImageUtil;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -29,6 +30,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.util.MimeTypeUtils;
 
 import java.io.IOException;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Uploads a product image to the REST API and shows it as a compact thumbnail.
@@ -49,17 +51,17 @@ public class ProductImageUploadView extends VerticalLayout {
     private transient ProductImageDto productImageDto;
     @Getter
     Image image = new Image();
-    private final Button removeButton = new Button("Remove", new Icon(VaadinIcon.TRASH));
+    private final Button removeButton = new Button(Messages.get("action.remove"), new Icon(VaadinIcon.TRASH));
     private final Icon placeholderIcon = VaadinIcon.PICTURE.create();
-    private final Span imageTitle = new Span("Product image");
-    private final Span imageHint = new Span("PNG, JPG or GIF");
+    private final Span imageTitle = new Span(Messages.get("label.productImage"));
+    private final Span imageHint = new Span(Messages.get("label.imageHint"));
 
     private void renderLayout() {
         setWidthFull();
         setPadding(false);
         setSpacing(false);
 
-        image.getStyle().set("width", "96px")
+        image.getStyle().set(Css.WIDTH, "96px")
                 .set("height", "96px")
                 .set("object-fit", "cover")
                 .set("border-radius", "var(--lumo-border-radius-l)")
@@ -69,7 +71,7 @@ public class ProductImageUploadView extends VerticalLayout {
 
         placeholderIcon.setSize("28px");
         placeholderIcon.setColor("var(--lumo-contrast-30pct)");
-        imageTitle.getStyle().set("font-weight", "600");
+        imageTitle.getStyle().set(Css.FONT_WEIGHT, "600");
         imageHint.getStyle().set("font-size", "var(--lumo-font-size-s)")
                 .set("color", "var(--lumo-secondary-text-color)");
 
@@ -78,8 +80,8 @@ public class ProductImageUploadView extends VerticalLayout {
         upload.setAcceptedFileTypes(MimeTypeUtils.IMAGE_JPEG_VALUE, MimeTypeUtils.IMAGE_GIF_VALUE, MimeTypeUtils.IMAGE_PNG_VALUE);
         upload.setMaxFiles(1);
         upload.setDropAllowed(true);
-        upload.setDropLabel(new Span("or drag & drop here"));
-        Button browseButton = new Button("Browse image", new Icon(VaadinIcon.FOLDER_OPEN));
+        upload.setDropLabel(new Span(Messages.get("label.dropHere")));
+        Button browseButton = new Button(Messages.get("action.browseImage"), new Icon(VaadinIcon.FOLDER_OPEN));
         browseButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         upload.setUploadButton(browseButton);
 

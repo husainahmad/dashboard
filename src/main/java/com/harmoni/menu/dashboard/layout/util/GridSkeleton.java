@@ -80,7 +80,7 @@ public class GridSkeleton extends VerticalLayout {
     private static Component skeletonBar(String width) {
         Div bar = new Div();
         bar.addClassName("skeleton-bar");
-        bar.getStyle().set("width", width);
+        bar.getStyle().set(Css.WIDTH, width);
         return bar;
     }
 }

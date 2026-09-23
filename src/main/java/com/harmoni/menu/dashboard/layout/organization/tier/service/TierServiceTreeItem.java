@@ -1,5 +1,7 @@
 package com.harmoni.menu.dashboard.layout.organization.tier.service;
 
+import com.harmoni.menu.dashboard.layout.organization.tier.TierTreeItem;
+import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,7 +12,7 @@ import lombok.Data;
  */
 @Data
 @Builder
-public class TierServiceTreeItem {
+public class TierServiceTreeItem implements TierTreeItem {
     private Integer rootIndex;
     private String id;
     private String name;

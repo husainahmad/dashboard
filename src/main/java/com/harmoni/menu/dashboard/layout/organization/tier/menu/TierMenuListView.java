@@ -4,38 +4,32 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
 import com.harmoni.menu.dashboard.event.tier.TierMenuUpdateEventListener;
-import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
+import com.harmoni.menu.dashboard.layout.organization.tier.AbstractTierTreeListView;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
-import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
-import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientBase.AsyncRestCallback;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.checkbox.Checkbox;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.TabSheet;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Vaadin tree-grid view listing menu tiers. Renders a {@link TreeGrid} of
@@ -43,36 +37,40 @@ import java.util.stream.Collectors;
  * carrying the tier with checkboxes per child category, and opens a
  * {@link TierMenuForm} tab for add/edit of tiers.
  */
-@RequiredArgsConstructor
 @Slf4j
-public class TierMenuListView extends AbstractListView {
+public class TierMenuListView extends AbstractTierTreeListView<TierMenuTreeItem> {
 
     private final TreeGrid<TierMenuTreeItem> tierMenuTreeGrid = new TreeGrid<>(TierMenuTreeItem.class);
-    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final AsyncRestClientMenuService asyncRestClientMenuService;
-    private final AccessService accessService;
-
-    private final RestClientOrganizationService restClientOrganizationService;
     private transient List<CategoryDto> categoryDtos = new ArrayList<>();
-    @Getter
-    @Setter
-    private transient BrandDto brandDto = new BrandDto();
-    private final LoadingBar loadingBar = new LoadingBar();
-    private final GridSkeleton gridSkeleton = new GridSkeleton(8);
-
-    private final transient Map<Integer, Date> lastSavedByTier = new HashMap<>();
-
-    private Button[] buttonEdits;
-    private Button[] buttonDeletes;
-    private final Map<String, Checkbox> checkBoxes = new HashMap<>();
     private final Set<Integer> expandedTierIds = new HashSet<>();
 
-    private void renderLayout() {
-        setSizeFull();
-        setPadding(false);
-        brandDto.setId(accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
-        configureGrid();
-        add(loadingBar, gridSlot(tierMenuTreeGrid, gridSkeleton));
+    public TierMenuListView(AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+                            AsyncRestClientMenuService asyncRestClientMenuService,
+                            AccessService accessService,
+                            RestClientOrganizationService restClientOrganizationService) {
+        super(asyncRestClientOrganizationService, accessService, restClientOrganizationService);
+        this.asyncRestClientMenuService = asyncRestClientMenuService;
+    }
+
+    @Override
+    protected TreeGrid<TierMenuTreeItem> treeGrid() {
+        return tierMenuTreeGrid;
+    }
+
+    @Override
+    protected String emptyStateText() {
+        return Messages.get("grid.empty.tierMenus");
+    }
+
+    @Override
+    protected String newTierLabel() {
+        return Messages.get("tab.newTierMenu");
+    }
+
+    @Override
+    protected String loadingErrorMessage() {
+        return Messages.get("notification.tierMenu.loadFailed");
     }
 
     @Override
@@ -90,15 +88,8 @@ public class TierMenuListView extends AbstractListView {
         });
     }
 
-    private void configureGrid() {
-        tierMenuTreeGrid.setSizeFull();
-        tierMenuTreeGrid.removeAllColumns();
-        tierMenuTreeGrid.setEmptyStateText("No menu tiers yet \u2014 click \u201CNew Tier Menu\u201D to add one.");
-
-        tierMenuTreeGrid.addHierarchyColumn(TierMenuTreeItem::getName).setHeader("Tier Name");
-        tierMenuTreeGrid.addComponentColumn(this::applyCheckbox).setHeader("Active");
-        tierMenuTreeGrid.addComponentColumn(this::applyButton).setHeader("Action");
-        tierMenuTreeGrid.getColumns().forEach(productDtoColumn -> productDtoColumn.setAutoWidth(true));
+    @Override
+    protected void wireExpansionTracking() {
         tierMenuTreeGrid.addExpandListener(expandEvent -> expandEvent.getItems()
                 .forEach(item -> {
                     if (item.getTreeLevel().equals(TreeLevel.ROOT)
@@ -117,32 +108,17 @@ public class TierMenuListView extends AbstractListView {
                 }));
     }
 
-    /**
-     * Loads the brands for the current user, then opens a tab containing a
-     * {@link TierMenuForm} for the given tier. Brands are resolved before the
-     * tab opens so the brand combo box is populated synchronously on attach and
-     * the tier's brand can be pre-selected.
-     *
-     * @param tierDto the tier to edit, or a new empty one to create
-     * @param action  whether the tab is in create or edit mode
-     */
-    private void editTier(TierDto tierDto, FormAction action) {
-        if (tierDto.getBrandId() == null) {
-            tierDto.setBrandId(brandDto.getId());
+    @Override
+    protected void restoreExpansion() {
+        if (ObjectUtils.isEmpty(expandedTierIds)) {
+            return;
         }
-        loadingBar.start();
-        asyncRestClientOrganizationService.getAllBrandAsync(brands ->
-                UiUtil.safeAccess(ui, () -> {
-                    loadingBar.stop();
-                    if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
-                        return;
-                    }
-                    TabManager tabManager = new TabManager(tabSheet);
-                    String tabLabel = action == FormAction.EDIT && ObjectUtils.isNotEmpty(tierDto.getName())
-                            ? "Edit ".concat(tierDto.getName()) : "New Tier Menu";
-                    tabManager.addOrSelect(tabLabel, tab -> new TierMenuForm(restClientOrganizationService,
-                            asyncRestClientOrganizationService, tabManager, tab, action, tierDto, brands));
-                }));
+        tierMenuTreeGrid.getTreeData().getRootItems().stream()
+                .filter(rootItem -> rootItem.getTreeLevel().equals(TreeLevel.ROOT)
+                        && ObjectUtils.isNotEmpty(rootItem.getTierDto())
+                        && ObjectUtils.isNotEmpty(rootItem.getTierDto().getId())
+                        && expandedTierIds.contains(rootItem.getTierDto().getId()))
+                .forEach(tierMenuTreeGrid::expand);
     }
 
     /**
@@ -153,7 +129,7 @@ public class TierMenuListView extends AbstractListView {
     public HorizontalLayout getToolbarComponent() {
         configureSearchFilter();
 
-        Button addTierServiceButton = UiUtil.addButton("New Tier Menu", event -> addTier());
+        Button addTierServiceButton = UiUtil.addButton(Messages.get("action.newTierMenu"), event -> addTier());
 
         configureBrandFilter(() -> {
             if (brandFilter.getValue().getId() != null) {
@@ -162,7 +138,7 @@ public class TierMenuListView extends AbstractListView {
             }
         });
         HorizontalLayout toolbar = new HorizontalLayout(brandFilter, filterText, addTierServiceButton);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
         registerNewShortcut(this::addTier);
         return toolbar;
@@ -174,119 +150,58 @@ public class TierMenuListView extends AbstractListView {
         editTier(tierDto, FormAction.CREATE);
     }
 
-    private void fetchTier() {
-        gridSkeleton.show();
-        asyncRestClientOrganizationService.getTierMenuByBrandAsync(this::operationFinished,
-                error -> UiUtil.safeAccess(ui, () -> {
-                    gridSkeleton.hide();
-                    UiUtil.errorWithRetry("Couldn't load menu tiers", this::fetchTier);
-                }), brandDto.getId());
+    @Override
+    protected void fetchTierData(AsyncRestCallback<Throwable> errorHandler) {
+        asyncRestClientOrganizationService.getTierMenuByBrandAsync(this::operationFinished, errorHandler,
+                brandDto.getId());
     }
 
     private void fetchCategories() {
         asyncRestClientMenuService.getAllCategoryAsync(result -> {
             categoryDtos = result;
             fetchTier();
-        }, error -> UiUtil.safeAccess(ui, () -> UiUtil.errorWithRetry("Couldn't load categories",
+        }, error -> UiUtil.safeAccess(ui, () -> UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_CATEGORY_LOAD_FAILED),
                 () -> loadBrands(asyncRestClientOrganizationService, accessService, this::fetchCategories))),
                 brandDto.getId());
     }
 
-    private Component applyCheckbox(TierMenuTreeItem tierMenuTreeItem) {
-        if (tierMenuTreeItem.getTreeLevel().equals(TreeLevel.ROOT)
-                || tierMenuTreeItem.getTreeLevel().equals(TreeLevel.PARENT)) {
-            return null;
-        }
-
-        Checkbox checkbox = new Checkbox(tierMenuTreeItem.isActive());
-        VerticalLayout cell = new VerticalLayout();
-        cell.setPadding(false);
-        cell.setSpacing(false);
-        Span status = new Span();
-        status.setText(UiUtil.tierSavedText(lastSavedByTier.get(getTierDto(tierMenuTreeItem).getId())));
-        status.addClassName("tier-saved-at");
-        status.setVisible(status.getText() != null);
-        final boolean[] rollingBack = {false};
-        checkbox.addValueChangeListener(event -> {
-            if (rollingBack[0]) {
-                return;
-            }
-            boolean previous = event.getOldValue();
-            tierMenuTreeItem.setActive(event.getValue());
-            TierMenuTreeItem rootItem = tierMenuTreeItem.getItemParent();
-            if (ObjectUtils.isNotEmpty(rootItem)) {
-                Integer tierId = getTierDto(rootItem).getId();
-                Date priorSaved = lastSavedByTier.get(tierId);
-                lastSavedByTier.put(tierId, new Date());
-                checkbox.setEnabled(false);
-                status.removeClassName("tier-saved-at");
-                status.setText("Saving\u2026");
-                status.addClassName("tier-saving");
-                status.setVisible(true);
-                new TierMenuUpdateEventListener(this.ui, restClientOrganizationService, tierMenuTreeGrid,
-                        rootItem, getTierDto(rootItem)).execute(() -> {
-                            rollingBack[0] = true;
-                            checkbox.setEnabled(true);
-                            if (priorSaved != null) {
-                                lastSavedByTier.put(tierId, priorSaved);
-                            } else {
-                                lastSavedByTier.remove(tierId);
-                            }
-                            status.removeClassName("tier-saving");
-                            String savedText = UiUtil.tierSavedText(priorSaved);
-                            status.setText(savedText);
-                            if (savedText == null) {
-                                status.setVisible(false);
-                            } else {
-                                status.addClassName("tier-saved-at");
-                            }
-                            checkbox.setValue(previous);
-                            rollingBack[0] = false;
-                        });
-            }
-        });
-
-        checkBoxes.put(tierMenuTreeItem.getId(), checkbox);
-
-        cell.add(checkbox, status);
-        return cell;
+    @Override
+    protected TierMenuTreeItem tierRoot(TierMenuTreeItem item) {
+        return item.getItemParent();
     }
 
-    private Component applyButton(TierMenuTreeItem tierMenuTreeItem) {
-        if (tierMenuTreeItem.getTreeLevel().equals(TreeLevel.ROOT)) {
-            HorizontalLayout layout = new HorizontalLayout();
-            layout.add(applyButtonEdit(tierMenuTreeItem));
-            layout.add(applyButtonDelete(tierMenuTreeItem));
-            return layout;
-        }
-        return null;
-    }
-
-    private Button applyButtonDelete(TierMenuTreeItem tierMenuTreeItem) {
-        buttonDeletes[tierMenuTreeItem.getRootIndex()] = UiUtil.deleteButton(
-                new TierDeleteEventListener(this.ui,
-                        tierMenuTreeItem.getTierDto().getId(),
-                        restClientOrganizationService));
-        return buttonDeletes[tierMenuTreeItem.getRootIndex()];
-    }
-
-    private Button applyButtonEdit(TierMenuTreeItem tierMenuTreeItem) {
-        buttonEdits[tierMenuTreeItem.getRootIndex()] = UiUtil.editButton("Edit Name",
-                event -> editTier(getTierDto(tierMenuTreeItem), FormAction.EDIT));
-        return buttonEdits[tierMenuTreeItem.getRootIndex()];
-    }
-
-    private static TierDto getTierDto(TierMenuTreeItem tierMenuTreeItem) {
+    @Override
+    protected TierDto tierDtoOf(TierMenuTreeItem item) {
         TierDto tierDto = new TierDto();
-        tierDto.setId(tierMenuTreeItem.getTierDto().getId());
-        tierDto.setBrandId(tierMenuTreeItem.getTierDto().getBrandId());
+        tierDto.setId(item.getTierDto().getId());
+        tierDto.setBrandId(item.getTierDto().getBrandId());
         tierDto.setType(TierTypeDto.MENU);
-        tierDto.setName(tierMenuTreeItem.getName());
+        tierDto.setName(item.getName());
         return tierDto;
     }
 
+    @Override
+    protected void saveCheckbox(TierMenuTreeItem item, TierMenuTreeItem rootItem, Runnable rollback) {
+        new TierMenuUpdateEventListener(ui, restClientOrganizationService, tierMenuTreeGrid,
+                rootItem, tierDtoOf(rootItem)).execute(rollback);
+    }
+
+    @Override
+    protected Button deleteButtonFor(TierMenuTreeItem item) {
+        return UiUtil.deleteButton(new TierDeleteEventListener(ui, item.getTierDto().getId(),
+                restClientOrganizationService));
+    }
+
+    @Override
+    protected Component openForm(RestClientOrganizationService sync,
+                                 AsyncRestClientOrganizationService async, TabManager tabManager,
+                                 Tab currentTab, FormAction formAction, TierDto tierDto,
+                                 List<BrandDto> brands) {
+        return new TierMenuForm(sync, async, tabManager, currentTab, formAction, tierDto, brands);
+    }
+
     private void operationFinished(List<TierMenuDto> result) {
-        TreeData<TierMenuTreeItem> tierMenuTreeItemTreeData = new TreeData<>();
+        TreeData<TierMenuTreeItem> treeData = new TreeData<>();
 
         Map<TierDto, List<TierMenuDto>> tierGroup = result.stream().collect(
                 Collectors.groupingBy(TierMenuDto::getTierDto));
@@ -299,22 +214,11 @@ public class TierMenuListView extends AbstractListView {
         tierGroup.forEach((tierDto, tierMenuDtos) -> {
             TierMenuTreeItem tierMenuTreeItem = getTierMenuTreeItem(rootIndex.getAndIncrement(), tierDto,
                     tierDto.getName(), null, false, null, TreeLevel.ROOT);
-            tierMenuTreeItemTreeData.addItem(null, tierMenuTreeItem);
-            extractedCategoryName(tierMenuTreeItemTreeData, tierMenuTreeItem, tierMenuDtos);
+            treeData.addItem(null, tierMenuTreeItem);
+            extractedCategoryName(treeData, tierMenuTreeItem, tierMenuDtos);
         });
 
-        UiUtil.safeAccess(ui, () -> {
-            gridSkeleton.hide();
-            tierMenuTreeGrid.setTreeData(tierMenuTreeItemTreeData);
-            if (ObjectUtils.isNotEmpty(expandedTierIds)) {
-                tierMenuTreeGrid.getTreeData().getRootItems().stream()
-                        .filter(rootItem -> rootItem.getTreeLevel().equals(TreeLevel.ROOT)
-                                && ObjectUtils.isNotEmpty(rootItem.getTierDto())
-                                && ObjectUtils.isNotEmpty(rootItem.getTierDto().getId())
-                                && expandedTierIds.contains(rootItem.getTierDto().getId()))
-                        .forEach(tierMenuTreeGrid::expand);
-            }
-        });
+        finishLoad(treeData);
     }
 
     private static TierMenuTreeItem getTierMenuTreeItem(Integer rootIndex, TierDto tierDto, String name,
@@ -334,9 +238,9 @@ public class TierMenuListView extends AbstractListView {
                 .build();
     }
 
-    private void extractedCategoryName(TreeData<TierMenuTreeItem> tierMenuTreeItemTreeData,
+    private void extractedCategoryName(TreeData<TierMenuTreeItem> treeData,
                                        TierMenuTreeItem tierMenuTreeItem, List<TierMenuDto> tierMenuDtos) {
-        for (CategoryDto categoryDto: categoryDtos) {
+        for (CategoryDto categoryDto : categoryDtos) {
             TierMenuTreeItem childItem = getTierMenuTreeItem(null, tierMenuTreeItem.getTierDto(),
                     categoryDto.getName(), categoryDto,
                     false, tierMenuTreeItem, TreeLevel.CHILD);
@@ -346,7 +250,7 @@ public class TierMenuListView extends AbstractListView {
                     childItem.setActive(tierMenuDto.getActive());
                 }
             });
-            tierMenuTreeItemTreeData.addItem(tierMenuTreeItem, childItem);
+            treeData.addItem(tierMenuTreeItem, childItem);
         }
     }
 }

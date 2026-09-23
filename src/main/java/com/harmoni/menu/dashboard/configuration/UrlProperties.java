@@ -18,12 +18,15 @@ import java.io.Serializable;
 @Data
 public class UrlProperties implements Serializable {
     private String store;
+    private String storeQuery;
     private String category;
     private String customization;
+    private String customizationQuery;
     private String sku;
     private String skutierprice;
     private String brand;
     private String chain;
+    private String chainByBrand;
     private String tier;
     private String product;
     private String service;

@@ -9,6 +9,7 @@ import com.harmoni.menu.dashboard.layout.LoginView;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientLoginService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
@@ -55,7 +56,7 @@ public class LoginEventListener implements ComponentEventListener<ClickEvent<But
 
         if (ObjectUtils.isEmpty(jwtDto) || ObjectUtils.isEmpty(jwtDto.getAccessToken())) {
             loginView.getUI().ifPresent(ui -> ui.access(() ->
-                    showErrorMessage("Login failed, please make sure username is correct!! ")));
+                    showErrorMessage(Messages.get(Messages.Keys.NOTIFICATION_LOGIN_FAILED))));
             return;
         }
 
@@ -95,7 +96,7 @@ public class LoginEventListener implements ComponentEventListener<ClickEvent<But
 
     private void handleLoginError(Throwable error) {
         log.error("Login Error", error);
-        loginView.getUI().ifPresent(ui -> ui.access(() -> showErrorMessage("Login failed, please make sure username is correct!! ")));
+        loginView.getUI().ifPresent(ui -> ui.access(() -> showErrorMessage(Messages.get(Messages.Keys.NOTIFICATION_LOGIN_FAILED))));
     }
 
     private void showErrorMessage(String message) {

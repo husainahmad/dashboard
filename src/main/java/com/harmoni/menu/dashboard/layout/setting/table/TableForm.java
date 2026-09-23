@@ -11,6 +11,7 @@ import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientSettingService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
@@ -50,14 +51,14 @@ public class TableForm extends FormLayout {
 
     /** Text field holding the table name. */
     @Getter
-    TextField nameField = new TextField("Table name");
+    TextField nameField = new TextField(Messages.get(Messages.Keys.LABEL_FIELD_TABLE_NAME));
 
     /** Integer field holding the seating capacity (1-999). */
     @Getter
-    IntegerField capacityField = new IntegerField("Capacity");
+    IntegerField capacityField = new IntegerField(Messages.get(Messages.Keys.LABEL_CAPACITY));
 
-    Button saveButton = new Button("Save");
-    Button closeButton = new Button("Cancel");
+    Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
+    Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
     Button updateButton = UiUtil.updateButton();
 
     private final TabManager tabManager;
@@ -114,13 +115,13 @@ public class TableForm extends FormLayout {
                 .withValidator(value -> {
                     String trimmed = value.trim();
                     return trimmed.length() >= 2 && trimmed.length() <= 45;
-                }, "Name must contain between two and forty-five characters")
+                }, Messages.get("validation.table.name.length"))
                 .bind(TableDto::getName, TableDto::setName);
 
         binder.forField(capacityField)
-                .withValidator(Objects::nonNull, "Capacity is required")
+                .withValidator(Objects::nonNull, Messages.get("validation.capacity.required"))
                 .withValidator(value -> value >= 1 && value <= 999,
-                        "Capacity must be between one and nine hundred ninety-nine")
+                        Messages.get("validation.capacity.range"))
                 .bind(TableDto::getCapacity, TableDto::setCapacity);
     }
 
@@ -170,7 +171,7 @@ public class TableForm extends FormLayout {
 
                 boolean isInsert = broadcastMessage.getType().equals(BroadcastMessage.TABLE_INSERT_SUCCESS);
                 UiUtil.safeAccess(ui, () -> {
-                    UiUtil.success(isInsert ? "Table created.." : "Table updated..");
+                    UiUtil.success(isInsert ? Messages.get("notification.table.created") : Messages.get("notification.table.updated"));
                     tabManager.closeAndSelectFirst(currentTab);
                 });
             }

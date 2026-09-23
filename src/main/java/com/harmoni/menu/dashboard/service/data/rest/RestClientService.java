@@ -42,6 +42,11 @@ public class RestClientService implements Serializable {
     private static final String BEARER = "Bearer ";
     private static final WebClient webClient = WebClient.builder().build();
 
+    /** Formats a resource base path plus an id, e.g. {@code "/brands/5"}. */
+    protected static final String URL_FORMAT = "%s/%d";
+
+    private final transient TokenRefreshService tokenRefreshService;
+
     /**
      * POSTs a payload and expects the standard {@link RestAPIResponse} body.
      *
@@ -66,17 +71,12 @@ public class RestClientService implements Serializable {
      */
     public <T> Mono<T> post(String url, Publisher<?> publisher, Class<?> bodyClass, Class<T> responseClass) {
         log.debug("POST {} auth={}", url, ObjectUtils.isNotEmpty(getTokenString()));
-        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
-                webClient.post()
+        return tokenRefreshService.withTokenRefresh(accessToken ->
+                toResponse(webClient.post()
                         .uri(url)
                         .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, null)))
                         .body(publisher, bodyClass)
-                        .retrieve()
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(responseClass));
+                        .retrieve(), responseClass));
     }
 
     private static String getTokenString() {
@@ -125,16 +125,11 @@ public class RestClientService implements Serializable {
      */
     public Mono<RestAPIResponse> get(String url, String token) {
         log.debug("GET {} auth={}", url, ObjectUtils.isNotEmpty(getTokenString(token)));
-        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
-                webClient.get()
+        return tokenRefreshService.withTokenRefresh(accessToken ->
+                toResponse(webClient.get()
                         .uri(url)
                         .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, token)))
-                        .retrieve()
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(RestAPIResponse.class));
+                        .retrieve(), RestAPIResponse.class));
     }
 
     /**
@@ -146,17 +141,12 @@ public class RestClientService implements Serializable {
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> put(String url, Publisher<?> publisher, Class<?> className) {
-        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
-                webClient.put()
+        return tokenRefreshService.withTokenRefresh(accessToken ->
+                toResponse(webClient.put()
                         .uri(url)
                         .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, null)))
                         .body(publisher, className)
-                        .retrieve()
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(RestAPIResponse.class));
+                        .retrieve(), RestAPIResponse.class));
     }
 
     /**
@@ -167,20 +157,13 @@ public class RestClientService implements Serializable {
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> upload(String url, File file) {
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new FileSystemResource(file)); // "file" should match the expected request parameter name
-        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
-                webClient.post()
+        return tokenRefreshService.withTokenRefresh(accessToken ->
+                toResponse(webClient.post()
                         .uri(url)
                         .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, null)))
                         .contentType(MediaType.MULTIPART_FORM_DATA)
-                        .body(BodyInserters.fromMultipartData(body))
-                        .retrieve()
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(RestAPIResponse.class));
+                        .body(BodyInserters.fromMultipartData(multipartBody(file)))
+                        .retrieve(), RestAPIResponse.class));
 
     }
 
@@ -192,20 +175,13 @@ public class RestClientService implements Serializable {
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> uploadUpdate(String url, File file) {
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new FileSystemResource(file)); // "file" should match the expected request parameter name
-        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
-                webClient.put()
+        return tokenRefreshService.withTokenRefresh(accessToken ->
+                toResponse(webClient.put()
                         .uri(url)
                         .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, null)))
                         .contentType(MediaType.MULTIPART_FORM_DATA)
-                        .body(BodyInserters.fromMultipartData(body))
-                        .retrieve()
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(RestAPIResponse.class));
+                        .body(BodyInserters.fromMultipartData(multipartBody(file)))
+                        .retrieve(), RestAPIResponse.class));
 
     }
 
@@ -216,16 +192,35 @@ public class RestClientService implements Serializable {
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> delete(String url) {
-        return TokenRefreshService.getInstance().withTokenRefresh(accessToken ->
-                webClient.delete()
+        return tokenRefreshService.withTokenRefresh(accessToken ->
+                toResponse(webClient.delete()
                         .uri(url)
                         .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, null)))
-                        .retrieve()
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.NO_CONTENT),this::handleNoContent)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.BAD_REQUEST),this::handleBadRequest)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.INTERNAL_SERVER_ERROR),this::handleInternalServerError)
-                        .onStatus(httpStatusCode -> httpStatusCode.equals(HttpStatus.UNAUTHORIZED), this::handleUnAuthorized)
-                        .bodyToMono(RestAPIResponse.class));
+                        .retrieve(), RestAPIResponse.class));
+    }
+
+    /**
+     * Applies the shared error-status handlers to a retrieved response and
+     * decodes the body into the given type.
+     *
+     * @param responseSpec the response to post-process
+     * @param responseClass the expected response type
+     * @param <T>           the response type
+     * @return a {@link Mono} mapping every error status to its exception
+     */
+    private <T> Mono<T> toResponse(WebClient.ResponseSpec responseSpec, Class<T> responseClass) {
+        return responseSpec
+                .onStatus(HttpStatus.NO_CONTENT::equals, this::handleNoContent)
+                .onStatus(HttpStatus.BAD_REQUEST::equals, this::handleBadRequest)
+                .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals, this::handleInternalServerError)
+                .onStatus(HttpStatus.UNAUTHORIZED::equals, this::handleUnAuthorized)
+                .bodyToMono(responseClass);
+    }
+
+    private static MultiValueMap<String, Object> multipartBody(File file) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new FileSystemResource(file)); // "file" should match the expected request parameter name
+        return body;
     }
 
     private static void logError(String s, RestAPIResponse restAPIResponse) {

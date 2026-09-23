@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.exception.BrandHandler;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -41,7 +42,7 @@ public class TierServiceUpdateEventListener implements ComponentEventListener<Cl
         tierDto.setBrandId(this.tierForm.getBrandBox().getValue().getId());
         restClientOrganizationService.updateTier(tierDto)
                 .doOnError(error -> new BrandHandler(this.tierForm.getUi(),
-                        "Error while updating Tier ".concat(error.getMessage())))
+                        Messages.get(Messages.Keys.NOTIFICATION_TIER_UPDATE_ERROR, error.getMessage())))
                 .subscribe(this::accept);
     }
 

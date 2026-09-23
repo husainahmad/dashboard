@@ -9,6 +9,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.harmoni.menu.dashboard.util.Messages;
 
 /**
  * Modal error dialog shown when an operation fails. Displays a warning icon,
@@ -27,8 +28,8 @@ public class DialogClosing extends Dialog {
         this.text = text;
 
         addClassName("app-error-dialog");
-        setHeaderTitle("Something went wrong");
-        setAriaLabel("System failure notification");
+        setHeaderTitle(Messages.get("dialog.error.title"));
+        setAriaLabel(Messages.get("dialog.error.ariaLabel"));
 
         Icon icon = new Icon(VaadinIcon.WARNING);
         icon.addClassName("app-error-dialog-icon");
@@ -43,7 +44,7 @@ public class DialogClosing extends Dialog {
         body.setPadding(false);
         body.setAlignItems(FlexComponent.Alignment.CENTER);
 
-        Button closeButton = new Button("Close", event -> close());
+        Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CLOSE), event -> close());
         closeButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         closeButton.getElement().setAttribute("autofocus", true);
 

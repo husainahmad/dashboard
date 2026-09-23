@@ -11,8 +11,7 @@ import java.io.Serializable;
  *
  * <p>
  * Binds the {@code menu.*} keys, with the per-resource URLs exposed through the
- * nested {@link UrlProperties} under {@code menu.url.*} and the category URL
- * templates provided as constants.
+ * nested {@link UrlProperties} under {@code menu.url.*}.
  * </p>
  */
 
@@ -20,16 +19,5 @@ import java.io.Serializable;
 @Data
 @ConfigurationProperties("menu")
 public class MenuProperties implements Serializable {
-    /**
-     * Formats a category listing URL from the brand-category base URL and the
-     * brand id.
-     */
-    public static final String CATEGORY = "%s/%d";
-
-    /**
-     * Formats a category listing URL from the product-category base URL, the
-     * category id and the brand id.
-     */
-    public static final String CATEGORY_BRAND = "%s/%d/%d";
     private transient UrlProperties url;
 }

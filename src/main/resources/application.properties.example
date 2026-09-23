@@ -15,36 +15,48 @@ menu.url.chain=${menu.url}/api/v1/chain
 menu.url.tier=${menu.url}/api/v1/tier
 menu.url.user=${menu.url}/api/v1/user
 
+menu.url.chainByBrand=${menu.url.chain}/brand/%d
+
+menu.url.tiers.byBrandType=${menu.url.tier}/brand/%d/type/%s
+
 menu.url.service=${menu.url}/api/v1/service
 menu.url.tiers.brand=${menu.url}/api/v1/tier/brand
 menu.url.tiers.service=${menu.url}/api/v1/tier/service
 menu.url.tiers.services.update=${menu.url.tier}/%s/service
-menu.url.tiers.serviceByBrandId=${menu.url}/api/v1/tier/service
+menu.url.tiers.serviceByBrandId=${menu.url}/api/v1/tier/service?brandId=%d
 menu.url.tiers.menu=${menu.url}/api/v1/tier/menu
 menu.url.tiers.menus.update=${menu.url.tier}/%s/menu
-menu.url.tiers.menuByBrandId=${menu.url}/api/v1/tier/menu
+menu.url.tiers.menuByBrandId=${menu.url}/api/v1/tier/menu?brandId=%d
 
 menu.url.users.chain=${menu.url}/api/v1/user/chain
+menu.url.users.chainPage=${menu.url.users.chain}/%d?page=%d&size=%d&search=%s
+menu.url.users.byId=${menu.url.user}/%d
+menu.url.users.byName=${menu.url.user}/%s
 
 menu.url.store=${menu.url}/api/v1/store
+menu.url.storeQuery=${menu.url.store}?chainId=%d&page=%d&size=%d&search=%s
 menu.url.category=${menu.url}/api/v1/category
 menu.url.customization=${menu.url}/api/v1/customization
+menu.url.customizationQuery=${menu.url.customization}?brandId=%d&page=%d&size=%d&search=%s
 menu.url.categories.brand=${menu.url}/api/v1/category/brand
 menu.url.product=${menu.url}/api/v1/product
 
 menu.url.products.sku=${menu.url}/api/v1/product/
 menu.url.products.category=${menu.url}/api/v1/product/category/
+menu.url.products.categoryQuery=${menu.url}/api/v1/product/category/%d/%d?page=%d&size=%d&search=%s
 menu.url.products.bulk=${menu.url}/api/v1/product/%s/sku
 
 menu.url.products.images.upload=${menu.url}/api/v1/product/image/upload
 menu.url.products.images.uploadUpdate=${menu.url}/api/v1/product/image/%s/upload
 menu.url.products.images.prefix=${menu.url}/api/v1/product/image/
+menu.url.products.customization=${menu.url.product}/%d/customization
 
 menu.url.sku=${menu.url}/api/v1/sku
 menu.url.skutierprice=${menu.url}/api/v1/skutier
 
 setting.url.service=${menu.url}/api/v1/service
 setting.url.table=${menu.url}/api/v1/table
+setting.url.tableByStore=${setting.url.table}/store/%d
 
 logging.level.org.springframework=DEBUG
 logging.level.com.harmoni=DEBUG

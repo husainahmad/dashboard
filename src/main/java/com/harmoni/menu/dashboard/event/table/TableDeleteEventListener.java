@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientSettingService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.UI;
@@ -38,8 +39,8 @@ public class TableDeleteEventListener implements ComponentEventListener<ClickEve
 
     private void setConfirmDialogDelete() {
         ConfirmDialog confirmDialog = new ConfirmDialog();
-        confirmDialog.setHeader("Confirmation");
-        confirmDialog.setText("Do you want to remove this table ".concat(tableDto.getName()).concat("?"));
+        confirmDialog.setHeader(Messages.get(Messages.Keys.DIALOG_CONFIRM_TITLE));
+        confirmDialog.setText(Messages.get("dialog.confirmDeleteTable", tableDto.getName()));
         confirmDialog.setCancelable(true);
         confirmDialog.addConfirmListener(event -> callRemoveAPI());
         confirmDialog.open();
@@ -52,7 +53,7 @@ public class TableDeleteEventListener implements ComponentEventListener<ClickEve
 
     private void accept(RestAPIResponse restAPIResponse) {
         ui.access(() -> {
-            UiUtil.success("Table deleted..");
+            UiUtil.success(Messages.get("notification.table.deleted"));
             broadcastMessage(BroadcastMessage.TABLE_DELETED_SUCCESS, restAPIResponse);
         });
     }

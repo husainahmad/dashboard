@@ -12,6 +12,7 @@ import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
@@ -58,19 +59,19 @@ public class CategoryForm extends FormLayout {
 
     /** Category name input. */
     @Getter
-    TextField categoryNameField = new TextField("Category name");
+    TextField categoryNameField = new TextField(Messages.get("label.field.categoryName"));
 
     /** Free-text category description input. */
     @Getter
-    TextArea categoryDescArea = new TextArea("Description");
+    TextArea categoryDescArea = new TextArea(Messages.get(Messages.Keys.LABEL_DESCRIPTION));
 
     /** Optional brand selection, populated from the injected brand list. */
     @Getter
-    ComboBox<BrandDto> brandBox = new ComboBox<>("Brand");
+    ComboBox<BrandDto> brandBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_BRAND));
 
-    Button saveButton = new Button("Save");
-    Button closeButton = new Button("Cancel");
-    Button updateButton = new Button("Update");
+    Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
+    Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
+    Button updateButton = new Button(Messages.get(Messages.Keys.ACTION_UPDATE));
 
     /** Captured on attach; used to marshal notifications and dialog close onto the UI thread. */
     @Getter
@@ -97,7 +98,7 @@ public class CategoryForm extends FormLayout {
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
                         && (broadcastMessage.getType().equals(BroadcastMessage.CATEGORY_INSERT_SUCCESS) ||
                         broadcastMessage.getType().equals(BroadcastMessage.CATEGORY_UPDATED_SUCCESS))) {
-                        showNotification("Category created..");
+                        showNotification(Messages.get(Messages.Keys.NOTIFICATION_CATEGORY_CREATED));
                         close();
                     }
 
@@ -162,12 +163,12 @@ public class CategoryForm extends FormLayout {
 
         binder.forField(categoryNameField)
                 .withValidator(value -> value != null && value.length() > 2,
-                        "Name must contain at least three characters")
+                        Messages.get(Messages.Keys.VALIDATION_NAME_MIN_LENGTH))
                 .bind(CategoryDto::getName, CategoryDto::setName);
 
         binder.forField(categoryDescArea)
                 .withValidator(value -> value != null && value.length() > 2,
-                        "Description must contain at least three characters")
+                        Messages.get("validation.description.minLength"))
                 .bind(CategoryDto::getDescription, CategoryDto::setDescription);
     }
 

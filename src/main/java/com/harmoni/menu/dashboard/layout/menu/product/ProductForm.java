@@ -17,6 +17,7 @@ import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ImageUtil;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Key;
@@ -45,6 +46,7 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.List;
 import java.util.Objects;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Thin orchestrator for the product editor tab.
@@ -73,7 +75,7 @@ import java.util.Objects;
  * </p>
  */
 @RequiredArgsConstructor
-@Route(value = "product-form", layout = MainLayout.class)
+@Route(value = Css.PRODUCT_FORM, layout = MainLayout.class)
 @Slf4j
 public class ProductForm extends ProductFormLayout implements ProductFormDelegate {
 
@@ -99,9 +101,9 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
     @Getter
     CustomizationSection customizationSection;
 
-    Button saveButton = new Button("Save");
-    Button updateButton = new Button("Update");
-    Button closeButton = new Button("Cancel");
+    Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
+    Button updateButton = new Button(Messages.get(Messages.Keys.ACTION_UPDATE));
+    Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
     private final LoadingBar savingBar = new LoadingBar();
     private boolean saving;
 
@@ -135,7 +137,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
      * grids, then wires validation and the action buttons.
      */
     private void renderLayout() {
-        categoryBox.setLabel("Category");
+        categoryBox.setLabel(Messages.get(Messages.Keys.LABEL_CATEGORY));
         categoryBox.setItems(categoryDtos);
         if (ObjectUtils.isNotEmpty(categoryDtos)) {
             categoryBox.setValue(categoryDtos.getLast());
@@ -143,14 +145,14 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         categoryBox.setItemLabelGenerator(CategoryDto::getName);
         categoryBox.setWidth("100%");
 
-        productNameField.setLabel("Product name");
-        productNameField.setPlaceholder("Enter Product name...");
+        productNameField.setLabel(Messages.get("label.field.productName"));
+        productNameField.setPlaceholder(Messages.get("placeholder.productName"));
         productNameField.setClearButtonVisible(true);
         productNameField.setValueChangeMode(ValueChangeMode.LAZY);
         productNameField.setWidth("100%");
 
-        productDescTextArea.setLabel("Description");
-        productDescTextArea.setPlaceholder("Enter Description");
+        productDescTextArea.setLabel(Messages.get(Messages.Keys.LABEL_DESCRIPTION));
+        productDescTextArea.setPlaceholder(Messages.get("placeholder.productDescription"));
         productDescTextArea.setValueChangeMode(ValueChangeMode.LAZY);
         productDescTextArea.setWidth("100%");
         productDescTextArea.getElement().setProperty("rows", 3);
@@ -163,14 +165,14 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
                 brandDto, tierDtos, skuSection, this);
 
         add(savingBar, 2);
-        add(sectionCaption("Product Info"), 2);
+        add(sectionCaption(Messages.get("section.productInfo")), 2);
         add(categoryBox, productNameField);
         add(productDescTextArea, productImageUploadView);
 
         setSizeFull();
         setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("760px", 2));
 
-        add(sectionCaption("SKU & Pricing"), 2);
+        add(sectionCaption(Messages.get("section.skuPricing")), 2);
         add(skuSection.getToolbar(), 2);
         add(getContent(skuSection.getGrid()), 2);
         add(customizationSection.getLayout(), 2);
@@ -206,7 +208,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
             return;
         }
         AsyncUtil.subscribe(restClientMenuService.getProduct(productTreeItem.getProductId()),
-                getUi(), "Failed to load product",
+                getUi(), Messages.get(Messages.Keys.NOTIFICATION_PRODUCT_LOAD_FAILED),
                 this::applyProduct);
     }
 
@@ -331,11 +333,11 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
     private void addValidation() {
         binder.forField(categoryBox)
                 .withValidator(value -> value == null || (value.getId() != null && value.getId() > 0),
-                        "Category not allow to be empty")
+                        Messages.get("validation.category.required"))
                 .bind(ProductDto::getCategoryDto, ProductDto::setCategoryDto);
         binder.forField(productNameField)
                 .withValidator(value -> value != null && value.length() > 2,
-                        "Name must contain at least three characters")
+                        Messages.get(Messages.Keys.VALIDATION_NAME_MIN_LENGTH))
                 .bind(ProductDto::getName, ProductDto::setName);
     }
 
@@ -406,7 +408,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         closeButton.addClickListener(this::onButtonClose);
 
         HorizontalLayout toolbar = new HorizontalLayout((this.productTreeItem != null ? updateButton : saveButton), closeButton);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         toolbar.addClassName("form-actions");
         toolbar.setWidthFull();
         toolbar.setAlignItems(FlexComponent.Alignment.CENTER);

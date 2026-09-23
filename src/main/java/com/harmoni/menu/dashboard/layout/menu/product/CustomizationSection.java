@@ -12,6 +12,7 @@ import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -81,7 +82,7 @@ public class CustomizationSection {
      * @return the toolbar + grid block, placed under the "SKU &amp; Pricing" section of the form
      */
     public VerticalLayout getLayout() {
-        Button addButton = new Button("Add Customization");
+        Button addButton = new Button(Messages.get("action.addCustomization"));
         addButton.setIcon(new Icon(VaadinIcon.PLUS));
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addButton.addClickListener(event -> onAddCustomization());
@@ -107,7 +108,7 @@ public class CustomizationSection {
      */
     public void load(Integer productId) {
         AsyncUtil.subscribe(restClientMenuService.getProductCustomizations(productId),
-                delegate.getUi(), "Failed to load customizations",
+                delegate.getUi(), Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_LOAD_FAILED),
                 response -> render(customizationsFrom(response)));
     }
 
@@ -137,21 +138,21 @@ public class CustomizationSection {
     private void configureGrid() {
         grid.setSelectionMode(Grid.SelectionMode.NONE);
         grid.setAllRowsVisible(true);
-        grid.setEmptyStateText("No customizations added yet");
+        grid.setEmptyStateText(Messages.get("grid.empty.customizations"));
         grid.addClassName("customization-grid");
-        grid.addColumn(ProductCustomizationDto::getName).setHeader("Name");
-        grid.addComponentColumn(this::renderRequiredColumn).setHeader("Required").setWidth("100px");
+        grid.addColumn(ProductCustomizationDto::getName).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
+        grid.addComponentColumn(this::renderRequiredColumn).setHeader(Messages.get(Messages.Keys.LABEL_REQUIRED)).setWidth("100px");
         grid.addColumn(dto -> dto.getSelectionType() == null ? "" : dto.getSelectionType().getLabel())
-                .setHeader("Type");
-        grid.addColumn(this::renderMinMaxText).setHeader("Min/Max").setWidth("110px");
-        grid.addComponentColumn(this::renderOptionsColumn).setHeader("Options").setWidth("90px");
+                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_TYPE));
+        grid.addColumn(this::renderMinMaxText).setHeader(Messages.get("grid.header.minMax")).setWidth("110px");
+        grid.addComponentColumn(this::renderOptionsColumn).setHeader(Messages.get("grid.header.options")).setWidth("90px");
         grid.addComponentColumn(this::renderCustomizationActions).setWidth("120px");
         grid.setItems(productCustomizations);
     }
 
     private void onAddCustomization() {
         if (!skuSection.hasDefinedSku()) {
-            delegate.showErrorDialog("Define the SKU before adding customizations");
+            delegate.showErrorDialog(Messages.get("validation.sku.required"));
             return;
         }
         new CustomizationAddDialog(this, delegate, asyncRestClientMenuService, brandDto).open();
@@ -168,7 +169,7 @@ public class CustomizationSection {
      */
     void onAddSelected(Set<CustomizationDto> selected, Dialog dialog) {
         List<Integer> merged = new ArrayList<>(productCustomizations.stream()
-                .map(ProductCustomizationDto::getCustomizationId).collect(Collectors.toList()));
+                .map(ProductCustomizationDto::getCustomizationId).toList());
         selected.stream()
                 .map(CustomizationDto::getId)
                 .filter(id -> !merged.contains(id))
@@ -186,18 +187,18 @@ public class CustomizationSection {
                     .forEach(productCustomizations::add);
             dialog.close();
             grid.getDataProvider().refreshAll();
-            delegate.showNotification("Customizations will be saved with the product");
+            delegate.showNotification(Messages.get("notification.customization.willSaveWithProduct"));
             return;
         }
 
         Integer productId = delegate.getProductId();
         AsyncUtil.subscribe(restClientMenuService.saveProductCustomizations(productId,
                         ProductCustomizationReplaceDto.builder().customizationIds(merged).build()),
-                delegate.getUi(), "Failed to update customizations",
+                delegate.getUi(), Messages.get("notification.customization.updateFailed"),
                 response -> {
                     dialog.close();
                     reload();
-                    delegate.showNotification("Customizations updated");
+                    delegate.showNotification(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_UPDATED));
                 });
     }
 
@@ -205,16 +206,16 @@ public class CustomizationSection {
         if (delegate.getProductId() == null) {
             productCustomizations.removeIf(pc -> Objects.equals(pc.getCustomizationId(), dto.getCustomizationId()));
             grid.getDataProvider().refreshAll();
-            delegate.showNotification("Customization removed");
+            delegate.showNotification(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_REMOVED));
             return;
         }
 
         Integer productId = delegate.getProductId();
         AsyncUtil.subscribe(restClientMenuService.deleteProductCustomization(productId, dto.getId()),
-                delegate.getUi(), "Failed to remove customization",
+                delegate.getUi(), Messages.get("notification.customization.removeFailed"),
                 response -> {
                     reload();
-                    delegate.showNotification("Customization removed");
+                    delegate.showNotification(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_REMOVED));
                 });
     }
 
@@ -239,7 +240,7 @@ public class CustomizationSection {
 
     private void openConfigureDialog(ProductCustomizationDto dto) {
         if (delegate.getProductId() == null) {
-            UiUtil.show("Save the product first, then open the settings to adjust each customization",
+            UiUtil.show(Messages.get("notification.product.saveFirst"),
                     NotificationVariant.LUMO_PRIMARY, 4000);
             return;
         }
@@ -279,7 +280,7 @@ public class CustomizationSection {
 
         Button configureButton = new Button(new Icon(VaadinIcon.COG));
         configureButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
-        configureButton.setTooltipText("Configuration");
+        configureButton.setTooltipText(Messages.get("tooltip.configuration"));
         configureButton.addClickListener(event -> openConfigureDialog(dto));
 
         actions.add(configureButton, UiUtil.deleteButton(event -> onDeleteCustomization(dto)));

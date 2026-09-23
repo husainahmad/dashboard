@@ -5,6 +5,7 @@ import com.harmoni.menu.dashboard.dto.ProductDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductTreeItem;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -39,8 +40,8 @@ public class ProductDeleteEventListener implements ComponentEventListener<ClickE
     private void setConfirmDialogDelete() {
 
         ConfirmDialog confirmDialog = new ConfirmDialog();
-        confirmDialog.setHeader("Confirmation");
-        confirmDialog.setText("Do you want to remove this product ".concat(productTreeItem.getName()).concat("?"));
+        confirmDialog.setHeader(Messages.get(Messages.Keys.DIALOG_CONFIRM_TITLE));
+        confirmDialog.setText(Messages.get("dialog.confirmDeleteProduct", productTreeItem.getName()));
         confirmDialog.setCancelable(true);
         confirmDialog.addConfirmListener(confirmEvent -> callRemoveAPI());
         confirmDialog.open();

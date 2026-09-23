@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.layout.organization.chain;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -25,7 +26,7 @@ public class ChainTabs extends VerticalLayout {
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
-        browseTab.setLabel("All Chains");
+        browseTab.setLabel(Messages.get("tab.chainList"));
         ChainListView chainListView = new ChainListView(asyncRestClientOrganizationService,
                 restClientOrganizationService, accessService);
         tabSheet.add(browseTab, chainListView);

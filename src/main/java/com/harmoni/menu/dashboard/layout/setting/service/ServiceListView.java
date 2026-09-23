@@ -8,6 +8,7 @@ import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -24,6 +25,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * List of services shown inside the service tab sheet: a {@link TreeGrid} of
@@ -52,8 +54,8 @@ public class ServiceListView extends AbstractListView {
     private void configureGrid() {
         serviceTreeGrid.setSizeFull();
         serviceTreeGrid.removeAllColumns();
-        serviceTreeGrid.addHierarchyColumn(ServiceTreeItem::getServiceName).setHeader("Service Name");
-        serviceTreeGrid.addColumn(ServiceTreeItem::getSubServiceName).setHeader("Sub Service Name");
+        serviceTreeGrid.addHierarchyColumn(ServiceTreeItem::getServiceName).setHeader(Messages.get(Messages.Keys.LABEL_FIELD_SERVICE_NAME));
+        serviceTreeGrid.addColumn(ServiceTreeItem::getSubServiceName).setHeader(Messages.get("grid.header.subServiceName"));
 
         serviceTreeGrid.addCollapseListener(event -> event.getItems().forEach(serviceTreeItem ->
                 log.debug("item collapse {}", serviceTreeItem)));
@@ -73,11 +75,11 @@ public class ServiceListView extends AbstractListView {
      * @return the toolbar layout
      */
     public HorizontalLayout getToolbarComponent() {
-        Button addServiceButton = new Button("New Service", new Icon(VaadinIcon.PLUS));
+        Button addServiceButton = new Button(Messages.get(Messages.Keys.ACTION_NEW_SERVICE), new Icon(VaadinIcon.PLUS));
         addServiceButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addServiceButton.addClickListener(event -> addService());
         HorizontalLayout toolbar = new HorizontalLayout(addServiceButton);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         return toolbar;
     }
 
@@ -114,7 +116,7 @@ public class ServiceListView extends AbstractListView {
             });
         }, error -> UiUtil.safeAccess(ui, () -> {
             gridSkeleton.hide();
-            UiUtil.errorWithRetry("Couldn't load services", this::fetchServices);
+            UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_SERVICE_LOAD_FAILED), this::fetchServices);
         }));
     }
 
@@ -136,7 +138,7 @@ public class ServiceListView extends AbstractListView {
             return;
         }
         TabManager tabManager = new TabManager(tabSheet);
-        tabManager.addOrSelect("New Service", tab ->
+        tabManager.addOrSelect(Messages.get(Messages.Keys.ACTION_NEW_SERVICE), tab ->
                 new ServiceForm(tabManager, tab, FormAction.CREATE, new ServiceDto()));
     }
 

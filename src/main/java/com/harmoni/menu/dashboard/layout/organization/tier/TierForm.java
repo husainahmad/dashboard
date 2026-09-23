@@ -14,6 +14,7 @@ import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
@@ -63,19 +64,19 @@ public class TierForm extends FormLayout {
      * Input for the tier's display name.
      */
     @Getter
-    public TextField tierNameField = new TextField("Tier name");
+    public TextField tierNameField = new TextField(Messages.get("label.field.tierName"));
     /**
      * Selects the brand the tier belongs to.
      */
     @Getter
     @Setter
-    public ComboBox<BrandDto> brandBox = new ComboBox<>("Brand");
+    public ComboBox<BrandDto> brandBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_BRAND));
     @Getter
-    MultiSelectComboBox<ServiceDto> serviceBox = new MultiSelectComboBox<>("Service");
+    MultiSelectComboBox<ServiceDto> serviceBox = new MultiSelectComboBox<>(Messages.get(Messages.Keys.LABEL_SERVICE));
 
-    protected final Button saveButton = new Button("Save");
-    protected final Button closeButton = new Button("Cancel");
-    protected final Button updateButton = new Button("Update");
+    protected final Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
+    protected final Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
+    protected final Button updateButton = new Button(Messages.get(Messages.Keys.ACTION_UPDATE));
 
     @Getter
     private UI ui;
@@ -116,7 +117,7 @@ public class TierForm extends FormLayout {
                         && (broadcastMessage.getType().equals(BroadcastMessage.TIER_INSERT_SUCCESS) ||
                             broadcastMessage.getType().equals(BroadcastMessage.TIER_UPDATED_SUCCESS) ||
                         broadcastMessage.getType().equals(BroadcastMessage.TIER_DELETED_SUCCESS))) {
-                        showNotification("Tier updated..");
+                        showNotification(Messages.get("notification.tier.updated"));
                         close();
                     }
 
@@ -158,12 +159,12 @@ public class TierForm extends FormLayout {
     public void addValidation() {
         getBinder().forField(brandBox)
                 .withValidator(value -> ObjectUtils.isNotEmpty(value) && value.getId() > 0,
-                        "Brand not allow to be empty"
+                        Messages.get(Messages.Keys.VALIDATION_BRAND_REQUIRED)
                 ).bind(TierDto::getBrandDto, TierDto::setBrandDto);
 
         getBinder().forField(tierNameField)
                 .withValidator(value -> ObjectUtils.isNotEmpty(value) && value.length() > 2,
-                        "Name must contain at least three characters")
+                        Messages.get(Messages.Keys.VALIDATION_NAME_MIN_LENGTH))
                 .bind(TierDto::getName, TierDto::setName);
 
     }

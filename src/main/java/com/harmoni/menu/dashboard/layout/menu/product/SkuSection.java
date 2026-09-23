@@ -4,6 +4,7 @@ import com.harmoni.menu.dashboard.dto.SkuDto;
 import com.harmoni.menu.dashboard.dto.SkuTierPriceDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Owns the SKU/tier-price editing grid of the product form: row rendering, add,
@@ -52,7 +54,7 @@ public class SkuSection {
         this.dataProvider = new ListDataProvider<>(skuItems);
         grid.setDataProvider(dataProvider);
         grid.setSelectionMode(Grid.SelectionMode.NONE);
-        grid.setEmptyStateText("No SKUs yet — click \u201cAdd SKU\u201d to create one");
+        grid.setEmptyStateText(Messages.get("grid.empty.sku"));
         configureGrid();
     }
 
@@ -92,9 +94,9 @@ public class SkuSection {
      * @return the toolbar holding the "Add SKU" action, to be placed above the grid
      */
     public HorizontalLayout getToolbar() {
-        Button addButton = UiUtil.addButton("Add SKU", event -> addSku(null));
+        Button addButton = UiUtil.addButton(Messages.get("action.addSku"), event -> addSku(null));
         HorizontalLayout toolbar = new HorizontalLayout(addButton);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         toolbar.setWidthFull();
         toolbar.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         return toolbar;
@@ -135,8 +137,8 @@ public class SkuSection {
     private void configureGrid() {
         grid.addClassName("sku-grid");
         grid.removeAllColumns();
-        grid.addComponentColumn(this::applySkuNameTextField).setHeader("Name").setFlexGrow(1);
-        grid.addComponentColumn(this::applySkuDescTextField).setHeader("Description").setFlexGrow(1);
+        grid.addComponentColumn(this::applySkuNameTextField).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME)).setFlexGrow(1);
+        grid.addComponentColumn(this::applySkuDescTextField).setHeader(Messages.get("grid.header.description")).setFlexGrow(1);
         tierDtos.forEach(tier ->
                 grid.addComponentColumn(item -> applyTierPriceField(item, tier))
                         .setHeader(tier.getName().toUpperCase())
@@ -158,7 +160,7 @@ public class SkuSection {
 
     private void removeSku(SkuTreeItem skuTreeItem) {
         if (skuItems.size() <= MIN_SKUS) {
-            delegate.showErrorDialog("Delete rejected!. Product should have one SKU!!");
+            delegate.showErrorDialog(Messages.get("notification.sku.deleteRejected"));
             return;
         }
         skuItems.remove(skuTreeItem);

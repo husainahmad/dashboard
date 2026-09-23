@@ -8,6 +8,7 @@ import com.harmoni.menu.dashboard.layout.organization.brand.BrandForm;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -39,13 +40,14 @@ public class BrandUpdateEventListener implements ComponentEventListener<ClickEve
         BrandDto brandDto = this.brandForm.getBrandDto();
         brandDto.setName(this.brandForm.getBrandNameField().getValue());
         restClientOrganizationService.updateBrand(brandDto)
-                .doOnError(error -> new BrandHandler(this.brandForm.getUi(), "Error while inserting Brand ".concat(error.getMessage())))
+                .doOnError(error -> new BrandHandler(this.brandForm.getUi(),
+                        Messages.get(Messages.Keys.NOTIFICATION_BRAND_INSERT_ERROR, error.getMessage())))
                 .subscribe(this::accept);
     }
 
     private void accept(RestAPIResponse restAPIResponse) {
         this.brandForm.getUi().access(()->{
-            UiUtil.success("Brand created..");
+            UiUtil.success(Messages.get(Messages.Keys.NOTIFICATION_BRAND_CREATED));
             this.brandForm.close();
             broadcastMessage(BroadcastMessage.BRAND_SUCCESS_UPDATED, restAPIResponse);
         });

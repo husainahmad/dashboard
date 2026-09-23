@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.exception.BrandHandler;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -39,7 +40,7 @@ public class TierSaveEventListener implements ComponentEventListener<ClickEvent<
         tierDto.setBrandId(this.tierForm.getBrandBox().getValue().getId());
         restClientOrganizationService.createTier(tierDto)
                 .doOnError(error -> new BrandHandler(this.tierForm.getUi(),
-                        "Error while inserting Brand ".concat(error.getMessage())))
+                        Messages.get(Messages.Keys.NOTIFICATION_BRAND_INSERT_ERROR, error.getMessage())))
                 .subscribe(this::accept);
     }
 

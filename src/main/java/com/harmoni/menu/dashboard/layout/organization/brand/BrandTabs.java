@@ -2,6 +2,7 @@ package com.harmoni.menu.dashboard.layout.organization.brand;
 
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -23,7 +24,7 @@ public class BrandTabs extends VerticalLayout {
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
-        browseTab.setLabel("All Brands");
+        browseTab.setLabel(Messages.get("tab.brandList"));
         BrandListView brandListView = new BrandListView(asyncRestClientOrganizationService,
                 restClientOrganizationService);
         tabSheet.add(browseTab, brandListView);

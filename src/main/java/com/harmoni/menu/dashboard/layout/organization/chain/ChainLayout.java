@@ -9,6 +9,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Main route ({@code /chain}) for the chain administration domain. Hosts the
@@ -26,7 +27,7 @@ public class ChainLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        addClassName("list-view");
+        addClassName(Css.LIST_VIEW);
         add(new ChainTabs(asyncRestClientOrganizationService,
                 restClientOrganizationService, accessService));
         setSizeFull();

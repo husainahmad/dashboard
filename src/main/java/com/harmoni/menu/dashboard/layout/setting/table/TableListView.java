@@ -12,6 +12,7 @@ import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientSettingService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -25,6 +26,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Set;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * List of tables shown inside the table tab sheet: a {@link Grid} with name,
@@ -64,13 +66,13 @@ public class TableListView extends AbstractListView {
 
     private void configureGrid() {
         tableDtoGrid.setSizeFull();
-        tableDtoGrid.setEmptyStateText("No tables yet \u2014 click \u201CNew Table\u201D to add one.");
+        tableDtoGrid.setEmptyStateText(Messages.get("grid.empty.tables"));
         tableDtoGrid.setColumns("name", "capacity");
-        tableDtoGrid.getColumnByKey("name").setHeader("Table Name");
-        tableDtoGrid.getColumnByKey("capacity").setHeader("Capacity");
-        tableDtoGrid.addColumn(this::getStoreName).setHeader("Store").setKey("store");
+        tableDtoGrid.getColumnByKey("name").setHeader(Messages.get(Messages.Keys.LABEL_FIELD_TABLE_NAME));
+        tableDtoGrid.getColumnByKey("capacity").setHeader(Messages.get(Messages.Keys.LABEL_CAPACITY));
+        tableDtoGrid.addColumn(this::getStoreName).setHeader(Messages.get("grid.header.store")).setKey("store");
         tableDtoGrid.getColumns().forEach(tableDtoColumn -> tableDtoColumn.setAutoWidth(true));
-        tableDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
+        tableDtoGrid.addComponentColumn(this::applyButton).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
     }
 
     private String getStoreName(TableDto tableDto) {
@@ -107,10 +109,10 @@ public class TableListView extends AbstractListView {
         configureSearchFilter();
         filterText.addValueChangeListener(event -> filterTables(event.getValue()));
 
-        Button addTableButton = UiUtil.addButton("New Table", event -> addTable());
+        Button addTableButton = UiUtil.addButton(Messages.get(Messages.Keys.ACTION_NEW_TABLE), event -> addTable());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addTableButton);
         registerNewShortcut(this::addTable);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         return toolbar;
     }
 
@@ -134,7 +136,7 @@ public class TableListView extends AbstractListView {
                         filterTables(filterText.getValue());
                     }), error -> UiUtil.safeAccess(ui, () -> {
                         gridSkeleton.hide();
-                        UiUtil.errorWithRetry("Couldn't load tables", this::fetchTables);
+                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_TABLE_LOAD_FAILED), this::fetchTables);
                     }), storeDto.getId());
         } else {
             asyncRestClientSettingService.getAllTables(result ->
@@ -144,7 +146,7 @@ public class TableListView extends AbstractListView {
                         filterTables(filterText.getValue());
                     }), error -> UiUtil.safeAccess(ui, () -> {
                         gridSkeleton.hide();
-                        UiUtil.errorWithRetry("Couldn't load tables", this::fetchTables);
+                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_TABLE_LOAD_FAILED), this::fetchTables);
                     }));
         }
     }
@@ -162,7 +164,7 @@ public class TableListView extends AbstractListView {
         }
         TabManager tabManager = new TabManager(tabSheet);
         String tabLabel = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(tableDto.getName())
-                ? "Edit ".concat(tableDto.getName()) : "New Table";
+                ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, tableDto.getName()) : Messages.get(Messages.Keys.ACTION_NEW_TABLE);
         tabManager.addOrSelect(tabLabel, tab ->
                 new TableForm(tabManager, tab, formAction, prepareDto(tableDto), restClientSettingService));
     }

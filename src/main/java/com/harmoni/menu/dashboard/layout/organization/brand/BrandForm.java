@@ -11,6 +11,7 @@ import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
@@ -47,11 +48,11 @@ public class BrandForm extends FormLayout {
     BeanValidationBinder<BrandDto> binder = new BeanValidationBinder<>(BrandDto.class);
 
     @Getter
-    TextField brandNameField = new TextField("Brand name");
+    TextField brandNameField = new TextField(Messages.get("label.field.brandName"));
 
-    Button saveButton = new Button("Save");
-    Button closeButton = new Button("Cancel");
-    Button updateButton = new Button("Update");
+    Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
+    Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
+    Button updateButton = new Button(Messages.get(Messages.Keys.ACTION_UPDATE));
 
     @Getter
     UI ui;
@@ -73,7 +74,7 @@ public class BrandForm extends FormLayout {
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
                         && (broadcastMessage.getType().equals(BroadcastMessage.BRAND_INSERT_SUCCESS) ||
                         broadcastMessage.getType().equals(BroadcastMessage.BRAND_SUCCESS_UPDATED))) {
-                        showNotification("Brand created..");
+                        showNotification(Messages.get(Messages.Keys.NOTIFICATION_BRAND_CREATED));
                         close();
                     }
 
@@ -119,7 +120,7 @@ public class BrandForm extends FormLayout {
     private void addValidation() {
         binder.forField(brandNameField)
                 .withValidator(value -> value.length() > 2,
-                        "Name must contain at least three characters")
+                        Messages.get(Messages.Keys.VALIDATION_NAME_MIN_LENGTH))
                 .bind(BrandDto::getName, BrandDto::setName);
     }
 

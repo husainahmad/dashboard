@@ -8,6 +8,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import lombok.AllArgsConstructor;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * The main layout for the product page.
@@ -28,7 +29,7 @@ public class ProductLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        addClassName("list-view");
+        addClassName(Css.LIST_VIEW);
         add(new ProductTabs(asyncRestClientMenuService, restClientMenuService, accessService));
         setSizeFull();
     }

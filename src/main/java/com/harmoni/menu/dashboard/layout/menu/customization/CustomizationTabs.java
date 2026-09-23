@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.layout.menu.customization;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -29,7 +30,7 @@ public class CustomizationTabs extends VerticalLayout {
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
-        browseTab.setLabel(CustomizationListView.TAB_LABEL_LIST);
+        browseTab.setLabel(Messages.get("tab.customizationList"));
         CustomizationListView customizationListView = new CustomizationListView(
                 asyncRestClientMenuService, restClientMenuService, accessService);
         tabSheet.add(browseTab, customizationListView);

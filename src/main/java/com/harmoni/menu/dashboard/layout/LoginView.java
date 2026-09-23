@@ -4,6 +4,7 @@ import com.harmoni.menu.dashboard.dto.LoginDto;
 import com.harmoni.menu.dashboard.event.user.LoginEventListener;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientLoginService;
 import com.harmoni.menu.dashboard.layout.util.ThemeUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -18,7 +19,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.theme.lumo.Lumo;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -33,9 +33,9 @@ public class LoginView extends VerticalLayout {
 
     private final RestClientLoginService restClientLoginService;
 
-    TextField usernameField = new TextField("Username");
-    PasswordField passwordField = new PasswordField("Password");
-    Button loginButton = new Button("Sign in");
+    TextField usernameField = new TextField(Messages.get("label.username"));
+    PasswordField passwordField = new PasswordField(Messages.get(Messages.Keys.LABEL_PASSWORD));
+    Button loginButton = new Button(Messages.get("action.signIn"));
     Span messageSpan = new Span("");
 
     private void drawLayout() {
@@ -67,7 +67,7 @@ public class LoginView extends VerticalLayout {
         badge.addClassName("app-logo-icon");
 
         H1 title = new H1("POSHarmoni");
-        Paragraph tagline = new Paragraph("The all-in-one menu management platform for your stores.");
+        Paragraph tagline = new Paragraph(Messages.get("login.tagline"));
 
         VerticalLayout content = new VerticalLayout(badge, title, tagline);
         content.addClassName("login-brand-content");
@@ -83,9 +83,9 @@ public class LoginView extends VerticalLayout {
     }
 
     private VerticalLayout createFormPanel() {
-        H2 welcome = new H2("Sign in");
+        H2 welcome = new H2(Messages.get("login.welcome"));
         welcome.getStyle().set("margin", "0");
-        Paragraph subtitle = new Paragraph("Welcome back — enter your credentials to continue.");
+        Paragraph subtitle = new Paragraph(Messages.get("login.subtitle"));
         subtitle.addClassName("login-subtitle");
 
         usernameField.setWidthFull();

@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.layout.organization.chain.ChainForm;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -43,7 +44,7 @@ public class ChainUpdateEventListener implements ComponentEventListener<ClickEve
 
     private void accept(RestAPIResponse restAPIResponse) {
         this.chainForm.getUi().access(()->{
-            UiUtil.success("Chain updated..");
+            UiUtil.success(Messages.get("notification.chain.updated"));
             this.chainForm.close();
             broadcastMessage(BroadcastMessage.CHAIN_SUCCESS_UPDATED, restAPIResponse);
         });

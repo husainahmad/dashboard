@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -35,8 +36,8 @@ public class CustomizationDeleteEventListener
     @Override
     public void onComponentEvent(ClickEvent<Button> buttonClickEvent) {
         ConfirmDialog confirmDialog = new ConfirmDialog();
-        confirmDialog.setHeader("Confirmation");
-        confirmDialog.setText("Do you want to remove this customization " + customizationDto.getName() + "?");
+        confirmDialog.setHeader(Messages.get(Messages.Keys.DIALOG_CONFIRM_TITLE));
+        confirmDialog.setText(Messages.get("dialog.confirmDeleteCustomization", customizationDto.getName()));
         confirmDialog.setCancelable(true);
         confirmDialog.addConfirmListener(event -> executeDelete());
         confirmDialog.open();
@@ -54,7 +55,7 @@ public class CustomizationDeleteEventListener
     private void onError(Throwable error) {
         log.error("Delete customization failed", error);
         if (!(error instanceof BusinessBadRequestException)) {
-            UiUtil.error("Unable to delete customization");
+            UiUtil.error(Messages.get("notification.customization.deleteFailed"));
         }
     }
 }

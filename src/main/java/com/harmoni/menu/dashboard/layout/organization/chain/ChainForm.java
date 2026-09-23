@@ -13,6 +13,7 @@ import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
@@ -51,13 +52,13 @@ public class ChainForm extends FormLayout {
     BeanValidationBinder<ChainDto> binder = new BeanValidationBinder<>(ChainDto.class);
 
     @Getter
-    ComboBox<BrandDto> brandComboBox = new ComboBox<>("Brand");
+    ComboBox<BrandDto> brandComboBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_BRAND));
 
     @Getter
-    TextField chainNameField = new TextField("Chain name");
+    TextField chainNameField = new TextField(Messages.get("label.field.chainName"));
 
-    Button saveButton = new Button("Save");
-    Button closeButton = new Button("Cancel");
+    Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
+    Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
     Button updateButton = UiUtil.updateButton();
 
     private final RestClientOrganizationService restClientOrganizationService;
@@ -107,7 +108,7 @@ public class ChainForm extends FormLayout {
     }
 
     private void showNotification() {
-        UiUtil.safeAccess(ui, () -> UiUtil.success("Chain created.."));
+        UiUtil.safeAccess(ui, () -> UiUtil.success(Messages.get("notification.chain.created")));
     }
 
     /**
@@ -120,11 +121,11 @@ public class ChainForm extends FormLayout {
     private void addValidation() {
         binder.forField(brandComboBox)
                 .withValidator(value -> value != null && value.getId() > 0,
-                        "Brand must be not empty")
+                        Messages.get(Messages.Keys.VALIDATION_BRAND_REQUIRED))
                 .bind(ChainDto::getBrandDto, ChainDto::setBrandDto);
         binder.forField(chainNameField)
                 .withValidator(value -> value.length() > 2,
-                        "Name must contain at least three characters")
+                        Messages.get(Messages.Keys.VALIDATION_NAME_MIN_LENGTH))
                 .bind(ChainDto::getName, ChainDto::setName);
     }
 

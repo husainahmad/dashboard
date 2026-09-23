@@ -10,6 +10,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
+import com.harmoni.menu.dashboard.util.Messages;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -65,7 +66,7 @@ public final class TabManager {
         Button closeButton = new Button(closeIcon);
         closeButton.addClassName("tab-close");
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON, ButtonVariant.LUMO_SMALL);
-        closeButton.setTooltipText("Close tab");
+        closeButton.setTooltipText(Messages.get("action.closeTab"));
 
         HorizontalLayout header = new HorizontalLayout(text, closeButton);
         header.setAlignItems(FlexComponent.Alignment.CENTER);

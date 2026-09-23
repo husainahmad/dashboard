@@ -9,6 +9,7 @@ import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
@@ -121,7 +122,7 @@ public abstract class AbstractListView extends VerticalLayout {
      * search icon and lazy value-change mode.
      */
     protected void configureSearchFilter() {
-        filterText.setPlaceholder("Filter by name...");
+        filterText.setPlaceholder(Messages.get("placeholder.filterByName"));
         filterText.setClearButtonVisible(true);
         filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
@@ -164,7 +165,7 @@ public abstract class AbstractListView extends VerticalLayout {
      * @param onChange action reloading the view for the selected brand
      */
     protected void configureBrandFilter(Runnable onChange) {
-        brandFilter.setLabel("Brand");
+        brandFilter.setLabel(Messages.get(Messages.Keys.LABEL_BRAND));
         brandFilter.setItemLabelGenerator(BrandDto::getName);
         brandFilter.addValueChangeListener(change -> {
             if (!change.isFromClient()) {
@@ -213,7 +214,7 @@ public abstract class AbstractListView extends VerticalLayout {
             brandFilter.setValue(selected);
             afterLoad.run();
         }), error -> UiUtil.safeAccess(ui, () ->
-                UiUtil.errorWithRetry("Couldn't load brands",
+                UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_BRAND_LOAD_FAILED),
                         () -> loadBrands(orgService, access, afterLoad))));
     }
 
@@ -270,8 +271,8 @@ public abstract class AbstractListView extends VerticalLayout {
      * @return the footer layout
      */
     protected HorizontalLayout paginationFooter(Runnable onPrevious, Runnable onNext) {
-        previousPageButton = new Button("Previous", event -> onPrevious.run());
-        nextPageButton = new Button("Next", event -> onNext.run());
+        previousPageButton = new Button(Messages.get("action.previous"), event -> onPrevious.run());
+        nextPageButton = new Button(Messages.get("action.next"), event -> onNext.run());
         HorizontalLayout footer = new HorizontalLayout(previousPageButton, pageInfoText, nextPageButton);
         footer.addClassName("pagination");
         footer.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
@@ -286,7 +287,7 @@ public abstract class AbstractListView extends VerticalLayout {
      * {@link #currentPage} and {@link #totalPages}.
      */
     protected void updatePagination() {
-        pageInfoText.setText("Page " + currentPage + " of " + totalPages);
+        pageInfoText.setText(Messages.get("pagination.page", currentPage, totalPages));
         if (previousPageButton != null) {
             previousPageButton.setEnabled(currentPage > 1);
             nextPageButton.setEnabled(currentPage < totalPages);

@@ -19,15 +19,13 @@ import reactor.core.publisher.Mono;
 /**
  * Refreshes an expired access token using the stored refresh token.
  *
- * <p>Exposed as a singleton so the reactive REST clients can trigger a refresh
- * from anywhere; the refreshed {@link JwtDto} replaces the session token.
+ * <p>Spring injects this bean into the REST clients; the refreshed
+ * {@link JwtDto} replaces the session token.
  */
 @RequiredArgsConstructor
 @Component
 @Slf4j
 public class TokenRefreshService {
-
-    private static TokenRefreshService instance;
 
     private final AuthProperties authProperties;
     private final WebClient.Builder webClientBuilder;
@@ -36,12 +34,7 @@ public class TokenRefreshService {
 
     @PostConstruct
     void init() {
-        instance = this;
         webClient = webClientBuilder.build();
-    }
-
-    public static TokenRefreshService getInstance() {
-        return instance;
     }
 
     public Mono<JwtDto> refresh(String refreshToken) {

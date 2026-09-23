@@ -20,6 +20,7 @@ public class TierProperties implements Serializable {
     private String brand;
     private String service;
     private String serviceByBrandId;
+    private String byBrandType;
     private String menu;
     private String menuByBrandId;
     private TierMenuProperties menus;

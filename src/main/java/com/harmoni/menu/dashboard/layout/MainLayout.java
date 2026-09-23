@@ -11,6 +11,7 @@ import com.harmoni.menu.dashboard.layout.util.ThemeUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
@@ -19,7 +20,6 @@ import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -34,6 +34,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
 import org.apache.commons.lang3.ObjectUtils;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Root application shell hosting the header (logo, palette switcher, theme
@@ -67,7 +68,7 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
 
     private void createHeader() {
         DrawerToggle toggle = new DrawerToggle();
-        toggle.setTooltipText("Toggle navigation");
+        toggle.setTooltipText(Messages.get("nav.toggle"));
 
         H2 logo = createLogo();
 
@@ -90,19 +91,19 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
     private H2 createLogo() {
         Div badge = new Div("P");
         badge.addClassName("app-logo-icon");
-        H2 logo = new H2(badge, new Span("POSHarmoni"));
+        H2 logo = new H2(badge, new Span(TITLE));
         logo.addClassName("app-logo");
         return logo;
     }
 
     private MenuBar createPaletteMenu() {
         MenuBar palette = new MenuBar();
-        palette.setThemeName("tertiary-inline");
+        palette.setThemeName(Css.TERTIARY_INLINE);
         MenuItem paletteItem = palette.addItem(new Icon(VaadinIcon.PALETTE));
-        paletteItem.setAriaLabel("Color palette");
+        paletteItem.setAriaLabel(Messages.get("nav.palette"));
 
-        paletteItem.getSubMenu().addItem("Emerald (default)", event -> applyPalette(null));
-        paletteItem.getSubMenu().addItem("Warm Food", event -> applyPalette("preset-warm"));
+        paletteItem.getSubMenu().addItem(Messages.get("nav.palette.emerald"), event -> applyPalette(null));
+        paletteItem.getSubMenu().addItem(Messages.get("nav.palette.warm"), event -> applyPalette("preset-warm"));
         return palette;
     }
 
@@ -118,7 +119,7 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         Button toggle = new Button(sunIcon);
         toggle.addClassName("app-theme-toggle");
         toggle.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
-        toggle.setTooltipText("Toggle light/dark mode");
+        toggle.setTooltipText(Messages.get("nav.themeToggle"));
         toggle.addClickListener(event -> {
             boolean dark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
             if (dark) {
@@ -138,7 +139,7 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
     private Component createUserMenu() {
         UserDto user = accessService.getUserDetail();
         String name = user != null && ObjectUtils.isNotEmpty(user.getUsername())
-                ? user.getUsername() : "Guest";
+                ? user.getUsername() : Messages.get("label.guest");
         String initials = name.length() >= 2 ? name.substring(0, 2).toUpperCase() : name.toUpperCase();
 
         Div avatar = new Div(initials);
@@ -149,10 +150,10 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         chip.addClassName("app-user-chip");
 
         MenuBar menuBar = new MenuBar();
-        menuBar.setThemeName("tertiary-inline");
+        menuBar.setThemeName(Css.TERTIARY_INLINE);
         MenuItem userItem = menuBar.addItem(chip);
-        userItem.setAriaLabel("User menu");
-        userItem.getSubMenu().addItem("Sign out", event -> logout());
+        userItem.setAriaLabel(Messages.get("nav.userMenu"));
+        userItem.getSubMenu().addItem(Messages.get("action.signOut"), event -> logout());
         return menuBar;
     }
 

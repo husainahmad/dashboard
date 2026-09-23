@@ -9,6 +9,7 @@ import com.harmoni.menu.dashboard.layout.menu.customization.CustomizationForm;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -43,20 +44,20 @@ public class CustomizationSaveEventListener
 
         // validate main customization form
         if (!customizationForm.getCustomizationBinder().writeBeanIfValid(customization)) {
-            showNotification("Please fix the errors in the form.", NotificationVariant.LUMO_ERROR);
+            showNotification(Messages.get(Messages.Keys.VALIDATION_CUSTOMIZATION_FORM_ERRORS), NotificationVariant.LUMO_ERROR);
             return;
         }
 
         // validate each option row and attach tier-based prices
         List<CustomizationOptionDto> options = customizationForm.buildOptions();
         if (options == null) {
-            showNotification("Please fill all required option fields.", NotificationVariant.LUMO_ERROR);
+            showNotification(Messages.get(Messages.Keys.VALIDATION_CUSTOMIZATION_FILL_OPTION_FIELDS), NotificationVariant.LUMO_ERROR);
             return;
         }
 
         // must have at least one option
         if (options.isEmpty()) {
-            showNotification("A customization must have at least one customization option.", NotificationVariant.LUMO_ERROR);
+            showNotification(Messages.get(Messages.Keys.VALIDATION_CUSTOMIZATION_MIN_OPTION), NotificationVariant.LUMO_ERROR);
             return;
         }
 

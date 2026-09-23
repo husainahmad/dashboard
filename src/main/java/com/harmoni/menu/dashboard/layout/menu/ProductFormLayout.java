@@ -9,6 +9,7 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import lombok.Getter;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Base {@link FormLayout} for the product editors.
@@ -25,7 +26,7 @@ public class ProductFormLayout extends FormLayout  {
     private UI ui;
 
     public ProductFormLayout() {
-        addClassName("product-form");
+        addClassName(Css.PRODUCT_FORM);
         this.getElement().addEventListener("keydown", domEvent -> {}).stopPropagation();
     }
 
@@ -51,7 +52,7 @@ public class ProductFormLayout extends FormLayout  {
      */
     public HorizontalLayout getToolbar(Component component) {
         HorizontalLayout toolbar = new HorizontalLayout(component);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
         return toolbar;
     }

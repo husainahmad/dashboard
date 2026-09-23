@@ -3,7 +3,6 @@ package com.harmoni.menu.dashboard.service.data.rest;
 import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.util.ImageUtil;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -18,13 +17,17 @@ import java.io.Serializable;
  * customization links. Builds URLs from {@link MenuProperties}, extends
  * {@link RestClientService} and returns {@link Mono} responses.
  */
-@RequiredArgsConstructor
 @Service
 @Slf4j
 public class RestClientMenuService extends RestClientService implements Serializable {
 
     private final transient MenuProperties urlMenuProperties;
-    private static final String FORMAT_STRING = "%s/%d";
+
+    public RestClientMenuService(MenuProperties urlMenuProperties,
+                                 TokenRefreshService tokenRefreshService) {
+        super(tokenRefreshService);
+        this.urlMenuProperties = urlMenuProperties;
+    }
 
     /**
      * Creates a menu category.
@@ -43,7 +46,7 @@ public class RestClientMenuService extends RestClientService implements Serializ
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> getAllCategoryByBrand(Integer brandId) {
-        return get(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getCategories().getBrand(), brandId));
+        return get(URL_FORMAT.formatted(urlMenuProperties.getUrl().getCategories().getBrand(), brandId));
     }
 
     /**
@@ -54,7 +57,7 @@ public class RestClientMenuService extends RestClientService implements Serializ
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> getAllTierByBrand(Integer brandId, String type) {
-        return get("%s/brand/%d/type/%s".formatted(urlMenuProperties.getUrl().getTier(), brandId, type));
+        return get(String.format(urlMenuProperties.getUrl().getTiers().getByBrandType(), brandId, type));
     }
 
     /**
@@ -73,7 +76,7 @@ public class RestClientMenuService extends RestClientService implements Serializ
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> getProduct(Integer productId) {
-        return get(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getProduct(), productId));
+        return get(URL_FORMAT.formatted(urlMenuProperties.getUrl().getProduct(), productId));
     }
 
     /**
@@ -131,7 +134,7 @@ public class RestClientMenuService extends RestClientService implements Serializ
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> deleteProduct(ProductDto productDto) {
-        return delete(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getProduct(), productDto.getId()));
+        return delete(URL_FORMAT.formatted(urlMenuProperties.getUrl().getProduct(), productDto.getId()));
     }
 
     /**
@@ -153,7 +156,7 @@ public class RestClientMenuService extends RestClientService implements Serializ
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> deleteCategory(CategoryDto categoryDto) {
-        return delete(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getCategory(), categoryDto.getId()));
+        return delete(URL_FORMAT.formatted(urlMenuProperties.getUrl().getCategory(), categoryDto.getId()));
     }
 
     /**
@@ -173,7 +176,7 @@ public class RestClientMenuService extends RestClientService implements Serializ
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> getCustomizationById(Integer customizationId) {
-        return get(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getCustomization(), customizationId));
+        return get(URL_FORMAT.formatted(urlMenuProperties.getUrl().getCustomization(), customizationId));
     }
 
     /**
@@ -183,7 +186,7 @@ public class RestClientMenuService extends RestClientService implements Serializ
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> updateCustomization(CustomizationDto customizationDto) {
-        return put(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getCustomization(), customizationDto.getId()),
+        return put(URL_FORMAT.formatted(urlMenuProperties.getUrl().getCustomization(), customizationDto.getId()),
                 Mono.just(customizationDto), CustomizationDto.class);
     }
 
@@ -194,12 +197,11 @@ public class RestClientMenuService extends RestClientService implements Serializ
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> deleteCustomization(CustomizationDto customizationDto) {
-        return delete(FORMAT_STRING.formatted(urlMenuProperties.getUrl().getCustomization(), customizationDto.getId()));
+        return delete(URL_FORMAT.formatted(urlMenuProperties.getUrl().getCustomization(), customizationDto.getId()));
     }
 
     private String productCustomizationUrl(Integer productId) {
-        return FORMAT_STRING.formatted(urlMenuProperties.getUrl().getProduct(), productId)
-                .concat("/customization");
+        return String.format(urlMenuProperties.getUrl().getProducts().getCustomization(), productId);
     }
 
     /**
@@ -235,7 +237,7 @@ public class RestClientMenuService extends RestClientService implements Serializ
      */
     public Mono<RestAPIResponse> updateProductCustomization(Integer productId, Integer linkId,
                                                             ProductCustomizationConfigDto configDto) {
-        return put(FORMAT_STRING.formatted(productCustomizationUrl(productId), linkId),
+        return put(URL_FORMAT.formatted(productCustomizationUrl(productId), linkId),
                 Mono.just(configDto), ProductCustomizationConfigDto.class);
     }
 
@@ -247,7 +249,7 @@ public class RestClientMenuService extends RestClientService implements Serializ
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> deleteProductCustomization(Integer productId, Integer linkId) {
-        return delete(FORMAT_STRING.formatted(productCustomizationUrl(productId), linkId));
+        return delete(URL_FORMAT.formatted(productCustomizationUrl(productId), linkId));
     }
 
 }

@@ -10,6 +10,7 @@ import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Set;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Vaadin grid view listing all brands. Refreshes on BROADCAST insert/update,
@@ -55,11 +57,11 @@ public class BrandListView extends AbstractListView {
     private void configureGrid() {
         brandDtoGrid.setSizeFull();
         brandDtoGrid.removeAllColumns();
-        brandDtoGrid.setEmptyStateText("No brands yet \u2014 click \u201CNew Brand\u201D to add one.");
-        brandDtoGrid.addColumn(BrandDto::getName).setHeader("Name");
+        brandDtoGrid.setEmptyStateText(Messages.get("grid.empty.brands"));
+        brandDtoGrid.addColumn(BrandDto::getName).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
 
         brandDtoGrid.getColumns().forEach(brandDtoColumn -> brandDtoColumn.setAutoWidth(true));
-        brandDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
+        brandDtoGrid.addComponentColumn(this::applyButton).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
     }
 
     private Component applyButton(BrandDto brandDto) {
@@ -86,10 +88,10 @@ public class BrandListView extends AbstractListView {
     public HorizontalLayout getToolbarComponent() {
         configureSearchFilter();
 
-        Button addBrandButton = UiUtil.addButton("New Brand", event -> addBrand());
+        Button addBrandButton = UiUtil.addButton(Messages.get(Messages.Keys.ACTION_NEW_BRAND), event -> addBrand());
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addBrandButton);
         registerNewShortcut(this::addBrand);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         return toolbar;
     }
 
@@ -113,7 +115,7 @@ public class BrandListView extends AbstractListView {
         }
         TabManager tabManager = new TabManager(tabSheet);
         String tabLabel = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(brandDto.getName())
-                ? "Edit ".concat(brandDto.getName()) : "New Brand";
+                ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, brandDto.getName()) : Messages.get(Messages.Keys.ACTION_NEW_BRAND);
         tabManager.addOrSelect(tabLabel, tab ->
                 new BrandForm(this.restClientOrganizationService, tabManager, tab, formAction, brandDto));
     }
@@ -130,7 +132,7 @@ public class BrandListView extends AbstractListView {
             brandDtoGrid.setItems(result);
         }), error -> UiUtil.safeAccess(ui, () -> {
             gridSkeleton.hide();
-            UiUtil.errorWithRetry("Couldn't load brands", this::fetchBrands);
+            UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_BRAND_LOAD_FAILED), this::fetchBrands);
         }));
     }
 }

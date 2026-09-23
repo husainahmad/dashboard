@@ -15,6 +15,7 @@ import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -36,6 +37,7 @@ import lombok.Getter;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.*;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 
 /**
@@ -51,19 +53,19 @@ import java.util.*;
 public class UserForm extends FormLayout  {
     Registration broadcasterRegistration;
     @Getter
-    BeanValidationBinder<StoreDto> binder = new BeanValidationBinder<>(StoreDto.class);
+    BeanValidationBinder<UserDto> binder = new BeanValidationBinder<>(UserDto.class);
 
-    TextField userNameField = new TextField("User Name");
-    EmailField userEmailField = new EmailField("Email");
+    TextField userNameField = new TextField(Messages.get("label.field.userName"));
+    EmailField userEmailField = new EmailField(Messages.get("label.email"));
 
-    PasswordField userPassField = new PasswordField("Password");
+    PasswordField userPassField = new PasswordField(Messages.get(Messages.Keys.LABEL_PASSWORD));
 
-    ComboBox<StoreDto> storeDtoComboBox = new ComboBox<>("Store");
-    ComboBox<RoleType> authDtoComboBox = new ComboBox<>("Auth");
+    ComboBox<StoreDto> storeDtoComboBox = new ComboBox<>(Messages.get("label.store"));
+    ComboBox<RoleType> authDtoComboBox = new ComboBox<>(Messages.get("label.auth"));
 
-    Button saveButton = new Button("Save");
-    Button closeButton = new Button("Cancel");
-    Button updateButton = new Button("Update");
+    Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
+    Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
+    Button updateButton = new Button(Messages.get(Messages.Keys.ACTION_UPDATE));
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
@@ -80,9 +82,9 @@ public class UserForm extends FormLayout  {
         setSizeFull();
         storeDtoComboBox.setAllowCustomValue(false);
         storeDtoComboBox.setItemLabelGenerator(StoreDto::getName); // Display store name
-        userNameField.getElement().setAttribute("autocomplete", "off");
-        userEmailField.getElement().setAttribute("autocomplete", "off");
-        userPassField.getElement().setAttribute("autocomplete", "off");
+        userNameField.getElement().setAttribute(Css.AUTOCOMPLETE, "off");
+        userEmailField.getElement().setAttribute(Css.AUTOCOMPLETE, "off");
+        userPassField.getElement().setAttribute(Css.AUTOCOMPLETE, "off");
 
         storeDtoComboBox.setDataProvider(
             DataProvider.fromFilteringCallbacks(
@@ -147,9 +149,9 @@ public class UserForm extends FormLayout  {
 
     private void addValidation() {
         binder.forField(userNameField)
-                .withValidator(value -> value.length()>2,
-                        "Name must contain at least three characters")
-                .bind(StoreDto::getName, StoreDto::setName);
+                .withValidator(value -> value.length() > 2,
+                        Messages.get(Messages.Keys.VALIDATION_NAME_MIN_LENGTH))
+                .bind(UserDto::getUsername, UserDto::setUsername);
     }
 
     private HorizontalLayout createButtonsLayout() {

@@ -9,6 +9,7 @@ import com.harmoni.menu.dashboard.layout.menu.customization.CustomizationForm;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -42,18 +43,18 @@ public class CustomizationUpdateEventListener
         CustomizationDto customization = CustomizationDto.builder().build();
 
         if (!customizationForm.getCustomizationBinder().writeBeanIfValid(customization)) {
-            showNotification("Please fix the errors in the form.", NotificationVariant.LUMO_ERROR);
+            showNotification(Messages.get(Messages.Keys.VALIDATION_CUSTOMIZATION_FORM_ERRORS), NotificationVariant.LUMO_ERROR);
             return;
         }
 
         List<CustomizationOptionDto> options = customizationForm.buildOptions();
         if (options == null) {
-            showNotification("Please fill all required option fields.", NotificationVariant.LUMO_ERROR);
+            showNotification(Messages.get(Messages.Keys.VALIDATION_CUSTOMIZATION_FILL_OPTION_FIELDS), NotificationVariant.LUMO_ERROR);
             return;
         }
 
         if (options.isEmpty()) {
-            showNotification("A customization must have at least one customization option.", NotificationVariant.LUMO_ERROR);
+            showNotification(Messages.get(Messages.Keys.VALIDATION_CUSTOMIZATION_MIN_OPTION), NotificationVariant.LUMO_ERROR);
             return;
         }
 

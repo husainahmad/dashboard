@@ -17,6 +17,7 @@ import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Key;
@@ -56,6 +57,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Tab form for creating or editing a {@link CustomizationDto}.
@@ -86,24 +88,24 @@ public class CustomizationForm extends VerticalLayout {
 
     // Form fields
     /** Customization name input. */
-    @Getter private final TextField nameField = new TextField("Customization name");
+    @Getter private final TextField nameField = new TextField(Messages.get(Messages.Keys.LABEL_FIELD_CUSTOMIZATION_NAME));
     /** Free-text customization description input. */
-    @Getter private final TextArea descriptionField = new TextArea("Description");
+    @Getter private final TextArea descriptionField = new TextArea(Messages.get(Messages.Keys.LABEL_DESCRIPTION));
     /** Single / multiple selection type combo. */
-    @Getter private final ComboBox<SelectionType> selectionType = new ComboBox<>("Selection Type");
+    @Getter private final ComboBox<SelectionType> selectionType = new ComboBox<>(Messages.get(Messages.Keys.LABEL_SELECTION_TYPE));
     /** Whether the customization is mandatory. */
-    @Getter private final Checkbox requiredField = new Checkbox("Required");
+    @Getter private final Checkbox requiredField = new Checkbox(Messages.get(Messages.Keys.LABEL_REQUIRED));
     /** Minimum number of options the user must select. */
-    @Getter private final IntegerField minSelectionField = new IntegerField("Minimum Selection");
+    @Getter private final IntegerField minSelectionField = new IntegerField(Messages.get("label.minSelection"));
     /** Maximum number of options the user may select. */
-    @Getter private final IntegerField maxSelectionField = new IntegerField("Maximum Selection");
+    @Getter private final IntegerField maxSelectionField = new IntegerField(Messages.get("label.maxSelection"));
 
     // Buttons
-    private final Button addOptionButton = new Button("+ Add Option");
+    private final Button addOptionButton = new Button(Messages.get("action.addOption"));
     private final Button deleteOptionButton = new Button(VaadinIcon.TRASH.create());
-    private final Button saveButton = new Button("Save");
-    private final Button updateButton = new Button("Update");
-    private final Button closeButton = new Button("Cancel");
+    private final Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
+    private final Button updateButton = new Button(Messages.get(Messages.Keys.ACTION_UPDATE));
+    private final Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
 
     // Option tree grid (mirrors the product SKU + tier price layout)
     private final TreeGrid<CustomizationOptionTreeItem> optionGrid = new TreeGrid<>(CustomizationOptionTreeItem.class);
@@ -167,11 +169,11 @@ public class CustomizationForm extends VerticalLayout {
 
     private void configureBinder() {
         customizationBinder.forField(nameField)
-                .asRequired("Customization name is required")
+                .asRequired(Messages.get("validation.customization.name.required"))
                 .bind(CustomizationDto::getName, CustomizationDto::setName);
 
         customizationBinder.forField(selectionType)
-                .asRequired("Selection type is required")
+                .asRequired(Messages.get("validation.selectionType.required"))
                 .bind(CustomizationDto::getSelectionType, CustomizationDto::setSelectionType);
 
         customizationBinder.forField(descriptionField)
@@ -187,18 +189,18 @@ public class CustomizationForm extends VerticalLayout {
                 .withValidator(maximum -> minSelectionField.getValue() == null
                                 || maximum == null
                                 || maximum >= minSelectionField.getValue(),
-                        "Maximum selection must be equal to or greater than minimum")
+                        Messages.get("validation.maxSelection"))
                 .bind(CustomizationDto::getMaximumSelection, CustomizationDto::setMaximumSelection);
     }
 
     private void configureForm() {
         setSizeFull();
 
-        nameField.setPlaceholder("Customization name");
+        nameField.setPlaceholder(Messages.get(Messages.Keys.LABEL_FIELD_CUSTOMIZATION_NAME));
         nameField.setClearButtonVisible(true);
 
         descriptionField.setWidthFull();
-        descriptionField.setPlaceholder("Additional customization description");
+        descriptionField.setPlaceholder(Messages.get("placeholder.customization.description"));
 
         selectionType.setItems(SelectionType.values());
         selectionType.setItemLabelGenerator(SelectionType::getLabel);
@@ -218,13 +220,13 @@ public class CustomizationForm extends VerticalLayout {
                 new FormLayout.ResponsiveStep("600px", 2)
         );
 
-        Span optionsTitle = new Span("OPTIONS");
-        optionsTitle.getStyle().set("font-weight", "600");
+        Span optionsTitle = new Span(Messages.get("label.options"));
+        optionsTitle.getStyle().set(Css.FONT_WEIGHT, "600");
 
         deleteOptionButton.setEnabled(false);
         deleteOptionButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_ICON,
                 ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
-        deleteOptionButton.setTooltipText("Delete selected option");
+        deleteOptionButton.setTooltipText(Messages.get("tooltip.deleteOption"));
 
         HorizontalLayout optionsHeader = new HorizontalLayout(optionsTitle, deleteOptionButton, addOptionButton);
         optionsHeader.setWidthFull();
@@ -240,7 +242,7 @@ public class CustomizationForm extends VerticalLayout {
 
         addOptionButton.addClickListener(e -> {
             if (!canAddNewRow()) {
-                showNotification("Please fill in the previous option before adding another.", NotificationVariant.LUMO_ERROR);
+                showNotification(Messages.get("notification.customization.addOptionFirst"), NotificationVariant.LUMO_ERROR);
                 return;
             }
             addOptionRow(CustomizationOptionDto.builder().status(ACTIVE).build());
@@ -267,19 +269,19 @@ public class CustomizationForm extends VerticalLayout {
         optionGrid.removeAllColumns();
 
         optionGrid.addComponentHierarchyColumn(this::applyNameField)
-                .setHeader("Name")
+                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME))
                 .setAutoWidth(true);
 
         optionGrid.addColumn(CustomizationOptionTreeItem::getTierName)
-                .setHeader("Tier")
+                .setHeader(Messages.get(Messages.Keys.LABEL_TIER))
                 .setAutoWidth(true);
 
         optionGrid.addComponentColumn(this::applyPriceNumberField)
-                .setHeader("Price")
+                .setHeader(Messages.get(Messages.Keys.LABEL_PRICE))
                 .setAutoWidth(true);
 
         optionGrid.addComponentColumn(this::applyActiveBox)
-                .setHeader("Active")
+                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTIVE))
                 .setAutoWidth(true);
 
         optionGrid.setSelectionMode(Grid.SelectionMode.SINGLE);
@@ -293,7 +295,7 @@ public class CustomizationForm extends VerticalLayout {
         }
         TextField field = new TextField();
         field.setValue(Optional.ofNullable(optionNames.get(item.getId())).orElse(item.getName()));
-        field.setPlaceholder("Option name");
+        field.setPlaceholder(Messages.get("label.optionName"));
         field.addValueChangeListener(changeEvent ->
                 optionNames.put(item.getId(),
                         changeEvent.getValue() == null ? "" : changeEvent.getValue().trim()));
@@ -638,7 +640,7 @@ public class CustomizationForm extends VerticalLayout {
             return;
         }
         UiUtil.safeAccess(ui, () -> {
-            UiUtil.success("Customization saved successfully");
+            UiUtil.success(Messages.get("notification.customization.saved"));
             closeTab();
         });
     }
@@ -652,7 +654,7 @@ public class CustomizationForm extends VerticalLayout {
             return;
         }
         UiUtil.safeAccess(ui, () -> {
-            UiUtil.success("Customization updated successfully");
+            UiUtil.success(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_UPDATED));
             closeTab();
         });
     }
@@ -666,7 +668,7 @@ public class CustomizationForm extends VerticalLayout {
         if (ui == null) {
             return;
         }
-        UiUtil.safeAccess(ui, () -> UiUtil.error("Unable to save customization"));
+        UiUtil.safeAccess(ui, () -> UiUtil.error(Messages.get("notification.customization.saveFailed")));
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.util;
 
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
@@ -24,7 +25,6 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -37,9 +37,6 @@ import java.util.concurrent.TimeUnit;
  */
 public final class UiUtil {
 
-    /** Default message shown in lists/grids when there is nothing to display. */
-    public static final String NO_RECORDS = "No records found";
-
     private UiUtil() {
         throw new IllegalStateException("Utility class");
     }
@@ -51,7 +48,7 @@ public final class UiUtil {
      * @return the configured button
      */
     public static Button editButton(ComponentEventListener<ClickEvent<Button>> listener) {
-        return editButton("Edit", listener);
+        return editButton(Messages.get(Messages.Keys.ACTION_EDIT), listener);
     }
 
     /**
@@ -84,7 +81,7 @@ public final class UiUtil {
      * @return the configured button
      */
     public static Button updateButton() {
-        return buildIconButton(VaadinIcon.CHECK, "Update", false);
+        return buildIconButton(VaadinIcon.CHECK, Messages.get(Messages.Keys.ACTION_UPDATE), false);
     }
 
     /**
@@ -94,7 +91,7 @@ public final class UiUtil {
      * @return the configured button
      */
     public static Button deleteButton(ComponentEventListener<ClickEvent<Button>> listener) {
-        Button button = deleteButton("Delete");
+        Button button = deleteButton(Messages.get(Messages.Keys.ACTION_DELETE));
         button.addClickListener(listener);
         return button;
     }
@@ -174,7 +171,7 @@ public final class UiUtil {
         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
         notification.setDuration(8000);
         Span text = new Span(message);
-        Button retryButton = new Button("Retry", event -> {
+        Button retryButton = new Button(Messages.get("action.retry"), event -> {
             notification.close();
             if (retry != null) {
                 retry.run();
@@ -205,7 +202,7 @@ public final class UiUtil {
         notification.getElement().getStyle()
                 .set("--vaadin-notification-card-padding", "var(--lumo-space-s) var(--lumo-space-m)")
                 .set("border-radius", "var(--lumo-border-radius-l)")
-                .set("font-weight", "500");
+                .set(Css.FONT_WEIGHT, "500");
         notification.open();
     }
 
@@ -283,16 +280,16 @@ public final class UiUtil {
      */
     public static Dialog shortcutsHelpDialog() {
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Keyboard shortcuts");
+        dialog.setHeaderTitle(Messages.get(Messages.Keys.UI_KEYS_TITLE));
         dialog.setWidth("440px");
         VerticalLayout content = new VerticalLayout();
         content.setPadding(false);
         content.setSpacing(true);
-        content.add(shortcutRow("/", "Focus the search filter"));
-        content.add(shortcutRow("n", "Create a new item"));
-        content.add(shortcutRow("Enter or Tab", "Save the price in an edit cell"));
+        content.add(shortcutRow("/", Messages.get("ui.keys.focusSearch")));
+        content.add(shortcutRow("n", Messages.get("ui.keys.createNew")));
+        content.add(shortcutRow("Enter or Tab", Messages.get("ui.keys.savePrice")));
         dialog.add(content);
-        dialog.getFooter().add(new Button("Close", event -> dialog.close()));
+        dialog.getFooter().add(new Button(Messages.get(Messages.Keys.ACTION_CLOSE), event -> dialog.close()));
         return dialog;
     }
 
@@ -337,6 +334,6 @@ public final class UiUtil {
      * @return the caption text, or {@code null}
      */
     public static String tierSavedText(Date savedAt) {
-        return savedAt == null ? null : "Saved ".concat(SAVED_FORMAT.format(savedAt));
+        return savedAt == null ? null : Messages.get("grid.tier.saved", SAVED_FORMAT.format(savedAt));
     }
 }

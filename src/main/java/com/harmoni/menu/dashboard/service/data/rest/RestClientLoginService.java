@@ -3,7 +3,6 @@ package com.harmoni.menu.dashboard.service.data.rest;
 import com.harmoni.menu.dashboard.configuration.AuthProperties;
 import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
@@ -16,13 +15,19 @@ import reactor.core.publisher.Mono;
  * for the shared token and error handling; consumers subscribe to the returned
  * {@link Mono}.
  */
-@RequiredArgsConstructor
 @Service
 @Slf4j
 public class RestClientLoginService extends RestClientService {
 
     private final AuthProperties authProperties;
     private final MenuProperties menuProperties;
+
+    public RestClientLoginService(AuthProperties authProperties, MenuProperties menuProperties,
+                                  TokenRefreshService tokenRefreshService) {
+        super(tokenRefreshService);
+        this.authProperties = authProperties;
+        this.menuProperties = menuProperties;
+    }
 
     /**
      * Authenticates the given credentials and returns the issued JWT pair.
@@ -44,7 +49,7 @@ public class RestClientLoginService extends RestClientService {
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> getUser(String username, String token) {
-        String url = menuProperties.getUrl().getUser().concat("/").concat(username);
+        String url = String.format(menuProperties.getUrl().getUsers().getByName(), username);
         log.debug("Sending get-user request username={} url={} hasToken={}", username, url, ObjectUtils.isNotEmpty(token));
         return get(url, token);
     }

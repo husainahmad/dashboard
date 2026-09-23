@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.layout.setting.service;
 
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -26,7 +27,7 @@ public class ServiceTabs extends VerticalLayout {
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
-        browseTab.setLabel("All Services");
+        browseTab.setLabel(Messages.get("tab.serviceList"));
         ServiceListView serviceListView = new ServiceListView(asyncRestClientSettingService);
         tabSheet.add(browseTab, serviceListView);
         tabSheet.setSizeFull();

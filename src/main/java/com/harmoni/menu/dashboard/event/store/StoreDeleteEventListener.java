@@ -5,6 +5,7 @@ import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -40,8 +41,8 @@ public class StoreDeleteEventListener implements ComponentEventListener<ClickEve
 
     private void setConfirmDialogDelete() {
         ConfirmDialog confirmDialog = new ConfirmDialog();
-        confirmDialog.setHeader("Confirmation");
-        confirmDialog.setText("Do you want to remove this product ".concat(storeDto.getName()).concat("?"));
+        confirmDialog.setHeader(Messages.get(Messages.Keys.DIALOG_CONFIRM_TITLE));
+        confirmDialog.setText(Messages.get("dialog.confirmDeleteStore", storeDto.getName()));
         confirmDialog.setCancelable(true);
         confirmDialog.addConfirmListener(event -> callRemoveAPI());
         confirmDialog.open();

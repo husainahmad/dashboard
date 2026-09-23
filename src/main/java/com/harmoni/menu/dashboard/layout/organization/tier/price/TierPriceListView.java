@@ -13,6 +13,7 @@ import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Set;
+import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Vaadin grid view listing the price tiers (type {@code PRICE}) of the current
@@ -66,16 +68,16 @@ public class TierPriceListView extends AbstractListView {
     private void configureGrid() {
         tierDtoGrid.setSizeFull();
         tierDtoGrid.removeAllColumns();
-        tierDtoGrid.setEmptyStateText("No price tiers yet \u2014 click \u201CNew Tier\u201D to add one.");
+        tierDtoGrid.setEmptyStateText(Messages.get("grid.empty.tierPrices"));
         tierDtoGrid.addClassName("tier-grid");
-        tierDtoGrid.addColumn(TierDto::getName).setHeader("Name");
-        tierDtoGrid.addColumn("brandDto.name").setHeader("Brand Name");
-        tierDtoGrid.addComponentColumn(this::applyButton).setHeader("Action");
+        tierDtoGrid.addColumn(TierDto::getName).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
+        tierDtoGrid.addColumn("brandDto.name").setHeader(Messages.get(Messages.Keys.GRID_HEADER_BRAND_NAME));
+        tierDtoGrid.addComponentColumn(this::applyButton).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
         tierDtoGrid.getColumns().forEach(tierDtoColumn -> tierDtoColumn.setAutoWidth(true));
     }
 
     private Button applyEditButton(TierDto tierDto) {
-        return UiUtil.editButton("Edit Name", event -> editTier(tierDto, FormAction.EDIT));
+        return UiUtil.editButton(Messages.get(Messages.Keys.ACTION_EDIT_NAME_FLAT), event -> editTier(tierDto, FormAction.EDIT));
     }
 
     private Button applyDeleteButton(TierDto tierDto) {
@@ -112,7 +114,7 @@ public class TierPriceListView extends AbstractListView {
                     }
                     TabManager tabManager = new TabManager(tabSheet);
                     String tabLabel = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(tierDto.getName())
-                            ? "Edit ".concat(tierDto.getName()) : "New Tier Price";
+                            ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, tierDto.getName()) : Messages.get("action.newTierPrice");
                     tabManager.addOrSelect(tabLabel, tab -> new TierPriceForm(restClientOrganizationService,
                             asyncRestClientOrganizationService, tabManager, tab, formAction, tierDto, brands));
                 }));
@@ -126,11 +128,11 @@ public class TierPriceListView extends AbstractListView {
     public HorizontalLayout getToolbarComponent() {
         configureSearchFilter();
 
-        Button addChainButton = UiUtil.addButton("New Tier", event -> addTier());
+        Button addChainButton = UiUtil.addButton(Messages.get("action.newTier"), event -> addTier());
         configureBrandFilter(this::fetchTier);
         HorizontalLayout toolbar = new HorizontalLayout(brandFilter, filterText, addChainButton);
         registerNewShortcut(this::addTier);
-        toolbar.addClassName("toolbar");
+        toolbar.addClassName(Css.TOOLBAR);
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
         return toolbar;
     }
@@ -149,7 +151,7 @@ public class TierPriceListView extends AbstractListView {
             tierDtoGrid.setItems(result);
         }), error -> UiUtil.safeAccess(ui, () -> {
             gridSkeleton.hide();
-            UiUtil.errorWithRetry("Couldn't load price tiers", this::fetchTier);
+            UiUtil.errorWithRetry(Messages.get("notification.tierPrice.loadFailed"), this::fetchTier);
         }),
                 selectedBrandId(accessService), TierTypeDto.PRICE);
     }

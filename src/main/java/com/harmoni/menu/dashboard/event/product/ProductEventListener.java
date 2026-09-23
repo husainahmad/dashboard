@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Shared logic for the product save/update listeners: builds the payload from
@@ -58,7 +57,7 @@ public class ProductEventListener implements
         if (ObjectUtils.isEmpty(productDto.getId())) {
             productDto.setCustomizationIds(productForm.getCustomizationSection().getProductCustomizations().stream()
                     .map(ProductCustomizationDto::getCustomizationId)
-                    .collect(Collectors.toList()));
+                    .toList());
         }
         if (ObjectUtils.isNotEmpty(productForm.getProductImageUploadView())
                 && ObjectUtils.isNotEmpty(productForm.getProductImageUploadView().getProductImageDto())) {
