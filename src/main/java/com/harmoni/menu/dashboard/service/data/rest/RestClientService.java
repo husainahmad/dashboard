@@ -79,18 +79,43 @@ public class RestClientService implements Serializable {
                         .retrieve(), responseClass));
     }
 
+    /**
+     * GETs a resource using the default session token.
+     *
+     * @param url the target endpoint
+     * @return a {@link Mono} with the server response
+     */
     private static String getTokenString() {
         return getTokenString(VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class));
     }
 
+    /**
+     * Returns the token string with the "Bearer " prefix if the token is not empty.
+     *
+     * @param token the token to format
+     * @return the formatted token string or null if the token is empty
+     */
     private static String getTokenString(String token) {
         return ObjectUtils.isNotEmpty(token) ? BEARER.concat(token) : token;
     }
 
+    /**
+     * Retrieves the session token from the Vaadin session.
+     *
+     * @return the session token or null if not present
+     */
     private static String sessionToken() {
         return VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);
     }
 
+    /**
+     * Resolves the token to use for the request, preferring the access token if available,
+     * then the explicit token, and finally falling back to the session token.
+     *
+     * @param accessToken   the access token from the token refresh service
+     * @param explicitToken  an explicitly provided token
+     * @return the resolved token to use for the request
+     */
     private static String resolveToken(String accessToken, String explicitToken) {
         if (ObjectUtils.isNotEmpty(accessToken)) {
             return accessToken;
@@ -98,6 +123,12 @@ public class RestClientService implements Serializable {
         return ObjectUtils.isNotEmpty(explicitToken) ? explicitToken : sessionToken();
     }
 
+    /**
+     * Applies default headers to the request, including Content-Type and Authorization.
+     *
+     * @param httpHeaders the headers to modify
+     * @param token       the token to use for the Authorization header
+     */
     private static void applyDefaultHeaders(HttpHeaders httpHeaders, String token) {
         httpHeaders.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
         if (ObjectUtils.isNotEmpty(token)) {
@@ -217,16 +248,35 @@ public class RestClientService implements Serializable {
                 .bodyToMono(responseClass);
     }
 
+    /**
+     * Constructs a multipart body for file upload.
+     *
+     * @param file the file to attach
+     * @return a {@link MultiValueMap} representing the multipart body
+     */
     private static MultiValueMap<String, Object> multipartBody(File file) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("file", new FileSystemResource(file)); // "file" should match the expected request parameter name
         return body;
     }
 
+    /**
+     * Logs an error message with the HTTP status from the response.
+     *
+     * @param s                the log message
+     * @param restAPIResponse  the response containing the HTTP status
+     */
     private static void logError(String s, RestAPIResponse restAPIResponse) {
         log.error(s, restAPIResponse.getHttpStatus());
     }
 
+    /**
+     * Handles a 400 Bad Request response by logging the error and throwing a
+     * {@link BusinessBadRequestException}.
+     *
+     * @param clientResponse the client response to process
+     * @return a {@link Mono} that emits the exception
+     */
     private Mono<? extends Throwable> handleBadRequest(ClientResponse clientResponse) {
         return clientResponse.bodyToMono(RestAPIResponse.class)
                 .handle(((restAPIResponse, throwableSynchronousSink) -> {
@@ -235,6 +285,13 @@ public class RestClientService implements Serializable {
                 }));
     }
 
+    /**
+     * Handles a 204 No Content response by logging the error and throwing a
+     * {@link BusinessBadRequestException}.
+     *
+     * @param clientResponse the client response to process
+     * @return a {@link Mono} that emits the exception
+     */
     private Mono<? extends Throwable> handleNoContent(ClientResponse clientResponse) {
         return clientResponse.bodyToMono(RestAPIResponse.class)
                 .handle(((restAPIResponse, throwableSynchronousSink) -> {
@@ -243,6 +300,13 @@ public class RestClientService implements Serializable {
                 }));
     }
 
+    /**
+     * Handles a 401 Unauthorized response by logging the error and throwing a
+     * {@link TokenRefreshRequiredException}.
+     *
+     * @param clientResponse the client response to process
+     * @return a {@link Mono} that emits the exception
+     */
     private Mono<? extends Throwable> handleUnAuthorized(ClientResponse clientResponse) {
         return clientResponse.bodyToMono(RestAPIResponse.class)
                 .handle(((restAPIResponse, throwableSynchronousSink) -> {
@@ -251,6 +315,13 @@ public class RestClientService implements Serializable {
                 }));
     }
 
+    /**
+     * Handles a 500 Internal Server Error response by logging the error and throwing a
+     * {@link BusinessBadRequestException}.
+     *
+     * @param clientResponse the client response to process
+     * @return a {@link Mono} that emits the exception
+     */
     private Mono<? extends Throwable> handleInternalServerError(ClientResponse clientResponse) {
         return clientResponse.bodyToMono(RestAPIResponse.class)
                 .handle(((restAPIResponse, throwableSynchronousSink) -> {

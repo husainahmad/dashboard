@@ -37,6 +37,12 @@ public class TokenRefreshService {
         webClient = webClientBuilder.build();
     }
 
+    /**
+     * Refreshes the access token using the provided refresh token.
+     *
+     * @param refreshToken the refresh token to use
+     * @return a {@link Mono} with the new {@link JwtDto} or an error
+     */
     public Mono<JwtDto> refresh(String refreshToken) {
         String url = authProperties.getUrl().getRefreshToken();
         log.debug("Refreshing access token url={}", url);
@@ -53,6 +59,16 @@ public class TokenRefreshService {
         Mono<T> request(String accessToken);
     }
 
+    /**
+     * Wraps a request with token refresh logic. If the request fails with
+     * {@link TokenRefreshRequiredException}, it attempts to refresh the token and
+     * retry the request. If the refresh fails or the retried request fails, it
+     * propagates the original error.
+     *
+     * @param request the request to wrap
+     * @param <T>     the type of the response
+     * @return a {@link Mono} with the response or error
+     */
     public <T> Mono<T> withTokenRefresh(TokenRequest<T> request) {
         VaadinSession session = VaadinSession.getCurrent();
         String refreshToken = VaadinSessionUtil.getAttribute(VaadinSessionUtil.REFRESH_TOKEN, String.class);
@@ -63,6 +79,16 @@ public class TokenRefreshService {
                 .onErrorResume(TokenRefreshRequiredException.class, this::handleUnauthorizedAfterRetry);
     }
 
+    /**
+     * Attempts to refresh the access token and retry the original request.
+     *
+     * @param request       the original request
+     * @param session       the current Vaadin session
+     * @param refreshToken  the refresh token
+     * @param originalError the original error that triggered the refresh
+     * @param <T>           the type of the response
+     * @return a {@link Mono} with the response or error
+     */
     private <T> Mono<T> refreshAndRetry(TokenRequest<T> request, VaadinSession session, String refreshToken,
                                         Throwable originalError) {
         if (ObjectUtils.isEmpty(refreshToken)) {
@@ -87,6 +113,14 @@ public class TokenRefreshService {
                 });
     }
 
+    /**
+     * Handles the case where the retried request after token refresh still results in an unauthorized error.
+     * Logs out the user and broadcasts an unauthorized event.
+     *
+     * @param error the error that occurred after retrying
+     * @param <T>   the type of the response
+     * @return a {@link Mono} that propagates the error
+     */
     private <T> Mono<T> handleUnauthorizedAfterRetry(Throwable error) {
         log.warn("Unauthorized after token refresh, logging out", error);
         UnAuthorizedServerRequestException.broadcast();

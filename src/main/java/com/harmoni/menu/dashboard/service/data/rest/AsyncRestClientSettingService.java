@@ -21,34 +21,47 @@ public class AsyncRestClientSettingService extends AsyncRestClientBase {
 
     private final transient SettingProperties settingProperties;
 
+    /**
+     * Constructs the service with the required configuration and token refresh support.
+     *
+     * @param settingProperties   configuration for setting endpoints
+     * @param tokenRefreshService service to refresh expired tokens
+     */
     public AsyncRestClientSettingService(SettingProperties settingProperties,
                                          TokenRefreshService tokenRefreshService) {
         super(tokenRefreshService);
         this.settingProperties = settingProperties;
     }
 
-    public void getAllService(AsyncRestCallback<List<ServiceDto>> callback) {
-        getAllService(callback, null);
-    }
-
+    /**
+     * Asynchronously retrieves all services.
+     *
+     * @param callback      success callback with the list of services
+     * @param errorCallback optional error callback for handling failures
+     */
     public void getAllService(AsyncRestCallback<List<ServiceDto>> callback,
                               AsyncRestCallback<Throwable> errorCallback) {
         makeAsyncRequest(settingProperties.getUrl().getService(), new TypeReference<List<ServiceDto>>() {}, callback, errorCallback);
     }
 
-    public void getAllTables(AsyncRestCallback<List<TableDto>> callback) {
-        getAllTables(callback, null);
-    }
-
+    /**
+     * Asynchronously retrieves all tables.
+     *
+     * @param callback      success callback with the list of tables
+     * @param errorCallback optional error callback for handling failures
+     */
     public void getAllTables(AsyncRestCallback<List<TableDto>> callback,
                              AsyncRestCallback<Throwable> errorCallback) {
         makeAsyncRequest(settingProperties.getUrl().getTable(), new TypeReference<List<TableDto>>() {}, callback, errorCallback);
     }
 
-    public void getAllTablesByStore(AsyncRestCallback<List<TableDto>> callback, Integer storeId) {
-        getAllTablesByStore(callback, null, storeId);
-    }
-
+    /**
+     * Asynchronously retrieves all tables for a given store.
+     *
+     * @param callback      success callback with the list of tables
+     * @param errorCallback optional error callback for handling failures
+     * @param storeId       the ID of the store to filter tables
+     */
     public void getAllTablesByStore(AsyncRestCallback<List<TableDto>> callback,
                                     AsyncRestCallback<Throwable> errorCallback, Integer storeId) {
         String uri = String.format(settingProperties.getUrl().getTableByStore(), storeId);

@@ -24,6 +24,11 @@ public class UserTabs extends VerticalLayout {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
+
+    /**
+     * Renders the tab sheet with the "All Users" tab and the
+     * {@link UserListView}. Adds the toolbar above the tab sheet.
+     */
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();

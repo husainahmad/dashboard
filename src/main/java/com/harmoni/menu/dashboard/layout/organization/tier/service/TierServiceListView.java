@@ -141,6 +141,9 @@ public class TierServiceListView extends AbstractTierTreeListView<TierServiceTre
                 brandDto.getId());
     }
 
+    /**
+     * Fetches all services asynchronously and then fetches the tiers. If an error occurs, it shows an error notification with a retry option.
+     */
     private void fetchService() {
         asyncRestClientOrganizationService.getAllServicesAsync(result -> {
             serviceDtos = result;
@@ -182,6 +185,11 @@ public class TierServiceListView extends AbstractTierTreeListView<TierServiceTre
         return new TierServiceForm(sync, async, tabManager, currentTab, formAction, tierDto, brands);
     }
 
+    /**
+     * Groups the fetched {@link TierServiceDto} by their {@link TierDto}, creates a tree structure of {@link TierServiceTreeItem} and updates the tree grid with the new data.
+     *
+     * @param result the list of fetched {@link TierServiceDto}
+     */
     private void operationFinished(List<TierServiceDto> result) {
         TreeData<TierServiceTreeItem> treeData = new TreeData<>();
 
@@ -204,6 +212,13 @@ public class TierServiceListView extends AbstractTierTreeListView<TierServiceTre
         finishLoad(treeData);
     }
 
+    /**
+     * For each service in the list of {@link ServiceDto}, creates a {@link TierServiceTreeItem} and adds it to the tree data. Then, for each sub-service of the service, creates a {@link TierServiceTreeItem} and adds it to the tree data.
+     *
+     * @param treeData            the tree data to add items to
+     * @param tierServiceTreeItem the parent tree item for the services
+     * @param tierServiceDtos     the list of {@link TierServiceDto} to match with sub-services
+     */
     private void extractedServiceName(TreeData<TierServiceTreeItem> treeData,
                                       TierServiceTreeItem tierServiceTreeItem, List<TierServiceDto> tierServiceDtos) {
         serviceDtos.parallelStream().forEach(serviceDto -> {
@@ -213,6 +228,15 @@ public class TierServiceListView extends AbstractTierTreeListView<TierServiceTre
         });
     }
 
+    /**
+     * For each sub-service of the given service, creates a {@link TierServiceTreeItem} and adds it to the tree data.
+     *
+     * @param treeData            the tree data to add items to
+     * @param tierServiceTreeItem the parent tree item for the services
+     * @param tierServiceDtos     the list of {@link TierServiceDto} to match with sub-services
+     * @param serviceDto          the service containing the sub-services
+     * @param tServiceTreeItem    the parent tree item for the sub-services
+     */
     private static void extractedSubServiceName(TreeData<TierServiceTreeItem> treeData,
                                                 TierServiceTreeItem tierServiceTreeItem, List<TierServiceDto> tierServiceDtos,
                                                 ServiceDto serviceDto, TierServiceTreeItem tServiceTreeItem) {
@@ -221,11 +245,28 @@ public class TierServiceListView extends AbstractTierTreeListView<TierServiceTre
                         subServiceDto, getMatchTierSubService(tierServiceDtos, subServiceDto))));
     }
 
+    /**
+     * Finds the first {@link TierServiceDto} in the list that matches the given {@link SubServiceDto} by ID.
+     *
+     * @param tierServiceDtos the list of {@link TierServiceDto} to search
+     * @param subServiceDto   the {@link SubServiceDto} to match
+     * @return the matching {@link TierServiceDto}, or null if not found
+     */
     private static TierServiceDto getMatchTierSubService(List<TierServiceDto> tierServiceDtos, SubServiceDto subServiceDto) {
         return tierServiceDtos.stream().filter(tierServiceDto -> ObjectUtils.isNotEmpty(tierServiceDto.getSubServiceDto()) &&
                 subServiceDto.getId().equals(tierServiceDto.getSubServiceDto().getId())).findFirst().orElse(null);
     }
 
+    /**
+     * Creates a {@link TierServiceTreeItem} for the given sub-service, using the provided parent items and matching tier service.
+     *
+     * @param tierServiceTreeItem the root tree item for the tier
+     * @param serviceDto          the service containing the sub-service
+     * @param tServiceTreeItem    the parent tree item for the sub-service
+     * @param subServiceDto       the sub-service to create a tree item for
+     * @param tierServiceDtoFound the matching {@link TierServiceDto} for the sub-service, or null if not found
+     * @return a new {@link TierServiceTreeItem} representing the sub-service
+     */
     private static TierServiceTreeItem getTierServiceTreeItemSubService(TierServiceTreeItem tierServiceTreeItem, ServiceDto serviceDto,
                                                                         TierServiceTreeItem tServiceTreeItem, SubServiceDto subServiceDto,
                                                                         TierServiceDto tierServiceDtoFound) {
@@ -238,6 +279,13 @@ public class TierServiceListView extends AbstractTierTreeListView<TierServiceTre
                 TreeLevel.CHILD);
     }
 
+    /**
+     * Creates a {@link TierServiceTreeItem} for the given service, using the provided parent tier item.
+     *
+     * @param tierServiceTreeItem the root tree item for the tier
+     * @param serviceDto          the service to create a tree item for
+     * @return a new {@link TierServiceTreeItem} representing the service
+     */
     private static TierServiceTreeItem getTierServiceTreeItem(TierServiceTreeItem tierServiceTreeItem, ServiceDto serviceDto) {
         return getTreeItem(null,
                 tierServiceTreeItem.getId()
@@ -249,6 +297,18 @@ public class TierServiceListView extends AbstractTierTreeListView<TierServiceTre
                 TreeLevel.PARENT);
     }
 
+    /**
+     * Creates a {@link TierServiceTreeItem} with the given parameters.
+     *
+     * @param rootIndex the index of the root item, or null if not applicable
+     * @param id        the unique identifier for the tree item
+     * @param name      the display name for the tree item
+     * @param subServiceId the ID of the sub-service, or null if not applicable
+     * @param parent    the parent tree item, or null if this is a root item
+     * @param isActive  whether the tree item is active (checked)
+     * @param level     the level of the tree item (ROOT, PARENT, CHILD)
+     * @return a new {@link TierServiceTreeItem} with the specified properties
+     */
     private static TierServiceTreeItem getTreeItem(Integer rootIndex, String id, String name, Integer subServiceId,
                                                    TierServiceTreeItem parent, boolean isActive, TreeLevel level) {
         return TierServiceTreeItem.builder()

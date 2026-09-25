@@ -42,6 +42,9 @@ public class ServiceListView extends AbstractListView {
 
     private final GridSkeleton gridSkeleton = new GridSkeleton(8);
 
+    /**
+     * Renders the grid layout with the service list and pagination footer.
+     */
     private void renderLayout() {
         setSizeFull();
         setPadding(false);
@@ -51,6 +54,10 @@ public class ServiceListView extends AbstractListView {
         add(getContent());
     }
 
+    /**
+     * Configures the {@link TreeGrid} with the service name and sub-service name
+     * columns, and adds expand/collapse listeners for logging.
+     */
     private void configureGrid() {
         serviceTreeGrid.setSizeFull();
         serviceTreeGrid.removeAllColumns();
@@ -96,6 +103,11 @@ public class ServiceListView extends AbstractListView {
         this.fetchServices();
     }
 
+    /**
+     * Fetches the list of services from the {@link AsyncRestClientSettingService}
+     * and populates the {@link TreeGrid}. Shows a skeleton loader while fetching
+     * and handles errors with a retry option.
+     */
     private void fetchServices() {
         gridSkeleton.show();
         asyncRestClientSettingService.getAllService(result -> {
@@ -120,6 +132,13 @@ public class ServiceListView extends AbstractListView {
         }));
     }
 
+    /**
+     * Converts a {@link ServiceDto} with its sub-services into a list of
+     * {@link ServiceTreeItem} for the {@link TreeGrid}.
+     *
+     * @param serviceDto the service DTO containing sub-services
+     * @return a list of tree items representing the sub-services
+     */
     private List<ServiceTreeItem> getSubServices(ServiceDto serviceDto) {
         List<ServiceTreeItem> serviceTreeItems = new ArrayList<>();
         serviceDto.getSubServices().forEach(subServiceDto -> serviceTreeItems.add(ServiceTreeItem.builder()
@@ -132,6 +151,11 @@ public class ServiceListView extends AbstractListView {
         return serviceTreeItems;
     }
 
+    /**
+     * Opens a new tab with the {@link ServiceForm} for creating a new service.
+     * Clears any selection in the {@link TreeGrid} and uses the parent
+     * {@link TabSheet} to manage the new tab.
+     */
     private void addService() {
         serviceTreeGrid.asSingleSelect().clear();
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {

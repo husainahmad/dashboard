@@ -63,6 +63,9 @@ public class TableListView extends AbstractListView {
     private final ComboBox<ChainDto> chainFilter = new ComboBox<>();
     private final ComboBox<StoreDto> storeFilter = new ComboBox<>();
 
+    /**
+     * Options for the brand filter, used to select a default when the user has one.
+     * */
     private void renderLayout() {
         setSizeFull();
         setPadding(false);
@@ -81,6 +84,10 @@ public class TableListView extends AbstractListView {
         renderLayout();
     }
 
+    /**
+     * Configures the {@link Grid} with name, capacity, store and action columns,
+     * and adds edit/delete buttons to the action column.
+     */
     private void configureGrid() {
         tableDtoGrid.setSizeFull();
         tableDtoGrid.setEmptyStateText(Messages.get("grid.empty.tables"));
@@ -92,26 +99,63 @@ public class TableListView extends AbstractListView {
         tableDtoGrid.addComponentColumn(this::applyButton).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
     }
 
+    /**
+     * Returns the store name for the given table, or an empty string if the
+     * store is not set.
+     *
+     * @param tableDto the table to get the store name for
+     * @return the store name or an empty string
+     */
     private String getStoreName(TableDto tableDto) {
         return ObjectUtils.isNotEmpty(tableDto.getStoreDto())
                 ? tableDto.getStoreDto().getName() : StringUtils.EMPTY;
     }
 
-    private Component applyButton(TableDto tableDto) {        HorizontalLayout layout = new HorizontalLayout();
+    /**
+     * Returns a horizontal layout with edit and delete buttons for the given
+     * table. The edit button opens the {@link TableForm} in a new tab, while the
+     * delete button triggers a {@link TableDeleteEventListener}.
+     *
+     * @param tableDto the table to apply the buttons to
+     * @return a horizontal layout with edit and delete buttons
+     */
+    private Component applyButton(TableDto tableDto) {
+        HorizontalLayout layout = new HorizontalLayout();
         layout.add(applyButtonEdit(tableDto));
         layout.add(applyButtonDelete(tableDto));
         return layout;
     }
 
+    /**
+     * Returns an edit button that opens the {@link TableForm} in a new tab for
+     * editing the given table.
+     *
+     * @param tableDto the table to edit
+     * @return an edit button
+     */
     private Button applyButtonEdit(TableDto tableDto) {
         return UiUtil.editButton(event -> editTable(tableDto, FormAction.EDIT));
     }
 
+    /**
+     * Returns a delete button that triggers a {@link TableDeleteEventListener}
+     * for the given table.
+     *
+     * @param tableDto the table to delete
+     * @return a delete button
+     */
     private Button applyButtonDelete(TableDto tableDto) {
         return UiUtil.deleteButton(
                 new TableDeleteEventListener(tableDto, restClientSettingService, ui));
     }
 
+    /**
+     * Returns a horizontal layout containing the table grid and a skeleton
+     * loader. The skeleton is shown while the tables are being fetched from the
+     * server.
+     *
+     * @return a horizontal layout with the table grid and skeleton loader
+     */
     private HorizontalLayout getContent() {
         return gridSlot(tableDtoGrid, gridSkeleton);
     }
@@ -135,6 +179,11 @@ public class TableListView extends AbstractListView {
         return toolbar;
     }
 
+    /**
+     * Configures the brand, chain and store filters with labels, item label
+     * generators and value change listeners. Loads the brands for the filter on
+     * initialization.
+     */
     private void configureFilters() {
         brandFilter.setLabel(Messages.get(Messages.Keys.LABEL_BRAND));
         brandFilter.setItemLabelGenerator(BrandDto::getName);
@@ -151,6 +200,15 @@ public class TableListView extends AbstractListView {
         loadBrandsForFilter();
     }
 
+    /**
+     * Handles changes to the brand filter. If the new value is null and the old
+     * value is not null, it checks if the old value is still in the brand options.
+     * If it is, it resets the filter to the old value. If not, it clears the chain
+     * and store filters and fetches all tables. If the new value is not null, it
+     * loads the chains for the selected brand.
+     *
+     * @param change the value change event for the brand filter
+     */
     private void onBrandFilterChange(HasValue.ValueChangeEvent<BrandDto> change) {
         if (change.getValue() == null && change.getOldValue() != null && change.isFromClient()) {
             if (brandOptions.stream().anyMatch(brand -> Objects.equals(brand.getId(), change.getOldValue().getId()))) {
@@ -169,6 +227,13 @@ public class TableListView extends AbstractListView {
         }
     }
 
+    /**
+     * Handles changes to the chain filter. If the new value is null and the old
+     * value is not null, it clears the store filter and fetches all tables. If the
+     * new value is not null, it loads the stores for the selected chain.
+     *
+     * @param change the value change event for the chain filter
+     */
     private void onChainFilterChange(HasValue.ValueChangeEvent<ChainDto> change) {
         if (change.isFromClient() && change.getValue() == null && change.getOldValue() != null) {
             storeFilter.setItems(Collections.emptyList());
@@ -181,10 +246,21 @@ public class TableListView extends AbstractListView {
         }
     }
 
+    /**
+     * Handles changes to the store filter. Whenever the store filter value
+     * changes, it fetches the tables for the selected store.
+     *
+     * @param change the value change event for the store filter
+     */
     private void onStoreFilterChange(HasValue.ValueChangeEvent<StoreDto> change) {
         fetchTables();
     }
 
+    /**
+     * Loads the brands for the brand filter asynchronously. If the result is
+     * empty, it fetches all tables. If there is an error, it shows an error
+     * notification with a retry option.
+     */
     private void loadBrandsForFilter() {
         asyncRestClientOrganizationService.getAllBrandAsync(
                 result -> UiUtil.safeAccess(ui, () -> {
@@ -201,6 +277,11 @@ public class TableListView extends AbstractListView {
                                 this::loadBrandsForFilter)));
     }
 
+    /**
+     * Selects the default brand filter based on the user's session. If the
+     * session brand ID is found in the brand options, it sets that as the value.
+     * Otherwise, it selects the first brand option.
+     */
     private void selectDefaultBrandFilter() {
         Integer brandId = sessionBrandId(accessService);
         brandFilter.getListDataView().getItems()
@@ -210,6 +291,11 @@ public class TableListView extends AbstractListView {
                         () -> brandFilter.setValue(brandOptions.getFirst()));
     }
 
+    /**
+     * Loads the chains for the selected brand filter asynchronously. If the
+     * brand is null or has no ID, it fetches all tables. If there is an error,
+     * it shows an error notification with a retry option.
+     */
     private void loadChainsForFilter() {
         BrandDto brand = brandFilter.getValue();
         chainFilter.setItems(Collections.emptyList());
@@ -235,6 +321,11 @@ public class TableListView extends AbstractListView {
                 brand.getId());
     }
 
+    /**
+     * Selects the default chain filter based on the user's session. If the
+     * session chain ID is found in the chain options, it sets that as the value.
+     * Otherwise, it fetches all tables.
+     */
     private void selectDefaultChainFilter() {
         Integer chainId = sessionChainId();
         boolean selected = chainFilter.getListDataView().getItems()
@@ -250,6 +341,11 @@ public class TableListView extends AbstractListView {
         }
     }
 
+    /**
+     * Loads the stores for the selected chain filter asynchronously. If the
+     * chain is null or has no ID, it fetches all tables. If there is an error,
+     * it shows an error notification with a retry option.
+     */
     private void loadStoresForFilter() {
         ChainDto chain = chainFilter.getValue();
         storeFilter.setItems(Collections.emptyList());
@@ -270,6 +366,11 @@ public class TableListView extends AbstractListView {
                 chain.getId(), 1, PAGE_SIZE, "");
     }
 
+    /**
+     * Selects the default store filter based on the user's session. If the
+     * session store ID is found in the store options, it sets that as the value.
+     * Otherwise, it fetches all tables.
+     */
     private void selectDefaultStoreFilter() {
         Integer storeId = sessionStoreId();
         boolean selected = storeFilter.getListDataView().getItems()
@@ -285,6 +386,13 @@ public class TableListView extends AbstractListView {
         }
     }
 
+    /**
+     * Retrieves the brand ID from the user's session. If the session store and
+     * chain are not empty, it returns the brand ID. Otherwise, it returns null.
+     *
+     * @param accessService the access service to get user details
+     * @return the brand ID from the session or null
+     */
     private Integer sessionChainId() {
         StoreDto sessionStore = accessService.getUserDetail().getStoreDto();
         if (ObjectUtils.isNotEmpty(sessionStore) && ObjectUtils.isNotEmpty(sessionStore.getChainDto())) {
@@ -293,6 +401,12 @@ public class TableListView extends AbstractListView {
         return null;
     }
 
+    /**
+     * Retrieves the store ID from the user's session. If the session store is
+     * not empty, it returns the store ID. Otherwise, it returns null.
+     *
+     * @return the store ID from the session or null
+     */
     private Integer sessionStoreId() {
         StoreDto sessionStore = accessService.getUserDetail().getStoreDto();
         if (ObjectUtils.isNotEmpty(sessionStore)) {
@@ -301,6 +415,14 @@ public class TableListView extends AbstractListView {
         return null;
     }
 
+    /**
+     * Extracts a list of {@link StoreDto} from the given result map. If the
+     * result is null or does not contain a "data" key with a list, it returns an
+     * empty list.
+     *
+     * @param result the result map containing store data
+     * @return a list of {@link StoreDto} extracted from the result
+     */
     private List<StoreDto> extractStores(Map<String, Object> result) {
         List<StoreDto> stores = new ArrayList<>();
         if (result == null || !(result.get("data") instanceof List<?> dataList)) {
@@ -324,6 +446,12 @@ public class TableListView extends AbstractListView {
         }
     }
 
+    /**
+     * Fetches the tables from the server based on the selected store filter. If
+     * a store is selected, it fetches tables for that store; otherwise, it fetches
+     * all tables. The grid skeleton is shown while fetching, and any errors are
+     * handled with a retry option.
+     */
     private void fetchTables() {
         gridSkeleton.show();
         StoreDto store = storeFilter.getValue();
@@ -369,6 +497,13 @@ public class TableListView extends AbstractListView {
                         restClientSettingService, asyncRestClientOrganizationService, accessService));
     }
 
+    /**
+     * Prepares the given {@link TableDto} for editing or creating. If the form
+     * action is create, it seeds the store from the current user's session.
+     *
+     * @param tableDto the table DTO to prepare
+     * @return the prepared table DTO
+     */
     private TableDto prepareDto(TableDto tableDto) {
         if (formActionIsCreate(tableDto)) {
             StoreDto storeDto = accessService.getUserDetail().getStoreDto();
@@ -379,10 +514,23 @@ public class TableListView extends AbstractListView {
         return tableDto;
     }
 
+    /**
+     * Determines if the form action is for creating a new table. Returns true if
+     * the table DTO's ID is empty, indicating a new table; otherwise, returns
+     * false.
+     *
+     * @param tableDto the table DTO to check
+     * @return true if creating a new table, false otherwise
+     */
     private boolean formActionIsCreate(TableDto tableDto) {
         return ObjectUtils.isEmpty(tableDto.getId());
     }
 
+    /**
+     * Opens a {@link TableForm} in a new tab for creating a new table. Clears any
+     * selection in the grid and uses the parent {@link TabSheet} to manage the
+     * new tab.
+     */
     private void addTable() {
         tableDtoGrid.asSingleSelect().clear();
         editTable(new TableDto(), FormAction.CREATE);

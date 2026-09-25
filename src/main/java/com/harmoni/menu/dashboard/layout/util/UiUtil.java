@@ -195,6 +195,13 @@ public final class UiUtil {
         toast(message, variant, duration);
     }
 
+    /**
+     * Shows a notification toast with the given variant and duration.
+     *
+     * @param message  text shown in the toast
+     * @param variant  styling variant of the notification
+     * @param duration how long in milliseconds the toast stays visible
+     */
     private static void toast(String message, NotificationVariant variant, int duration) {
         Notification notification = new Notification(message, duration);
         notification.setPosition(Notification.Position.BOTTOM_CENTER);

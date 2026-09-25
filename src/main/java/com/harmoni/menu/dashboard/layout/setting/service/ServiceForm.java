@@ -88,6 +88,10 @@ public class ServiceForm extends FormLayout {
         UiUtil.safeAccess(ui, () -> tabManager.closeAndSelectFirst(currentTab));
     }
 
+    /**
+     * Adds validation to the service name field, ensuring it has a minimum length
+     * of 3 characters. Binds the field to the {@link ServiceDto} name property.
+     */
     private void addValidation() {
         binder.forField(serviceNameField)
                 .withValidator(value -> value.length() > 2,
@@ -95,6 +99,10 @@ public class ServiceForm extends FormLayout {
                 .bind(ServiceDto::getName, ServiceDto::setName);
     }
 
+    /**
+     * Adds the footer buttons to the form, configuring their theme variants,
+     * click shortcuts, and click listeners.
+     */
     private void addFooterButtons() {
 
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);

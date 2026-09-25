@@ -23,6 +23,10 @@ public class TierServiceTabs extends VerticalLayout {
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
 
+    /**
+     * Renders the tab sheet with the "All Tier Services" tab and the
+     * {@link TierServiceListView}. Adds the toolbar above the tab sheet.
+     */
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();

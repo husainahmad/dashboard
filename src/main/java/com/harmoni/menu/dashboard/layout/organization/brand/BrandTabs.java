@@ -21,6 +21,10 @@ public class BrandTabs extends VerticalLayout {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
 
+    /**
+     * Renders the tab sheet with the "All Brands" tab and the {@link BrandListView}.
+     * Adds the toolbar above the tab sheet.
+     */
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();

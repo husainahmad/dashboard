@@ -38,6 +38,11 @@ public class LoginView extends VerticalLayout {
     Button loginButton = new Button(Messages.get("action.signIn"));
     Span messageSpan = new Span("");
 
+    /**
+     * Draws the login view with a two-column layout: the left side shows the
+     * branding and tagline, the right side shows the form. The layout is
+     * re-drawn on every attach to apply the persisted theme.
+     */
     private void drawLayout() {
         removeAll();
         setSizeFull();
@@ -62,6 +67,12 @@ public class LoginView extends VerticalLayout {
         loginButton.addClickListener(new LoginEventListener(restClientLoginService, this));
     }
 
+    /**
+     * Creates the left side of the login view with the POSHarmoni logo, title,
+     * and tagline.
+     *
+     * @return the branding panel
+     */
     private VerticalLayout createBrandPanel() {
         Div badge = new Div("");
         badge.addClassName("app-logo-icon");
@@ -82,6 +93,12 @@ public class LoginView extends VerticalLayout {
         return brand;
     }
 
+    /**
+     * Creates the right side of the login view with the username/password form
+     * and sign-in button.
+     *
+     * @return the form panel
+     */
     private VerticalLayout createFormPanel() {
         H2 welcome = new H2(Messages.get("login.welcome"));
         welcome.getStyle().set("margin", "0");

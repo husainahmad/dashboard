@@ -27,6 +27,10 @@ public class TableTabs extends VerticalLayout {
     private final AccessService accessService;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
 
+    /**
+     * Renders the tab sheet with a single "All Tables" tab and the list's
+     * toolbar above it.
+     */
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();

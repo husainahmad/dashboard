@@ -23,6 +23,10 @@ public class TierPriceTabs extends VerticalLayout {
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
 
+    /**
+     * Renders the tab sheet with the "All Tier Prices" tab and the
+     * {@link TierPriceListView}. Adds the toolbar above the tab sheet.
+     */
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();

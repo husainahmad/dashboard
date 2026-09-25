@@ -78,6 +78,12 @@ public class UserForm extends FormLayout  {
     UI ui;
     private int totalRow = 1;
 
+    /**
+     * Renders the form layout with all fields and buttons. Configures the store
+     * combo box to load stores lazily through a filtering callback data
+     * provider. Binds the fields to the {@link UserDto} through a
+     * {@link BeanValidationBinder}.
+     */
     private void renderLayout() {
         setSizeFull();
         storeDtoComboBox.setAllowCustomValue(false);
@@ -154,6 +160,13 @@ public class UserForm extends FormLayout  {
                 .bind(UserDto::getUsername, UserDto::setUsername);
     }
 
+    /**
+     * Creates the horizontal layout containing the save, update and cancel
+     * buttons. Configures the buttons with click listeners and keyboard
+     * shortcuts.
+     *
+     * @return the horizontal layout with buttons
+     */
     private HorizontalLayout createButtonsLayout() {
 
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -207,6 +220,16 @@ public class UserForm extends FormLayout  {
         }
     }
 
+    /**
+     * Fetches a page of stores from the REST service using the given filter,
+     * offset and limit. Converts the response data into a list of
+     * {@link StoreDto} objects.
+     *
+     * @param filter the filter string to apply to store names
+     * @param offset the offset of the first store to fetch
+     * @param limit  the maximum number of stores to fetch
+     * @return a list of {@link StoreDto} objects matching the filter and page
+     */
     private List<StoreDto> fetchStores(String filter, int offset, int limit) {
         int page = (offset / limit) + 1;
         List<StoreDto> storeDtos = new ArrayList<>();
@@ -236,10 +259,22 @@ public class UserForm extends FormLayout  {
         return storeDtos;
     }
 
+    /**
+     * Returns the total number of stores available for the current filter.
+     * This is used by the lazy data provider to determine the size of the
+     * store combo box.
+     *
+     * @return the total number of stores matching the current filter
+     */
     private int countStores() {
         return totalRow;
     }
 
+    /**
+     * Returns a list of all available role types for the auth combo box.
+     *
+     * @return a list of {@link RoleType} values
+     */
     private List<RoleType> getRoleTypes() {
         return List.of(RoleType.ADMIN, RoleType.MANAGER, RoleType.USER);
     }

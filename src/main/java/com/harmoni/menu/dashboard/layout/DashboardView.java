@@ -120,6 +120,12 @@ public class DashboardView extends AbstractListView {
         loadDashboard();
     }
 
+    /**
+     * Creates the hero caption at the top of the page, explaining the dashboard's
+     * purpose.
+     *
+     * @return the configured hero layout
+     */
     private VerticalLayout createHero() {
         H2 title = new H2(Messages.get("dashboard.storeHealth"));
         Paragraph subtitle = new Paragraph(Messages.get("dashboard.heroSubtitle"));
@@ -131,6 +137,12 @@ public class DashboardView extends AbstractListView {
         return hero;
     }
 
+    /**
+     * Creates the four stat cards showing the number of products, SKUs, price
+     * tiers and missing prices.
+     *
+     * @return the configured card layout
+     */
     private HorizontalLayout createStatCards() {
         productsCard = new StatCard(VaadinIcon.COFFEE, Messages.get("dashboard.products"));
         skusCard = new StatCard(VaadinIcon.TAGS, Messages.get("dashboard.skus"));
@@ -147,6 +159,12 @@ public class DashboardView extends AbstractListView {
         return cards;
     }
 
+    /**
+     * Creates the price-matrix health panel, showing the number of SKUs missing
+     * a price in at least one tier and a grid of the offending SKUs.
+     *
+     * @return the configured health panel
+     */
     private VerticalLayout createHealthPanel() {
         H2 title = new H2(Messages.get("dashboard.matrixHealth"));
         Button review = new Button(Messages.get("dashboard.reviewProducts"), event -> {
@@ -176,6 +194,12 @@ public class DashboardView extends AbstractListView {
         return createPanel(header, healthSummary, healthEmpty, gridSlot(healthGrid, healthSkeleton));
     }
 
+    /**
+     * Creates the lowest-priced SKUs panel, showing the cheapest price and tier
+     * for each SKU in the watchlist.
+     *
+     * @return the configured pricing panel
+     */
     private VerticalLayout createPricingPanel() {
         H2 title = new H2(Messages.get("dashboard.lowestPriced"));
         lowestSummary.addClassName(Css.HEALTH_CAPTION);
@@ -191,6 +215,12 @@ public class DashboardView extends AbstractListView {
         return createPanel(title, lowestSummary, gridSlot(lowestGrid, lowestSkeleton));
     }
 
+    /**
+     * Creates the recent activity panel, showing the last time each admin area
+     * was changed.
+     *
+     * @return the configured activity panel
+     */
     private VerticalLayout createActivityPanel() {
         H2 title = new H2(Messages.get("dashboard.recentActivity"));
         Span caption = new Span(Messages.get("dashboard.activityCaption"));
@@ -498,6 +528,13 @@ public class DashboardView extends AbstractListView {
         return lowest.size() <= 8 ? lowest : lowest.subList(0, 8);
     }
 
+    /**
+     * Builds a map of tier id to price for the given SKU, skipping any tiers
+     * that have no price.
+     *
+     * @param sku the SKU to map
+     * @return the tier id → price mapping
+     */
     private Map<Integer, Double> tierPriceMap(SkuDto sku) {
         Map<Integer, Double> byTier = new HashMap<>();
         if (sku.getSkuTierPriceDtos() == null) {
@@ -532,6 +569,13 @@ public class DashboardView extends AbstractListView {
         }
     }
 
+    /**
+     * Maps a broadcast message type to a human-readable label for the activity
+     * panel. Returns {@code null} for unrecognized types.
+     *
+     * @param type the broadcast message type
+     * @return the label to show in the activity panel, or {@code null}
+     */
     private String activityLabel(String type) {
         return switch (type) {
             case BroadcastMessage.PRODUCT_INSERT_SUCCESS, BroadcastMessage.PRODUCT_UPDATE_SUCCESS ->
@@ -548,6 +592,10 @@ public class DashboardView extends AbstractListView {
         };
     }
 
+    /**
+     * Renders the activity panel from the last activity map, showing the most
+     * recent timestamp for each admin area.
+     */
     private void renderActivityLines() {
         activityLines.removeAll();
         if (lastActivity.isEmpty()) {
@@ -561,6 +609,10 @@ public class DashboardView extends AbstractListView {
                 timeFormat.format(entry.getValue()) + "  ·  " + entry.getKey())));
     }
 
+    /**
+     * Loads the last activity map from the session, if available, and populates
+     * the {@link #lastActivity} field.
+     */
     private void loadActivity() {
         if (ui == null || ui.getSession() == null) {
             return;
@@ -576,6 +628,10 @@ public class DashboardView extends AbstractListView {
         }
     }
 
+    /**
+     * Saves the last activity map to the session, so it persists across page
+     * reloads.
+     */
     private void saveActivity() {
         if (ui != null && ui.getSession() != null) {
             ui.getSession().setAttribute(ACTIVITY_SESSION_KEY, new LinkedHashMap<>(lastActivity));

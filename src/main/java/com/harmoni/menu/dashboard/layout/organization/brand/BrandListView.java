@@ -120,11 +120,18 @@ public class BrandListView extends AbstractListView {
                 new BrandForm(this.restClientOrganizationService, tabManager, tab, formAction, brandDto));
     }
 
+    /**
+     * Opens a tab containing a {@link BrandForm} for creating a new brand.
+     */
     private void addBrand() {
         brandDtoGrid.asSingleSelect().clear();
         editBrand(new BrandDto(), FormAction.CREATE);
     }
 
+    /**
+     * Fetches all brands from the REST API and populates the grid. Shows a
+     * skeleton while loading and an error dialog if the fetch fails.
+     */
     private void fetchBrands() {
         gridSkeleton.show();
         asyncRestClientOrganizationService.getAllBrandAsync(result -> UiUtil.safeAccess(ui, () -> {

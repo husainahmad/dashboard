@@ -165,23 +165,59 @@ public class RestClientOrganizationService extends RestClientService {
                 Mono.just(storeDto), StoreDto.class);
     }
 
+    /**
+     * Deletes a store.
+     *
+     * @param storeDto the store to delete
+     * @return a {@link Mono} with the server response
+     */
     public Mono<RestAPIResponse> deleteStore(StoreDto storeDto) {
         return delete(URL_FORMAT.formatted(menuProperties.getUrl().getStore(), storeDto.getId()));
     }
 
+    /**
+     * Retrieves a paginated list of stores for a given chain.
+     *
+     * @param chainId the ID of the chain
+     * @param page    the page number (0-based)
+     * @param size    the number of items per page
+     * @param search  optional search term to filter stores
+     * @return a {@link Mono} with the server response containing the list of stores
+     */
     public Mono<RestAPIResponse> getStore(Integer chainId, int page, int size, String search) {
         String uri = String.format(menuProperties.getUrl().getStoreQuery(), chainId, page, size, search);
         return get(uri);
     }
 
+    /**
+     * Retrieves a paginated list of users for a given chain.
+     *
+     * @param chainId the ID of the chain
+     * @param page    the page number (0-based)
+     * @param size    the number of items per page
+     * @param search  optional search term to filter users
+     * @return a {@link Mono} with the server response containing the list of users
+     */
     public Mono<RestAPIResponse> createUser(UserDto userDto) {
         return post(menuProperties.getUrl().getUser(), Mono.just(userDto), UserDto.class);
     }
 
+    /**
+     * Deletes a user.
+     *
+     * @param userDto the user to delete
+     * @return a {@link Mono} with the server response
+     */
     public Mono<RestAPIResponse> deleteUser(UserDto userDto) {
         return delete(String.format(menuProperties.getUrl().getUsers().getById(), userDto.getId()));
     }
 
+    /**
+     * Updates an existing user.
+     *
+     * @param userDto the user to update
+     * @return a {@link Mono} with the server response
+     */
     public Mono<RestAPIResponse> updateUser(UserDto userDto) {
         return put(String.format(menuProperties.getUrl().getUsers().getById(), userDto.getId()),
                 Mono.just(userDto), UserDto.class);

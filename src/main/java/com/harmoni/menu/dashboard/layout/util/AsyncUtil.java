@@ -63,6 +63,13 @@ public final class AsyncUtil {
                 throwable -> onUi(ui, () -> onError.accept(throwable)));
     }
 
+    /**
+     * Logs the error and shows a {@link DialogClosing} with the given message.
+     *
+     * @param ui        the UI to add the dialog to, or {@code null} to skip
+     * @param message   the message to show in the dialog
+     * @param throwable the cause of the error, logged for debugging
+     */
     private static void showError(UI ui, String message, Throwable throwable) {
         log.error(message, throwable);
         if (ui != null) {

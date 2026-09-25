@@ -45,6 +45,10 @@ public class TierPriceListView extends AbstractListView {
     private final LoadingBar loadingBar = new LoadingBar();
     private final GridSkeleton gridSkeleton = new GridSkeleton(8);
 
+    /**
+     * Renders the grid and loads the price tiers for the current user's brand.
+     * Adds the loading bar and skeleton to the layout.
+     */
     private void renderLayout() {
         setSizeFull();
         setPadding(false);
@@ -65,6 +69,10 @@ public class TierPriceListView extends AbstractListView {
         renderLayout();
     }
 
+    /**
+     * Configures the tier grid with columns for name, brand name, and action
+     * buttons. Sets the grid to full size and adds an empty state message.
+     */
     private void configureGrid() {
         tierDtoGrid.setSizeFull();
         tierDtoGrid.removeAllColumns();
@@ -76,15 +84,36 @@ public class TierPriceListView extends AbstractListView {
         tierDtoGrid.getColumns().forEach(tierDtoColumn -> tierDtoColumn.setAutoWidth(true));
     }
 
+    /**
+     * Creates an edit button for the given tier. When clicked, it opens a
+     * {@link TierPriceForm} tab in edit mode for the selected tier.
+     *
+     * @param tierDto the tier to edit
+     * @return the edit button component
+     */
     private Button applyEditButton(TierDto tierDto) {
         return UiUtil.editButton(Messages.get(Messages.Keys.ACTION_EDIT_NAME_FLAT), event -> editTier(tierDto, FormAction.EDIT));
     }
 
+    /**
+     * Creates a delete button for the given tier. When clicked, it triggers a
+     * {@link TierDeleteEventListener} to handle the deletion of the tier.
+     *
+     * @param tierDto the tier to delete
+     * @return the delete button component
+     */
     private Button applyDeleteButton(TierDto tierDto) {
         return UiUtil.deleteButton(new TierDeleteEventListener(this.ui, tierDto.getId(),
                 this.restClientOrganizationService));
     }
 
+    /**
+     * Creates a horizontal layout containing the edit and delete buttons for the
+     * given tier. This layout is used as the action column in the grid.
+     *
+     * @param tierDto the tier for which to create the action buttons
+     * @return a horizontal layout with edit and delete buttons
+     */
     private Component applyButton(TierDto tierDto) {
         HorizontalLayout layout = new HorizontalLayout();
         layout.add(applyEditButton(tierDto));
@@ -137,6 +166,11 @@ public class TierPriceListView extends AbstractListView {
         return toolbar;
     }
 
+    /**
+     * Clears the grid selection and opens a new {@link TierPriceForm} tab in
+     * create mode with an empty {@link TierDto}. The new tier's type is set to
+     * {@code PRICE}.
+     */
     private void addTier() {
         tierDtoGrid.asSingleSelect().clear();
         TierDto tierDto = new TierDto();
@@ -144,6 +178,11 @@ public class TierPriceListView extends AbstractListView {
         editTier(tierDto, FormAction.CREATE);
     }
 
+    /**
+     * Fetches the price tiers for the current user's brand asynchronously. Shows
+     * a skeleton while loading and updates the grid with the results. If an
+     * error occurs, it shows an error notification with a retry option.
+     */
     private void fetchTier() {
         gridSkeleton.show();
         asyncRestClientOrganizationService.getAllTierByBrandAsync(result -> UiUtil.safeAccess(ui, () -> {

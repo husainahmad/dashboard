@@ -47,6 +47,10 @@ public class ChainListView extends AbstractListView {
     private final LoadingBar loadingBar = new LoadingBar();
     private final GridSkeleton gridSkeleton = new GridSkeleton(8);
 
+    /**
+     * Renders the grid layout with the loading bar and fetches the chains for
+     * display.
+     */
     private void renderLayout() {
         setSizeFull();
         setPadding(false);
@@ -65,6 +69,11 @@ public class ChainListView extends AbstractListView {
         renderLayout();
     }
 
+    /**
+     * Configures the grid to display the chain name, brand name, and action
+     * buttons for edit/delete. The brand name is resolved from the chain's
+     * {@link BrandDto} for display.
+     */
     private void configureGrid() {
         chainDtoGrid.setSizeFull();
         chainDtoGrid.setEmptyStateText(Messages.get("grid.empty.chains"));
@@ -74,10 +83,25 @@ public class ChainListView extends AbstractListView {
         chainDtoGrid.addComponentColumn(this::applyButton).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
     }
 
+    /**
+     * Resolves the brand name for display in the grid. If the chain's
+     * {@link BrandDto} is null, returns an empty string.
+     *
+     * @param chainDto the chain to resolve the brand name for
+     * @return the brand name or an empty string if not available
+     */
     private String brandName(ChainDto chainDto) {
         return chainDto.getBrandDto() == null ? "" : chainDto.getBrandDto().getName();
     }
 
+    /**
+     * Creates a horizontal layout containing the edit and delete buttons for a
+     * chain. The edit button opens the {@link ChainForm} in edit mode, and the
+     * delete button triggers the {@link ChainDeleteEventListener}.
+     *
+     * @param chainDto the chain to apply the buttons for
+     * @return a horizontal layout with the action buttons
+     */
     private Component applyButton(ChainDto chainDto) {
         HorizontalLayout layout = new HorizontalLayout();
         layout.add(applyButtonEdit(chainDto));
@@ -85,15 +109,34 @@ public class ChainListView extends AbstractListView {
         return layout;
     }
 
+    /**
+     * Creates an edit button for a chain. When clicked, it opens the
+     * {@link ChainForm} in edit mode for the given chain.
+     *
+     * @param chainDto the chain to edit
+     * @return the edit button
+     */
     private Button applyButtonEdit(ChainDto chainDto) {
         return UiUtil.editButton(event -> editChain(chainDto, FormAction.EDIT));
     }
 
+    /**
+     * Creates a delete button for a chain. When clicked, it triggers the
+     * {@link ChainDeleteEventListener} to handle the deletion of the chain.
+     *
+     * @param chainDto the chain to delete
+     * @return the delete button
+     */
     private Button applyButtonDelete(ChainDto chainDto) {
         return UiUtil.deleteButton(
                 new ChainDeleteEventListener(chainDto, restClientOrganizationService));
     }
 
+    /**
+     * Wraps the grid in a horizontal layout with a skeleton loader for display.
+     *
+     * @return the content layout containing the grid and skeleton
+     */
     private HorizontalLayout getContent() {
         return gridSlot(chainDtoGrid, gridSkeleton);
     }
@@ -115,6 +158,11 @@ public class ChainListView extends AbstractListView {
         return toolbar;
     }
 
+    /**
+     * Fetches the chains for the current user's brand asynchronously. Resolves
+     * the brand names for display in the grid. Shows a loading skeleton while
+     * fetching and handles errors with a retry option.
+     */
     private void fetchChains() {
         gridSkeleton.show();
         Integer brandId = selectedBrandId(accessService);
@@ -137,6 +185,14 @@ public class ChainListView extends AbstractListView {
                 }));
     }
 
+    /**
+     * Applies the brand name to the given chain using the provided map of brand
+     * IDs to names. If the brand ID is found in the map, a new {@link BrandDto}
+     * is created and set on the chain.
+     *
+     * @param chain      the chain to apply the brand name to
+     * @param brandNames a map of brand IDs to their corresponding names
+     */
     private void applyBrandName(ChainDto chain, Map<Integer, String> brandNames) {
         String name = brandNames.get(chain.getBrandId());
         if (name != null) {
@@ -170,6 +226,9 @@ public class ChainListView extends AbstractListView {
                 }));
     }
 
+    /**
+     * Opens a tab containing a {@link ChainForm} for creating a new chain.
+     */
     private void addChain() {
         chainDtoGrid.asSingleSelect().clear();
         editChain(new ChainDto(), FormAction.CREATE);

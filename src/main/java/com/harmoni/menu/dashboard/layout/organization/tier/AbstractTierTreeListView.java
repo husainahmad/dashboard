@@ -98,6 +98,10 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
                                           Tab currentTab, FormAction formAction, TierDto tierDto,
                                           List<BrandDto> brands);
 
+    /**
+     * Renders the grid and loads the tiers for the current user's brand. Adds
+     * the loading bar and skeleton to the layout.
+     */
     protected void renderLayout() {
         setSizeFull();
         setPadding(false);
@@ -106,6 +110,10 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
         add(loadingBar, gridSlot(treeGrid(), gridSkeleton));
     }
 
+    /**
+     * Configures the grid columns and headers, sets the empty state text and
+     * attaches the expand/collapse listeners tracking expanded nodes.
+     */
     protected void configureGrid() {
         TreeGrid<T> grid = treeGrid();
         grid.setSizeFull();
@@ -159,6 +167,15 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
         }));
     }
 
+    /**
+     * Creates a checkbox for the given tier item, unless it is a non-leaf node
+     * (root or parent). The checkbox is bound to the item's active state and
+     * triggers a save operation on change, rolling back on failure.
+     *
+     * @param item the tier item for which to create the checkbox
+     * @return a component containing the checkbox and its status span, or null
+     *         for non-leaf nodes
+     */
     protected Component applyCheckbox(T item) {
         if (isNonLeafNode(item)) {
             return null;
@@ -177,17 +194,43 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
         return cell;
     }
 
+    /**
+     * Determines whether the given item is a non-leaf node (root or parent) in
+     * the tree. Non-leaf nodes do not have checkboxes.
+     *
+     * @param item the tier item to check
+     * @return true if the item is a root or parent node, false otherwise
+     */
     private boolean isNonLeafNode(T item) {
         TreeLevel level = item.getTreeLevel();
         return TreeLevel.ROOT.equals(level) || TreeLevel.PARENT.equals(level);
     }
 
+    /**
+     * Updates the status span to show the last saved timestamp for the given
+     * item. Applies the "saved" CSS class and hides the span if there is no
+     * saved timestamp.
+     *
+     * @param item   the tier item associated with the status
+     * @param status the status span to update
+     */
     private void applySavedStatus(T item, Span status) {
         status.setText(UiUtil.tierSavedText(lastSavedByTier.get(tierDtoOf(item).getId())));
         status.addClassName(Css.TIER_SAVED_AT);
         status.setVisible(status.getText() != null);
     }
 
+    /**
+     * Handles the checkbox value change event by updating the item's active
+     * state, saving it, and rolling back if necessary. Disables the checkbox
+     * during the save operation and shows a "Saving..." status.
+     *
+     * @param item        the tier item associated with the checkbox
+     * @param checkbox    the checkbox component that was changed
+     * @param status      the status span to update with save information
+     * @param rollingBack a flag indicating whether a rollback is in progress
+     * @param event       the value change event containing the new and old values
+     */
     private void onCheckboxChanged(T item, Checkbox checkbox, Span status, boolean[] rollingBack,
                                    HasValue.ValueChangeEvent<Boolean> event) {
         if (rollingBack[0]) {
@@ -207,6 +250,12 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
         saveCheckbox(item, rootItem, () -> rollbackToggle(checkbox, status, tierId, priorSaved, previous, rollingBack));
     }
 
+    /**
+     * Updates the status span to show a "Saving..." message and applies the
+     * saving CSS class.
+     *
+     * @param status the status span to update
+     */
     private void showSaving(Span status) {
         status.removeClassName(Css.TIER_SAVED_AT);
         status.setText(Messages.get("grid.tier.saving"));
@@ -214,6 +263,17 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
         status.setVisible(true);
     }
 
+    /**
+     * Rolls back the checkbox toggle to its previous state, restoring the
+     * saved timestamp and re-enabling the checkbox.
+     *
+     * @param checkbox   the checkbox to roll back
+     * @param status     the status span to update
+     * @param tierId     the ID of the tier being rolled back
+     * @param priorSaved the previous saved timestamp, or null if none
+     * @param previous   the previous checkbox value
+     * @param rollingBack a flag indicating whether a rollback is in progress
+     */
     private void rollbackToggle(Checkbox checkbox, Span status, Integer tierId, Date priorSaved,
                                 boolean previous, boolean[] rollingBack) {
         rollingBack[0] = true;
@@ -245,11 +305,23 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
         return null;
     }
 
+    /** Creates the delete button for the given tier item and stores it in the
+     * buttonDeletes array for later reference.
+     *
+     * @param item the tier item for which to create the delete button
+     * @return the delete button component
+     */
     protected Component applyButtonDelete(T item) {
         buttonDeletes[item.getRootIndex()] = deleteButtonFor(item);
         return buttonDeletes[item.getRootIndex()];
     }
 
+    /** Creates the edit button for the given tier item and stores it in the
+     * buttonEdits array for later reference.
+     *
+     * @param item the tier item for which to create the edit button
+     * @return the edit button component
+     */
     protected Component applyButtonEdit(T item) {
         buttonEdits[item.getRootIndex()] = UiUtil.editButton(Messages.get(Messages.Keys.ACTION_EDIT_NAME_FLAT),
                 event -> editTier(tierDtoOf(item), FormAction.EDIT));

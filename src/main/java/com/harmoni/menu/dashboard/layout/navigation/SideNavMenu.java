@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.navigation;
 
+import com.harmoni.menu.dashboard.layout.DashboardView;
 import com.harmoni.menu.dashboard.layout.menu.customization.CustomizationLayout;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductLayout;
 import com.harmoni.menu.dashboard.layout.organization.store.StoreLayout;
@@ -22,24 +23,29 @@ import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Route;
 
 /**
- * Side navigation rendered in the main layout drawer. Groups the Admin, Menu
- * and Setting sections into collapsible entries that navigate to their
+ * Side navigation rendered in the main layout drawer. Groups the POS
+ * administration sections into collapsible entries that navigate to their
  * respective routes; also reachable directly at {@code /side-nav-labelled}.
  */
 @Route("side-nav-labelled")
 public class SideNavMenu extends Div {
 
     /**
-     * Builds the collapsible Admin, Menu and Setting navigation groups.
+     * Builds the collapsible POS administration navigation groups.
      */
     public SideNavMenu() {
         this.addClassName("side-nav-sample");
 
-        SideNav sideNavAdmin = new SideNav();
-        sideNavAdmin.setLabel(Messages.get("nav.admin"));
-        sideNavAdmin.setCollapsible(true);
-        sideNavAdmin.addItem(new SideNavItem(Messages.get("nav.brand"), BrandLayout.class, VaadinIcon.SHOP.create()));
-        sideNavAdmin.addItem(new SideNavItem(Messages.get("nav.chain"), ChainLayout.class, VaadinIcon.BUILDING_O.create()));
+        SideNav sideNavOverview = new SideNav();
+        sideNavOverview.setLabel(Messages.get("nav.overview"));
+        sideNavOverview.setCollapsible(true);
+        sideNavOverview.addItem(new SideNavItem(Messages.get("nav.dashboard"), DashboardView.class, VaadinIcon.HOME.create()));
+
+        SideNav sideNavOrganization = new SideNav();
+        sideNavOrganization.setLabel(Messages.get("nav.organization"));
+        sideNavOrganization.setCollapsible(true);
+        sideNavOrganization.addItem(new SideNavItem(Messages.get("nav.brand"), BrandLayout.class, VaadinIcon.SHOP.create()));
+        sideNavOrganization.addItem(new SideNavItem(Messages.get("nav.chain"), ChainLayout.class, VaadinIcon.BUILDING_O.create()));
 
         SideNavItem sideNavTier = new SideNavItem(Messages.get("nav.tier"));
         sideNavTier.setPrefixComponent(VaadinIcon.GRID_BEVEL.create());
@@ -47,29 +53,40 @@ public class SideNavMenu extends Div {
         sideNavTier.addItem(new SideNavItem(Messages.get("nav.tierService"), TierServiceLayout.class, VaadinIcon.COG_O.create()));
         sideNavTier.addItem(new SideNavItem(Messages.get("nav.tierMenu"), TierMenuLayout.class, VaadinIcon.LIST.create()));
 
-        sideNavAdmin.addItem(sideNavTier);
-        sideNavAdmin.addItem(new SideNavItem(Messages.get("nav.store"), StoreLayout.class, VaadinIcon.STORAGE.create()));
-        sideNavAdmin.addItem(new SideNavItem(Messages.get("nav.user"), UserLayout.class, VaadinIcon.USER.create()));
+        sideNavOrganization.addItem(sideNavTier);
+        sideNavOrganization.addItem(new SideNavItem(Messages.get("nav.store"), StoreLayout.class, VaadinIcon.STORAGE.create()));
 
-        SideNav sideNavMenu = new SideNav();
-        sideNavMenu.setLabel(Messages.get("nav.menu"));
-        sideNavMenu.setCollapsible(true);
-        sideNavMenu.addItem(new SideNavItem(Messages.get("nav.category"), CategoryLayout.class, VaadinIcon.TAGS.create()));
-        sideNavMenu.addItem(new SideNavItem(Messages.get("nav.customization"), CustomizationLayout.class, VaadinIcon.SLIDERS.create()));
-        sideNavMenu.addItem(new SideNavItem(Messages.get("nav.product"), ProductLayout.class, VaadinIcon.COFFEE.create()));
+        SideNav sideNavCatalog = new SideNav();
+        sideNavCatalog.setLabel(Messages.get("nav.catalog"));
+        sideNavCatalog.setCollapsible(true);
+        sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.category"), CategoryLayout.class, VaadinIcon.TAGS.create()));
+        sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.customization"), CustomizationLayout.class, VaadinIcon.SLIDERS.create()));
+        sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.product"), ProductLayout.class, VaadinIcon.COFFEE.create()));
 
-        SideNav sideNavSetting = new SideNav();
-        sideNavSetting.setLabel(Messages.get("nav.setting"));
-        sideNavSetting.setCollapsible(true);
-        sideNavSetting.addItem(new SideNavItem(Messages.get("nav.service"), ServiceLayout.class, VaadinIcon.COG.create()));
-        sideNavSetting.addItem(new SideNavItem(Messages.get("nav.table"), TableLayout.class, VaadinIcon.TABLE.create()));
+        SideNav sideNavAdministration = new SideNav();
+        sideNavAdministration.setLabel(Messages.get("nav.administration"));
+        sideNavAdministration.setCollapsible(true);
+        sideNavAdministration.addItem(new SideNavItem(Messages.get("nav.user"), UserLayout.class, VaadinIcon.USER.create()));
 
-        VerticalLayout navWrapper = new VerticalLayout(sideNavAdmin, sideNavMenu, sideNavSetting);
+        SideNav sideNavSettings = new SideNav();
+        sideNavSettings.setLabel(Messages.get("nav.settings"));
+        sideNavSettings.setCollapsible(true);
+        sideNavSettings.addItem(new SideNavItem(Messages.get("nav.service"), ServiceLayout.class, VaadinIcon.COG.create()));
+        sideNavSettings.addItem(new SideNavItem(Messages.get("nav.table"), TableLayout.class, VaadinIcon.TABLE.create()));
+
+        VerticalLayout navWrapper = new VerticalLayout(
+                sideNavOverview,
+                sideNavOrganization,
+                sideNavCatalog,
+                sideNavAdministration,
+                sideNavSettings);
         navWrapper.setSpacing(true);
         navWrapper.setSizeUndefined();
-        sideNavMenu.setWidthFull();
-        sideNavAdmin.setWidthFull();
-        sideNavSetting.setWidthFull();
+        sideNavOverview.setWidthFull();
+        sideNavOrganization.setWidthFull();
+        sideNavCatalog.setWidthFull();
+        sideNavAdministration.setWidthFull();
+        sideNavSettings.setWidthFull();
 
         Scroller scroller = new Scroller(new Div(navWrapper));
         scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);

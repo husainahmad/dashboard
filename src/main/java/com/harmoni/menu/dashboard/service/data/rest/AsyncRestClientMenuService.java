@@ -26,16 +26,24 @@ public class AsyncRestClientMenuService extends AsyncRestClientBase {
 
     private final transient MenuProperties menuProperties;
 
+    /**
+     * Constructs the service with the required configuration and token refresh support.
+     *
+     * @param menuProperties      configuration for menu endpoints
+     * @param tokenRefreshService service to refresh expired tokens
+     */
     public AsyncRestClientMenuService(MenuProperties menuProperties,
                                       TokenRefreshService tokenRefreshService) {
         super(tokenRefreshService);
         this.menuProperties = menuProperties;
     }
 
-    public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback, Integer brandId) {
-        getAllCategoryAsync(callback, null, brandId);
-    }
-
+    /**
+     * Asynchronously retrieves all brands.
+     *
+     * @param callback      success callback with the list of brands
+     * @param errorCallback optional error callback for handling failures
+     */
     public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback,
                                     AsyncRestCallback<Throwable> errorCallback, Integer brandId) {
         String url = URL_FORMAT.formatted(menuProperties.getUrl().getCategories().getBrand(), brandId);
@@ -43,11 +51,12 @@ public class AsyncRestClientMenuService extends AsyncRestClientBase {
         }, callback, errorCallback);
     }
 
-    public void getAllProductCategoryBrandAsync(AsyncRestCallback<Map<String, Object>> callback,
-                                                Integer categoryId, Integer brandId, int page, int size, String search) {
-        getAllProductCategoryBrandAsync(callback, null, categoryId, brandId, page, size, search);
-    }
-
+    /**
+     * Asynchronously retrieves all brands.
+     *
+     * @param callback      success callback with the list of brands
+     * @param errorCallback optional error callback for handling failures
+     */
     public void getAllProductCategoryBrandAsync(AsyncRestCallback<Map<String, Object>> callback,
                                                 AsyncRestCallback<Throwable> errorCallback,
                                                 Integer categoryId, Integer brandId, int page, int size, String search) {
@@ -57,6 +66,12 @@ public class AsyncRestClientMenuService extends AsyncRestClientBase {
         }, callback, errorCallback);
     }
 
+    /**
+     * Asynchronously retrieves all customizations.
+     *
+     * @param callback      success callback with the list of customizations
+     * @param errorCallback optional error callback for handling failures
+     */
     public void getAllCustomizationAsync(AsyncRestCallback<Map<String, Object>> callback,
                                          AsyncRestCallback<Throwable> errorCallback,
                                          Integer brandId, int page, int size, String search) {
@@ -65,12 +80,13 @@ public class AsyncRestClientMenuService extends AsyncRestClientBase {
         makeAsyncRequest(url, new TypeReference<>() {}, callback, errorCallback);
     }
 
-    public void getAllSkuAsync(AsyncRestCallback<List<SkuDto>> callback) {
-        String url = menuProperties.getUrl().getSku();
-        makeAsyncRequest(url, new TypeReference<>() {
-        }, callback);
-    }
-
+    /**
+     * Asynchronously retrieves SKU tier prices for the specified SKUs and tier.
+     *
+     * @param callback success callback with the list of SKU tier prices
+     * @param skuIds   list of SKU IDs to retrieve prices for
+     * @param tierId   the tier ID to filter prices by
+     */
     public void getDetailSkuTierPriceAsync(AsyncRestCallback<List<SkuTierPriceDto>> callback,
                                            List<Integer> skuIds, Integer tierId) {
         URI uri = UriComponentsBuilder.fromUriString(menuProperties.getUrl().getSkutierprice())

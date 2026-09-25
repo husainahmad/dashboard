@@ -23,6 +23,10 @@ public class ChainTabs extends VerticalLayout {
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
 
+    /**
+     * Renders the tab sheet with the "All Chains" tab and the {@link ChainListView}.
+     * Adds the toolbar above the tab sheet.
+     */
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();

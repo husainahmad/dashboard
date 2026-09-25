@@ -66,6 +66,10 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         createDrawer();
     }
 
+    /**
+     * Creates the header with a drawer toggle, logo, palette switcher, theme
+     * toggle and user menu.
+     */
     private void createHeader() {
         DrawerToggle toggle = new DrawerToggle();
         toggle.setTooltipText(Messages.get("nav.toggle"));
@@ -88,6 +92,11 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         addToNavbar(navbar);
     }
 
+    /**
+     * Creates the logo with a badge and title.
+     *
+     * @return the logo component
+     */
     private H2 createLogo() {
         Div badge = new Div("P");
         badge.addClassName("app-logo-icon");
@@ -96,6 +105,12 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         return logo;
     }
 
+    /**
+     * Creates the palette menu with options to switch between the default and
+     * warm color palettes.
+     *
+     * @return the palette menu component
+     */
     private MenuBar createPaletteMenu() {
         MenuBar palette = new MenuBar();
         palette.setThemeName(Css.TERTIARY_INLINE);
@@ -107,6 +122,12 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         return palette;
     }
 
+    /**
+     * Applies the selected palette by removing any existing preset and adding
+     * the new one. If the token is null, it reverts to the default palette.
+     *
+     * @param token the theme token to apply, or null for default
+     */
     private void applyPalette(String token) {
         UI.getCurrent().getElement().getThemeList().removeIf(theme -> theme.startsWith("preset-"));
         if (token != null) {
@@ -114,6 +135,12 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         }
     }
 
+    /**
+     * Creates the theme toggle button that switches between light and dark
+     * modes. The initial state is determined by the current theme.
+     *
+     * @return the theme toggle button
+     */
     private Button createThemeToggle() {
         // App boots in night mode, so the toggle offers light first.
         Button toggle = new Button(sunIcon);
@@ -136,6 +163,12 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         return toggle;
     }
 
+    /**
+     * Creates the user menu with the user's initials and name. If no user is
+     * logged in, it shows "Guest". The menu provides a sign-out option.
+     *
+     * @return the user menu component
+     */
     private Component createUserMenu() {
         UserDto user = accessService.getUserDetail();
         String name = user != null && ObjectUtils.isNotEmpty(user.getUsername())
@@ -157,11 +190,18 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         return menuBar;
     }
 
+    /**
+     * Logs out the user by closing the current session and navigating to the
+     * login view.
+     */
     private void logout() {
         getUI().ifPresent(ui -> ui.getSession().close());
         getUI().ifPresent(ui -> ui.navigate(LoginView.class));
     }
 
+    /**
+     * Creates the side navigation drawer with the main menu items.
+     */
     private void createDrawer() {
         addToDrawer(new SideNavMenu());
     }
@@ -179,6 +219,13 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         broadcasterRegistration = null;
     }
 
+    /**
+     * Accepts a broadcast message, parses it, and shows an error dialog if the
+     * message indicates a bad request or process failure. If the message
+     * indicates an unauthorized access, it navigates to the login view.
+     *
+     * @param message the broadcast message as a JSON string
+     */
     private void acceptNotification(String message) {
         try {
             BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
@@ -190,6 +237,13 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         }
     }
 
+    /**
+     * Shows an error dialog if the broadcast message indicates a bad request or
+     * process failure. If the message indicates an unauthorized access, it
+     * navigates to the login view.
+     *
+     * @param broadcastMessage the broadcast message to process
+     */
     private void showErrorDialogOnlyProcessError(BroadcastMessage broadcastMessage) {
         if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED) ||
                 broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
@@ -203,6 +257,12 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         }
     }
 
+    /**
+     * Displays an error dialog with the given message. The dialog is added to
+     * the current UI and opened in a thread-safe manner.
+     *
+     * @param message the error message to display
+     */
     private void showErrorDialog(String message) {
         if (getUI().isPresent()) {
             getUI().orElseThrow().access(() -> {

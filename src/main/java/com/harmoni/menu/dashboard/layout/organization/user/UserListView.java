@@ -50,7 +50,10 @@ public class UserListView extends AbstractListView {
 
     private final GridSkeleton gridSkeleton = new GridSkeleton(10);
 
-private void renderLayout() {
+    /**
+     * Renders the grid layout with the user list and pagination footer.
+     */
+    private void renderLayout() {
         setSizeFull();
         setPadding(false);
         configureGrid();
@@ -67,6 +70,10 @@ private void renderLayout() {
         fetchUsers();
     }
 
+    /**
+     * Configures the user grid with columns for username, role, and action buttons.
+     * Sets the grid to full size and defines the empty state text.
+     */
     private void configureGrid() {
         userDtoGrid.setSizeFull();
         userDtoGrid.removeAllColumns();
@@ -83,6 +90,12 @@ private void renderLayout() {
         userDtoGrid.getColumns().forEach(storeDtoColumn -> storeDtoColumn.setAutoWidth(true));
     }
 
+    /**
+     * Creates a horizontal layout with edit and delete buttons for a given user.
+     *
+     * @param userDto the user data transfer object
+     * @return a horizontal layout containing the action buttons
+     */
     private Component applyGroupButton(UserDto userDto) {
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         horizontalLayout.add(UiUtil.editButton(
@@ -92,6 +105,13 @@ private void renderLayout() {
         return horizontalLayout;
     }
 
+    /**
+     * Opens a new tab with the {@link UserForm} for adding or editing a user.
+     *
+     * @param userDto the user data transfer object to edit, or a new instance for adding
+     * @param title   the title of the tab
+     * @param action  the form action (CREATE or EDIT)
+     */
     private void showAddEditUser(UserDto userDto, String title, FormAction action) {
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
@@ -104,6 +124,11 @@ private void renderLayout() {
                         this.restClientOrganizationService, this.accessService, tab, action, userDto));
     }
 
+    /**
+     * Creates a horizontal layout containing the user grid and a skeleton loader.
+     *
+     * @return a horizontal layout with the grid and skeleton
+     */
     private HorizontalLayout getContent() {
         return gridSlot(userDtoGrid, gridSkeleton);
     }
@@ -130,6 +155,12 @@ private void renderLayout() {
         return toolbar;
     }
 
+    /**
+     * Creates a pagination footer with previous and next buttons.
+     * The buttons update the current page and fetch users accordingly.
+     *
+     * @return a horizontal layout containing the pagination controls
+     */
     private HorizontalLayout getPaginationFooter() {
         return paginationFooter(() -> {
             if (currentPage > 1) {
@@ -144,6 +175,11 @@ private void renderLayout() {
         });
     }
 
+    /**
+     * Fetches the list of users from the backend service asynchronously.
+     * Updates the grid with the retrieved users and handles pagination.
+     * Displays a skeleton loader while fetching and shows an error notification on failure.
+     */
     private void fetchUsers() {
         int pageSize = 10;
         gridSkeleton.show();

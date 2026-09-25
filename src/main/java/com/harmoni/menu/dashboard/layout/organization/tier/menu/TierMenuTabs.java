@@ -25,6 +25,10 @@ public class TierMenuTabs extends VerticalLayout {
     private final AccessService accessService;
     private final RestClientOrganizationService restClientOrganizationService;
 
+    /**
+     * Renders the tab sheet with the "All Tier Menus" tab and the
+     * {@link TierMenuListView}. Adds the toolbar above the tab sheet.
+     */
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();

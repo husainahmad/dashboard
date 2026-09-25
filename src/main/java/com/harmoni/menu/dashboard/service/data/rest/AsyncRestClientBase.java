@@ -107,6 +107,13 @@ public abstract class AsyncRestClientBase implements Serializable {
                 });
     }
 
+    /**
+     * Resolves the token to use for the request. If an explicit access token is
+     * provided, it is used; otherwise, the token from the Vaadin session is used.
+     *
+     * @param accessToken the explicit access token, or null
+     * @return the resolved Bearer token string
+     */
     private static String resolveToken(String accessToken) {
         if (ObjectUtils.isNotEmpty(accessToken)) {
             return BEARER.concat(accessToken);
@@ -114,6 +121,11 @@ public abstract class AsyncRestClientBase implements Serializable {
         return getTokenString();
     }
 
+    /**
+     * Retrieves the JWT token from the Vaadin session and formats it as a Bearer token.
+     *
+     * @return the formatted Bearer token, or null if no token is present
+     */
     private static String getTokenString() {
         String token = VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);
         if (ObjectUtils.isNotEmpty(token)) {

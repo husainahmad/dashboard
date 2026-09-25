@@ -156,6 +156,10 @@ public class TierMenuListView extends AbstractTierTreeListView<TierMenuTreeItem>
                 brandDto.getId());
     }
 
+    /**
+     * Fetches all categories asynchronously and then fetches the tiers.
+     * If fetching categories fails, it shows an error notification with a retry option.
+     */
     private void fetchCategories() {
         asyncRestClientMenuService.getAllCategoryAsync(result -> {
             categoryDtos = result;
@@ -165,11 +169,23 @@ public class TierMenuListView extends AbstractTierTreeListView<TierMenuTreeItem>
                 brandDto.getId());
     }
 
+    /**
+     * Returns the parent of the given {@link TierMenuTreeItem}.
+     *
+     * @param item the tree item whose parent is to be returned
+     * @return the parent tree item, or null if the item is a root
+     */
     @Override
     protected TierMenuTreeItem tierRoot(TierMenuTreeItem item) {
         return item.getItemParent();
     }
 
+    /**
+     * Converts a {@link TierMenuTreeItem} to a {@link TierDto} for saving.
+     *
+     * @param item the tree item to convert
+     * @return the corresponding TierDto
+     */
     @Override
     protected TierDto tierDtoOf(TierMenuTreeItem item) {
         TierDto tierDto = new TierDto();
@@ -221,6 +237,18 @@ public class TierMenuListView extends AbstractTierTreeListView<TierMenuTreeItem>
         finishLoad(treeData);
     }
 
+    /**
+     * Creates a new {@link TierMenuTreeItem} with the given parameters.
+     *
+     * @param rootIndex    the index of the root item
+     * @param tierDto      the tier data transfer object
+     * @param name         the name of the item
+     * @param categoryDto  the category data transfer object (can be null for root items)
+     * @param isActive     whether the item is active
+     * @param parent       the parent tree item (null for root items)
+     * @param treeLevel    the level of the tree (ROOT or CHILD)
+     * @return a new TierMenuTreeItem instance
+     */
     private static TierMenuTreeItem getTierMenuTreeItem(Integer rootIndex, TierDto tierDto, String name,
                                                         CategoryDto categoryDto,
                                                         boolean isActive,
@@ -238,6 +266,14 @@ public class TierMenuListView extends AbstractTierTreeListView<TierMenuTreeItem>
                 .build();
     }
 
+    /**
+     * Extracts category names from the given list of {@link CategoryDto} and adds them as child items
+     * to the specified {@link TierMenuTreeItem} in the provided {@link TreeData}.
+     *
+     * @param treeData          the tree data structure to which child items will be added
+     * @param tierMenuTreeItem  the parent tree item to which child items will be added
+     * @param tierMenuDtos      the list of tier menu DTOs containing active status information
+     */
     private void extractedCategoryName(TreeData<TierMenuTreeItem> treeData,
                                        TierMenuTreeItem tierMenuTreeItem, List<TierMenuDto> tierMenuDtos) {
         for (CategoryDto categoryDto : categoryDtos) {
