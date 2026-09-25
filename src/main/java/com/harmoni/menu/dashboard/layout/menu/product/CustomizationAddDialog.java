@@ -3,32 +3,67 @@ package com.harmoni.menu.dashboard.layout.menu.product;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CustomizationDto;
+import com.harmoni.menu.dashboard.dto.ProductCustomizationDto;
 import com.harmoni.menu.dashboard.layout.util.AsyncUtil;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.Messages;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
  * "Add Customization" dialog: searches the customization master for the brand
- * and lets the user attach the selected items to the product. Items that are
- * already attached are shown but disabled. Confirmation delegates to
- * {@link CustomizationSection#onAddSelected}.
+ * with server-side pagination and lets the user pick the items to attach to
+ * the product. Already-attached customizations are hidden because they are
+ * visible in the product form's own grid. Selections are kept across page
+ * turns so the user can pick items from several pages before confirming.
+ * Confirmation delegates to {@link CustomizationSection#onAddSelected}.
  */
 public class CustomizationAddDialog extends Dialog {
+
+    private static final int PAGE_SIZE = 15;
+
+    private final CustomizationSection section;
+    private final ProductFormDelegate delegate;
+    private final AsyncRestClientMenuService asyncRestClientMenuService;
+    private final BrandDto brandDto;
+
+    private final Grid<CustomizationDto> grid = new Grid<>(CustomizationDto.class);
+    private final Map<Integer, CustomizationDto> selectedById = new LinkedHashMap<>();
+    private final Set<Integer> attachedIds;
+    private List<CustomizationDto> currentPageItems = new ArrayList<>();
+
+    private final TextField searchField = new TextField();
+    private final Text pageInfoText = new Text("");
+    private Button previousPageButton;
+    private Button nextPageButton;
+    private Button addSelectedButton;
+    private final AtomicInteger requestGeneration = new AtomicInteger();
+
+    private int currentPage = 1;
+    private int totalPages;
 
     /**
      * @param section                      the owner section that persists the selection
@@ -39,75 +74,165 @@ public class CustomizationAddDialog extends Dialog {
     public CustomizationAddDialog(CustomizationSection section, ProductFormDelegate delegate,
                                   AsyncRestClientMenuService asyncRestClientMenuService,
                                   BrandDto brandDto) {
-        setHeaderTitle(Messages.get("label.addCustomization"));
+        this.section = section;
+        this.delegate = delegate;
+        this.asyncRestClientMenuService = asyncRestClientMenuService;
+        this.brandDto = brandDto;
 
-        TextField searchField = new TextField(Messages.get(Messages.Keys.LABEL_SEARCH));
+        this.attachedIds = section.getProductCustomizations().stream()
+                .map(ProductCustomizationDto::getCustomizationId)
+                .collect(Collectors.toSet());
+
+        addClassName("customization-add-dialog");
+        setHeaderTitle(Messages.get("label.addCustomization"));
+        setWidth("920px");
+
+        configureSearch();
+        configureGrid();
+
+        VerticalLayout dialogContent = new VerticalLayout(searchField, grid, buildPaginationFooter());
+        dialogContent.setPadding(false);
+        dialogContent.setSpacing(true);
+        add(dialogContent);
+
+        Button cancelButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL), event -> close());
+        addSelectedButton = UiUtil.addButton(Messages.get("action.addSelected"),
+                event -> section.onAddSelected(getSelectedCustomizations(), this));
+        updateAddSelectedState();
+        getFooter().add(cancelButton, addSelectedButton);
+
+        fetchCustomizations();
+    }
+
+    private void configureSearch() {
+        searchField.setLabel(Messages.get(Messages.Keys.LABEL_SEARCH));
         searchField.setPlaceholder(Messages.get("placeholder.searchCustomizations"));
         searchField.setClearButtonVisible(true);
         searchField.setValueChangeMode(ValueChangeMode.LAZY);
-
-        CheckboxGroup<CustomizationDto> group = new CheckboxGroup<>();
-        group.setLabel(Messages.get("label.availableCustomizations"));
-        group.setItemLabelGenerator(CustomizationDto::getName);
-        group.setItemHelperGenerator(this::buildAddMeta);
-
-        Set<Integer> attachedIds = section.getProductCustomizations().stream()
-                .map(customization -> customization.getCustomizationId())
-                .collect(Collectors.toSet());
-
-        AtomicReference<List<CustomizationDto>> allCustomizations = new AtomicReference<>(new ArrayList<>());
-
-        asyncRestClientMenuService.getAllCustomizationAsync(result -> {
-                    if (ObjectUtils.isEmpty(result.get("data"))) {
-                        return;
-                    }
-                    List<CustomizationDto> list = ObjectUtil.convertObjectToObject(result.get("data"),
-                            new TypeReference<>() {
-                            });
-                    allCustomizations.set(list);
-                    AsyncUtil.onUi(delegate.getUi(), () -> {
-                        group.setItems(list);
-                        group.setItemEnabledProvider(customization -> !attachedIds.contains(customization.getId()));
-                    });
-                },
-                throwable -> AsyncUtil.onUi(delegate.getUi(),
-                        () -> delegate.showErrorDialog(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_LOAD_FAILED))),
-                brandDto.getId(), 1, 500, "");
-
         searchField.addValueChangeListener(event -> {
-            String filter = event.getValue() == null ? "" : event.getValue().trim().toLowerCase();
-            List<CustomizationDto> filtered = allCustomizations.get().stream()
-                    .filter(customization -> customization.getName() == null
-                            || customization.getName().toLowerCase().contains(filter))
-                    .toList();
-            group.setItems(filtered);
+            if (event.isFromClient()) {
+                currentPage = 1;
+                fetchCustomizations();
+            }
         });
-
-        Button cancelButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL), event -> close());
-        Button addSelectedButton = UiUtil.addButton(Messages.get("action.addSelected"),
-                event -> section.onAddSelected(group.getSelectedItems(), this));
-
-        VerticalLayout dialogContent = new VerticalLayout(searchField, group);
-        add(dialogContent);
-        getFooter().add(cancelButton, addSelectedButton);
     }
 
-    /**
-     * Builds the metadata string for a customization, showing its selection type,
-     * required/optional status, and min/max selection range.
-     *
-     * @param customization the customization to build metadata for
-     * @return a formatted string with the customization's metadata
-     */
-    private String buildAddMeta(CustomizationDto customization) {
-        String type = customization.getSelectionType() == null ? ""
-                : customization.getSelectionType().getLabel();
-        String required = Boolean.TRUE.equals(customization.getRequired())
-                ? Messages.get(Messages.Keys.LABEL_REQUIRED) : Messages.get("label.optional");
-        String min = customization.getMinimumSelection() == null ? "0"
-                : String.valueOf(customization.getMinimumSelection());
-        String max = customization.getMaximumSelection() == null ? "n"
-                : String.valueOf(customization.getMaximumSelection());
-        return Messages.get("label.customizationMeta", type, required, min, max);
+    private void configureGrid() {
+        grid.setSelectionMode(Grid.SelectionMode.MULTI);
+        grid.setEmptyStateText(Messages.get("grid.empty.customizationPicker"));
+        grid.setAllRowsVisible(true);
+        grid.removeAllColumns();
+        grid.addClassName("customization-picker-grid");
+        grid.setSizeFull();
+        grid.addColumn(CustomizationDto::getName)
+                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
+        grid.addColumn(dto -> dto.getSelectionType() == null ? "-" : dto.getSelectionType().getLabel())
+                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_TYPE));
+        grid.addComponentColumn(this::renderRequiredColumn)
+                .setHeader(Messages.get(Messages.Keys.LABEL_REQUIRED)).setWidth("90px");
+        grid.addSelectionListener(event -> {
+            if (!event.isFromClient()) {
+                return;
+            }
+            Set<CustomizationDto> nowSelected = new HashSet<>(event.getAllSelectedItems());
+            currentPageItems.forEach(item -> selectedById.remove(item.getId()));
+            nowSelected.forEach(item -> selectedById.put(item.getId(), item));
+            updateAddSelectedState();
+        });
+    }
+
+    private void fetchCustomizations() {
+        if (previousPageButton != null) {
+            previousPageButton.setEnabled(false);
+            nextPageButton.setEnabled(false);
+        }
+        int generation = requestGeneration.incrementAndGet();
+        asyncRestClientMenuService.getAllCustomizationAsync(
+                result -> AsyncUtil.onUi(delegate.getUi(), () -> {
+                    if (generation != requestGeneration.get()) {
+                        return;
+                    }
+                    List<CustomizationDto> list = ObjectUtils.isEmpty(result.get("data"))
+                            ? new ArrayList<>()
+                            : ObjectUtil.convertObjectToObject(result.get("data"), new TypeReference<>() {
+                    });
+                    totalPages = result.get("page") == null ? 0 : Integer.parseInt(result.get("page").toString());
+                    applyPage(list);
+                    updatePagination();
+                }),
+                throwable -> AsyncUtil.onUi(delegate.getUi(), () -> {
+                    if (generation != requestGeneration.get()) {
+                        return;
+                    }
+                    delegate.showErrorDialog(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_LOAD_FAILED));
+                    updatePagination();
+                }),
+                brandDto.getId(), currentPage, PAGE_SIZE, normalizeSearch(searchField.getValue()));
+    }
+
+    private void applyPage(List<CustomizationDto> items) {
+        currentPageItems = items.stream()
+                .filter(item -> !attachedIds.contains(item.getId()))
+                .toList();
+        grid.setItems(currentPageItems);
+        currentPageItems.stream()
+                .filter(item -> selectedById.containsKey(item.getId()))
+                .forEach(grid::select);
+    }
+
+    private Set<CustomizationDto> getSelectedCustomizations() {
+        return new LinkedHashSet<>(selectedById.values());
+    }
+
+    private void updateAddSelectedState() {
+        if (addSelectedButton != null) {
+            addSelectedButton.setEnabled(!selectedById.isEmpty());
+        }
+    }
+
+    private HorizontalLayout buildPaginationFooter() {
+        previousPageButton = new Button(Messages.get("action.previous"), event -> {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchCustomizations();
+            }
+        });
+        nextPageButton = new Button(Messages.get("action.next"), event -> {
+            if (currentPage < totalPages) {
+                currentPage++;
+                fetchCustomizations();
+            }
+        });
+        HorizontalLayout footer = new HorizontalLayout(previousPageButton, pageInfoText, nextPageButton);
+        footer.addClassName("pagination");
+        footer.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        footer.setWidthFull();
+        footer.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        updatePagination();
+        return footer;
+    }
+
+    private void updatePagination() {
+        pageInfoText.setText(Messages.get("pagination.page", currentPage, totalPages));
+        if (previousPageButton != null) {
+            previousPageButton.setEnabled(currentPage > 1);
+            nextPageButton.setEnabled(currentPage < totalPages);
+        }
+    }
+
+    private String normalizeSearch(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private Component renderRequiredColumn(CustomizationDto dto) {
+        HorizontalLayout wrapper = new HorizontalLayout();
+        wrapper.setWidthFull();
+        wrapper.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        if (Boolean.TRUE.equals(dto.getRequired())) {
+            Icon check = new Icon(VaadinIcon.CHECK);
+            check.setColor("var(--lumo-primary-color)");
+            wrapper.add(check);
+        }
+        return wrapper;
     }
 }

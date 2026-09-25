@@ -12,7 +12,8 @@ import java.io.Serializable;
  * <p>Used as the payload for {@code /api/v1/product/image/upload} and
  * {@code /api/v1/product/image/{id}/upload}. The image bytes travel in
  * {@link #fileStream}, which is {@code transient} and therefore never
- * serialized on the wire.
+ * serialized on the wire. The menu service hosts the image on ImgBB and
+ * returns the hosted URL in {@link ProductImageDto#url}.</p>
  */
 
 @Data

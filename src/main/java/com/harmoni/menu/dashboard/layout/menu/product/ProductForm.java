@@ -15,7 +15,6 @@ import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
-import com.harmoni.menu.dashboard.util.ImageUtil;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
@@ -305,10 +304,8 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
      */
     private void refreshImage() {
         if (ObjectUtils.isNotEmpty(productDto.getProductImageDto()) &&
-                ObjectUtils.isNotEmpty(productDto.getProductImageDto().getImageBlob())) {
-            this.productImageUploadView.setImage(ImageUtil.createStreamResource(
-                    productDto.getProductImageDto().getImageBlob(),
-                    productDto.getProductImageDto().getFileName()));
+                ObjectUtils.isNotEmpty(productDto.getProductImageDto().getUrl())) {
+            this.productImageUploadView.setImage(productDto.getProductImageDto().getUrl());
         }
     }
 

@@ -62,7 +62,6 @@ public class ProductEventListener implements
         if (ObjectUtils.isNotEmpty(productForm.getProductImageUploadView())
                 && ObjectUtils.isNotEmpty(productForm.getProductImageUploadView().getProductImageDto())) {
             ProductImageDto productImageDto = productForm.getProductImageUploadView().getProductImageDto();
-            productImageDto.setImageBlob(null); // no need to include byte
             productDto.setProductImageDto(productImageDto);
         }
         return productDto;

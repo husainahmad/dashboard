@@ -102,7 +102,7 @@ public class RestClientMenuService extends RestClientService implements Serializ
     }
 
     /**
-     * Uploads the image of a product.
+     * Uploads the image of a product; the menu service hosts it on ImgBB.
      *
      * @param imageDto the image to upload
      * @return a {@link Mono} with the server response
@@ -115,7 +115,8 @@ public class RestClientMenuService extends RestClientService implements Serializ
     }
 
     /**
-     * Replaces the image of an existing product.
+     * Replaces the image of an existing product; the menu service hosts the new
+     * image on ImgBB.
      *
      * @param productId the product id
      * @param imageDto  the new image

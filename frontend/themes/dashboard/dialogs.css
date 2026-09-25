@@ -55,3 +55,95 @@ vaadin-dialog-overlay::part(header) {
 
     width: 100%;
 }
+
+
+/* ---------- "Add Customization" dialog ---------- */
+
+.customization-add-dialog {
+
+    max-width: 95vw;
+}
+
+.customization-add-dialog
+vaadin-grid.customization-picker-grid {
+
+    max-height: 640px;
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-m);
+}
+
+.customization-add-dialog
+.pagination {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    width: 100%;
+
+    padding:
+        var(--lumo-space-xs) 0;
+
+    border-top:
+        1px solid var(--lumo-contrast-10pct);
+
+    color:
+        var(--app-text-muted);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    font-weight: 600;
+}
+
+
+/* ---------- Image crop dialog ---------- */
+
+.cropper-dialog {
+
+    max-width: 95vw;
+}
+
+.cropper-dialog
+.cropper-host {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 100%;
+
+    max-height: 520px;
+
+    background:
+        var(--lumo-contrast-5pct);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-m);
+
+    overflow: hidden;
+}
+
+.cropper-dialog
+img.cropper-source {
+
+    display: block;
+
+    max-width: 100%;
+
+    max-height: 520px;
+}

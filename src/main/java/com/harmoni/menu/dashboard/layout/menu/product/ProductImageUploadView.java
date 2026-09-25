@@ -5,9 +5,8 @@ import com.harmoni.menu.dashboard.dto.ProductImageDto;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
-import com.harmoni.menu.dashboard.util.ImageUtil;
-import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.Messages;
+import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -22,13 +21,13 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.StreamResource;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.util.MimeTypeUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
@@ -36,7 +35,8 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * Uploads a product image to the REST API and shows it as a compact thumbnail.
  * The image is uploaded immediately when the user selects a file, and the
  * resulting {@link ProductImageDto} is stored in this view for later retrieval
- * by the owner form.
+ * by the owner form. The menu service hosts the image on ImgBB and returns the
+ * hosted URL in {@link ProductImageDto#url}.
  */
 @RequiredArgsConstructor
 @Route("product-image-upload")
@@ -90,22 +90,15 @@ public class ProductImageUploadView extends VerticalLayout {
         removeButton.addClickListener(event -> clearImage());
 
         upload.addSucceededListener(succeededEvent -> {
-
-            ImageDto imageDto = ImageDto.builder()
-                    .fileName(buffer.getFileName())
-                    .mimeType(succeededEvent.getMIMEType())
-                    .fileStream(buffer.getInputStream())
-                    .build();
-
             try {
-                if (ObjectUtils.isNotEmpty(productTreeItem)) {
-                    restClientMenuService.uploadUpdatedProduct(productTreeItem.getProductId(), imageDto)
-                            .subscribe(this::processResponse);
-                } else {
-                    restClientMenuService.uploadProduct(imageDto).subscribe(this::processResponse);
+                byte[] pickedBytes = buffer.getInputStream().readAllBytes();
+                if (pickedBytes.length == 0) {
+                    return;
                 }
+                new ProductImageCropDialog(pickedBytes, buffer.getFileName(), 1.0,
+                        croppedBytes -> uploadImage(croppedBytes, buffer.getFileName())).open();
             } catch (IOException e) {
-                log.error("Error", e);
+                log.error("Error reading picked image", e);
             }
         });
 
@@ -126,6 +119,32 @@ public class ProductImageUploadView extends VerticalLayout {
     }
 
     /**
+     * Uploads the cropped image returned by {@link ProductImageCropDialog}. The
+     * crop is always a JPEG, so the file name is normalised to a {@code .jpg}
+     * suffix regardless of the picked format.
+     *
+     * @param croppedBytes the JPEG bytes produced by the crop dialog
+     * @param pickedName   the original file name from the upload
+     */
+    private void uploadImage(byte[] croppedBytes, String pickedName) {
+        try {
+            ImageDto imageDto = ImageDto.builder()
+                    .fileName(pickedName.replaceAll("(?i)\\.[a-z0-9]+$", "") + ".jpg")
+                    .mimeType(MimeTypeUtils.IMAGE_JPEG_VALUE)
+                    .fileStream(new ByteArrayInputStream(croppedBytes))
+                    .build();
+            if (ObjectUtils.isNotEmpty(productTreeItem)) {
+                restClientMenuService.uploadUpdatedProduct(productTreeItem.getProductId(), imageDto)
+                        .subscribe(this::processResponse);
+            } else {
+                restClientMenuService.uploadProduct(imageDto).subscribe(this::processResponse);
+            }
+        } catch (IOException e) {
+            log.error("Error uploading cropped image", e);
+        }
+    }
+
+    /**
      * Processes the REST API response after uploading an image. If the response
      * contains image data, it converts it to a {@link ProductImageDto} and updates
      * the UI to display the uploaded image.
@@ -135,17 +154,16 @@ public class ProductImageUploadView extends VerticalLayout {
     private void processResponse(RestAPIResponse restAPIResponse) {
         if (ObjectUtils.isNotEmpty(restAPIResponse.getData())) {
             productImageDto = ObjectUtil.convertValueToObject(restAPIResponse.getData(), ProductImageDto.class);
-            UiUtil.safeAccess(ui, () -> setImage(ImageUtil.createStreamResource(productImageDto.getImageBlob(),
-                    productImageDto.getFileName())));
+            UiUtil.safeAccess(ui, () -> setImage(productImageDto.getUrl()));
         }
     }
 
     /**
-     * Shows the given image as the compact product thumbnail. Call this from a
-     * UI-access context.
+     * Shows the given image URL as the compact product thumbnail. Call this from
+     * a UI-access context.
      */
-    public void setImage(StreamResource resource) {
-        image.setSrc(resource);
+    public void setImage(String imageUrl) {
+        image.setSrc(imageUrl);
         showImageState(true);
         removeButton.setVisible(true);
     }

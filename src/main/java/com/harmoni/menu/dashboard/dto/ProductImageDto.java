@@ -7,8 +7,8 @@ import java.util.Date;
 /**
  * Metadata of the image attached to a product.
  *
- * <p>Returned inline in {@link ProductDto#productImageDto}; the raw bytes are
- * served from {@code /api/v1/product/image/{id}}.
+ * <p>Returned inline in {@link ProductDto#productImageDto}; the image bytes are
+ * hosted on ImgBB and referenced through {@link #url}.
  */
 
 @Data
@@ -26,9 +26,9 @@ public class ProductImageDto {
 
     private String fileName;
 
-    /** The raw image bytes, present when the image is delivered inline; otherwise {@code null}. */
+    /** The hosted image URL returned by ImgBB. */
 
-    private byte[] imageBlob;
+    private String url;
 
     /** The content type of the image, such as {@code image/png}. */
 

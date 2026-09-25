@@ -11,7 +11,7 @@ import java.util.UUID;
  *
  * <p>Converts an uploaded {@link ImageDto} into a temp file for the upload
  * request and exposes raw image bytes as a Vaadin {@link StreamResource} for
- * previewing.
+ * previewing.</p>
  */
 public class ImageUtil {
 

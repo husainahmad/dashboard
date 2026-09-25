@@ -134,6 +134,10 @@ public class TableForm extends FormLayout {
 
         if (formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(tableDto)) {
             binder.readBean(tableDto);
+            capacityField.setReadOnly(false);
+            capacityField.setEnabled(true);
+            log.info("TableForm [{}] capacity enabled={} readOnly={}", formAction,
+                    capacityField.isEnabled(), capacityField.isReadOnly());
         }
 
         addFooterButtons();
