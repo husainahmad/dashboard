@@ -108,6 +108,52 @@ public abstract class AsyncRestClientBase implements Serializable {
     }
 
     /**
+     * Performs a GET for {@code uri} against a service that answers with a
+     * plain body instead of the {@link RestAPIResponse} envelope, refreshing
+     * the token when needed and reporting business errors through
+     * {@code errorCallback}.
+     *
+     * @param uri           endpoint to call
+     * @param responseClass expected type of the raw response body
+     * @param callback      success callback
+     * @param errorCallback optional error callback
+     * @param <T>           payload type
+     */
+    protected <T> void makeAsyncRawRequest(String uri, Class<T> responseClass,
+                                           AsyncRestCallback<T> callback,
+                                           AsyncRestCallback<Throwable> errorCallback) {
+        TokenRefreshService.TokenRequest<T> request = accessToken -> webClient.get()
+                .uri(uri)
+                .header(HttpHeaders.AUTHORIZATION, resolveToken(accessToken))
+                .retrieve()
+                .onStatus(HttpStatus.BAD_REQUEST::equals,
+                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
+                                .map(BusinessBadRequestException::new))
+                .onStatus(HttpStatus.NOT_FOUND::equals,
+                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
+                                .map(BusinessBadRequestException::new))
+                .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals,
+                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
+                                .map(BusinessServerRequestException::new))
+                .onStatus(HttpStatus.UNAUTHORIZED::equals,
+                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
+                                .map(response -> new TokenRefreshRequiredException(response.toString())))
+                .bodyToMono(responseClass);
+
+        tokenRefreshService.withTokenRefresh(request)
+                .subscribe(result -> {
+                    if (result != null) {
+                        callback.operationFinished(result);
+                    }
+                }, error -> {
+                    log.error("Async request failed uri={}", uri, error);
+                    if (errorCallback != null) {
+                        errorCallback.operationFinished(error);
+                    }
+                });
+    }
+
+    /**
      * Resolves the token to use for the request. If an explicit access token is
      * provided, it is used; otherwise, the token from the Vaadin session is used.
      *

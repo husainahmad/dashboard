@@ -117,6 +117,20 @@ public final class UiUtil {
     }
 
     /**
+     * Creates an inline "view" button used to open the read-only detail page of
+     * a record.
+     *
+     * @param tooltip  tooltip shown on hover
+     * @param listener the click listener wired to the button
+     * @return the configured button
+     */
+    public static Button viewButton(String tooltip, ComponentEventListener<ClickEvent<Button>> listener) {
+        Button button = buildIconButton(VaadinIcon.EYE, tooltip, false);
+        button.addClickListener(listener);
+        return button;
+    }
+
+    /**
      * Creates a primary "add" button with the given label.
      *
      * @param label    button caption

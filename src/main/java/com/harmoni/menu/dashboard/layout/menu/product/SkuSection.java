@@ -8,7 +8,6 @@ import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
@@ -191,7 +190,6 @@ public class SkuSection {
         NumberField numberField = new NumberField();
         numberField.setValue(skuTreeItem.getTierPrices().get(tier.getId()) == null
                 ? 0.0 : skuTreeItem.getTierPrices().get(tier.getId()));
-        numberField.setPrefixComponent(new Span("Rp"));
         numberField.setWidth("104px");
         numberField.addClassName("tier-price-field");
         numberField.addValueChangeListener(changeEvent ->

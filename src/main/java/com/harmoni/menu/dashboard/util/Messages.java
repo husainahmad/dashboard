@@ -16,6 +16,11 @@ import java.util.Locale;
  * without being a Spring bean itself; falls back to the key when the context
  * is not yet available or the key is missing.
  * </p>
+ *
+ * <p>Translations come from the locale the user picked for their session (see
+ * {@link VaadinSessionUtil#setLocale(Locale)}), falling back to the JVM default
+ * locale.
+ * </p>
  */
 @Component
 public class Messages implements ApplicationContextAware {
@@ -46,19 +51,27 @@ public class Messages implements ApplicationContextAware {
         public static final String ACTION_NEW_USER = "action.newUser";
         public static final String ACTION_SAVE = "action.save";
         public static final String ACTION_UPDATE = "action.update";
+        public static final String ACTION_VIEW_DETAIL = "action.viewDetail";
+        public static final String ACTION_VIEW_NAME = "action.view.name";
         public static final String DASHBOARD_PRODUCT = "dashboard.product";
         public static final String DASHBOARD_SKU = "dashboard.sku";
         public static final String DIALOG_CONFIRM_TITLE = "dialog.confirmTitle";
         public static final String GRID_HEADER_ACTION = "grid.header.action";
         public static final String GRID_HEADER_ACTIVE = "grid.header.active";
         public static final String GRID_HEADER_BRAND_NAME = "grid.header.brandName";
+        public static final String GRID_HEADER_CREATED_AT = "grid.header.createdAt";
+        public static final String GRID_HEADER_EMAIL = "grid.header.email";
         public static final String GRID_HEADER_NAME = "grid.header.name";
+        public static final String GRID_HEADER_PHONE = "grid.header.phone";
         public static final String GRID_HEADER_PRICE = "grid.header.price";
         public static final String GRID_HEADER_TYPE = "grid.header.type";
         public static final String LABEL_ALL = "label.all";
         public static final String LABEL_BRAND = "label.brand";
         public static final String LABEL_CAPACITY = "label.capacity";
         public static final String LABEL_CATEGORY = "label.category";
+        public static final String LABEL_CUSTOMER_EMAIL = "label.customer.email";
+        public static final String LABEL_CUSTOMER_NAME = "label.customer.name";
+        public static final String LABEL_CUSTOMER_PHONE = "label.customer.phone";
         public static final String LABEL_DESCRIPTION = "label.description";
         public static final String LABEL_FIELD_CUSTOMIZATION_NAME = "label.field.customizationName";
         public static final String LABEL_FIELD_SERVICE_NAME = "label.field.serviceName";
@@ -80,6 +93,8 @@ public class Messages implements ApplicationContextAware {
         public static final String NOTIFICATION_CUSTOMIZATION_LOAD_FAILED = "notification.customization.loadFailed";
         public static final String NOTIFICATION_CUSTOMIZATION_REMOVED = "notification.customization.removed";
         public static final String NOTIFICATION_CUSTOMIZATION_UPDATED = "notification.customization.updated";
+        public static final String NOTIFICATION_CUSTOMER_LOAD_FAILED = "notification.customer.loadFailed";
+        public static final String NOTIFICATION_CUSTOMER_NOT_FOUND = "notification.customer.notFound";
         public static final String NOTIFICATION_LOGIN_FAILED = "notification.login.failed";
         public static final String NOTIFICATION_PRODUCT_LOAD_FAILED = "notification.product.loadFailed";
         public static final String NOTIFICATION_SERVICE_LOAD_FAILED = "notification.service.loadFailed";
@@ -102,7 +117,7 @@ public class Messages implements ApplicationContextAware {
     }
 
     /**
-     * Resolves a message key against the current locale.
+     * Resolves a message key against the locale of the current session.
      *
      * @param key  the message key
      * @param args optional placeholders, formatted into the message value
@@ -112,6 +127,21 @@ public class Messages implements ApplicationContextAware {
         if (messageSource == null) {
             return key;
         }
-        return messageSource.getMessage(key, args, key, Locale.getDefault());
+        return messageSource.getMessage(key, args, key, resolveLocale());
+    }
+
+    /**
+     * Resolves the locale messages are translated to: the one selected for the
+     * current user session, falling back to the JVM default when the user has
+     * not chosen one.
+     *
+     * <p>Reading the locale per session keeps the language choice scoped to the
+     * signed-in user instead of the whole server.</p>
+     *
+     * @return the locale to translate to
+     */
+    private static Locale resolveLocale() {
+        Locale sessionLocale = VaadinSessionUtil.getLocale();
+        return sessionLocale != null ? sessionLocale : Locale.getDefault();
     }
 }

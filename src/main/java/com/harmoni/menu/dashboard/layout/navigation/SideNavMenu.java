@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.layout.navigation;
 
 import com.harmoni.menu.dashboard.layout.DashboardView;
+import com.harmoni.menu.dashboard.layout.customer.CustomerLayout;
 import com.harmoni.menu.dashboard.layout.menu.customization.CustomizationLayout;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductLayout;
 import com.harmoni.menu.dashboard.layout.organization.store.StoreLayout;
@@ -13,8 +14,14 @@ import com.harmoni.menu.dashboard.layout.organization.brand.BrandLayout;
 import com.harmoni.menu.dashboard.layout.menu.category.CategoryLayout;
 import com.harmoni.menu.dashboard.layout.organization.chain.ChainLayout;
 import com.harmoni.menu.dashboard.layout.organization.tier.price.TierPriceLayout;
+import com.harmoni.menu.dashboard.layout.report.DailyReportView;
+import com.harmoni.menu.dashboard.layout.report.OrderVolumeReportView;
+import com.harmoni.menu.dashboard.layout.report.SalesReportView;
+import com.harmoni.menu.dashboard.layout.report.SettlementReportView;
+import com.harmoni.menu.dashboard.layout.report.TopProductReportView;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -63,6 +70,31 @@ public class SideNavMenu extends Div {
         sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.customization"), CustomizationLayout.class, VaadinIcon.SLIDERS.create()));
         sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.product"), ProductLayout.class, VaadinIcon.COFFEE.create()));
 
+        SideNav sideNavCustomers = new SideNav();
+        sideNavCustomers.setLabel(Messages.get("nav.customers"));
+        sideNavCustomers.setCollapsible(true);
+        sideNavCustomers.addItem(new SideNavItem(Messages.get("nav.customerList"),
+                CustomerLayout.class, VaadinIcon.USERS.create()));
+
+        SideNav sideNavInventory = new SideNav();
+        sideNavInventory.setLabel(Messages.get("nav.inventory"));
+        sideNavInventory.setCollapsible(true);
+        sideNavInventory.addItem(placeholderItem(Messages.get("nav.inventoryStock"), VaadinIcon.CUBES.create()));
+
+        SideNav sideNavReport = new SideNav();
+        sideNavReport.setLabel(Messages.get("nav.report"));
+        sideNavReport.setCollapsible(true);
+        sideNavReport.addItem(new SideNavItem(Messages.get("nav.report.settlement"),
+                SettlementReportView.class, VaadinIcon.CREDIT_CARD.create()));
+        sideNavReport.addItem(new SideNavItem(Messages.get("nav.report.topProducts"),
+                TopProductReportView.class, VaadinIcon.TROPHY.create()));
+        sideNavReport.addItem(new SideNavItem(Messages.get("nav.report.daily"),
+                DailyReportView.class, VaadinIcon.CALENDAR.create()));
+        sideNavReport.addItem(new SideNavItem(Messages.get("nav.report.sales"),
+                SalesReportView.class, VaadinIcon.CHART_GRID.create()));
+        sideNavReport.addItem(new SideNavItem(Messages.get("nav.report.orderVolume"),
+                OrderVolumeReportView.class, VaadinIcon.BAR_CHART.create()));
+
         SideNav sideNavAdministration = new SideNav();
         sideNavAdministration.setLabel(Messages.get("nav.administration"));
         sideNavAdministration.setCollapsible(true);
@@ -78,6 +110,9 @@ public class SideNavMenu extends Div {
                 sideNavOverview,
                 sideNavOrganization,
                 sideNavCatalog,
+                sideNavCustomers,
+                sideNavInventory,
+                sideNavReport,
                 sideNavAdministration,
                 sideNavSettings);
         navWrapper.setSpacing(true);
@@ -85,6 +120,9 @@ public class SideNavMenu extends Div {
         sideNavOverview.setWidthFull();
         sideNavOrganization.setWidthFull();
         sideNavCatalog.setWidthFull();
+        sideNavCustomers.setWidthFull();
+        sideNavInventory.setWidthFull();
+        sideNavReport.setWidthFull();
         sideNavAdministration.setWidthFull();
         sideNavSettings.setWidthFull();
 
@@ -94,5 +132,20 @@ public class SideNavMenu extends Div {
                 .set("border-bottom", "1px solid var(--lumo-contrast-20pct)")
                 .set("padding", "var(--lumo-space-m)");
         add(scroller);
+    }
+
+    /**
+     * Builds a disabled navigation item for a section that is not implemented
+     * yet, so the group shows its intended shape without offering a dead link.
+     *
+     * @param label the item caption
+     * @param icon  the icon shown before the caption
+     * @return the disabled item
+     */
+    private static SideNavItem placeholderItem(String label, Icon icon) {
+        SideNavItem item = new SideNavItem(label);
+        item.setPrefixComponent(icon);
+        item.setEnabled(false);
+        return item;
     }
 }

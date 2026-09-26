@@ -61,8 +61,8 @@ public class ProductImageUploadView extends VerticalLayout {
         setPadding(false);
         setSpacing(false);
 
-        image.getStyle().set(Css.WIDTH, "96px")
-                .set("height", "96px")
+        image.getStyle().set(Css.WIDTH, "64px")
+                .set("height", "64px")
                 .set("object-fit", "cover")
                 .set("border-radius", "var(--lumo-border-radius-l)")
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
@@ -81,6 +81,7 @@ public class ProductImageUploadView extends VerticalLayout {
         upload.setMaxFiles(1);
         upload.setDropAllowed(true);
         upload.setDropLabel(new Span(Messages.get("label.dropHere")));
+        upload.getElement().getStyle().set("width", "auto");
         Button browseButton = new Button(Messages.get("action.browseImage"), new Icon(VaadinIcon.FOLDER_OPEN));
         browseButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         upload.setUploadButton(browseButton);
@@ -105,15 +106,31 @@ public class ProductImageUploadView extends VerticalLayout {
         HorizontalLayout actions = new HorizontalLayout(upload, removeButton);
         actions.setAlignItems(FlexComponent.Alignment.CENTER);
         actions.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        actions.setFlexShrink(0);
 
-        VerticalLayout tile = new VerticalLayout();
+        VerticalLayout thumbnail = new VerticalLayout();
+        thumbnail.setWidth("64px");
+        thumbnail.setHeight("64px");
+        thumbnail.setPadding(false);
+        thumbnail.setSpacing(false);
+        thumbnail.setFlexShrink(0);
+        thumbnail.setAlignItems(FlexComponent.Alignment.CENTER);
+        thumbnail.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        thumbnail.add(image, placeholderIcon);
+
+        VerticalLayout labels = new VerticalLayout(imageTitle, imageHint);
+        labels.setPadding(false);
+        labels.setSpacing(false);
+        labels.setFlexGrow(1);
+
+        HorizontalLayout tile = new HorizontalLayout();
         tile.addClassName("upload-tile");
         tile.setWidthFull();
         tile.setPadding(true);
         tile.setSpacing(true);
         tile.setAlignItems(FlexComponent.Alignment.CENTER);
-        tile.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        tile.add(image, placeholderIcon, imageTitle, imageHint, actions);
+        tile.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
+        tile.add(thumbnail, labels, actions);
 
         add(tile);
     }
@@ -177,15 +194,14 @@ public class ProductImageUploadView extends VerticalLayout {
 
     /**
      * Updates the visibility of the image and placeholder elements based on
-     * whether an image is present.
+     * whether an image is present. The title and hint stay visible either way,
+     * so the field keeps a constant height and the buttons do not shift.
      *
      * @param hasImage {@code true} if an image is present, {@code false} otherwise
      */
     private void showImageState(boolean hasImage) {
         image.setVisible(hasImage);
         placeholderIcon.setVisible(!hasImage);
-        imageTitle.setVisible(!hasImage);
-        imageHint.setVisible(!hasImage);
     }
 
     @Override

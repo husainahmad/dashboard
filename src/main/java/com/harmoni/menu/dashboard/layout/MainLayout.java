@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.navigation.SideNavMenu;
+import com.harmoni.menu.dashboard.layout.util.LanguageSelector;
 import com.harmoni.menu.dashboard.layout.util.ThemeUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -76,7 +77,8 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
 
         H2 logo = createLogo();
 
-        HorizontalLayout actions = new HorizontalLayout(createPaletteMenu(), createThemeToggle(), createUserMenu());
+        HorizontalLayout actions = new HorizontalLayout(createPaletteMenu(), LanguageSelector.create(),
+                createThemeToggle(), createUserMenu());
         actions.setSpacing(true);
         actions.setPadding(false);
         actions.setAlignItems(FlexComponent.Alignment.CENTER);

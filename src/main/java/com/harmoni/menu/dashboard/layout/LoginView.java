@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.layout;
 import com.harmoni.menu.dashboard.dto.LoginDto;
 import com.harmoni.menu.dashboard.event.user.LoginEventListener;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientLoginService;
+import com.harmoni.menu.dashboard.layout.util.LanguageSelector;
 import com.harmoni.menu.dashboard.layout.util.ThemeUtil;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
@@ -119,7 +120,7 @@ public class LoginView extends VerticalLayout {
         panel.setSpacing(true);
         panel.setPadding(true);
 
-        VerticalLayout formSide = new VerticalLayout(panel);
+        VerticalLayout formSide = new VerticalLayout(panel, LanguageSelector.create());
         formSide.addClassName("login-form-side");
         formSide.setHeightFull();
         formSide.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);

@@ -42,6 +42,16 @@ public class StatCard extends HorizontalLayout {
         valueLabel.setText(String.valueOf(value));
     }
 
+    /**
+     * Sets a pre-formatted value, for reports whose totals are money rather than
+     * plain counts.
+     *
+     * @param value the already formatted value to show
+     */
+    public void setValue(String value) {
+        valueLabel.setText(value);
+    }
+
     public void setWarn(boolean warn) {
         valueLabel.removeClassName(Css.STAT_VALUE_OK);
         valueLabel.removeClassName(Css.STAT_VALUE_WARN);
