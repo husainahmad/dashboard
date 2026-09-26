@@ -73,6 +73,7 @@ public class Messages implements ApplicationContextAware {
         public static final String LABEL_CUSTOMER_NAME = "label.customer.name";
         public static final String LABEL_CUSTOMER_PHONE = "label.customer.phone";
         public static final String LABEL_DESCRIPTION = "label.description";
+        public static final String LABEL_NAME = "label.name";
         public static final String LABEL_FIELD_CUSTOMIZATION_NAME = "label.field.customizationName";
         public static final String LABEL_FIELD_SERVICE_NAME = "label.field.serviceName";
         public static final String LABEL_FIELD_TABLE_NAME = "label.field.tableName";

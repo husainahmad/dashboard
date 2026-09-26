@@ -1,9 +1,10 @@
 package com.harmoni.menu.dashboard.layout.organization;
 
 /**
- * Distinguishes between the two modes a form can be opened in: creating a new
- * record ({@code CREATE}) or editing an existing one ({@code EDIT}).
+ * Distinguishes the modes a form can be opened in: creating a new record
+ * ({@code CREATE}), editing an existing one ({@code EDIT}) or changing only the
+ * lifecycle state of an existing one ({@code STATUS}).
  */
 public enum FormAction {
-    CREATE,EDIT
+    CREATE, EDIT, STATUS
 }

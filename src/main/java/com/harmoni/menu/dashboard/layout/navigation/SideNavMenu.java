@@ -12,6 +12,7 @@ import com.harmoni.menu.dashboard.layout.setting.service.ServiceLayout;
 import com.harmoni.menu.dashboard.layout.setting.table.TableLayout;
 import com.harmoni.menu.dashboard.layout.organization.brand.BrandLayout;
 import com.harmoni.menu.dashboard.layout.menu.category.CategoryLayout;
+import com.harmoni.menu.dashboard.layout.menu.promotion.PromotionLayout;
 import com.harmoni.menu.dashboard.layout.organization.chain.ChainLayout;
 import com.harmoni.menu.dashboard.layout.organization.tier.price.TierPriceLayout;
 import com.harmoni.menu.dashboard.layout.report.DailyReportView;
@@ -69,6 +70,7 @@ public class SideNavMenu extends Div {
         sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.category"), CategoryLayout.class, VaadinIcon.TAGS.create()));
         sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.customization"), CustomizationLayout.class, VaadinIcon.SLIDERS.create()));
         sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.product"), ProductLayout.class, VaadinIcon.COFFEE.create()));
+        sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.promotion"), PromotionLayout.class, VaadinIcon.MONEY_EXCHANGE.create()));
 
         SideNav sideNavCustomers = new SideNav();
         sideNavCustomers.setLabel(Messages.get("nav.customers"));

@@ -11,7 +11,8 @@ import java.io.Serializable;
  * Binds the {@code menu.url.*} keys for the flat resources (store, category,
  * branding, tier, product, service, user, ...) and groups the more complex
  * paths into the nested {@link TierProperties}, {@link CategoryProperties},
- * {@link ProductProperties} and {@link UserProperties}.
+ * {@link ProductProperties}, {@link UserProperties} and
+ * {@link PromotionProperties}.
  * </p>
  */
 
@@ -35,4 +36,5 @@ public class UrlProperties implements Serializable {
     private transient CategoryProperties categories;
     private transient ProductProperties products;
     private transient UserProperties users;
+    private transient PromotionProperties promotions;
 }

@@ -231,6 +231,22 @@ public class RestClientService implements Serializable {
     }
 
     /**
+     * PATCHes a resource that carries its parameters in the query string, such as
+     * a lifecycle status transition. The body is empty, so no publisher is sent.
+     *
+     * @param url the target endpoint including its query string
+     * @return a {@link Mono} with the server response
+     */
+    public Mono<RestAPIResponse> patch(String url) {
+        log.debug("PATCH {} auth={}", url, ObjectUtils.isNotEmpty(getTokenString()));
+        return tokenRefreshService.withTokenRefresh(accessToken ->
+                toResponse(webClient.patch()
+                        .uri(url)
+                        .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, null)))
+                        .retrieve(), RestAPIResponse.class));
+    }
+
+    /**
      * Applies the shared error-status handlers to a retrieved response and
      * decodes the body into the given type.
      *
