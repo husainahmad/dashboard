@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import org.apache.commons.lang3.ObjectUtils;
 
@@ -17,6 +19,13 @@ import java.util.Objects;
  * <p>The shared mapper ignores unknown properties and allows unquoted field
  * names, so it can convert arbitrary backend payloads without failing on
  * fields the DTOs do not model.
+ *
+ * <p>{@link JavaTimeModule} is registered because the promotion DTOs carry
+ * {@code LocalDate}, {@code LocalTime} and {@code LocalDateTime}; without it
+ * Jackson refuses to map them. Dates are written as ISO-8601 text rather than
+ * numeric arrays, which is both what the menu service sends and what
+ * {@code spring.jackson} does by default, so payloads keep matching the
+ * contract the backend documents.
  */
 public final class ObjectUtil {
 
@@ -24,8 +33,10 @@ public final class ObjectUtil {
     }
 
     private static final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+            .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     public static String objectToJsonString(Object object) throws JsonProcessingException {
         return objectMapper.writeValueAsString(object);

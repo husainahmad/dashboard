@@ -22,35 +22,58 @@ class PromotionMessagesTest {
             "nav.promotion",
             "tab.promotionList", "tab.promotionNew", "tab.promotionEdit",
             "tab.promotionStatus", "tab.promotionStatusNamed",
-            "tab.promotionSchedules", "tab.promotionTargets",
-            "tab.promotionRules", "tab.promotionSpecialPrices",
-            "action.newPromotion", "action.applyStatus",
-            "action.addSchedule", "action.addTarget", "action.addRule", "action.addSpecialPrice",
+            "action.newPromotion", "action.applyStatus", "action.addSpecialPrice",
             "label.name",
             "label.promotion.code", "label.promotion.priority", "label.promotion.status",
             "label.promotion.type", "label.promotion.startDate", "label.promotion.endDate",
-            "label.promotion.enabled",
             "grid.empty.promotionList",
             "grid.header.code", "grid.header.status", "grid.header.priority",
-            "grid.header.dateRange", "grid.header.actions", "grid.header.window",
-            "grid.header.target", "grid.header.rule", "grid.header.specialPrice",
+            "grid.header.dateRange", "grid.header.actions", "grid.header.specialPrice",
             "promotion.day.MONDAY", "promotion.day.TUESDAY", "promotion.day.WEDNESDAY",
             "promotion.day.THURSDAY", "promotion.day.FRIDAY", "promotion.day.SATURDAY",
             "promotion.day.SUNDAY",
             "promotion.schedule.none",
-            "validation.promotion.codeRequired", "validation.promotion.codeMinLength",
-            "validation.promotion.codeFormat", "validation.promotion.nameRequired",
+            "validation.promotion.codeRequired", "validation.promotion.codeMinLength", "validation.promotion.nameRequired",
             "validation.promotion.nameMinLength", "validation.promotion.typeRequired",
-            "validation.promotion.statusRequired", "validation.promotion.priorityRequired",
-            "validation.promotion.dateRange", "validation.promotion.formErrors",
-            "validation.promotion.ruleRequired", "validation.promotion.specialPriceRequired",
-            "validation.promotion.scheduleIncomplete", "validation.promotion.targetIncomplete",
-            "validation.promotion.ruleIncomplete", "validation.promotion.specialPriceIncomplete",
+            "validation.promotion.statusRequired", "validation.promotion.priorityRequired", "validation.promotion.formErrors", "validation.promotion.specialPriceRequired",
             "notification.promotion.loadFailed", "notification.promotion.saveFailed",
             "notification.promotion.saved", "notification.promotion.deleted",
             "notification.promotion.deleteFailed", "notification.promotion.statusUpdated",
             "notification.promotion.statusFailed",
-            "dialog.confirmDeletePromotion");
+            "dialog.confirmDeletePromotion",
+
+            // Labels and sections of the editor form and its live preview
+            "promotion.section.general", "promotion.section.schedule", "promotion.section.target",
+            "label.promotion.description", "label.promotion.discount",
+            "label.promotion.stackable", "label.promotion.startTime", "label.promotion.endTime",
+            "label.promotion.days", "label.promotion.applyTo", "label.promotion.target",
+            "label.active", "label.inactive", "label.off",
+
+            // Target selection dialogs
+            "button.selectCategory", "button.selectProducts", "button.selectSkus",
+            "button.categorySelected", "button.productSelected", "button.skuSelected",
+            "error.brandNotSelected",
+            "action.cancel", "action.confirm", "action.confirmSelected",
+            "dialog.categorySelection.title", "dialog.categorySelection.searchPlaceholder",
+            "dialog.categorySelection.selectAll", "dialog.categorySelection.clearAll",
+            "dialog.categorySelection.loading", "dialog.categorySelection.empty",
+            "dialog.categorySelection.loadFailed",
+            "dialog.productSelection.title", "dialog.productSelection.searchPlaceholder",
+            "dialog.productSelection.selectAll", "dialog.productSelection.clearAll",
+            "dialog.productSelection.loading", "dialog.productSelection.empty",
+            "dialog.productSelection.loadFailed", "dialog.productSelection.category",
+            "dialog.productSelection.noCategories", "dialog.productSelection.categoryLoadFailed",
+
+            // Live preview mirror
+            "preview.notSet", "preview.unnamed", "preview.emptyTitle",
+            "preview.specialPrice.title", "preview.target.category",
+            "preview.target.product", "preview.target.sku",
+
+            // Field-level validation the aggregate check relies on
+            "validation.name.minLength",
+            "validation.promotion.discountRequired",
+            "validation.promotion.timeRequired",
+            "validation.promotion.daysRequired");
 
     @Test
     void everyPromotionKey_existsInTheDefaultLocale() {

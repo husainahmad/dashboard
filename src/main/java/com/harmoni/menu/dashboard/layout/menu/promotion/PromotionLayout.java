@@ -2,6 +2,8 @@ package com.harmoni.menu.dashboard.layout.menu.promotion;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.util.Css;
+import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientPromotionService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientPromotionService;
 import com.vaadin.flow.component.AttachEvent;
@@ -19,13 +21,16 @@ import lombok.AllArgsConstructor;
 public class PromotionLayout extends VerticalLayout {
 
     private final AsyncRestClientPromotionService asyncRestClientPromotionService;
+    private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientPromotionService restClientPromotionService;
+    private final AccessService accessService;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         addClassName(Css.LIST_VIEW);
-        add(new PromotionTabs(asyncRestClientPromotionService, restClientPromotionService));
+        add(new PromotionTabs(asyncRestClientPromotionService, asyncRestClientMenuService,
+                restClientPromotionService, accessService));
         setSizeFull();
     }
 }

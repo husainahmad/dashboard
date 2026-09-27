@@ -67,7 +67,8 @@ public class PromotionStatusEventListener
     private void onError(Throwable error) {
         log.error("Update promotion status failed", error);
         if (!(error instanceof BusinessBadRequestException)) {
-            UiUtil.error(Messages.get("notification.promotion.statusFailed"));
+            UI ui = promotionForm.getUi();
+            UiUtil.safeAccess(ui, () -> UiUtil.error(Messages.get("notification.promotion.statusFailed")));
         }
     }
 

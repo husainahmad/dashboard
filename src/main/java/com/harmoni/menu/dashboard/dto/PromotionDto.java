@@ -1,13 +1,16 @@
 package com.harmoni.menu.dashboard.dto;
 
 import com.harmoni.menu.dashboard.layout.enums.PromotionStatus;
+import com.harmoni.menu.dashboard.layout.enums.PromotionTargetType;
 import com.harmoni.menu.dashboard.layout.enums.PromotionType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -74,5 +77,14 @@ public class PromotionDto {
     /** The replacement prices, only used by a {@code SPECIAL_PRICE} promotion. */
 
     private List<PromotionSpecialPriceDto> specialPrices;
+
+    // Simplified form fields (UI-only)
+    private BigDecimal discountValue;
+    private PromotionTargetType applyToType;
+    private Long targetId;
+    private Boolean active;
+    private LocalTime startTime;
+    private LocalTime endTime;
+    private Boolean stackable;
 
 }

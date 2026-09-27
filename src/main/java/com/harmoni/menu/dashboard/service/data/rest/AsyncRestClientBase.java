@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.exception.BusinessServerRequestException;
 import com.harmoni.menu.dashboard.exception.TokenRefreshRequiredException;
@@ -39,8 +41,10 @@ public abstract class AsyncRestClientBase implements Serializable {
     }
 
     private final transient ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+            .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     /**
      * Callback fired when the async request lands, either with the deserialized

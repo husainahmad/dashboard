@@ -147,3 +147,422 @@ vaadin-password-field:focus-within::part(input-field) {
         0 0 0 1px
         var(--lumo-primary-color-50pct);
 }
+
+/* ============================================================
+   PROMOTION EDITOR
+
+   The form and its live preview sit side by side. The preview
+   groups, titles and detail rows carry their presentation from
+   inline styles in PromotionPreview, so only the structural
+   pieces live here.
+   ============================================================ */
+
+.promotion-editor-layout {
+
+    display:
+        flex;
+
+    flex-direction:
+        row;
+
+    gap:
+        var(--lumo-space-m);
+
+    width:
+        100%;
+
+    min-height:
+        0;
+}
+
+.promotion-form-wrapper {
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow);
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    /*
+     * The column's sizing lives here rather than in PromotionFormWithPreview.
+     * An inline width outranks every stylesheet rule, so declaring it from Java
+     * left this block unable to describe the column at all: the two disagreed,
+     * and the Java always won.
+     *
+     * flex-basis is what sizes a column on its container's main axis, so
+     * flex: 1 1 0 is the "take the remaining space" declaration, and no width
+     * is declared here. VerticalLayout's own constructor already puts an inline
+     * width: 100% on the element; that one is inert, because flex-basis wins on
+     * the main axis and the media query below stretches the column on the cross
+     * axis anyway. Only the constraints need stating, and only here can the
+     * media query relax them.
+     *
+     * min-width, not 0: a form squeezed below 560px stops being readable, and
+     * 0 would only buy the flex algorithm permission to crush it that far.
+     */
+
+    flex:
+        1 1 0;
+
+    min-width:
+        560px;
+
+    max-width:
+        1000px;
+
+    overflow-x:
+        hidden;
+}
+
+.promotion-form-wrapper
+vaadin-form-layout {
+
+    flex:
+        1;
+
+    overflow-y:
+        auto;
+
+    overflow-x:
+        hidden;
+
+    max-height:
+        calc(100vh - 200px);
+}
+
+.promotion-preview-wrapper {
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow);
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    overflow:
+        hidden;
+
+    min-height:
+        0;
+
+    /*
+     * A fixed band, and the reason it is declared here rather than in
+     * PromotionFormWithPreview: all three of width, min-width and max-width used to
+     * be set on the component, and an inline width outranks every stylesheet rule - so
+     * the full-width fallback for a narrow screen in the media query below was
+     * unreachable. flex-basis auto reads the width, which is what pins the column.
+     */
+
+    flex:
+        0 0 auto;
+
+    width:
+        420px;
+
+    min-width:
+        380px;
+
+    max-width:
+        480px;
+}
+
+.promotion-preview {
+
+    flex:
+        1;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    padding:
+        var(--lumo-space-m);
+
+    background:
+        var(--lumo-contrast-5pct);
+
+    border-radius:
+        var(--lumo-border-radius-m);
+
+    min-height:
+        0;
+
+    overflow-y:
+        auto;
+
+    overflow-x:
+        hidden;
+
+    max-height:
+        calc(100vh - 220px);
+}
+
+.promotion-editor-footer {
+
+    border-top:
+        1px solid var(--lumo-contrast-10pct);
+
+    margin-top:
+        var(--lumo-space-s);
+
+    padding-top:
+        var(--lumo-space-m);
+}
+
+
+/* ---------- Caption beside an unlabelled field ---------- */
+
+/*
+ * The Days row labels its checkboxes with a Span rather than a field label, so
+ * it needs the weight and colour Vaadin gives ::part(label) to sit on the same
+ * optical line as the labelled fields around it.
+ */
+
+.field-label {
+
+    color:
+        var(--app-text-secondary);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    font-weight:
+        500;
+
+    line-height:
+        1.2;
+}
+
+
+/* ---------- Day of week row ---------- */
+
+/*
+ * Day labels are localised, so their widths vary per locale and seven of them
+ * overflow the card on a narrow form. :has() is the only way to reach the row
+ * from the checkbox class; without :has() support the row stays on one line,
+ * which is the behaviour that shipped before localisation.
+ */
+
+vaadin-horizontal-layout:has(
+        > .day-checkbox) {
+
+    flex-wrap:
+        wrap;
+
+    row-gap:
+        var(--lumo-space-xs);
+}
+
+.day-checkbox {
+
+    margin-inline-end:
+        var(--lumo-space-xs);
+}
+
+
+/* ---------- Form section cards ---------- */
+
+.form-section-card {
+
+    box-sizing:
+        border-box;
+
+    width:
+        100%;
+
+    max-width:
+        100%;
+}
+
+.form-section-card
+vaadin-form-layout {
+
+    width:
+        100%;
+
+    box-sizing:
+        border-box;
+}
+
+
+/* ---------- Preview ---------- */
+
+.preview-group {
+
+    margin-bottom:
+        var(--lumo-space-m);
+}
+
+.preview-group:last-child {
+
+    margin-bottom:
+        0;
+}
+
+.preview-name {
+
+    margin-bottom:
+        var(--lumo-space-s);
+}
+
+.preview-benefit {
+
+    margin-bottom:
+        var(--lumo-space-m);
+}
+
+.preview-status {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    gap:
+        var(--lumo-space-xs);
+
+    padding:
+        var(--lumo-space-xs) var(--lumo-space-s);
+
+    border-radius:
+        var(--lumo-border-radius-s);
+
+    font-size:
+        var(--lumo-font-size-xs);
+
+    text-transform:
+        uppercase;
+
+    letter-spacing:
+        0.05em;
+}
+
+/*
+ * --lumo-success-color-10pct is not defined by this theme, so the tinted fill is
+ * mixed from the text colour the same way grid.css does for its status
+ * outlines. Referencing the token bare would resolve to no background at all.
+ */
+
+.preview-status.status-active {
+
+    background:
+        color-mix(in srgb, var(--lumo-success-text-color, #16a34a) 10%, transparent);
+
+    color:
+        var(--lumo-success-text-color, #16a34a);
+}
+
+.preview-status.status-active::before {
+
+    content:
+        "\25cf";
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    line-height:
+        1;
+}
+
+.preview-status.status-inactive {
+
+    background:
+        var(--lumo-contrast-10pct);
+
+    color:
+        var(--lumo-tertiary-text-color);
+}
+
+.preview-status.status-inactive::before {
+
+    content:
+        "\25cb";
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    line-height:
+        1;
+}
+
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+
+    .promotion-editor-layout {
+
+        flex-direction:
+            column;
+    }
+
+    .promotion-form-wrapper {
+
+        max-width:
+            none;
+    }
+
+    .promotion-preview-wrapper {
+
+        width:
+            100%;
+
+        max-width:
+            none;
+
+        min-width:
+            0;
+    }
+}
+
+
+/* ---------- Dark mode ---------- */
+
+/*
+ * Keyed off the theme attribute the app actually toggles, not the OS setting,
+ * so a user who picked light mode on a dark desktop keeps the light surfaces.
+ * Every token referenced below is re-declared by color-schemes.css under this
+ * same attribute, so the cards follow the active scheme with no extra work.
+ */
+
+body[theme~="dark"] .promotion-form-wrapper,
+body[theme~="dark"] .promotion-preview-wrapper {
+
+    background:
+        var(--app-surface);
+
+    border-color:
+        var(--app-border);
+}
+
+body[theme~="dark"] .promotion-preview {
+
+    background:
+        var(--lumo-contrast-10pct);
+}

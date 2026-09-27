@@ -293,6 +293,31 @@ vaadin-grid.customization-grid {
 }
 
 
+/* ---------- Nested SKU / Customization tab sheet ---------- */
+
+/*
+ * The form is its own scroll container, so the inner sheet must size to its
+ * content; a height:100% sheet would push the sticky action bar out of reach.
+ * ::part(content) padding is dropped because the form card already insets its
+ * rows. The .content wrapper around the SKU grid is kept, so the height caps
+ * above still apply through the descendant selectors.
+ */
+
+.product-form
+vaadin-tabsheet {
+
+    margin-top:
+        var(--lumo-space-s);
+}
+
+.product-form
+vaadin-tabsheet::part(content) {
+
+    padding:
+        0;
+}
+
+
 /* ---------- SKU tier price alignment ---------- */
 
 vaadin-number-field.tier-price-field

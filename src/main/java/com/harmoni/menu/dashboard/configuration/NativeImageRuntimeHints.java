@@ -11,6 +11,11 @@ import com.harmoni.menu.dashboard.dto.JwtDto;
 import com.harmoni.menu.dashboard.dto.LoginDto;
 import com.harmoni.menu.dashboard.dto.ProductDto;
 import com.harmoni.menu.dashboard.dto.ProductImageDto;
+import com.harmoni.menu.dashboard.dto.PromotionDto;
+import com.harmoni.menu.dashboard.dto.PromotionRuleDto;
+import com.harmoni.menu.dashboard.dto.PromotionScheduleDto;
+import com.harmoni.menu.dashboard.dto.PromotionSpecialPriceDto;
+import com.harmoni.menu.dashboard.dto.PromotionTargetDto;
 import com.harmoni.menu.dashboard.dto.ServiceDto;
 import com.harmoni.menu.dashboard.dto.SkuDto;
 import com.harmoni.menu.dashboard.dto.SkuTierPriceDto;
@@ -24,6 +29,10 @@ import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemAction;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
+import com.harmoni.menu.dashboard.layout.enums.PromotionRuleType;
+import com.harmoni.menu.dashboard.layout.enums.PromotionStatus;
+import com.harmoni.menu.dashboard.layout.enums.PromotionTargetType;
+import com.harmoni.menu.dashboard.layout.enums.PromotionType;
 import com.harmoni.menu.dashboard.layout.enums.RoleType;
 import com.harmoni.menu.dashboard.layout.enums.SelectionType;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductTreeItem;
@@ -63,8 +72,18 @@ public class NativeImageRuntimeHints {
                 TierMenuProperties.class,
                 TierProperties.class,
                 TierServiceProperties.class,
+                PromotionProperties.class,
                 UrlProperties.class,
                 UserProperties.class,
+                PromotionDto.class,
+                PromotionScheduleDto.class,
+                PromotionTargetDto.class,
+                PromotionRuleDto.class,
+                PromotionSpecialPriceDto.class,
+                PromotionType.class,
+                PromotionStatus.class,
+                PromotionTargetType.class,
+                PromotionRuleType.class,
                 StoreDto.class,
                 TierDto.class,
                 ProductImageDto.class,

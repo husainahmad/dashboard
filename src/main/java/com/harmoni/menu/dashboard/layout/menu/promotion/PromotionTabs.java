@@ -1,5 +1,7 @@
 package com.harmoni.menu.dashboard.layout.menu.promotion;
 
+import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientPromotionService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientPromotionService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -19,14 +21,16 @@ import lombok.extern.slf4j.Slf4j;
 public class PromotionTabs extends VerticalLayout {
 
     private final AsyncRestClientPromotionService asyncRestClientPromotionService;
+    private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientPromotionService restClientPromotionService;
+    private final AccessService accessService;
 
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
         browseTab.setLabel(Messages.get("tab.promotionList"));
         PromotionListView promotionListView = new PromotionListView(
-                asyncRestClientPromotionService, restClientPromotionService);
+                asyncRestClientPromotionService, asyncRestClientMenuService, restClientPromotionService, accessService);
         tabSheet.add(browseTab, promotionListView);
         tabSheet.setSizeFull();
 

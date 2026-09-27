@@ -96,6 +96,22 @@
 				<artifactId>jackson-annotations</artifactId>
 				<version>2.18.8</version>
 			</dependency>
+
+			<!-- The datatype modules ship on Boot's 2.15.4 line, which would pair a
+			     2.15 module with the 2.18 databind above. They are pinned to the same
+			     version because JavaTimeModule is now registered explicitly on the
+			     shared mappers, so this is a runtime dependency and not just a
+			     transitive one. -->
+			<dependency>
+				<groupId>com.fasterxml.jackson.datatype</groupId>
+				<artifactId>jackson-datatype-jsr310</artifactId>
+				<version>2.18.8</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.datatype</groupId>
+				<artifactId>jackson-datatype-jdk8</artifactId>
+				<version>2.18.8</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 

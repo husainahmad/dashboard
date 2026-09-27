@@ -269,8 +269,14 @@ class AsyncRestClientPromotionServiceTest {
     }
 
     /**
-     * Mirrors the lenient mapper the reactive client relies on, so the test fails
-     * if the wire format ever drifts from the DTOs.
+     * A wire-format fixture, not the production mapper.
+     *
+     * <p>This mapper is built here on purpose so the assertions below pin the JSON the
+     * service is expected to put on the wire. It must not be read as a stand-in for the
+     * client's own mapper: when this comment claimed it mirrored it, the client had no
+     * {@code JavaTimeModule} at all and a missing-registration bug reached production with
+     * this test green. The shared mappers are covered directly by
+     * {@code ObjectUtilDateTimeTest} and by the client's own registration.</p>
      */
     private static ObjectMapper objectMapper() {
         return new ObjectMapper()

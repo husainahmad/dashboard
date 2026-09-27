@@ -25,6 +25,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -171,14 +172,42 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         setSizeFull();
         setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("760px", 2));
 
-        add(sectionCaption(Messages.get("section.skuPricing")), 2);
-        add(skuSection.getToolbar(), 2);
-        add(getContent(skuSection.getGrid()), 2);
-        add(customizationSection.getLayout(), 2);
+        add(buildSkuCustomizationTabs(), 2);
         add(getButtonBar(), 2);
 
         addValidation();
         bindButtonState();
+    }
+
+    /**
+     * Groups the {@link SkuSection} and {@link CustomizationSection} editors into
+     * a nested {@link TabSheet} so the form scrolls less and each editor gets the
+     * full row width.
+     *
+     * <p>
+     * The sheet is intentionally left to size itself instead of filling the form:
+     * the form is its own scroll container (absolutely positioned in the outer
+     * product tab), so a {@code sizeFull} sheet would pin the action bar out of
+     * reach. Panel padding is dropped because the form already provides it, and
+     * each grid keeps its existing {@code .content} wrapper so the height caps in
+     * {@code product-form.css} still apply.
+     * </p>
+     *
+     * @return the SKU / customization tab sheet
+     */
+    private TabSheet buildSkuCustomizationTabs() {
+        TabSheet tabSheet = new TabSheet();
+        tabSheet.setWidthFull();
+
+        Tab skuTab = new Tab(Messages.get("section.skuPricing"));
+        Div skuPanel = new Div(getToolbar(skuSection.getToolbar()), getContent(skuSection.getGrid()));
+        tabSheet.add(skuTab, skuPanel);
+
+        Tab customizationTab = new Tab(Messages.get("section.customization"));
+        Div customizationPanel = new Div(customizationSection.getLayout());
+        tabSheet.add(customizationTab, customizationPanel);
+
+        return tabSheet;
     }
 
     /**

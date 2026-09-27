@@ -12,6 +12,8 @@ import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
+import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientPromotionService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientPromotionService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -32,7 +34,6 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +58,9 @@ public class PromotionListView extends AbstractListView {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
     private final AsyncRestClientPromotionService asyncRestClientPromotionService;
+    private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientPromotionService restClientPromotionService;
+    private final AccessService accessService;
 
     private final Grid<PromotionDto> promotionGrid = new Grid<>(PromotionDto.class);
     private final GridSkeleton gridSkeleton = new GridSkeleton(PAGE_SIZE);
@@ -156,7 +159,7 @@ public class PromotionListView extends AbstractListView {
     private void configureFilters() {
         statusFilter.setLabel(Messages.get("label.promotion.status"));
         statusFilter.setItemLabelGenerator(PromotionStatus::getLabel);
-        statusFilter.setItems(Collections.emptyList());
+        statusFilter.setItems(PromotionStatus.values());
         statusFilter.setClearButtonVisible(true);
         statusFilter.addValueChangeListener(change -> {
             if (change.isFromClient()) {
@@ -167,7 +170,7 @@ public class PromotionListView extends AbstractListView {
 
         typeFilter.setLabel(Messages.get("label.promotion.type"));
         typeFilter.setItemLabelGenerator(PromotionType::getLabel);
-        typeFilter.setItems(Collections.emptyList());
+        typeFilter.setItems(PromotionType.values());
         typeFilter.setClearButtonVisible(true);
         typeFilter.addValueChangeListener(change -> {
             if (change.isFromClient()) {
@@ -221,8 +224,9 @@ public class PromotionListView extends AbstractListView {
         TabManager tabManager = new TabManager(tabSheet);
         if (formAction == FormAction.CREATE || ObjectUtils.isEmpty(promotion.getId())) {
             String label = Messages.get("tab.promotionNew");
-            tabManager.addOrSelect(label, tab -> new PromotionForm(
-                    restClientPromotionService, tabManager, tab, formAction, null));
+            tabManager.addOrSelect(label, tab -> new PromotionFormWithPreview(
+                    restClientPromotionService, asyncRestClientMenuService, tabManager, tab, formAction, null,
+                    accessService));
             return;
         }
         restClientPromotionService.getPromotionById(promotion.getId()).subscribe(response -> {
@@ -235,8 +239,9 @@ public class PromotionListView extends AbstractListView {
                 String label = ObjectUtils.isEmpty(detail.getName())
                         ? Messages.get("tab.promotionEdit")
                         : Messages.get(Messages.Keys.ACTION_EDIT_NAME, detail.getName());
-                manager.addOrSelect(label, tab -> new PromotionForm(
-                        restClientPromotionService, manager, tab, FormAction.EDIT, detail));
+                manager.addOrSelect(label, tab -> new PromotionFormWithPreview(
+                        restClientPromotionService, asyncRestClientMenuService, manager, tab, FormAction.EDIT, detail,
+                        accessService));
             });
         }, error -> log.error("Failed to load promotion detail id={}", promotion.getId(), error));
     }
@@ -255,8 +260,9 @@ public class PromotionListView extends AbstractListView {
         String label = ObjectUtils.isEmpty(promotion.getName())
                 ? Messages.get("tab.promotionStatus")
                 : Messages.get("tab.promotionStatusNamed", promotion.getName());
-        tabManager.addOrSelect(label, tab -> new PromotionForm(
-                restClientPromotionService, tabManager, tab, FormAction.STATUS, promotion));
+        tabManager.addOrSelect(label, tab -> new PromotionFormWithPreview(
+                restClientPromotionService, asyncRestClientMenuService, tabManager, tab, FormAction.STATUS, promotion,
+                accessService));
     }
 
     private void fetchPromotions() {

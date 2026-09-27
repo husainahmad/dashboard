@@ -10,6 +10,7 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientPromotionService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,12 @@ public class PromotionDeleteEventListener
 
     private final PromotionDto promotionDto;
     private final RestClientPromotionService restClientPromotionService;
+
+    /**
+     * The UI captured on click, so the REST callbacks can push their toast to it:
+     * they run on a background thread and a Notification needs a current UI.
+     */
+    private UI ui;
 
     /**
      * Builds the delete button shown in the footer of an edit form, so removing a
@@ -51,6 +58,7 @@ public class PromotionDeleteEventListener
         if (promotionDto == null || promotionDto.getId() == null) {
             return;
         }
+        this.ui = buttonClickEvent.getSource().getUI().orElse(null);
         String name = promotionDto.getName() == null || promotionDto.getName().isBlank()
                 ? promotionDto.getCode()
                 : promotionDto.getName();
@@ -68,14 +76,14 @@ public class PromotionDeleteEventListener
     }
 
     private void accept(RestAPIResponse response) {
-        UiUtil.success(Messages.get("notification.promotion.deleted"));
+        UiUtil.safeAccess(ui, () -> UiUtil.success(Messages.get("notification.promotion.deleted")));
         broadcastMessage(BroadcastMessage.PROMOTION_DELETE_SUCCESS, response);
     }
 
     private void onError(Throwable error) {
         log.error("Delete promotion failed id={}", promotionDto == null ? null : promotionDto.getId(), error);
         if (!(error instanceof BusinessBadRequestException)) {
-            UiUtil.error(Messages.get("notification.promotion.deleteFailed"));
+            UiUtil.safeAccess(ui, () -> UiUtil.error(Messages.get("notification.promotion.deleteFailed")));
         }
     }
 }
