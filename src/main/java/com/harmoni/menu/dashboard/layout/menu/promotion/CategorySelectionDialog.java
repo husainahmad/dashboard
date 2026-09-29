@@ -4,6 +4,7 @@ import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.util.Messages;
+import com.harmoni.menu.dashboard.layout.util.Css;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -130,11 +131,11 @@ public class CategorySelectionDialog extends Dialog {
 
         loadingIndicator.setText(Messages.get("dialog.categorySelection.loading"));
         loadingIndicator.getStyle()
-                .set("display", "flex")
-                .set("align-items", "center")
-                .set("justify-content", "center")
-                .set("height", "200px")
-                .set("color", "var(--lumo-secondary-text-color)");
+                .set(Css.DISPLAY, "flex")
+                .set(Css.ALIGN_ITEMS, "center")
+                .set(Css.JUSTIFY_CONTENT, "center")
+                .set(Css.HEIGHT, "200px")
+                .set(Css.COLOR, "var(--lumo-secondary-text-color)");
         loadingIndicator.setVisible(false);
 
         VerticalLayout listContainer = new VerticalLayout(categoryList, loadingIndicator);
@@ -149,9 +150,9 @@ public class CategorySelectionDialog extends Dialog {
         footer.setPadding(true);
         footer.setSpacing(true);
         footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
-        footer.getStyle().set("border-top", "1px solid var(--lumo-contrast-10pct)");
+        footer.getStyle().set("border-top", Css.HAIRLINE_BORDER);
 
-        cancelButton.setText(Messages.get("action.cancel"));
+        cancelButton.setText(Messages.get(Messages.Keys.ACTION_CANCEL));
         cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         cancelButton.addClickListener(e -> close());
 
@@ -216,11 +217,11 @@ public class CategorySelectionDialog extends Dialog {
             Div emptyState = new Div();
             emptyState.setText(Messages.get("dialog.categorySelection.empty"));
             emptyState.getStyle()
-                    .set("display", "flex")
-                    .set("align-items", "center")
-                    .set("justify-content", "center")
-                    .set("height", "200px")
-                    .set("color", "var(--lumo-tertiary-text-color)");
+                    .set(Css.DISPLAY, "flex")
+                    .set(Css.ALIGN_ITEMS, "center")
+                    .set(Css.JUSTIFY_CONTENT, "center")
+                    .set(Css.HEIGHT, "200px")
+                    .set(Css.COLOR, "var(--lumo-tertiary-text-color)");
             categoryList.add(emptyState);
             return;
         }
@@ -232,13 +233,13 @@ public class CategorySelectionDialog extends Dialog {
             row.setPadding(true);
             row.setAlignItems(FlexComponent.Alignment.CENTER);
             row.getStyle()
-                    .set("border-bottom", "1px solid var(--lumo-contrast-10pct)")
+                    .set(Css.BORDER_BOTTOM, Css.HAIRLINE_BORDER)
                     .set("transition", "background-color 0.15s");
 
             row.getElement().addEventListener("mouseenter", e ->
-                    row.getStyle().set("background-color", "var(--lumo-contrast-5pct)"));
+                    row.getStyle().set(Css.BACKGROUND_COLOR, "var(--lumo-contrast-5pct)"));
             row.getElement().addEventListener("mouseleave", e ->
-                    row.getStyle().set("background-color", "transparent"));
+                    row.getStyle().set(Css.BACKGROUND_COLOR, "transparent"));
 
             Checkbox checkbox = new Checkbox();
             checkbox.setValue(selectedCategories.stream()
@@ -259,16 +260,16 @@ public class CategorySelectionDialog extends Dialog {
 
             H4 nameLabel = new H4(category.getName());
             nameLabel.getStyle()
-                    .set("margin", "0")
-                    .set("font-size", "var(--lumo-font-size-m)")
-                    .set("font-weight", "500")
-                    .set("color", "var(--lumo-primary-text-color)");
+                    .set(Css.MARGIN, "0")
+                    .set(Css.FONT_SIZE, "var(--lumo-font-size-m)")
+                    .set(Css.FONT_WEIGHT, "500")
+                    .set(Css.COLOR, "var(--lumo-primary-text-color)");
 
             if (category.getDescription() != null && !category.getDescription().isEmpty()) {
                 Div descLabel = new Div(category.getDescription());
                 descLabel.getStyle()
-                        .set("font-size", "var(--lumo-font-size-s)")
-                        .set("color", "var(--lumo-secondary-text-color)")
+                        .set(Css.FONT_SIZE, "var(--lumo-font-size-s)")
+                        .set(Css.COLOR, "var(--lumo-secondary-text-color)")
                         .set("margin-top", "var(--lumo-space-xs)");
                 categoryInfo.add(nameLabel, descLabel);
             } else {

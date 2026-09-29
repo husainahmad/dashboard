@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.report;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
@@ -223,15 +224,7 @@ public abstract class AbstractReportView extends VerticalLayout {
      * @return the header layout
      */
     private VerticalLayout createHeader() {
-        H2 title = new H2(getTitle());
-        Paragraph description = new Paragraph(getDescription());
-        description.addClassName(Css.HEALTH_CAPTION);
-
-        VerticalLayout header = new VerticalLayout(title, description);
-        header.setPadding(false);
-        header.setAlignItems(FlexComponent.Alignment.START);
-        header.setWidthFull();
-        return header;
+        return new PageHeader(getTitle(), getDescription());
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.setting.table;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
@@ -41,6 +42,7 @@ public class TableTabs extends VerticalLayout {
         tabSheet.add(browseTab, tableListView);
         tabSheet.setSizeFull();
 
+        add(PageHeader.of(Messages.Keys.PAGE_TABLE_TITLE, Messages.Keys.PAGE_TABLE_DESCRIPTION));
         add(tableListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);

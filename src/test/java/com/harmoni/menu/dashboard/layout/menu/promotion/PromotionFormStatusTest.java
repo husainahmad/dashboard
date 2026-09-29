@@ -123,7 +123,8 @@ class PromotionFormStatusTest {
      * form only uses them when saving or when a target is picked.</p>
      */
     private static PromotionForm newForm(FormAction formAction, PromotionDto promotion) throws Exception {
-        PromotionForm form = new PromotionForm(null, null, null, null, formAction, promotion, null);
+        PromotionForm form = new PromotionForm(null, null, null, null,
+                PromotionEditorContext.builder().formAction(formAction).promotionDto(promotion).build());
         invoke(form, "configureFields");
         invoke(form, "configureSpecialPriceGrid");
         invoke(form, "addValidation");

@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.dto.PromotionScheduleDto;
 import com.harmoni.menu.dashboard.dto.PromotionSpecialPriceDto;
 import com.harmoni.menu.dashboard.dto.PromotionTargetDto;
 import com.harmoni.menu.dashboard.layout.enums.PromotionRuleType;
+import com.harmoni.menu.dashboard.layout.enums.PromotionScopeType;
 import com.harmoni.menu.dashboard.layout.enums.PromotionStatus;
 import com.harmoni.menu.dashboard.layout.enums.PromotionTargetType;
 import com.harmoni.menu.dashboard.layout.enums.PromotionType;
@@ -33,6 +34,7 @@ class PromotionRuntimeHintsTest {
             PromotionType.class,
             PromotionStatus.class,
             PromotionTargetType.class,
+            PromotionScopeType.class,
             PromotionRuleType.class);
 
     @Test

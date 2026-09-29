@@ -129,12 +129,29 @@ public class CustomizationSection {
         });
     }
 
+    /**
+     * Replaces the attached list and tells the form, so the product preview follows a
+     * load or a reload without each caller having to remember.
+     *
+     * <p>Notified from here rather than from the individual operations because this is
+     * the one point the list is known to be in its new state. An earlier version had the
+     * saved add and delete paths notify from their own response callbacks, which fired
+     * straight after calling {@code reload()} and so raced the reload it was supposed to
+     * be reporting; putting it on the render that reload triggers removes the ordering
+     * assumption entirely.</p>
+     */
     private void render(List<ProductCustomizationDto> customizations) {
         productCustomizations.clear();
         productCustomizations.addAll(ObjectUtils.isEmpty(customizations) ? new ArrayList<>() : customizations);
         grid.getDataProvider().refreshAll();
+        delegate.onContentChanged();
     }
 
+    /**
+     * Configures the grid columns and layout. The grid is not editable; all
+     * changes are made via the add dialog or the per-customization configure
+     * dialog.
+     */
     private void configureGrid() {
         grid.setSelectionMode(Grid.SelectionMode.NONE);
         grid.setAllRowsVisible(true);
@@ -148,6 +165,18 @@ public class CustomizationSection {
         grid.addComponentColumn(this::renderOptionsColumn).setHeader(Messages.get("grid.header.options")).setWidth("90px");
         grid.addComponentColumn(this::renderCustomizationActions).setWidth("120px");
         grid.setItems(productCustomizations);
+    }
+
+    /**
+     * The attached customizations as they currently stand.
+     *
+     * <p>For read-only consumers such as the product preview, and unmodifiable for the
+     * same reason as the SKU rows.</p>
+     *
+     * @return the live customizations, never {@code null}
+     */
+    public List<ProductCustomizationDto> productCustomizations() {
+        return List.copyOf(productCustomizations);
     }
 
     private void onAddCustomization() {
@@ -187,6 +216,7 @@ public class CustomizationSection {
                     .forEach(productCustomizations::add);
             dialog.close();
             grid.getDataProvider().refreshAll();
+            delegate.onContentChanged();
             delegate.showNotification(Messages.get("notification.customization.willSaveWithProduct"));
             return;
         }
@@ -202,10 +232,19 @@ public class CustomizationSection {
                 });
     }
 
+    /**
+     * Deletes the customization attachment from the product. For an unsaved
+     * product the deletion is local and carried in the save payload; for a saved
+     * product the deletion is sent via {@code deleteProductCustomization} and
+     * the grid reloads.
+     *
+     * @param dto the customization to delete
+     */
     private void onDeleteCustomization(ProductCustomizationDto dto) {
         if (delegate.getProductId() == null) {
             productCustomizations.removeIf(pc -> Objects.equals(pc.getCustomizationId(), dto.getCustomizationId()));
             grid.getDataProvider().refreshAll();
+            delegate.onContentChanged();
             delegate.showNotification(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_REMOVED));
             return;
         }
@@ -238,15 +277,28 @@ public class CustomizationSection {
                 .build();
     }
 
+    /**
+     * Opens the per-product configure dialog for the given customization. The
+     * dialog is only available for saved products, because it needs to persist
+     * the option selections.
+     *
+     * @param dto the customization to configure
+     */
     private void openConfigureDialog(ProductCustomizationDto dto) {
         if (delegate.getProductId() == null) {
             UiUtil.show(Messages.get("notification.product.saveFirst"),
                     NotificationVariant.LUMO_PRIMARY, 4000);
             return;
         }
-        new CustomizationConfigureDialog(dto, delegate, restClientMenuService, tierDtos, this::reload).open();
+        new CustomizationConfigureDialog(dto, delegate, restClientMenuService, tierDtos,
+                this::reload).open();
     }
 
+    /**
+     * Renders a checkmark in the "Required" column if the customization is required.
+     * @param dto the customization to render
+     * @return a component containing the checkmark or empty space
+     */
     private Component renderRequiredColumn(ProductCustomizationDto dto) {
         HorizontalLayout wrapper = new HorizontalLayout();
         wrapper.setWidthFull();
@@ -259,6 +311,13 @@ public class CustomizationSection {
         return wrapper;
     }
 
+    /**
+     * Renders the number of options in the "Options" column. If there are no
+     * options, it renders "0".
+     *
+     * @param dto the customization to render
+     * @return a component containing the number of options
+     */
     private Component renderOptionsColumn(ProductCustomizationDto dto) {
         HorizontalLayout wrapper = new HorizontalLayout();
         wrapper.setWidthFull();
@@ -268,12 +327,28 @@ public class CustomizationSection {
         return wrapper;
     }
 
+    /**
+     * Renders the "Min / Max" column as "min / max", where min and max are the
+     * minimum and maximum selection counts. If either is null, it renders "0" for
+     * min and "n" for max.
+     *
+     * @param dto the customization to render
+     * @return a string in the format "min / max"
+     */
     private String renderMinMaxText(ProductCustomizationDto dto) {
         String min = dto.getMinSelection() == null ? "0" : String.valueOf(dto.getMinSelection());
         String max = dto.getMaxSelection() == null ? "n" : String.valueOf(dto.getMaxSelection());
-        return min + " / " + max;
+        return min.concat( " / ").concat(max);
     }
 
+    /**
+     * Renders the "Actions" column with a configure button and a delete button.
+     * The configure button opens the per-product configure dialog, and the delete
+     * button removes the customization from the product.
+     *
+     * @param dto the customization to render
+     * @return a component containing the action buttons
+     */
     private Component renderCustomizationActions(ProductCustomizationDto dto) {
         HorizontalLayout actions = new HorizontalLayout();
         actions.setSpacing(false);

@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.dto;
 
+import com.harmoni.menu.dashboard.layout.enums.PromotionScopeType;
 import com.harmoni.menu.dashboard.layout.enums.PromotionStatus;
 import com.harmoni.menu.dashboard.layout.enums.PromotionTargetType;
 import com.harmoni.menu.dashboard.layout.enums.PromotionType;
@@ -19,6 +20,17 @@ import java.util.List;
  * <p>
  * On update an omitted child collection leaves the stored rows untouched, while an
  * empty list clears them, so the form always submits every collection it manages.
+ * <p>
+ * The promotion can be scoped to apply at different organizational levels:
+ * <ul>
+ *   <li>{@code All Stores} - applies to all stores</li>
+ *   <li>{@code Brand} - applies to a specific brand</li>
+ *   <li>{@code Chain} - applies to a specific chain</li>
+ *   <li>{@code Store} - applies to specific stores selected by the operator</li>
+ * </ul>
+ * <p>
+ * When {@code scope} is set, the {@link #targets} field describes what products,
+ * SKUs, or categories the promotion applies to within that scope.
  */
 @Data
 @Builder
@@ -86,5 +98,6 @@ public class PromotionDto {
     private LocalTime startTime;
     private LocalTime endTime;
     private Boolean stackable;
+    private PromotionScopeType scope;
 
 }

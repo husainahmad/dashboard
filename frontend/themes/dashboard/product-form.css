@@ -6,6 +6,17 @@
    action bar stays pinned to the bottom. Spacing is kept tight
    so the whole form stays compact.
 
+   One scroll, not three. The SKU and customization grids are
+   uncapped, so their rows belong to the form's scroll rather
+   than to a scrollbar of their own; they used to be capped at
+   332px and 240px, which put a second and a third scroller in
+   one panel and left the operator scrolling the form while the
+   grid under the cursor stayed put.
+
+   In the two-column editor the form is position: relative and
+   the column scrolls instead, and the action bar ends the form
+   rather than pinning - see forms.css, which owns that layout.
+
    DOM map
    -------
    vaadin-tabsheet
@@ -214,18 +225,21 @@ vaadin-tabsheet:has(.product-form:not([hidden]))::part(content) {
 /* ---------- SKU grid ---------- */
 
 /*
- * Unlimited SKUs/tiers would stretch the dialog to the moon;
- * cap the grid so it scrolls internally while the form stays
- * a predictable height. The grid is flat inside the form card,
- * so the generic grid card chrome is removed.
+ * No max-height: the grid grows to fit its rows and the form scrolls.
+ *
+ * It used to be capped at 332px so the grid would scroll inside itself and keep the
+ * form a predictable height. That put two scrollbars in one panel - the grid's and the
+ * form's - and the inner one was the one under the operator's cursor, so scrolling the
+ * form moved the page while the grid stayed put, and the rows past the cap were only
+ * reachable by finding the grid's own scrollbar. The form already scrolls, so the cap
+ * bought nothing but a second scroll target.
+ *
+ * The grid is flat inside the form card, so the generic grid card chrome is removed.
  */
 
 .product-form
 .content
 vaadin-grid.sku-grid {
-
-    max-height:
-        332px;
 
     background:
         transparent;
@@ -238,16 +252,6 @@ vaadin-grid.sku-grid {
 
     padding:
         0;
-}
-
-
-/* ---------- Customization grid ---------- */
-
-.product-form
-vaadin-grid.customization-grid {
-
-    max-height:
-        240px;
 }
 
 
@@ -297,10 +301,10 @@ vaadin-grid.customization-grid {
 
 /*
  * The form is its own scroll container, so the inner sheet must size to its
- * content; a height:100% sheet would push the sticky action bar out of reach.
+ * content; a height:100% sheet would push the action bar out of reach.
  * ::part(content) padding is dropped because the form card already insets its
- * rows. The .content wrapper around the SKU grid is kept, so the height caps
- * above still apply through the descendant selectors.
+ * rows. The .content wrapper around the SKU grid is kept, so the grid styling
+ * above still applies through the descendant selectors.
  */
 
 .product-form

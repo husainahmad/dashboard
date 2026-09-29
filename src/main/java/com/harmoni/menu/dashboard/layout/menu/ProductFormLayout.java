@@ -38,9 +38,15 @@ public class ProductFormLayout extends FormLayout  {
      */
     public HorizontalLayout getContent(Component component) {
         HorizontalLayout content = new HorizontalLayout(component);
-        content.setFlexGrow(1, component);
+        // Width only. This used to be setSizeFull() plus flex-grow 1, and both worked
+        // against the row growing to fit the grid: setSizeFull pinned the wrapper to
+        // 100% of the form, and flex-grow 1 made the grid stretch to fill whatever
+        // height that left. With the grid's max-height removed so it sizes to its rows,
+        // a stretched grid scrolls internally again - the second scroller the removal
+        // was meant to get rid of. So the row is full width and the grid is left to
+        // take its natural height.
+        content.setWidthFull();
         content.addClassNames("content");
-        content.setSizeFull();
         return content;
     }
 

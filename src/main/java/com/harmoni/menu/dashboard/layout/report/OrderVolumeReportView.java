@@ -2,6 +2,7 @@ package com.harmoni.menu.dashboard.layout.report;
 
 import com.harmoni.menu.dashboard.dto.report.OrderVolumeReportDto;
 import com.harmoni.menu.dashboard.layout.component.StatCard;
+import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientReportService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -65,7 +66,7 @@ public class OrderVolumeReportView extends AbstractReportView {
     @Override
     protected Component createContent() {
         HorizontalLayout cards = new HorizontalLayout(totalCard, peakCard, offPeakCard);
-        cards.addClassName("stat-cards");
+        cards.addClassName(Css.STAT_CARDS);
         cards.setWidthFull();
         cards.setSpacing(true);
         cards.setPadding(false);
@@ -76,7 +77,7 @@ public class OrderVolumeReportView extends AbstractReportView {
         shareBar.setWidthFull();
         shareBar.setHeight("24px");
         shareBar.setPadding(false);
-        shareBar.addClassName("stat-cards");
+        shareBar.addClassName(Css.STAT_CARDS);
 
         VerticalLayout panel = new VerticalLayout(
                 new Span(Messages.get("report.orderVolume.split")), shareCaption, shareBar);
@@ -147,8 +148,8 @@ public class OrderVolumeReportView extends AbstractReportView {
     private static Span segment(int percent, String label) {
         Span span = new Span(percent + "% " + label);
         span.addClassName(percent > 0 ? "stat-value--ok" : "stat-value--warn");
-        span.getStyle().set("flex", String.valueOf(Math.max(percent, 1)));
-        span.getStyle().set("padding", "0 8px");
+        span.getStyle().set(Css.FLEX, String.valueOf(Math.max(percent, 1)));
+        span.getStyle().set(Css.PADDING, "0 8px");
         return span;
     }
 

@@ -37,4 +37,10 @@ public interface ProductFormDelegate {
      * @return the persisted product id, or {@code null} for a brand-new product
      */
     Integer getProductId();
+
+    /**
+     * Signals that editable content behind the form has changed, so anything mirroring
+     * the form - the product preview - can repaint itself.
+     */
+    void onContentChanged();
 }

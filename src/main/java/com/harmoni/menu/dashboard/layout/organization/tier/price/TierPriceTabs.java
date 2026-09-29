@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.organization.tier.price;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -36,6 +37,7 @@ public class TierPriceTabs extends VerticalLayout {
         tabSheet.add(browseTab, tierPriceListView);
         tabSheet.setSizeFull();
 
+        add(PageHeader.of(Messages.Keys.PAGE_TIER_PRICE_TITLE, Messages.Keys.PAGE_TIER_PRICE_DESCRIPTION));
         add(tierPriceListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);

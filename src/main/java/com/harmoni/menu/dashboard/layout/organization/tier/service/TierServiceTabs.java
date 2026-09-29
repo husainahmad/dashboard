@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.organization.tier.service;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -36,6 +37,7 @@ public class TierServiceTabs extends VerticalLayout {
         tabSheet.add(browseTab, tierServiceListView);
         tabSheet.setSizeFull();
 
+        add(PageHeader.of(Messages.Keys.PAGE_TIER_SERVICE_TITLE, Messages.Keys.PAGE_TIER_SERVICE_DESCRIPTION));
         add(tierServiceListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);

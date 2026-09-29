@@ -62,7 +62,7 @@ public class StoreForm extends FormLayout {
 
     TextField storeNameField = new TextField(Messages.get("label.field.storeName"));
     TextArea storeAddressArea = new TextArea(Messages.get("label.address"));
-    ComboBox<ChainDto> chainDtoComboBox = new ComboBox<>(Messages.get("label.chain"));
+    ComboBox<ChainDto> chainDtoComboBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_CHAIN));
     ComboBox<TierDto> tierPriceBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_PRICE));
     ComboBox<TierDto> tierMenuBox = new ComboBox<>(Messages.get("label.menu"));
     ComboBox<TierDto> tierServiceBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_SERVICE));

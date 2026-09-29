@@ -87,6 +87,7 @@ public class SkuSection {
 
         skuItems.add(item);
         dataProvider.refreshAll();
+        delegate.onContentChanged();
     }
 
     /**
@@ -107,6 +108,20 @@ public class SkuSection {
      */
     public boolean hasDefinedSku() {
         return skuItems.stream().anyMatch(item -> item.getSkuName() != null && !item.getSkuName().trim().isEmpty());
+    }
+
+    /**
+     * The rows as they currently stand, unsaved edits included.
+     *
+     * <p>For read-only consumers such as the product preview. Unmodifiable on purpose: a
+     * caller that only wants to look at the variants should not be handed the live list
+     * to alter, and going through {@link #toSkuDtos()} instead would lose the tier
+     * identities the preview needs to lay the matrix out.</p>
+     *
+     * @return the live variant rows, never {@code null}
+     */
+    public List<SkuTreeItem> skuItems() {
+        return List.copyOf(skuItems);
     }
 
     /** Converts the editable rows into the payload expected by the product API. */
@@ -133,6 +148,11 @@ public class SkuSection {
         return skuDtos;
     }
 
+    /**
+     * Configures the grid to render the SKU name, description, tier prices and
+     * delete button. The tier price columns are built dynamically from the
+     * {@link #tierDtos} list, which must remain stable for the life of the section.
+     */
     private void configureGrid() {
         grid.addClassName("sku-grid");
         grid.removeAllColumns();
@@ -146,6 +166,11 @@ public class SkuSection {
         grid.setAllRowsVisible(true);
     }
 
+    /**
+     * @param skuDto  the SKU to look up
+     * @param tierDto the tier to look up
+     * @return the price for the given SKU and tier, or 0.0 when no price is set
+     */
     private static Double priceByTier(SkuDto skuDto, TierDto tierDto) {
         if (skuDto == null || tierDto == null || skuDto.getSkuTierPriceDtos() == null) {
             return 0.0;
@@ -157,6 +182,12 @@ public class SkuSection {
                 .orElse(0.0);
     }
 
+    /**
+     * Removes the given row from the model, unless it is the last remaining row,
+     * in which case a warning is shown and the action is rejected.
+     *
+     * @param skuTreeItem the row to remove
+     */
     private void removeSku(SkuTreeItem skuTreeItem) {
         if (skuItems.size() <= MIN_SKUS) {
             delegate.showErrorDialog(Messages.get("notification.sku.deleteRejected"));
@@ -164,20 +195,35 @@ public class SkuSection {
         }
         skuItems.remove(skuTreeItem);
         dataProvider.refreshAll();
+        delegate.onContentChanged();
     }
 
+    /**
+     * @param skuTreeItem the row being rendered
+     * @return a delete button that removes the given row from the model
+     */
     private Component applyButtonDelete(SkuTreeItem skuTreeItem) {
         return UiUtil.deleteButton(event -> removeSku(skuTreeItem));
     }
 
+    /**
+     * @param skuTreeItem the row being rendered
+     * @return a text field that edits the SKU name for the given row
+     */
     private TextField applySkuNameTextField(SkuTreeItem skuTreeItem) {
         TextField textField = new TextField();
         textField.setValue(skuTreeItem.getSkuName() == null ? "" : skuTreeItem.getSkuName());
-        textField.addValueChangeListener(changeEvent ->
-                skuTreeItem.setSkuName(changeEvent.getValue() == null ? "" : changeEvent.getValue()));
+        textField.addValueChangeListener(changeEvent -> {
+            skuTreeItem.setSkuName(changeEvent.getValue() == null ? "" : changeEvent.getValue());
+            delegate.onContentChanged();
+        });
         return textField;
     }
 
+    /**
+     * @param skuTreeItem the row being rendered
+     * @return a text field that edits the SKU description for the given row
+     */
     private TextField applySkuDescTextField(SkuTreeItem skuTreeItem) {
         TextField textField = new TextField();
         textField.setValue(skuTreeItem.getSkuDesc() == null ? "" : skuTreeItem.getSkuDesc());
@@ -186,15 +232,22 @@ public class SkuSection {
         return textField;
     }
 
+    /**
+     * @param skuTreeItem the row being rendered
+     * @param tier        the price tier for the column being rendered
+     * @return a number field that edits the price for the given SKU and tier
+     */
     private NumberField applyTierPriceField(SkuTreeItem skuTreeItem, TierDto tier) {
         NumberField numberField = new NumberField();
         numberField.setValue(skuTreeItem.getTierPrices().get(tier.getId()) == null
                 ? 0.0 : skuTreeItem.getTierPrices().get(tier.getId()));
         numberField.setWidth("104px");
         numberField.addClassName("tier-price-field");
-        numberField.addValueChangeListener(changeEvent ->
-                skuTreeItem.getTierPrices().put(tier.getId(),
-                        changeEvent.getValue() == null ? 0.0 : changeEvent.getValue()));
+        numberField.addValueChangeListener(changeEvent -> {
+            skuTreeItem.getTierPrices().put(tier.getId(),
+                    changeEvent.getValue() == null ? 0.0 : changeEvent.getValue());
+            delegate.onContentChanged();
+        });
         return numberField;
     }
 }

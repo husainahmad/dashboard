@@ -14,6 +14,7 @@ import com.harmoni.menu.dashboard.layout.model.LowPriceRow;
 import com.harmoni.menu.dashboard.layout.model.MatrixStats;
 import com.harmoni.menu.dashboard.layout.model.SkuScan;
 import com.harmoni.menu.dashboard.layout.model.UnpricedSku;
+import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -50,7 +51,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Landing page rendered at the root of the app after login.
@@ -150,7 +150,7 @@ public class DashboardView extends AbstractListView {
         missingCard = new StatCard(VaadinIcon.WARNING, Messages.get("dashboard.missingPrices"));
 
         HorizontalLayout cards = new HorizontalLayout(productsCard, skusCard, tiersCard, missingCard);
-        cards.addClassName("stat-cards");
+        cards.addClassName(Css.STAT_CARDS);
         cards.setWidthFull();
         cards.setSpacing(true);
         cards.setPadding(false);

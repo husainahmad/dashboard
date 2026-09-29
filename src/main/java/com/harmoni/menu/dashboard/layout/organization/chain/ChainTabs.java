@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.organization.chain;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -36,6 +37,7 @@ public class ChainTabs extends VerticalLayout {
         tabSheet.add(browseTab, chainListView);
         tabSheet.setSizeFull();
 
+        add(PageHeader.of(Messages.Keys.PAGE_CHAIN_TITLE, Messages.Keys.PAGE_CHAIN_DESCRIPTION));
         add(chainListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);

@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.menu.category;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
@@ -42,6 +43,7 @@ public class CategoryTabs extends VerticalLayout {
         tabSheet.add(browseTab, categoryListView);
         tabSheet.setSizeFull();
 
+        add(PageHeader.of(Messages.Keys.PAGE_CATEGORY_TITLE, Messages.Keys.PAGE_CATEGORY_DESCRIPTION));
         add(categoryListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);

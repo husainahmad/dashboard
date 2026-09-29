@@ -80,7 +80,7 @@ public class TableForm extends FormLayout {
 
     /** Chain whose stores are listed in {@link #storeBox}; driven by the selected brand. */
     @Getter
-    ComboBox<ChainDto> chainBox = new ComboBox<>(Messages.get("label.chain"));
+    ComboBox<ChainDto> chainBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_CHAIN));
 
     /** Store the table belongs to; its id is sent in the save/update payload. */
     @Getter
@@ -230,11 +230,11 @@ public class TableForm extends FormLayout {
 
     private void configureBrandAndStore() {
         brandBox.setItemLabelGenerator(BrandDto::getName);
-        brandBox.setPlaceholder(Messages.get("placeholder.selectBrand"));
+        brandBox.setPlaceholder(Messages.get(Messages.Keys.PLACEHOLDER_SELECT_BRAND));
         brandBox.setAllowCustomValue(false);
 
         chainBox.setItemLabelGenerator(ChainDto::getName);
-        chainBox.setPlaceholder(Messages.get("label.chain"));
+        chainBox.setPlaceholder(Messages.get(Messages.Keys.LABEL_CHAIN));
         chainBox.setAllowCustomValue(false);
 
         storeBox.setItemLabelGenerator(StoreDto::getName);
@@ -301,7 +301,7 @@ public class TableForm extends FormLayout {
                     selectDefaultChain();
                 }),
                 error -> UiUtil.safeAccess(ui, () ->
-                        UiUtil.errorWithRetry(Messages.get("notification.chain.loadFailed"), this::loadChains)),
+                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_CHAIN_LOAD_FAILED), this::loadChains)),
                 brand.getId());
     }
 
@@ -342,7 +342,7 @@ public class TableForm extends FormLayout {
                     restoreStoreSelection();
                 }),
                 error -> UiUtil.safeAccess(ui, () ->
-                        UiUtil.errorWithRetry(Messages.get("notification.store.loadFailed"), this::loadStores)),
+                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_STORE_LOAD_FAILED), this::loadStores)),
                 chain.getId(), 1, PAGE_SIZE, "");
     }
 

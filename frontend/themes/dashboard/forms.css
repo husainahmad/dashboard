@@ -224,22 +224,48 @@ vaadin-password-field:focus-within::part(input-field) {
 
     overflow-x:
         hidden;
+
+    /*
+     * The column scrolls, not the form.
+     *
+     * The form is position: relative, so it is the containing block for its own
+     * sticky action footer; that footer would pin to the form rather than to the
+     * column and scroll out of reach. Sizing the column instead also retires the
+     * calc(100vh - 200px) that stood in for a real height - that number assumed a
+     * fixed 200px of chrome above and below the form, and quietly cut the form
+     * short, or let it run under the tab strip, whenever the toolbar or window
+     * chrome did not match the guess.
+     */
+
+    overflow-y:
+        auto;
+
+    overscroll-behavior:
+        contain;
+
+    scrollbar-gutter:
+        stable;
 }
 
 .promotion-form-wrapper
 vaadin-form-layout {
 
-    flex:
-        1;
+    /*
+     * Not height: 100% - the form must be able to exceed the column for the sticky
+     * footer to travel. min-height fills a short form on a tall window.
+     */
 
-    overflow-y:
+    height:
         auto;
+
+    min-height:
+        100%;
+
+    flex:
+        0 0 auto;
 
     overflow-x:
         hidden;
-
-    max-height:
-        calc(100vh - 200px);
 }
 
 .promotion-preview-wrapper {
@@ -539,6 +565,33 @@ vaadin-form-layout {
         min-width:
             0;
     }
+
+    .product-editor-layout {
+
+        flex-direction:
+            column;
+    }
+
+    .product-form-wrapper {
+
+        max-width:
+            none;
+
+        min-width:
+            0;
+    }
+
+    .product-preview-wrapper {
+
+        width:
+            100%;
+
+        max-width:
+            none;
+
+        min-width:
+            0;
+    }
 }
 
 
@@ -565,4 +618,499 @@ body[theme~="dark"] .promotion-preview {
 
     background:
         var(--lumo-contrast-10pct);
+}
+
+/* ==========================================================================
+   product-editor-layout - the product form beside its live preview.
+   Mirrors .promotion-editor-layout, and for the same reasons: the columns are
+   sized here rather than in ProductFormWithPreview, because an inline width
+   outranks every rule in this file however specific, which used to leave the
+   single-column fallback below unreachable on a narrow screen.
+   ========================================================================== */
+
+/*
+ * The editor root fills the visible panel exactly the way .product-form does,
+ * and for the same reason: panels are slotted children of the tab sheet, so a
+ * plain percentage height resolves against the whole host - tab strip included -
+ * and the bottom of the row, and the form's action bar with it, falls below the
+ * fold with no way to scroll to it. Pinning the root to the panel and resolving
+ * the columns inside that box puts the sizing back on solid ground.
+ */
+.product-editor {
+
+    position:
+        absolute;
+
+    top:
+        0;
+
+    right:
+        0;
+
+    bottom:
+        0;
+
+    left:
+        0;
+
+    height:
+        100%;
+
+    box-sizing:
+        border-box;
+
+    overflow:
+        hidden;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+}
+
+.product-editor-layout {
+
+    display:
+        flex;
+
+    flex-direction:
+        row;
+
+    gap:
+        var(--lumo-space-m);
+
+    width:
+        100%;
+
+    min-height:
+        0;
+}
+
+.product-form-wrapper {
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    min-height:
+        0;
+
+    /*
+     * "Take the remaining space": flex-basis 0 is what sizes a column on its
+     * container's main axis, so no width is declared here. min-width, not 0: a
+     * form squeezed below 560px stops being readable, and 0 would only buy the
+     * flex algorithm permission to crush it that far.
+     */
+
+    flex:
+        1 1 0;
+
+    min-width:
+        560px;
+
+    max-width:
+        1000px;
+
+    overflow-x:
+        hidden;
+
+    /*
+     * The column, not the form, is the scroll container here.
+     *
+     * Standalone, the form scrolls: it is position: absolute, so the sticky action
+     * bar at its foot pins to the panel while the form scrolls behind it. In the
+     * editor the form is position: relative instead, and that is what breaks the
+     * bar. A sticky element sticks within its containing block, so the form
+     * becomes that block, the bar pins to the form's own padding box, and it
+     * scrolls away with the content - leaving Save and Update below the bottom of
+     * a long form with no way to reach them.
+     *
+     * Moving the scroll up one level to the wrapper puts the scrolling ancestor
+     * back outside the form, so the bar sticks against the column's bottom edge
+     * and the promotion editor's behaviour is matched. The form is then ordinary
+     * content that simply grows past the column, which is what a sticky child
+     * needs in order to have somewhere to stick.
+     */
+
+    overflow-y:
+        auto;
+
+    overscroll-behavior:
+        contain;
+
+    scrollbar-gutter:
+        stable;
+}
+
+.product-editor-layout
+.product-form {
+
+    position:
+        relative;
+
+    top:
+        auto;
+
+    right:
+        auto;
+
+    bottom:
+        auto;
+
+    left:
+        auto;
+
+    /*
+     * These four are declared here because ProductForm no longer calls setSizeFull(),
+     * which used to put an inline width and height on the form. An inline value outranks
+     * every rule in this file, so while that call stood none of the below could take
+     * effect on the editor's form - the height below included, which is what left the
+     * bottom of a long form unreachable no matter what the stylesheet said.
+     *
+     * The form fills its column on the cross axis and may exceed it on the main one:
+     * height auto with a min-height floor, so a short form still fills a tall window and
+     * a long one grows past the bottom, which is what gives the action bar something to
+     * travel across.
+     */
+
+    width:
+        100%;
+
+    height:
+        auto;
+
+    min-height:
+        100%;
+
+    flex:
+        0 0 auto;
+
+    overflow:
+        visible;
+}
+
+/*
+ * The action bar sits at the end of the form here, as the promotion editor's footer
+ * does, rather than pinned to the bottom of the window.
+ *
+ * Standalone it is position: sticky, which pins it to the scrollport and so holds the
+ * bottom edge of the screen while the form scrolls behind it. That is defensible when
+ * the form fills the panel on its own, but in the two-column editor the column is
+ * already scrolling, so a sticky bar inside it never leaves the viewport edge: the
+ * operator scrolls a long form and Save/Update hang there the whole way, which reads
+ * as a toolbar belonging to the window rather than the end of the form.
+ *
+ * The promotion footer is a sibling of its form and carries no position at all, so it
+ * simply travels with the content and turns up at the bottom of the form. Releasing
+ * the sticky here matches that: the bar is reached by scrolling to the end, which is
+ * where it is in the promotion editor and where this one is on its own page.
+ */
+
+.product-editor-layout
+.product-form
+.form-actions {
+
+    position:
+        static;
+}
+
+.product-preview-wrapper {
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow);
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    overflow:
+        hidden;
+
+    min-height:
+        0;
+
+    /* A fixed band, declared here for the same reason as the promotion one: on
+       this column the width is the entire point, and setting it from Java
+       would win over both this rule and the media query below. */
+
+    flex:
+        0 0 auto;
+
+    width:
+        420px;
+
+    min-width:
+        380px;
+
+    max-width:
+        480px;
+}
+
+.product-preview {
+
+    flex:
+        1;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    overflow-y:
+        auto;
+
+    min-height:
+        0;
+}
+
+/* The card itself: one surface, with the sections separated by rules rather
+   than gaps, so it reads as a single object rather than a stack of widgets. */
+
+.product-preview-section {
+
+    padding:
+        var(--lumo-space-m) 0;
+
+    border-bottom:
+        1px solid var(--app-border);
+}
+
+/*
+ * One customization on the card: the name, then the facts a customer would be
+ * asked for - required or not, one value or several, how many - then the option
+ * names. Only the name carries emphasis, so the group reads as a list of choices
+ * rather than a block of equally loud text.
+ */
+
+.product-preview-customization {
+
+    padding:
+        var(--lumo-space-xs) 0;
+
+    border-bottom:
+        1px solid var(--app-border);
+}
+
+.product-preview-customization:last-child {
+
+    border-bottom:
+        none;
+}
+
+.product-preview-customization-name {
+
+    font-weight:
+        600;
+
+    color:
+        var(--app-text-primary);
+
+    overflow-wrap:
+        break-word;
+}
+
+.product-preview-customization .product-preview-muted {
+
+    display:
+        block;
+
+    margin-top:
+        2px;
+
+    overflow-wrap:
+        break-word;
+}
+
+.product-preview-image-frame {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    overflow:
+        hidden;
+
+    /* 4:3, and fixed rather than intrinsic: the image is whatever the operator
+       uploaded, so a tall one would otherwise stretch the card and push the
+       name and prices below the fold. */
+
+    width:
+        100%;
+
+    aspect-ratio:
+        4 / 3;
+
+    background:
+        var(--lumo-contrast-5pct);
+
+    border-bottom:
+        1px solid var(--app-border);
+}
+
+.product-preview-header {
+
+    padding:
+        var(--lumo-space-m) 0;
+}
+
+.product-preview-description {
+
+    white-space:
+        pre-line;
+}
+
+/* The price matrix. Rows are flex lines of fixed-width cells so they stay
+   aligned; the whole table scrolls sideways inside one container, because
+   scrolling each row separately would strand the tier headings off-screen
+   while the operator read the numbers beneath them. */
+
+.product-preview-price-scroll {
+
+    overflow-x:
+        auto;
+}
+
+.product-preview-price-row,
+.product-preview-price-row-head {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        var(--lumo-space-s);
+
+    /*
+     * max-content, not 100%: the row has to be able to outgrow the panel so the
+     * scroller around it has something to scroll to. min-width keeps a table with
+     * only one or two tiers filling the panel rather than sitting in a corner.
+     */
+
+    width:
+        max-content;
+
+    min-width:
+        100%;
+}
+
+.product-preview-price-row-head {
+
+    border-bottom:
+        1px solid var(--app-border);
+
+    padding-bottom:
+        var(--lumo-space-xs);
+}
+
+.product-preview-price-corner,
+.product-preview-price-variant {
+
+    /*
+     * The one flexible cell, and the one that has to give: the price columns take
+     * the room their numbers need, so a long variant name is truncated rather than
+     * allowed to push the prices off the edge. min-width stops a short name
+     * collapsing to nothing; max-width stops a long one from taking the row.
+     */
+
+    flex:
+        1 1 auto;
+
+    min-width:
+        96px;
+
+    max-width:
+        40%;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+
+    white-space:
+        nowrap;
+}
+
+.product-preview-price-corner,
+.product-preview-price-head {
+
+    font-size:
+        var(--lumo-font-size-xs);
+
+    font-weight:
+        600;
+
+    text-transform:
+        uppercase;
+
+    letter-spacing:
+        0.04em;
+
+    color:
+        var(--lumo-tertiary-text-color);
+}
+
+.product-preview-price-head,
+.product-preview-price-cell {
+
+    flex:
+        0 0 auto;
+
+    /*
+     * min-width, not a fixed width. A column that cannot grow overflows its own cell
+     * as soon as the number is wide enough - Rp1.250.000 is well past what a fixed
+     * 92px column can hold - and with nowrap there is nothing to wrap onto, so the
+     * digits ran over the column edge. Sizing to the content keeps every figure
+     * readable, and the row scrolls when the sum of them no longer fits.
+     */
+
+    min-width:
+        92px;
+
+    text-align:
+        right;
+
+    white-space:
+        nowrap;
+}
+
+.product-preview-price-cell {
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    color:
+        var(--app-text);
+}
+
+body[theme~="dark"] .product-form-wrapper,
+body[theme~="dark"] .product-preview-wrapper {
+
+    background:
+        var(--app-surface);
+
+    border-color:
+        var(--app-border);
 }

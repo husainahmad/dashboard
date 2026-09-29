@@ -188,7 +188,7 @@ public class TableListView extends AbstractListView {
         brandFilter.setLabel(Messages.get(Messages.Keys.LABEL_BRAND));
         brandFilter.setItemLabelGenerator(BrandDto::getName);
 
-        chainFilter.setLabel(Messages.get("label.chain"));
+        chainFilter.setLabel(Messages.get(Messages.Keys.LABEL_CHAIN));
         chainFilter.setItemLabelGenerator(ChainDto::getName);
 
         storeFilter.setLabel(Messages.get(Messages.Keys.LABEL_STORE));
@@ -316,7 +316,7 @@ public class TableListView extends AbstractListView {
                     selectDefaultChainFilter();
                 }),
                 error -> UiUtil.safeAccess(ui, () ->
-                        UiUtil.errorWithRetry(Messages.get("notification.chain.loadFailed"),
+                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_CHAIN_LOAD_FAILED),
                                 this::loadChainsForFilter)),
                 brand.getId());
     }
@@ -361,7 +361,7 @@ public class TableListView extends AbstractListView {
                     selectDefaultStoreFilter();
                 }),
                 error -> UiUtil.safeAccess(ui, () ->
-                        UiUtil.errorWithRetry(Messages.get("notification.store.loadFailed"),
+                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_STORE_LOAD_FAILED),
                                 this::loadStoresForFilter)),
                 chain.getId(), 1, PAGE_SIZE, "");
     }

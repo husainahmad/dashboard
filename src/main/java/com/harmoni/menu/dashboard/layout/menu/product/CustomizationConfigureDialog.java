@@ -35,11 +35,11 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  */
 public class CustomizationConfigureDialog extends Dialog {
 
-    private final ProductCustomizationDto dto;
-    private final ProductFormDelegate delegate;
+    private final transient ProductCustomizationDto dto;
+    private final transient ProductFormDelegate delegate;
     private final RestClientMenuService restClientMenuService;
-    private final List<TierDto> tierDtos;
-    private final Runnable onSaved;
+    private final transient List<TierDto> tierDtos;
+    private final transient Runnable onSaved;
 
     /**
      * @param dto                     the attached customization being configured
@@ -151,9 +151,9 @@ public class CustomizationConfigureDialog extends Dialog {
     /** Builds a small status label indicating whether the value is overridden or inherited. */
     private Span buildOverrideStatus(boolean override) {
         Span span = new Span(override ? Messages.get("label.override") : Messages.get("label.inherited"));
-        span.getStyle().set("font-size", "var(--lumo-font-size-xs)")
+        span.getStyle().set(Css.FONT_SIZE, "var(--lumo-font-size-xs)")
                 .set(Css.FONT_WEIGHT, "600")
-                .set("color", override ? "var(--lumo-primary-color)" : "var(--lumo-secondary-text-color)");
+                .set(Css.COLOR, override ? "var(--lumo-primary-color)" : "var(--lumo-secondary-text-color)");
         return span;
     }
 

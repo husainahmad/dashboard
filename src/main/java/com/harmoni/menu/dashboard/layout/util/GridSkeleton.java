@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.util;
 
+import com.harmoni.menu.dashboard.layout.util.Css;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;

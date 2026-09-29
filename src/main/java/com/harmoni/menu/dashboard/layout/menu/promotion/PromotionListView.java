@@ -14,6 +14,7 @@ import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientPromotionService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientPromotionService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -59,6 +60,7 @@ public class PromotionListView extends AbstractListView {
 
     private final AsyncRestClientPromotionService asyncRestClientPromotionService;
     private final AsyncRestClientMenuService asyncRestClientMenuService;
+    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientPromotionService restClientPromotionService;
     private final AccessService accessService;
 
@@ -79,6 +81,10 @@ public class PromotionListView extends AbstractListView {
         buildLayout();
     }
 
+    /**
+     * Builds the main layout of this list view, including the grid, search and
+     * filters, and pagination footer.
+     */
     private void buildLayout() {
         setSizeFull();
         setPadding(false);
@@ -98,6 +104,9 @@ public class PromotionListView extends AbstractListView {
         fetchPromotions();
     }
 
+    /**
+     * Configures the grid columns and action buttons.
+     */
     private void configureGrid() {
         promotionGrid.setSizeFull();
         promotionGrid.setEmptyStateText(Messages.get("grid.empty.promotionList"));
@@ -115,23 +124,35 @@ public class PromotionListView extends AbstractListView {
         promotionGrid.addColumn(promotion -> promotion.getPriority() == null
                         ? "0" : String.valueOf(promotion.getPriority()))
                 .setHeader(Messages.get("grid.header.priority")).setAutoWidth(true);
-        promotionGrid.addColumn(promotion -> describeWindow(promotion))
+        promotionGrid.addColumn(this::describeWindow)
                 .setHeader(Messages.get("grid.header.dateRange")).setAutoWidth(true);
         promotionGrid.addComponentColumn(this::applyActionButtons)
                 .setHeader(Messages.get("grid.header.actions")).setAutoWidth(true);
         promotionGrid.getColumns().forEach(column -> column.setResizable(true));
     }
 
+    /**
+     * Describes the start and end dates of a promotion for the grid.
+     *
+     * @param promotion the promotion being described
+     * @return a string such as {@code "01 Jan 2024 - 31 Dec 2024"}
+     */
     private String describeWindow(PromotionDto promotion) {
         String from = promotion.getStartDate() == null ? "?" : DATE_FORMAT.format(promotion.getStartDate());
         String to = promotion.getEndDate() == null ? "?" : DATE_FORMAT.format(promotion.getEndDate());
-        return from + "  -  " + to;
+        return from.concat("  -  ").concat(to);
     }
 
     private String orDash(String value) {
         return ObjectUtils.isEmpty(value) ? "-" : value;
     }
 
+    /**
+     * Adds the edit, status and delete buttons to the grid row.
+     *
+     * @param promotion the promotion for which to create the buttons
+     * @return a horizontal layout containing the buttons
+     */
     private Component applyActionButtons(PromotionDto promotion) {
         Button editButton = UiUtil.editButton(Messages.get(Messages.Keys.ACTION_EDIT),
                 event -> openForm(promotion, FormAction.EDIT));
@@ -144,6 +165,10 @@ public class PromotionListView extends AbstractListView {
         return actions;
     }
 
+    /**
+     * Configures the search text field, including its label, value change mode and
+     * listener.
+     */
     private void configureSearch() {
         filterText.setLabel(Messages.get(Messages.Keys.LABEL_SEARCH));
         configureSearchFilter();
@@ -156,6 +181,10 @@ public class PromotionListView extends AbstractListView {
         });
     }
 
+    /**
+     * Configures the status and type filters, including their labels, item
+     * generators and value change listeners.
+     */
     private void configureFilters() {
         statusFilter.setLabel(Messages.get("label.promotion.status"));
         statusFilter.setItemLabelGenerator(PromotionStatus::getLabel);
@@ -184,6 +213,11 @@ public class PromotionListView extends AbstractListView {
         return gridSlot(promotionGrid, gridSkeleton);
     }
 
+    /**
+     * Builds the pagination footer with "Previous" and "Next" buttons.
+     *
+     * @return the pagination footer layout
+     */
     private HorizontalLayout getPaginationFooter() {
         return paginationFooter(() -> {
             if (currentPage > 1) {
@@ -217,6 +251,13 @@ public class PromotionListView extends AbstractListView {
         return toolbar;
     }
 
+    /**
+     * Opens the promotion form in a new tab, either for creating a new promotion or
+     * editing an existing one.
+     *
+     * @param promotion  the promotion to edit, or null for creating a new one
+     * @param formAction the action to perform (CREATE or EDIT)
+     */
     private void openForm(PromotionDto promotion, FormAction formAction) {
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
@@ -225,7 +266,13 @@ public class PromotionListView extends AbstractListView {
         if (formAction == FormAction.CREATE || ObjectUtils.isEmpty(promotion.getId())) {
             String label = Messages.get("tab.promotionNew");
             tabManager.addOrSelect(label, tab -> new PromotionFormWithPreview(
-                    restClientPromotionService, asyncRestClientMenuService, tabManager, tab, formAction, null,
+                    restClientPromotionService, asyncRestClientMenuService,
+                    asyncRestClientOrganizationService,
+                    PromotionEditorContext.builder()
+                            .tabManager(tabManager)
+                            .currentTab(tab)
+                            .formAction(formAction)
+                            .build(),
                     accessService));
             return;
         }
@@ -240,7 +287,14 @@ public class PromotionListView extends AbstractListView {
                         ? Messages.get("tab.promotionEdit")
                         : Messages.get(Messages.Keys.ACTION_EDIT_NAME, detail.getName());
                 manager.addOrSelect(label, tab -> new PromotionFormWithPreview(
-                        restClientPromotionService, asyncRestClientMenuService, manager, tab, FormAction.EDIT, detail,
+                        restClientPromotionService, asyncRestClientMenuService,
+                        asyncRestClientOrganizationService,
+                        PromotionEditorContext.builder()
+                                .tabManager(manager)
+                                .currentTab(tab)
+                                .formAction(FormAction.EDIT)
+                                .promotionDto(detail)
+                                .build(),
                         accessService));
             });
         }, error -> log.error("Failed to load promotion detail id={}", promotion.getId(), error));
@@ -261,10 +315,21 @@ public class PromotionListView extends AbstractListView {
                 ? Messages.get("tab.promotionStatus")
                 : Messages.get("tab.promotionStatusNamed", promotion.getName());
         tabManager.addOrSelect(label, tab -> new PromotionFormWithPreview(
-                restClientPromotionService, asyncRestClientMenuService, tabManager, tab, FormAction.STATUS, promotion,
+                restClientPromotionService, asyncRestClientMenuService, asyncRestClientOrganizationService,
+                PromotionEditorContext.builder()
+                        .tabManager(tabManager)
+                        .currentTab(tab)
+                        .formAction(FormAction.STATUS)
+                        .promotionDto(promotion)
+                        .build(),
                 accessService));
     }
 
+    /**
+     * Fetches promotions from the REST API based on the current filters and search
+     * text, and updates the grid with the results. This method is asynchronous and
+     * handles UI access safely.
+     */
     private void fetchPromotions() {
         if (ui == null) {
             return;
@@ -297,6 +362,12 @@ public class PromotionListView extends AbstractListView {
         });
     }
 
+    /**
+     * Applies the promotions fetched from the REST API to the grid and updates the
+     * pagination state.
+     *
+     * @param result the result map containing promotion data and pagination info
+     */
     private void applyPromotions(Map<String, Object> result) {
         List<PromotionDto> promotions = new ArrayList<>();
         if (result != null && result.get("data") instanceof List<?> list && !list.isEmpty()) {
@@ -314,21 +385,4 @@ public class PromotionListView extends AbstractListView {
         return value == null ? "" : value.trim();
     }
 
-    /**
-     * Summarises the weekly windows of a promotion for the form header.
-     *
-     * @param promotion the promotion being edited
-     * @return a short description such as {@code "Mon 15:00-17:00, Fri 23:00-01:00"}
-     */
-    static String describeSchedules(List<PromotionScheduleDto> schedules) {
-        if (ObjectUtils.isEmpty(schedules)) {
-            return Messages.get("promotion.schedule.none");
-        }
-        return schedules.stream()
-                .filter(schedule -> schedule.getDayOfWeek() != null)
-                .map(schedule -> schedule.getDayOfWeek().name().substring(0, 3) + " "
-                        + schedule.getStartTime() + "-" + schedule.getEndTime())
-                .reduce((left, right) -> left + ", " + right)
-                .orElse(Messages.get("promotion.schedule.none"));
-    }
 }

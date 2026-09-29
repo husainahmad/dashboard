@@ -44,6 +44,25 @@ public class AsyncRestClientMenuService extends AsyncRestClientBase {
      * @param callback      success callback with the list of brands
      * @param errorCallback optional error callback for handling failures
      */
+    /**
+     * Asynchronously retrieves a single product by id.
+     *
+     * <p>Used to resolve the display name of a target that a saved promotion already
+     * points at: the form restores targets as bare ids and needs a name for the preview,
+     * and the by-brand product listing can only be queried one category at a time, which
+     * a restored target does not carry.</p>
+     *
+     * @param callback      success callback with the product
+     * @param errorCallback optional error callback for handling failures
+     * @param productId     the product id
+     */
+    public void getProductAsync(AsyncRestCallback<ProductDto> callback,
+                                AsyncRestCallback<Throwable> errorCallback, Integer productId) {
+        String url = URL_FORMAT.formatted(menuProperties.getUrl().getProduct(), productId);
+        makeAsyncRequest(url, new TypeReference<>() {
+        }, callback, errorCallback);
+    }
+
     public void getAllCategoryAsync(AsyncRestCallback<List<CategoryDto>> callback,
                                     AsyncRestCallback<Throwable> errorCallback, Integer brandId) {
         String url = URL_FORMAT.formatted(menuProperties.getUrl().getCategories().getBrand(), brandId);

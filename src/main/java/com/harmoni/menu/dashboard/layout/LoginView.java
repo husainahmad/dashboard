@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientLoginService;
 import com.harmoni.menu.dashboard.layout.util.LanguageSelector;
 import com.harmoni.menu.dashboard.layout.util.ThemeUtil;
 import com.harmoni.menu.dashboard.util.Messages;
+import com.harmoni.menu.dashboard.layout.util.Css;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -102,7 +103,7 @@ public class LoginView extends VerticalLayout {
      */
     private VerticalLayout createFormPanel() {
         H2 welcome = new H2(Messages.get("login.welcome"));
-        welcome.getStyle().set("margin", "0");
+        welcome.getStyle().set(Css.MARGIN, "0");
         Paragraph subtitle = new Paragraph(Messages.get("login.subtitle"));
         subtitle.addClassName("login-subtitle");
 

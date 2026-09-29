@@ -179,7 +179,11 @@ vaadin-combo-box::part(input-field):hover {
 
     color: var(--app-text-muted);
 
-    font-size: 12px;
+    /* A token, not 12px: a fixed value here would have been larger than the tab
+       labels beside it once the type scale dropped, and these arrows are meant to
+       recede rather than stand out. */
+    font-size:
+        var(--lumo-font-size-xs);
 }
 
 

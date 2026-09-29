@@ -132,6 +132,9 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         return saved instanceof ProductFilters filters ? filters : null;
     }
 
+    /**
+     * Renders the main layout of the product list view, including the grid and pagination footer.
+     */
     private void renderLayout() {
         setSizeFull();
         setPadding(false);
@@ -140,6 +143,10 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         fetchBrands();
     }
 
+    /**
+     * Initializes the temporary "All" options for brand, category, and tier filters.
+     * These options are added to the respective lists if they are not already present.
+     */
     private void initTempOptions() {
         if (brandDtos.stream().noneMatch(dto -> Objects.equals(dto.getId(), -1))) {
             brandDtos.add(getTempBrandDto());
@@ -187,6 +194,10 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         });
     }
 
+    /**
+     * Configures the product tree grid, including size, empty state text, and column setup.
+     * Also adds an expand listener to handle row expansion events.
+     */
     private void configureGrid() {
         productDtoGrid.setSizeFull();
         productDtoGrid.setEmptyStateText(Messages.get("grid.empty.products"));
@@ -255,10 +266,22 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         return priceField;
     }
 
+    /**
+     * Determines if the given product tree item is a SKU row.
+     *
+     * @param productTreeItem the item to check
+     * @return {@code true} if the item is a SKU row, {@code false} otherwise
+     */
     private boolean isSkuRow(ProductTreeItem productTreeItem) {
         return productTreeItem.getProductItemType().equals(ProductItemType.SKU);
     }
 
+    /**
+     * Creates a new NumberField for editing prices, with appropriate configuration
+     * such as placeholder, minimum value, width, and tooltip.
+     *
+     * @return a configured NumberField for price input
+     */
     private NumberField newPriceField() {
         NumberField priceField = new NumberField();
         priceField.setValueChangeMode(ValueChangeMode.ON_CHANGE);
@@ -269,6 +292,14 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         return priceField;
     }
 
+    /**
+     * Wires the dirty tracking for the price field, adding a visual hint when
+     * the value has been changed but not yet committed. The hint is removed
+     * when the field loses focus or when a save is in progress.
+     *
+     * @param priceField the NumberField to wire
+     * @param saving     a boolean array indicating if a save operation is in progress
+     */
     private void wirePriceDirtyTracking(NumberField priceField, boolean[] saving) {
         Span commitHint = new Span("\u21b5");
         commitHint.addClassName("price-commit-hint");
@@ -286,6 +317,18 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         });
     }
 
+    /**
+     * Wires the commit logic for the price field, saving the new value to the backend
+     * when it changes. If the new value is invalid, it reverts to the previous value.
+     * The field is disabled while the save request is in flight, and visual hints are
+     * provided for saving and error states.
+     *
+     * @param productTreeItem the item (product or SKU node)
+     * @param tierId          the price tier id
+     * @param priceField      the NumberField to wire
+     * @param committed       an AtomicReference holding the last committed value
+     * @param saving          a boolean array indicating if a save operation is in progress
+     */
     private void wirePriceCommit(ProductTreeItem productTreeItem, Integer tierId, NumberField priceField,
                                  AtomicReference<Double> committed, boolean[] saving) {
         priceField.addValueChangeListener(event -> {
@@ -305,16 +348,43 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         });
     }
 
+    /**
+     * Checks if the given price value is invalid (null or less than or equal to zero).
+     *
+     * @param next the price value to check
+     * @return {@code true} if the price is invalid, {@code false} otherwise
+     */
     private boolean isInvalidPrice(Double next) {
         return next == null || next <= 0;
     }
 
+    /**
+     * Reverts the price field to the previous value and resets the saving state.
+     *
+     * @param priceField the NumberField to revert
+     * @param previous   the previous committed value
+     * @param saving     a boolean array indicating if a save operation is in progress
+     */
     private void revertPrice(NumberField priceField, Double previous, boolean[] saving) {
         saving[0] = true;
         priceField.setValue(previous);
         saving[0] = false;
     }
 
+    /**
+     * Saves the new price value to the backend for the given product tree item and tier.
+     * Disables the price field while the save request is in flight, and provides visual
+     * hints for saving and error states. On success, updates the committed value and
+     * the product tree item's tier prices.
+     *
+     * @param productTreeItem the item (product or SKU node)
+     * @param tierId          the price tier id
+     * @param priceField      the NumberField to save
+     * @param committed       an AtomicReference holding the last committed value
+     * @param previous        the previous committed value
+     * @param next            the new value to save
+     * @param saving          a boolean array indicating if a save operation is in progress
+     */
     private void savePrice(ProductTreeItem productTreeItem, Integer tierId, NumberField priceField,
                            AtomicReference<Double> committed, Double previous, Double next, boolean[] saving) {
         saving[0] = true;
@@ -334,6 +404,15 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
                         onPriceSaved(productTreeItem, tierId, priceField, next, saving)));
     }
 
+    /**
+     * Handles the error case when saving the price fails. Reverts the price field
+     * to the previous value, re-enables the field, and shows an error notification.
+     *
+     * @param priceField the NumberField that failed to save
+     * @param committed  an AtomicReference holding the last committed value
+     * @param previous   the previous committed value
+     * @param saving     a boolean array indicating if a save operation is in progress
+     */
     private void onPriceSaveError(NumberField priceField, AtomicReference<Double> committed,
                                   Double previous, boolean[] saving) {
         saving[0] = false;
@@ -346,6 +425,16 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         UiUtil.error(Messages.get("notification.price.saveFailed"));
     }
 
+    /**
+     * Handles the successful save of the price. Updates the product tree item's
+     * tier prices, re-enables the price field, and shows a success notification.
+     *
+     * @param productTreeItem the item (product or SKU node)
+     * @param tierId          the price tier id
+     * @param priceField      the NumberField that was saved
+     * @param next            the new value that was saved
+     * @param saving          a boolean array indicating if a save operation is in progress
+     */
     private void onPriceSaved(ProductTreeItem productTreeItem, Integer tierId, NumberField priceField,
                               Double next, boolean[] saving) {
         saving[0] = false;
@@ -515,11 +604,17 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
-        new TabManager(tabSheet).addOrSelect(Messages.get(Messages.Keys.ACTION_NEW_PRODUCT), tab ->
-                new ProductForm(this.restClientMenuService,
+        TabManager tabManager = new TabManager(tabSheet);
+        tabManager.addOrSelect(Messages.get(Messages.Keys.ACTION_NEW_PRODUCT), tab ->
+                new ProductFormWithPreview(this.restClientMenuService,
                         this.asyncRestClientMenuService,
-                        this.brandDtoComboBox.getValue(),
-                        this.categoryDtos, this.tierDtos, tab, null));
+                        ProductEditorContext.builder()
+                                .brandDto(this.brandDtoComboBox.getValue())
+                                .categoryDtos(this.categoryDtos)
+                                .tierDtos(this.tierDtos)
+                                .productTab(tab)
+                                .tabManager(tabManager)
+                                .build()));
     }
 
     /**
@@ -532,11 +627,18 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
-        new TabManager(tabSheet).addOrSelect(Messages.get(Messages.Keys.ACTION_EDIT_NAME, productTreeItem.getName()), tab ->
-                new ProductForm(this.restClientMenuService,
+        TabManager tabManager = new TabManager(tabSheet);
+        tabManager.addOrSelect(Messages.get(Messages.Keys.ACTION_EDIT_NAME, productTreeItem.getName()), tab ->
+                new ProductFormWithPreview(this.restClientMenuService,
                         this.asyncRestClientMenuService,
-                        this.brandDtoComboBox.getValue(),
-                        this.categoryDtos, this.tierDtos, tab, productTreeItem));
+                        ProductEditorContext.builder()
+                                .brandDto(this.brandDtoComboBox.getValue())
+                                .categoryDtos(this.categoryDtos)
+                                .tierDtos(this.tierDtos)
+                                .productTab(tab)
+                                .productTreeItem(productTreeItem)
+                                .tabManager(tabManager)
+                                .build()));
     }
 
     /**

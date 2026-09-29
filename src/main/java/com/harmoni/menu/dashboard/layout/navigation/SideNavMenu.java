@@ -21,6 +21,7 @@ import com.harmoni.menu.dashboard.layout.report.SalesReportView;
 import com.harmoni.menu.dashboard.layout.report.SettlementReportView;
 import com.harmoni.menu.dashboard.layout.report.TopProductReportView;
 import com.harmoni.menu.dashboard.util.Messages;
+import com.harmoni.menu.dashboard.layout.util.Css;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -131,8 +132,8 @@ public class SideNavMenu extends Div {
         Scroller scroller = new Scroller(new Div(navWrapper));
         scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
         scroller.getStyle()
-                .set("border-bottom", "1px solid var(--lumo-contrast-20pct)")
-                .set("padding", "var(--lumo-space-m)");
+                .set(Css.BORDER_BOTTOM, "1px solid var(--lumo-contrast-20pct)")
+                .set(Css.PADDING, "var(--lumo-space-m)");
         add(scroller);
     }
 

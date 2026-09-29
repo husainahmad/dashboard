@@ -60,7 +60,7 @@ public class UserForm extends FormLayout  {
 
     PasswordField userPassField = new PasswordField(Messages.get(Messages.Keys.LABEL_PASSWORD));
 
-    ComboBox<StoreDto> storeDtoComboBox = new ComboBox<>(Messages.get("label.store"));
+    ComboBox<StoreDto> storeDtoComboBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_STORE));
     ComboBox<RoleType> authDtoComboBox = new ComboBox<>(Messages.get("label.auth"));
 
     Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));

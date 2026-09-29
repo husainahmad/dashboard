@@ -116,7 +116,8 @@ class PromotionGeneralSectionLayoutTest {
     }
 
     private static PromotionForm newForm() throws Exception {
-        PromotionForm form = new PromotionForm(null, null, null, null, FormAction.CREATE, null, null);
+        PromotionForm form = new PromotionForm(null, null, null, null,
+                PromotionEditorContext.builder().formAction(FormAction.CREATE).build());
         invoke(form, "configureFields");
         invoke(form, "configureSpecialPriceGrid");
         invoke(form, "addValidation");

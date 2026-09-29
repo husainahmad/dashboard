@@ -2,6 +2,7 @@ package com.harmoni.menu.dashboard.layout.report;
 
 import com.harmoni.menu.dashboard.dto.report.SettlementReportDto;
 import com.harmoni.menu.dashboard.layout.component.StatCard;
+import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientReportService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -79,7 +80,7 @@ public class SettlementReportView extends AbstractReportView {
     protected Component createContent() {
         HorizontalLayout cards = new HorizontalLayout(ordersCard, grossCard, netCard,
                 discountCard, taxCard, refundCard);
-        cards.addClassName("stat-cards");
+        cards.addClassName(Css.STAT_CARDS);
         cards.setWidthFull();
         cards.setSpacing(true);
         cards.setPadding(false);

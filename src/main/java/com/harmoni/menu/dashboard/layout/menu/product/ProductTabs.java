@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
@@ -36,6 +37,7 @@ public class ProductTabs extends VerticalLayout {
         tabSheet.add(browseTab, productListView);
         tabSheet.setSizeFull();
 
+        add(PageHeader.of(Messages.Keys.PAGE_PRODUCT_TITLE, Messages.Keys.PAGE_PRODUCT_DESCRIPTION));
         add(productListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);

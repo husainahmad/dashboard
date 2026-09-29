@@ -23,6 +23,7 @@ import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.Route;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.util.MimeTypeUtils;
@@ -56,24 +57,30 @@ public class ProductImageUploadView extends VerticalLayout {
     private final Span imageTitle = new Span(Messages.get("label.productImage"));
     private final Span imageHint = new Span(Messages.get("label.imageHint"));
 
+    @Setter
+    private transient Runnable onImageChanged;
+    /**
+     * Builds the layout of the image upload view. This method is called on attach
+     * to ensure that the UI context is available for any asynchronous updates.
+     */
     private void renderLayout() {
         setWidthFull();
         setPadding(false);
         setSpacing(false);
 
         image.getStyle().set(Css.WIDTH, "64px")
-                .set("height", "64px")
+                .set(Css.HEIGHT, "64px")
                 .set("object-fit", "cover")
                 .set("border-radius", "var(--lumo-border-radius-l)")
-                .set("border", "1px solid var(--lumo-contrast-10pct)")
+                .set("border", Css.HAIRLINE_BORDER)
                 .set("background", "var(--lumo-contrast-5pct)");
         image.setVisible(false);
 
         placeholderIcon.setSize("28px");
         placeholderIcon.setColor("var(--lumo-contrast-30pct)");
         imageTitle.getStyle().set(Css.FONT_WEIGHT, "600");
-        imageHint.getStyle().set("font-size", "var(--lumo-font-size-s)")
-                .set("color", "var(--lumo-secondary-text-color)");
+        imageHint.getStyle().set(Css.FONT_SIZE, "var(--lumo-font-size-s)")
+                .set(Css.COLOR, "var(--lumo-secondary-text-color)");
 
         MemoryBuffer buffer = new MemoryBuffer();
         Upload upload = new Upload(buffer);
@@ -81,7 +88,7 @@ public class ProductImageUploadView extends VerticalLayout {
         upload.setMaxFiles(1);
         upload.setDropAllowed(true);
         upload.setDropLabel(new Span(Messages.get("label.dropHere")));
-        upload.getElement().getStyle().set("width", "auto");
+        upload.getElement().getStyle().set(Css.WIDTH, "auto");
         Button browseButton = new Button(Messages.get("action.browseImage"), new Icon(VaadinIcon.FOLDER_OPEN));
         browseButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         upload.setUploadButton(browseButton);
@@ -109,6 +116,7 @@ public class ProductImageUploadView extends VerticalLayout {
         actions.setFlexShrink(0);
 
         VerticalLayout thumbnail = new VerticalLayout();
+        thumbnail.setClassName("product-image-thumbnail");
         thumbnail.setWidth("64px");
         thumbnail.setHeight("64px");
         thumbnail.setPadding(false);
@@ -117,6 +125,14 @@ public class ProductImageUploadView extends VerticalLayout {
         thumbnail.setAlignItems(FlexComponent.Alignment.CENTER);
         thumbnail.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         thumbnail.add(image, placeholderIcon);
+        /*
+         * Hidden on purpose. The tile is now only the way to pick, crop and remove the
+         * image; showing the result here as well put a second copy of it on screen
+         * beside the product preview, which is where it is looked at properly. The
+         * elements are still built and still updated, so the tile can be brought back
+         * by removing this one line.
+         */
+        thumbnail.setVisible(false);
 
         VerticalLayout labels = new VerticalLayout(imageTitle, imageHint);
         labels.setPadding(false);
@@ -183,13 +199,26 @@ public class ProductImageUploadView extends VerticalLayout {
         image.setSrc(imageUrl);
         showImageState(true);
         removeButton.setVisible(true);
+        fireImageChanged();
     }
 
+    /**
+     * Clears the image from the view and resets the state. Call this from a
+     * UI-access context.
+     */
     private void clearImage() {
         image.setSrc("");
         showImageState(false);
         removeButton.setVisible(false);
         productImageDto = null;
+        fireImageChanged();
+    }
+
+
+    private void fireImageChanged() {
+        if (onImageChanged != null) {
+            onImageChanged.run();
+        }
     }
 
     /**

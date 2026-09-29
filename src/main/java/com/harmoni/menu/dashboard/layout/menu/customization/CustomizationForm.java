@@ -217,7 +217,7 @@ public class CustomizationForm extends VerticalLayout {
         formLayout.setColspan(descriptionField, 2);
         formLayout.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("600px", 2)
+                new FormLayout.ResponsiveStep(Css.DIALOG_WIDTH, 2)
         );
 
         Span optionsTitle = new Span(Messages.get("label.options"));

@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.organization.user;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -38,6 +39,7 @@ public class UserTabs extends VerticalLayout {
         tabSheet.add(browseTab, userListView);
         tabSheet.setSizeFull();
 
+        add(PageHeader.of(Messages.Keys.PAGE_USER_TITLE, Messages.Keys.PAGE_USER_DESCRIPTION));
         add(userListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);

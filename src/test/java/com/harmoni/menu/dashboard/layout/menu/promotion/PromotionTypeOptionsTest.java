@@ -86,7 +86,8 @@ class PromotionTypeOptionsTest {
     }
 
     private static PromotionForm newForm(FormAction formAction, PromotionDto promotion) throws Exception {
-        PromotionForm form = new PromotionForm(null, null, null, null, formAction, promotion, null);
+        PromotionForm form = new PromotionForm(null, null, null, null,
+                PromotionEditorContext.builder().formAction(formAction).promotionDto(promotion).build());
         invoke(form, "configureFields");
         invoke(form, "configureSpecialPriceGrid");
         invoke(form, "addValidation");

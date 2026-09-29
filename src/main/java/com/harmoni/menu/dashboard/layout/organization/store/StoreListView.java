@@ -169,7 +169,7 @@ public class StoreListView extends AbstractListView {
             }
         }), error -> UiUtil.safeAccess(ui, () -> {
             gridSkeleton.hide();
-            UiUtil.errorWithRetry(Messages.get("notification.store.loadFailed"), this::fetchStores);
+            UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_STORE_LOAD_FAILED), this::fetchStores);
         }), accessService.getUserDetail().getStoreDto().getChainDto().getId(), currentPage, pageSize, filterText.getValue());
     }
 

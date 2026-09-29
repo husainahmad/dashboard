@@ -9,6 +9,7 @@ import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientPromotionService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
@@ -43,7 +44,14 @@ public class PromotionFormWithPreview extends VerticalLayout {
     private final AsyncRestClientMenuService asyncRestClientMenuService;
 
     @Getter
-    private final TabManager tabManager;
+    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
+
+    /** The tab, action and promotion this editor was opened with. */
+    @Getter
+    private final PromotionEditorContext context;
+
+    @Getter
+    private final transient TabManager tabManager;
 
     @Getter
     private final Tab currentTab;
@@ -52,7 +60,7 @@ public class PromotionFormWithPreview extends VerticalLayout {
     private final FormAction formAction;
 
     @Getter
-    private final PromotionDto promotionDto;
+    private final transient PromotionDto promotionDto;
 
     @Getter
     private final PromotionForm promotionForm;
@@ -65,24 +73,34 @@ public class PromotionFormWithPreview extends VerticalLayout {
     private final Button statusButton = new Button(Messages.get("action.applyStatus"));
     private final Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
 
+    /**
+     * The form column, held so the action footer can be placed inside it.
+     *
+     * <p>It was added to the editor as a sibling of the two columns, which made the
+     * buttons sit in a full-width strip under both of them. They belong to the form, so
+     * they now sit at the foot of the form column, where the operator is already looking
+     * and where the product editor has always put its own.</p>
+     */
+    private VerticalLayout formWrapper;
+
     private UI ui;
 
     public PromotionFormWithPreview(RestClientPromotionService restClientPromotionService,
                                      AsyncRestClientMenuService asyncRestClientMenuService,
-                                     TabManager tabManager,
-                                     Tab currentTab,
-                                     FormAction formAction,
-                                     PromotionDto promotionDto,
+                                     AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+                                     PromotionEditorContext context,
                                      AccessService accessService) {
         this.restClientPromotionService = restClientPromotionService;
         this.asyncRestClientMenuService = asyncRestClientMenuService;
-        this.tabManager = tabManager;
-        this.currentTab = currentTab;
-        this.formAction = formAction;
-        this.promotionDto = promotionDto;
+        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
+        this.context = context;
+        this.tabManager = context.tabManager();
+        this.currentTab = context.currentTab();
+        this.formAction = context.formAction();
+        this.promotionDto = context.promotionDto();
 
-        this.promotionForm = new PromotionForm(restClientPromotionService, asyncRestClientMenuService, tabManager,
-                currentTab, formAction, promotionDto, accessService);
+        this.promotionForm = new PromotionForm(restClientPromotionService, asyncRestClientMenuService,
+                asyncRestClientOrganizationService, accessService, context);
         this.promotionPreview = new PromotionPreview();
 
         promotionForm.setPreviewUpdater(promotionPreview::updatePreview);
@@ -114,7 +132,7 @@ public class PromotionFormWithPreview extends VerticalLayout {
         // declared in forms.css, not here, so the single-column fallback in the media
         // query can still reach it: an inline width outranks every stylesheet rule,
         // however specific, and the two used to disagree with the Java always winning.
-        VerticalLayout formWrapper = new VerticalLayout(promotionForm);
+        formWrapper = new VerticalLayout(promotionForm);
         formWrapper.setPadding(true);
         formWrapper.addClassName("promotion-form-wrapper");
         releaseDefaultWidth(formWrapper);
@@ -153,9 +171,9 @@ public class PromotionFormWithPreview extends VerticalLayout {
     }
 
     /**
-     * Builds the footer. Exactly one of the three committing buttons is shown,
-     * depending on the action the editor was opened for, so the operator is never
-     * offered a save that would post the wrong payload.
+     * Builds the footer at the foot of the form column. Exactly one of the three
+     * committing buttons is shown, depending on the action the editor was opened for, so
+     * the operator is never offered a save that would post the wrong payload.
      */
     private void addFooterButtons() {
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -176,10 +194,13 @@ public class PromotionFormWithPreview extends VerticalLayout {
         footer.setWidthFull();
         footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         footer.setSpacing(true);
-        footer.setPadding(true);
+        // No padding: the footer is inside the form column, which already pads its
+        // contents. Padding both would indent the buttons twice and pull the rule above
+        // them in from the column edge.
+        footer.setPadding(false);
         footer.addClassName("promotion-editor-footer");
 
-        add(footer);
+        formWrapper.add(footer);
     }
 
     /**

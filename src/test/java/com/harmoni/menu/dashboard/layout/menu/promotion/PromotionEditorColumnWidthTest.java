@@ -139,7 +139,7 @@ class PromotionEditorColumnWidthTest {
 
     private static Component column(int index) throws Exception {
         PromotionFormWithPreview editor = new PromotionFormWithPreview(
-                null, null, null, null, FormAction.CREATE, null, null);
+                null, null, null, PromotionEditorContext.builder().formAction(FormAction.CREATE).build(), null);
         invoke(editor, "buildLayout");
 
         Component mainLayout = editor.getChildren().findFirst()

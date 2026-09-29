@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.setting.service;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
@@ -32,6 +33,7 @@ public class ServiceTabs extends VerticalLayout {
         tabSheet.add(browseTab, serviceListView);
         tabSheet.setSizeFull();
 
+        add(PageHeader.of(Messages.Keys.PAGE_SERVICE_TITLE, Messages.Keys.PAGE_SERVICE_DESCRIPTION));
         add(serviceListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);

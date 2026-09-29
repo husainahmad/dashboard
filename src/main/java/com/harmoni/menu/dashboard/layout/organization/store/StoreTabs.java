@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.organization.store;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -34,6 +35,7 @@ public class StoreTabs extends VerticalLayout {
         tabSheet.add(browseTab, storeListView);
         tabSheet.setSizeFull();
 
+        add(PageHeader.of(Messages.Keys.PAGE_STORE_TITLE, Messages.Keys.PAGE_STORE_DESCRIPTION));
         add(storeListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);

@@ -30,6 +30,7 @@ import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemAction;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
 import com.harmoni.menu.dashboard.layout.enums.PromotionRuleType;
+import com.harmoni.menu.dashboard.layout.enums.PromotionScopeType;
 import com.harmoni.menu.dashboard.layout.enums.PromotionStatus;
 import com.harmoni.menu.dashboard.layout.enums.PromotionTargetType;
 import com.harmoni.menu.dashboard.layout.enums.PromotionType;
@@ -83,6 +84,7 @@ public class NativeImageRuntimeHints {
                 PromotionType.class,
                 PromotionStatus.class,
                 PromotionTargetType.class,
+                PromotionScopeType.class,
                 PromotionRuleType.class,
                 StoreDto.class,
                 TierDto.class,

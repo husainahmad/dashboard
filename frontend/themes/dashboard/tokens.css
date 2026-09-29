@@ -21,6 +21,25 @@
 
     --lumo-font-family: var(--app-font);
 
+    /*
+     * The whole app's type scale, one step below Lumo's defaults.
+     *
+     * Declared here rather than per component because every page, menu, grid and
+     * dialog already reads these tokens, so this is the single place the scale
+     * lives. Lumo's defaults are body 16px, small 14px, extra-small 12px; the
+     * values below are one step down, which takes a visible amount of vertical
+     * space out of the grids and navigation without any text becoming hard to
+     * read. Sizes above the body scale move too, so a heading still reads as a
+     * heading instead of collapsing towards body text.
+     */
+    --lumo-font-size-xs: 0.6875rem;
+    --lumo-font-size-s: 0.8125rem;
+    --lumo-font-size-m: 0.875rem;
+    --lumo-font-size-l: 1rem;
+    --lumo-font-size-xl: 1.25rem;
+    --lumo-font-size-xxl: 1.5rem;
+    --lumo-font-size-xxxl: 2.25rem;
+
     /* ---------- Brand ---------- */
 
     --app-brand: #059669;

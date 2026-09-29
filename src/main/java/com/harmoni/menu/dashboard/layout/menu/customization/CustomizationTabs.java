@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.menu.customization;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
@@ -36,6 +37,7 @@ public class CustomizationTabs extends VerticalLayout {
         tabSheet.add(browseTab, customizationListView);
         tabSheet.setSizeFull();
 
+        add(PageHeader.of(Messages.Keys.PAGE_CUSTOMIZATION_TITLE, Messages.Keys.PAGE_CUSTOMIZATION_DESCRIPTION));
         add(customizationListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);

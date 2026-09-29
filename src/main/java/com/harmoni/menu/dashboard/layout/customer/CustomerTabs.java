@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.customer;
 
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientCustomerService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
@@ -34,6 +35,7 @@ public class CustomerTabs extends VerticalLayout {
         tabSheet.add(browseTab, customerListView);
         tabSheet.setSizeFull();
 
+        add(PageHeader.of(Messages.Keys.PAGE_CUSTOMER_TITLE, Messages.Keys.PAGE_CUSTOMER_DESCRIPTION));
         add(customerListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);

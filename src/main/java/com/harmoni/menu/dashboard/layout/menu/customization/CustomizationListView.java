@@ -169,7 +169,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
 
     private void configureBrandSelector() {
         brandDtoComboBox.setLabel(Messages.get(Messages.Keys.LABEL_BRAND));
-        brandDtoComboBox.setPlaceholder(Messages.get("placeholder.selectBrand"));
+        brandDtoComboBox.setPlaceholder(Messages.get(Messages.Keys.PLACEHOLDER_SELECT_BRAND));
         brandDtoComboBox.setClearButtonVisible(true);
         brandDtoComboBox.setItemLabelGenerator(BrandDto::getName);
         brandDtoComboBox.setItems(Collections.emptyList());
