@@ -29,7 +29,4 @@ public class PromotionProperties implements Serializable {
 
     /** Status transition, formatted with the promotion id. */
     private String status;
-
-    /** Discounts recorded against one order line, formatted with the order line id. */
-    private String orderItemDiscounts;
 }

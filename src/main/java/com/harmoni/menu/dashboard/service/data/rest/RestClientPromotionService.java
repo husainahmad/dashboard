@@ -109,17 +109,6 @@ public class RestClientPromotionService extends RestClientService implements Ser
         return delete(url);
     }
 
-    /**
-     * Retrieves the discounts recorded against one order line, which is how a
-     * basket shows what was actually granted.
-     *
-     * @param orderItemId the order line id
-     * @return list of discounts, oldest first
-     */
-    public Mono<RestAPIResponse> getDiscountsByOrderItem(Long orderItemId) {
-        return get(menuProperties.getUrl().getPromotions().getOrderItemDiscounts().formatted(orderItemId));
-    }
-
     private static String orEmpty(String value) {
         return value == null ? "" : value;
     }

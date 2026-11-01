@@ -405,7 +405,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
     private void refreshImage() {
         if (ObjectUtils.isNotEmpty(productDto.getProductImageDto()) &&
                 ObjectUtils.isNotEmpty(productDto.getProductImageDto().getUrl())) {
-            this.productImageUploadView.setImage(productDto.getProductImageDto().getUrl());
+            this.productImageUploadView.setImage(productDto.getProductImageDto());
         }
     }
 

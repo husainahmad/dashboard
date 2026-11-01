@@ -13,6 +13,27 @@ public final class Css {
     public static final String TOOLBAR = "toolbar";
     public static final String LIST_VIEW = "list-view";
     public static final String PRODUCT_FORM = "product-form";
+    /** The page shell: the header, the list toolbar and the tab sheet below them. */
+    public static final String PAGE = "page";
+    /** The title and caption block every page opens with; see {@link PageHeader}. */
+    public static final String PAGE_HEADER = "page-header";
+
+    /**
+     * The state class a page shell carries while its header and toolbar are hidden.
+     *
+     * <p>Hiding two elements rather than moving the content: the tab sheet is the one
+     * flexible child of the shell, so once the other two are out of the flow it takes
+     * the space they were holding and the editor below it grows with it. Nothing is
+     * re-parented, so the binder, the SKU rows and an uploaded image that has not been
+     * saved yet all survive the round trip.</p>
+     *
+     * <p>Paired by {@code FocusModeToggle}, which adds and removes it on whatever
+     * component it was given - the page shell, never one of the elements the rule
+     * hides.</p>
+     */
+    public static final String FOCUS_MODE = "focus-mode";
+    /** The floating control that toggles {@link #FOCUS_MODE} on its target. */
+    public static final String FOCUS_TOGGLE = "focus-toggle";
     public static final String HEALTH_CAPTION = "health-caption";
     public static final String TIER_SAVED_AT = "tier-saved-at";
     public static final String TIER_SAVING = "tier-saving";

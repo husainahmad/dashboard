@@ -17,6 +17,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
  * <p>The caption is optional. A page with nothing useful to say about itself passes
  * null and gets the heading alone, rather than an empty paragraph holding the space
  * a caption would have filled.</p>
+ *
+ * <p>It carries {@link Css#PAGE_HEADER} so a page that can collapse its own chrome has
+ * something to act on: the header is one of the two elements focus mode takes out of
+ * the way, and until now nothing named it.</p>
  */
 public class PageHeader extends VerticalLayout {
 
@@ -32,6 +36,7 @@ public class PageHeader extends VerticalLayout {
             caption.addClassName(Css.HEALTH_CAPTION);
             add(caption);
         }
+        addClassName(Css.PAGE_HEADER);
         setPadding(false);
         setAlignItems(FlexComponent.Alignment.START);
         setWidthFull();

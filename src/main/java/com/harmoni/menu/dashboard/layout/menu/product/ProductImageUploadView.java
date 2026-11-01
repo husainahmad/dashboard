@@ -125,14 +125,7 @@ public class ProductImageUploadView extends VerticalLayout {
         thumbnail.setAlignItems(FlexComponent.Alignment.CENTER);
         thumbnail.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         thumbnail.add(image, placeholderIcon);
-        /*
-         * Hidden on purpose. The tile is now only the way to pick, crop and remove the
-         * image; showing the result here as well put a second copy of it on screen
-         * beside the product preview, which is where it is looked at properly. The
-         * elements are still built and still updated, so the tile can be brought back
-         * by removing this one line.
-         */
-        thumbnail.setVisible(false);
+        thumbnail.setVisible(true);
 
         VerticalLayout labels = new VerticalLayout(imageTitle, imageHint);
         labels.setPadding(false);
@@ -200,6 +193,21 @@ public class ProductImageUploadView extends VerticalLayout {
         showImageState(true);
         removeButton.setVisible(true);
         fireImageChanged();
+    }
+
+    /**
+     * Shows an already-loaded product image and keeps it as this view's
+     * {@link #productImageDto} so the owner form's preview snapshot can pick it
+     * up. Call this from a UI-access context when populating an existing product.
+     *
+     * @param dto the image loaded with the product, may be {@code null}
+     */
+    public void setImage(ProductImageDto dto) {
+        if (ObjectUtils.isEmpty(dto) || ObjectUtils.isEmpty(dto.getUrl())) {
+            return;
+        }
+        this.productImageDto = dto;
+        setImage(dto.getUrl());
     }
 
     /**

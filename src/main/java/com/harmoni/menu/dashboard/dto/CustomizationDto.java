@@ -43,6 +43,10 @@ public class CustomizationDto {
 
     private Boolean required;
 
+    /** Whether an option in this customization may be chosen with a quantity greater than one. */
+
+    private Boolean allowQuantity;
+
     /** Minimum number of options that must be selected; {@code null} when unrestricted. */
 
     private Integer minimumSelection;

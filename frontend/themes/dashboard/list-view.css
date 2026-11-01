@@ -563,6 +563,73 @@ vaadin-combo-box::part(input-field):hover {
 
 
 /* ============================================================
+   FOCUS MODE
+   ============================================================ */
+
+/*
+ * The page shell: header, list toolbar, tab sheet. The tab sheet is the one flexible
+ * child, so the position here is what the control's absolute box is measured against.
+ */
+.page {
+
+    position:
+        relative;
+}
+
+/*
+ * Collapse the chrome and hand its height to the tab sheet.
+ *
+ * The direct child combinator is load bearing. .toolbar is not unique to this page:
+ * the product form's own SKU action bar and its Save/Update bar carry the same class,
+ * and a descendant selector would take the operator's price controls and Save button
+ * out of a form that is otherwise still on screen.
+ */
+.page.focus-mode > .page-header,
+.page.focus-mode > .toolbar {
+
+    display:
+        none;
+}
+
+/*
+ * The control: out of flow, in the top right of the shell.
+ *
+ * One position serves both states because the shell does not move when its header is
+ * hidden - the tab sheet grows upward into the space. Normally that corner is the empty
+ * right half of the page title, and collapsed it is the empty right end of the tab
+ * strip, so the control stays put and stays reachable. It is a sibling of the two
+ * elements the rule above hides, which is the only reason it can undo them.
+ */
+.page .focus-toggle {
+
+    position:
+        absolute;
+
+    top:
+        0;
+
+    right:
+        0;
+
+    z-index:
+        1;
+
+    /*
+     * Lifted off the page so it reads as a control rather than as part of the title.
+     * Lumo declares no border and no shadow of its own on a button, so these are
+     * additions rather than a fight with the theme, and the tokens mean the control
+     * follows the active colour scheme in dark mode like everything else.
+     */
+
+    border:
+        1px solid var(--app-border);
+
+    box-shadow:
+        var(--app-shadow);
+}
+
+
+/* ============================================================
    LOADING BAR
    ============================================================ */
 

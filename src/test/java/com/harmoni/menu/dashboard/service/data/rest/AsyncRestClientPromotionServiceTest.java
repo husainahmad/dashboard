@@ -33,8 +33,6 @@ class AsyncRestClientPromotionServiceTest {
         promotions.setRedeemable(BASE_URL + "/redeemable");
         promotions.setByCode(BASE_URL + "/code/%s");
         promotions.setStatus(BASE_URL + "/%d/status");
-        promotions.setOrderItemDiscounts(
-                "http://localhost:8080/api/v1/order-item-discount/order-item/%d");
 
         UrlProperties url = new UrlProperties();
         url.setPromotions(promotions);

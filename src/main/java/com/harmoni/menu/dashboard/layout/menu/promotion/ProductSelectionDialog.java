@@ -311,7 +311,7 @@ public class ProductSelectionDialog extends Dialog {
             checkbox.setValue(selectedProducts.stream()
                     .anyMatch(p -> p.getId() != null && p.getId().equals(product.getId())));
             checkbox.addValueChangeListener(e -> {
-                if (e.getValue()) {
+                if (Boolean.TRUE.equals(e.getValue())) {
                     if (selectedProducts.stream().noneMatch(p -> p.getId() != null && p.getId().equals(product.getId()))) {
                         selectedProducts.add(product);
                     }

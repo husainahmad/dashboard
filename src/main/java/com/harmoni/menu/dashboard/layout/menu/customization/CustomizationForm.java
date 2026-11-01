@@ -64,10 +64,11 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  *
  * <p>
  * Edits the customization header (name, description, selection type, required,
- * min/max selection) through a {@link Binder} and the options through a
- * {@link TreeGrid} where each root row is an option and its children the
- * per-tier prices. Price tiers are loaded for the owning brand, and a non-null
- * {@code editCustomization} pre-populates the fields and the option tree.
+ * allow-quantity, min/max selection) through a {@link Binder} and the options
+ * through a {@link TreeGrid} where each root row is an option and its children
+ * the per-tier prices. Price tiers are loaded for the owning brand, and a
+ * non-null {@code editCustomization} pre-populates the fields and the option
+ * tree.
  * </p>
  *
  * <p>
@@ -95,6 +96,8 @@ public class CustomizationForm extends VerticalLayout {
     @Getter private final ComboBox<SelectionType> selectionType = new ComboBox<>(Messages.get(Messages.Keys.LABEL_SELECTION_TYPE));
     /** Whether the customization is mandatory. */
     @Getter private final Checkbox requiredField = new Checkbox(Messages.get(Messages.Keys.LABEL_REQUIRED));
+    /** Whether an option may be ordered with a quantity greater than one. */
+    @Getter private final Checkbox allowQuantityField = new Checkbox(Messages.get(Messages.Keys.LABEL_ALLOW_QUANTITY));
     /** Minimum number of options the user must select. */
     @Getter private final IntegerField minSelectionField = new IntegerField(Messages.get("label.minSelection"));
     /** Maximum number of options the user may select. */
@@ -182,6 +185,9 @@ public class CustomizationForm extends VerticalLayout {
         customizationBinder.forField(requiredField)
                 .bind(CustomizationDto::getRequired, CustomizationDto::setRequired);
 
+        customizationBinder.forField(allowQuantityField)
+                .bind(CustomizationDto::getAllowQuantity, CustomizationDto::setAllowQuantity);
+
         customizationBinder.forField(minSelectionField)
                 .bind(CustomizationDto::getMinimumSelection, CustomizationDto::setMinimumSelection);
 
@@ -213,6 +219,7 @@ public class CustomizationForm extends VerticalLayout {
         FormLayout formLayout = new FormLayout();
         formLayout.add(nameField, descriptionField);
         formLayout.add(selectionType, requiredField);
+        formLayout.add(allowQuantityField, new Span());
         formLayout.add(minSelectionField, maxSelectionField);
         formLayout.setColspan(descriptionField, 2);
         formLayout.setResponsiveSteps(

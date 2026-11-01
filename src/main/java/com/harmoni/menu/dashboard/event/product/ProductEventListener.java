@@ -51,7 +51,6 @@ public class ProductEventListener implements
         List<com.harmoni.menu.dashboard.dto.SkuDto> skuDtos = productForm.getSkuSection().toSkuDtos();
         productDto.setSkuDtos(skuDtos);
 
-        // Only a not-yet-saved product carries the customization attachment list;
         // existing products manage the relationship via the customization endpoints
         // so per-product settings are never wiped by a plain product update.
         if (ObjectUtils.isEmpty(productDto.getId())) {

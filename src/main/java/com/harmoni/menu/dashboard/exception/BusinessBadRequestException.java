@@ -9,7 +9,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BusinessBadRequestException extends RuntimeException {
+    @lombok.Getter
+    private final transient RestAPIResponse restAPIResponse;
+
     public BusinessBadRequestException(RestAPIResponse restAPIResponse) {
+        super("Server responded httpStatus=" + (restAPIResponse == null ? "null"
+                : restAPIResponse.getHttpStatus()) + " error=" + (restAPIResponse == null ? "null"
+                : restAPIResponse.getError()));
+        this.restAPIResponse = restAPIResponse;
         log.warn("Serve Response : {}", restAPIResponse);
         try {
             Broadcaster.broadcast(ObjectUtil.objectToJsonString(BroadcastMessage.builder()

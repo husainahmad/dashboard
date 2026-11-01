@@ -10,7 +10,6 @@ import com.harmoni.menu.dashboard.layout.enums.PromotionScopeType;
 import com.harmoni.menu.dashboard.layout.enums.PromotionType;
 import com.harmoni.menu.dashboard.layout.enums.PromotionTargetType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
-import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientBase;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;

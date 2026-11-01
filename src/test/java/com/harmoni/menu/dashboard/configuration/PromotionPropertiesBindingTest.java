@@ -53,8 +53,6 @@ class PromotionPropertiesBindingTest {
         assertEquals(MENU_BASE + "/api/v1/promotion/redeemable", promotions.getRedeemable());
         assertEquals(MENU_BASE + "/api/v1/promotion/code/%s", promotions.getByCode());
         assertEquals(MENU_BASE + "/api/v1/promotion/%d/status", promotions.getStatus());
-        assertEquals(MENU_BASE + "/api/v1/order-item-discount/order-item/%d",
-                promotions.getOrderItemDiscounts());
     }
 
     @Test

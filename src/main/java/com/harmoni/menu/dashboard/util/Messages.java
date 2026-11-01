@@ -81,6 +81,7 @@ public class Messages implements ApplicationContextAware {
         public static final String LABEL_PASSWORD = "label.password";
         public static final String LABEL_PRICE = "label.price";
         public static final String LABEL_REQUIRED = "label.required";
+        public static final String LABEL_ALLOW_QUANTITY = "label.allowQuantity";
         public static final String LABEL_OPTIONAL = "label.optional";
         public static final String LABEL_SEARCH = "label.search";
         public static final String LABEL_SELECTION_TYPE = "label.selectionType";
