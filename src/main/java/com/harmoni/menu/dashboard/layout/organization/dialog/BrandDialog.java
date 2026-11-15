@@ -31,6 +31,7 @@ public class BrandDialog extends Dialog {
 
     private final RestClientOrganizationService restClientOrganizationService;
     private final Runnable onSaved;
+    private final BrandDto editingBrand;
 
     private final TextField nameField = new TextField(Messages.get("organization.brand.name"));
     private final EmailField adminEmailField = new EmailField(Messages.get("organization.brand.adminEmail"));
@@ -43,8 +44,14 @@ public class BrandDialog extends Dialog {
 
     public BrandDialog(RestClientOrganizationService restClientOrganizationService,
                        List<BrandDto> brands, Runnable onSaved) {
+        this(restClientOrganizationService, brands, null, onSaved);
+    }
+
+    public BrandDialog(RestClientOrganizationService restClientOrganizationService,
+                       List<BrandDto> brands, BrandDto editingBrand, Runnable onSaved) {
         this.restClientOrganizationService = restClientOrganizationService;
         this.onSaved = onSaved;
+        this.editingBrand = editingBrand;
 
         setHeaderTitle(Messages.get("organization.brand.title"));
         setWidth("560px");
@@ -86,9 +93,49 @@ public class BrandDialog extends Dialog {
 
         Button cancel = new Button(Messages.get("action.cancel"), event -> close());
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        Button save = new Button(Messages.get("organization.brand.create"), event -> save());
+        Button save = new Button(Messages.get(editingBrand == null
+                ? "organization.brand.create" : "organization.brand.update"), event -> save());
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         getFooter().add(cancel, save);
+
+        if (editingBrand != null) {
+            applyEdit(editingBrand);
+        }
+    }
+
+    private void applyEdit(BrandDto brand) {
+        setHeaderTitle(Messages.get("organization.brand.editTitle"));
+        nameField.setValue(brand.getName() == null ? "" : brand.getName());
+        adminEmailField.setValue(brand.getAdminEmail() == null ? "" : brand.getAdminEmail());
+        logoUrl = brand.getLogoUrl();
+        if (logoUrl != null && !logoUrl.isBlank()) {
+            logoPreview.setSrc(logoUrl);
+            logoPreview.setVisible(true);
+        }
+        selectByPrefix(timeZoneBox, brand.getTimeZone());
+        selectCurrency(currencyBox, brand.getCurrency());
+        menuMode.setVisible(false);
+        sourceBrandBox.setVisible(false);
+    }
+
+    private void selectByPrefix(ComboBox<String> box, String value) {
+        if (value == null) {
+            return;
+        }
+        box.getListDataView().getItems()
+                .filter(item -> item.startsWith(value + " "))
+                .findFirst()
+                .ifPresent(box::setValue);
+    }
+
+    private void selectCurrency(ComboBox<String> box, String code) {
+        if (code == null) {
+            return;
+        }
+        box.getListDataView().getItems()
+                .filter(item -> item.endsWith("(" + code + ")"))
+                .findFirst()
+                .ifPresent(box::setValue);
     }
 
     private FormLayout logoField() {
@@ -150,21 +197,37 @@ public class BrandDialog extends Dialog {
         dto.setTimeZone(stripLabel(timeZoneBox.getValue()));
         dto.setCurrency(stripLabel(currencyBox.getValue()));
         dto.setAdminEmail(adminEmailField.getValue());
-        dto.setInitialMenuMode(menuMode.getValue());
-        if ("COPY".equals(menuMode.getValue()) && sourceBrandBox.getValue() != null) {
-            dto.setSourceBrandId(sourceBrandBox.getValue().getId());
+
+        if (editingBrand == null) {
+            dto.setInitialMenuMode(menuMode.getValue());
+            if ("COPY".equals(menuMode.getValue()) && sourceBrandBox.getValue() != null) {
+                dto.setSourceBrandId(sourceBrandBox.getValue().getId());
+            }
+            restClientOrganizationService.createBrand(dto).subscribe(
+                    response -> success("organization.brand.created"),
+                    error -> failure("organization.brand.failed"));
+            return;
         }
 
-        restClientOrganizationService.createBrand(dto).subscribe(
-                response -> UiUtil.safeAccess(getUI().orElse(null), () -> {
-                    UiUtil.success(Messages.get("organization.brand.created"));
-                    close();
-                    if (onSaved != null) {
-                        onSaved.run();
-                    }
-                }),
-                error -> UiUtil.safeAccess(getUI().orElse(null),
-                        () -> UiUtil.error(Messages.get("organization.brand.failed"))));
+        dto.setId(editingBrand.getId());
+        restClientOrganizationService.updateBrand(dto).subscribe(
+                response -> success("organization.brand.updated"),
+                error -> failure("organization.brand.updateFailed"));
+    }
+
+    private void success(String messageKey) {
+        UiUtil.safeAccess(getUI().orElse(null), () -> {
+            UiUtil.success(Messages.get(messageKey));
+            close();
+            if (onSaved != null) {
+                onSaved.run();
+            }
+        });
+    }
+
+    private void failure(String messageKey) {
+        UiUtil.safeAccess(getUI().orElse(null),
+                () -> UiUtil.error(Messages.get(messageKey)));
     }
 
     private String stripLabel(String value) {

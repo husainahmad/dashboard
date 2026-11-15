@@ -38,6 +38,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -233,6 +234,7 @@ public class PromotionForm extends FormLayout {
         this.currentTab = context.currentTab();
         this.formAction = context.formAction();
         this.promotionDto = context.promotionDto();
+        addClassName("promotion-form");
     }
 
     private final List<PromotionSpecialPriceDto> specialPrices = new ArrayList<>();
@@ -515,6 +517,7 @@ public class PromotionForm extends FormLayout {
 
         discountValueField.setLabel(Messages.get("label.promotion.discount"));
         discountValueField.setWidth("160px");
+        discountValueField.addClassName("money-field");
         discountValueField.addValueChangeListener(e -> firePreviewUpdate());
 
         discountUnitLabel.getStyle()
@@ -788,6 +791,7 @@ public class PromotionForm extends FormLayout {
 
         BigDecimalField priceField = new BigDecimalField();
         priceField.setWidth(Css.COMPACT_FIELD_WIDTH);
+        priceField.addClassName("money-field");
         priceField.setValue(specialPrice.getSpecialPrice());
 
         Runnable sync = () -> {
@@ -1585,7 +1589,8 @@ public class PromotionForm extends FormLayout {
         generalForm.add(activeCheckbox);
         generalForm.add(statusSelect);
 
-        Div generalCard = createSectionCard(Messages.get("promotion.section.general"), generalForm);
+        Div generalCard = createSectionCard(Messages.get("promotion.section.general"),
+                Messages.get("promotion.section.general.hint"), VaadinIcon.INFO_CIRCLE, generalForm);
         setColspan(generalCard, 2);
         add(generalCard);
 
@@ -1598,7 +1603,8 @@ public class PromotionForm extends FormLayout {
         scheduleForm.add(scheduleTimingLayout);
         scheduleForm.setColspan(scheduleTimingLayout, 2);
 
-        Div scheduleCard = createSectionCard(Messages.get("promotion.section.schedule"), scheduleForm);
+        Div scheduleCard = createSectionCard(Messages.get("promotion.section.schedule"),
+                Messages.get("promotion.section.schedule.hint"), VaadinIcon.CALENDAR, scheduleForm);
         setColspan(scheduleCard, 2);
         add(scheduleCard);
 
@@ -1624,7 +1630,8 @@ public class PromotionForm extends FormLayout {
         targetForm.add(specialPriceLayout);
         targetForm.setColspan(specialPriceLayout, 2);
 
-        Div targetCard = createSectionCard(Messages.get("promotion.section.target"), targetForm);
+        Div targetCard = createSectionCard(Messages.get("promotion.section.target"),
+                Messages.get("promotion.section.target.hint"), VaadinIcon.BULLSEYE, targetForm);
         setColspan(targetCard, 2);
         add(targetCard);
     }
@@ -1639,27 +1646,30 @@ public class PromotionForm extends FormLayout {
      * @param content the form layout to wrap
      * @return a div containing the title and form layout
      */
-    private Div createSectionCard(String title, FormLayout content) {
+    private Div createSectionCard(String title, String hint, VaadinIcon icon, FormLayout content) {
         Div card = new Div();
         card.addClassName("form-section-card");
-        card.getStyle()
-                .set("background", "var(--lumo-base-color)")
-                .set("border", Css.HAIRLINE_BORDER)
-                .set("border-radius", "var(--lumo-border-radius-l)")
-                .set("box-shadow", "var(--lumo-box-shadow-s)")
-                .set(Css.PADDING, "var(--lumo-space-m)")
-                .set("margin-bottom", "var(--lumo-space-m)");
+
+        Icon iconComponent = icon.create();
+        iconComponent.addClassName("form-section-icon");
 
         H3 titleLabel = new H3(title);
-        titleLabel.getStyle()
-                .set(Css.MARGIN, "0 0 var(--lumo-space-m) 0")
-                .set(Css.FONT_SIZE, "var(--lumo-font-size-m)")
-                .set(Css.FONT_WEIGHT, "600")
-                .set(Css.COLOR, "var(--lumo-primary-text-color)")
-                .set("padding-bottom", "var(--lumo-space-s)")
-                .set(Css.BORDER_BOTTOM, Css.HAIRLINE_BORDER);
+        titleLabel.addClassName("form-section-title");
 
-        card.add(titleLabel, content);
+        Span hintLabel = new Span(hint);
+        hintLabel.addClassName("form-section-hint");
+
+        VerticalLayout text = new VerticalLayout(titleLabel, hintLabel);
+        text.setPadding(false);
+        text.setSpacing(false);
+
+        HorizontalLayout header = new HorizontalLayout(iconComponent, text);
+        header.addClassName("form-section-header");
+        header.setWidthFull();
+        header.setAlignItems(FlexComponent.Alignment.CENTER);
+        header.setFlexGrow(1, text);
+
+        card.add(header, content);
         return card;
     }
 

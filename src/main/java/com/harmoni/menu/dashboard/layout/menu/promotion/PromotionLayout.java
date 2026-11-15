@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 @Route(value = "promotion", layout = MainLayout.class)
-@PageTitle("Promotion | POSHarmoni")
+@PageTitle("Promotions | POSHarmoni")
 public class PromotionLayout extends VerticalLayout {
 
     private final AsyncRestClientPromotionService asyncRestClientPromotionService;

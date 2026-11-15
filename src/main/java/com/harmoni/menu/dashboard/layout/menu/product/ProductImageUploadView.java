@@ -20,7 +20,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
-import com.vaadin.flow.router.Route;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -42,7 +41,6 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * image on ImgBB and returns the hosted URL in {@link ProductImageDto#url}.</p>
  */
 @RequiredArgsConstructor
-@Route("product-image-upload")
 @Slf4j
 public class ProductImageUploadView extends VerticalLayout {
 

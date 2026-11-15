@@ -9,7 +9,6 @@ import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.event.product.ProductDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.AbstractListView;
-import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -23,6 +22,8 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -31,9 +32,7 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.treegrid.ExpandEvent;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
-import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.PreserveOnRefresh;
-import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.UIScope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,14 +55,12 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * <p>Shows products as a hierarchical {@link TreeGrid} (product rows expanded
  * into their SKUs), with category, brand and tier filters, pagination,
  * search and per-product edit/delete actions. Opens the edit form in the tab
- * supplied by the hosting {@link ProductTabs} view and refreshes the tree from
+ * supplied by the hosting {@link ProductLayout} view and refreshes the tree from
  * the menu service.
  */
 @RequiredArgsConstructor
 @UIScope
 @PreserveOnRefresh
-@Route(value = "product-list", layout = MainLayout.class)
-@PageTitle("Product | POSHarmoni")
 @org.springframework.stereotype.Component
 @Slf4j
 public class ProductListView extends AbstractListView implements BroadcastMessageService {
@@ -163,7 +160,7 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
                     new ProductDeleteEventListener(restClientMenuService, productTreeItem)));
             return horizontalLayout;
         }
-        return null;
+        return new HorizontalLayout();
     }
 
     /**
@@ -224,8 +221,35 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
     }
 
     private void addBaseColumns() {
-        productDtoGrid.addHierarchyColumn(ProductTreeItem::getName).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
-        productDtoGrid.addColumn(ProductTreeItem::getCategoryName).setHeader(Messages.get("grid.header.category"));
+        productDtoGrid.addComponentHierarchyColumn(this::applyNameLabel)
+                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
+        productDtoGrid.addColumn(item -> ProductItemType.PRODUCT.equals(item.getProductItemType())
+                        ? item.getCategoryName() : "")
+                .setHeader(Messages.get("grid.header.category"));
+    }
+
+    /**
+     * Renders the hierarchy cell: a product row shows its name with a variant
+     * count badge, a SKU row shows the variant name.
+     *
+     * @param item the product or SKU node
+     * @return the hierarchy cell component
+     */
+    private Component applyNameLabel(ProductTreeItem item) {
+        Span name = new Span(item.getName());
+        if (!ProductItemType.PRODUCT.equals(item.getProductItemType())) {
+            name.addClassName("product-name-sku");
+            return name;
+        }
+        name.addClassName("product-name-root");
+        HorizontalLayout row = new HorizontalLayout(name);
+        row.setAlignItems(Alignment.CENTER);
+        row.setSpacing(true);
+        int count = item.getSkus() == null ? 0 : item.getSkus().size();
+        Span badge = new Span(Messages.get("product.skuCount", count));
+        badge.addClassName("product-sku-count");
+        row.add(badge);
+        return row;
     }
 
     private String tierSignature() {
@@ -253,7 +277,8 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
                 .filter(tier -> tier.getId() != null && tier.getId() > 0)
                 .forEach(tier -> productDtoGrid.addComponentColumn(item -> tierPriceCell(item, tier.getId()))
                         .setKey("tier-price-".concat(String.valueOf(tier.getId())))
-                        .setHeader(tier.getName() == null ? "" : tier.getName().toUpperCase(Locale.ROOT)));
+                        .setHeader(tier.getName() == null ? "" : tier.getName().toUpperCase(Locale.ROOT))
+                        .setTextAlign(ColumnTextAlign.END));
     }
 
     /**
@@ -266,7 +291,7 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
      */
     private Component tierPriceCell(ProductTreeItem productTreeItem, Integer tierId) {
         if (!isSkuRow(productTreeItem)) {
-            return new Text("\u2013");
+            return new Span();
         }
         return new TierPriceCell(productTreeItem, tierId, restClientMenuService, ui, typingFields);
     }

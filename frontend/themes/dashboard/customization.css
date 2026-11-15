@@ -1,0 +1,81 @@
+/* ============================================================
+   Customization page — list tree and editor form
+   ============================================================ */
+
+/* ---------- List tree ---------- */
+
+.customization-name-root {
+    font-weight: 700;
+    color: var(--app-text);
+}
+
+.customization-count-badge {
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    color: var(--app-text-muted);
+    background: var(--lumo-contrast-5pct);
+    border-radius: 999px;
+    padding: 1px 8px;
+}
+
+.customization-type-badge {
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(5, 150, 105, 0.12);
+    color: var(--app-brand-strong);
+}
+
+.customization-tier-label {
+    color: var(--app-text-muted);
+    font-style: italic;
+}
+
+.customization-price {
+    display: block;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.customization-status-pill {
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.customization-status-active {
+    background: rgba(5, 150, 105, 0.12);
+    color: var(--app-brand-strong);
+}
+
+.customization-status-inactive {
+    background: var(--lumo-contrast-5pct);
+    color: var(--app-text-muted);
+}
+
+/* ---------- Editor form ---------- */
+
+.customization-form {
+    overflow-y: auto;
+}
+
+.customization-form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    margin-top: var(--lumo-space-m);
+    padding: var(--lumo-space-s) 0;
+    background: var(--app-surface);
+    border-top: 1px solid var(--app-border);
+    box-shadow: 0 -6px 14px -8px rgba(0, 0, 0, 0.12);
+}
+
+.customization-dirty-label {
+    font-size: var(--lumo-font-size-s);
+    font-weight: 600;
+    color: var(--app-accent);
+}

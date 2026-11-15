@@ -256,29 +256,4 @@ public class FloorFormDialog extends Dialog implements BroadcastMessageService {
         }));
     }
 
-    private Integer sessionBrandId() {
-        StoreDto store = sessionStore();
-        if (ObjectUtils.isNotEmpty(store) && ObjectUtils.isNotEmpty(store.getChainDto())) {
-            return store.getChainDto().getBrandId();
-        }
-        return null;
-    }
-
-    private Integer sessionChainId() {
-        StoreDto store = sessionStore();
-        if (ObjectUtils.isNotEmpty(store) && ObjectUtils.isNotEmpty(store.getChainDto())) {
-            return store.getChainDto().getId();
-        }
-        return null;
-    }
-
-    private Integer sessionStoreId() {
-        StoreDto store = sessionStore();
-        return ObjectUtils.isNotEmpty(store) ? store.getId() : null;
-    }
-
-    private StoreDto sessionStore() {
-        return accessService.getUserDetail() == null
-                ? null : accessService.getUserDetail().getStoreDto();
-    }
 }

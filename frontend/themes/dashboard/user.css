@@ -1,0 +1,311 @@
+/* ============================================================
+   Users page — searchable list + profile detail
+   ============================================================ */
+
+.user-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lumo-space-m);
+    padding: 0;
+    background: transparent;
+    min-height: 100%;
+}
+
+.user-toolbar {
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.user-body {
+    align-items: stretch;
+    gap: var(--lumo-space-m);
+    min-height: 0;
+}
+
+.user-list-card,
+.user-detail-card {
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--lumo-border-radius-l);
+    box-shadow: var(--lumo-box-shadow-xs);
+    padding: var(--lumo-space-m);
+    min-height: 0;
+}
+
+.user-list-card {
+    flex: 0 0 300px;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-detail-card {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-list-count {
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 700;
+    color: var(--app-text-secondary);
+    background: var(--lumo-contrast-5pct);
+    border-radius: 999px;
+    padding: 1px 8px;
+}
+
+/* ---------- List ---------- */
+
+.user-list-loading {
+    padding: var(--lumo-space-m) var(--lumo-space-s);
+    font-size: var(--lumo-font-size-s);
+    color: var(--app-text-muted);
+}
+
+.user-list {
+    overflow-y: auto;
+    gap: var(--lumo-space-xs);
+}
+
+.user-list-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--lumo-space-s);
+    padding: var(--lumo-space-s) var(--lumo-space-m);
+    border: 1px solid transparent;
+    border-radius: var(--lumo-border-radius-m);
+    cursor: pointer;
+    transition: background 120ms ease;
+}
+
+.user-list-row:hover {
+    background: var(--lumo-contrast-5pct);
+}
+
+.user-list-row-selected {
+    background: var(--lumo-primary-color-10pct);
+}
+
+.user-list-row-selected::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 3px;
+    background: var(--app-brand);
+}
+
+.user-list-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: var(--lumo-contrast-10pct);
+    color: var(--app-text-secondary);
+}
+
+.user-list-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.user-list-name {
+    font-weight: 600;
+    color: var(--app-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-list-store {
+    font-size: var(--lumo-font-size-xs);
+    color: var(--app-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-list-empty {
+    padding: var(--lumo-space-l) var(--lumo-space-m);
+    text-align: center;
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-s);
+}
+
+.user-list-footer {
+    margin-top: var(--lumo-space-s);
+    padding-top: var(--lumo-space-s);
+    border-top: 1px solid var(--app-border);
+    gap: var(--lumo-space-xs);
+}
+
+.user-list-summary {
+    font-size: var(--lumo-font-size-s);
+    color: var(--app-text-muted);
+}
+
+/* ---------- Role badges ---------- */
+
+.user-role-badge {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    line-height: 1.6;
+    white-space: nowrap;
+    background: var(--lumo-contrast-5pct);
+    color: var(--app-text-secondary);
+}
+
+.user-role-admin.user-list-avatar,
+.user-role-admin.user-detail-avatar {
+    background: var(--lumo-primary-color-10pct);
+    color: var(--app-brand-strong);
+}
+
+.user-role-manager.user-list-avatar,
+.user-role-manager.user-detail-avatar {
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+}
+
+.user-role-user.user-list-avatar,
+.user-role-user.user-detail-avatar {
+    background: rgba(59, 130, 246, 0.12);
+    color: #1d4ed8;
+}
+
+.user-role-admin.user-role-badge {
+    background: var(--lumo-primary-color-10pct);
+    color: var(--app-brand-strong);
+}
+
+.user-role-manager.user-role-badge {
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+}
+
+.user-role-user.user-role-badge {
+    background: rgba(59, 130, 246, 0.12);
+    color: #1d4ed8;
+}
+
+/* ---------- Empty detail ---------- */
+
+.user-detail-empty {
+    text-align: center;
+    color: var(--app-text-muted);
+    gap: var(--lumo-space-s);
+}
+
+.user-detail-empty-icon {
+    width: 44px;
+    height: 44px;
+    color: var(--lumo-contrast-40pct);
+}
+
+.user-detail-empty-title {
+    margin: 0;
+    font-size: var(--lumo-font-size-l);
+    font-weight: 700;
+    color: var(--app-text-secondary);
+}
+
+.user-detail-empty-hint {
+    margin: 0;
+    max-width: 320px;
+    font-size: var(--lumo-font-size-s);
+}
+
+/* ---------- Detail ---------- */
+
+.user-detail-header {
+    gap: var(--lumo-space-m);
+    padding-bottom: var(--lumo-space-m);
+}
+
+.user-detail-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    font-size: var(--lumo-font-size-l);
+    font-weight: 700;
+    background: var(--lumo-contrast-10pct);
+    color: var(--app-text-secondary);
+}
+
+.user-detail-name {
+    margin: 0;
+    font-size: var(--lumo-font-size-xl);
+    font-weight: 700;
+    color: var(--app-text);
+}
+
+.user-detail-subtitle {
+    font-size: var(--lumo-font-size-s);
+    color: var(--app-text-muted);
+}
+
+.user-info-list {
+    margin-top: var(--lumo-space-s);
+}
+
+.user-info-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 180px) 1fr;
+    gap: var(--lumo-space-m);
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--app-border);
+}
+
+.user-info-row:last-child {
+    border-bottom: none;
+}
+
+.user-info-label {
+    font-size: var(--lumo-font-size-s);
+    color: var(--app-text-muted);
+}
+
+.user-info-value {
+    font-size: var(--lumo-font-size-s);
+    font-weight: 600;
+    color: var(--app-text);
+    overflow-wrap: anywhere;
+}
+
+.user-action-bar {
+    margin-top: auto;
+    padding-top: var(--lumo-space-m);
+    border-top: 1px solid var(--app-border);
+    gap: var(--lumo-space-s);
+}
+
+.user-delete-button {
+    color: var(--lumo-error-text-color);
+}
+
+.user-delete-button:hover {
+    background: var(--lumo-error-color-10pct);
+}

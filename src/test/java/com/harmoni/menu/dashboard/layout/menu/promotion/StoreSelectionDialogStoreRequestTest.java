@@ -2,7 +2,6 @@ package com.harmoni.menu.dashboard.layout.menu.promotion;
 
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ChainDto;
-import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import org.junit.jupiter.api.Test;
 

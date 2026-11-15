@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.service.data.rest;
 
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
+import com.harmoni.menu.dashboard.exception.BusinessServerRequestException;
 import com.harmoni.menu.dashboard.exception.TokenRefreshRequiredException;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import io.netty.channel.ChannelOption;
@@ -281,7 +282,7 @@ public class RestClientService implements Serializable {
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
                         response -> handleError(response, LOG_BAD_REQUEST, BusinessBadRequestException::new))
                 .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals,
-                        response -> handleError(response, LOG_INTERNAL_SERVER_ERROR, BusinessBadRequestException::new))
+                        response -> handleError(response, LOG_INTERNAL_SERVER_ERROR, BusinessServerRequestException::new))
                 .onStatus(HttpStatus.UNAUTHORIZED::equals,
                         response -> handleError(response, LOG_UN_AUTHORIZED,
                                 restAPIResponse -> new TokenRefreshRequiredException(restAPIResponse.toString())))

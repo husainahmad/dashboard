@@ -5,11 +5,15 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
+import com.harmoni.menu.dashboard.layout.component.ErrorBanner;
+import com.harmoni.menu.dashboard.layout.component.ErrorDetail;
+import com.harmoni.menu.dashboard.layout.component.ErrorDetailsDialog;
 import com.harmoni.menu.dashboard.layout.navigation.SideNavMenu;
 import com.harmoni.menu.dashboard.layout.util.LanguageSelector;
 import com.harmoni.menu.dashboard.layout.util.ThemeUtil;
+import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -28,6 +32,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -55,6 +60,7 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
     private final Icon moonIcon = new Icon(VaadinIcon.MOON);
     private final Icon sunIcon = new Icon(VaadinIcon.SUN_O);
     private Button themeToggle;
+    private final ErrorBanner errorBanner;
 
     /**
      * Creates the app shell, building the header and drawer navigation.
@@ -63,6 +69,7 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
      */
     public MainLayout(AccessService accessService) {
         this.accessService = accessService;
+        this.errorBanner = new ErrorBanner(this::openErrorDetails);
         createHeader();
         createDrawer();
     }
@@ -91,7 +98,13 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         navbar.setFlexGrow(1, logo);
         navbar.addClassName("app-navbar");
 
-        addToNavbar(navbar);
+        VerticalLayout navbarStack = new VerticalLayout(navbar, errorBanner);
+        navbarStack.setPadding(false);
+        navbarStack.setSpacing(false);
+        navbarStack.setWidthFull();
+        navbarStack.addClassName("app-navbar-stack");
+
+        addToNavbar(navbarStack);
     }
 
     /**
@@ -232,26 +245,35 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         try {
             BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
             if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                showErrorDialogOnlyProcessError(broadcastMessage);
+                handleBroadcastError(broadcastMessage);
             }
         } catch (JsonProcessingException e) {
-            showErrorDialog(e.getMessage());
+            access(() -> errorBanner.show(ErrorDetail.raw(
+                    Messages.get("error.banner.messageUnknown"), e.getMessage())));
         }
     }
 
     /**
-     * Shows an error dialog if the broadcast message indicates a bad request or
-     * process failure. If the message indicates an unauthorized access, it
-     * navigates to the login view.
+     * Routes a failed request by severity. Validation failures stay a short
+     * toast; unexpected server failures raise the persistent banner with an
+     * optional details view. Unauthorized responses still return to login.
      *
      * @param broadcastMessage the broadcast message to process
      */
-    private void showErrorDialogOnlyProcessError(BroadcastMessage broadcastMessage) {
-        if (broadcastMessage.getType().equals(BroadcastMessage.BAD_REQUEST_FAILED) ||
-                broadcastMessage.getType().equals(BroadcastMessage.PROCESS_FAILED)) {
-            showErrorDialog(broadcastMessage.getData().toString());
+    private void handleBroadcastError(BroadcastMessage broadcastMessage) {
+        RestAPIResponse response = toResponse(broadcastMessage.getData());
+        if (BroadcastMessage.BAD_REQUEST_FAILED.equals(broadcastMessage.getType())) {
+            access(() -> UiUtil.error(Messages.get("error.toast.badRequest")));
+            return;
         }
-        if (broadcastMessage.getType().equals(BroadcastMessage.UN_AUTHORIZED)) {
+        if (BroadcastMessage.PROCESS_FAILED.equals(broadcastMessage.getType())) {
+            String summary = response == null
+                    ? Messages.get("error.banner.messageUnknown")
+                    : Messages.get("error.banner.message");
+            access(() -> errorBanner.show(ErrorDetail.from(summary, response)));
+            return;
+        }
+        if (BroadcastMessage.UN_AUTHORIZED.equals(broadcastMessage.getType())) {
             getUI().ifPresent(ui -> ui.access(() -> {
                 VaadinSessionUtil.close();
                 ui.navigate(LoginView.class);
@@ -260,20 +282,30 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
     }
 
     /**
-     * Displays an error dialog with the given message. The dialog is added to
-     * the current UI and opened in a thread-safe manner.
+     * Opens the technical detail for a banner failure.
      *
-     * @param message the error message to display
+     * @param detail the failure to show
      */
-    private void showErrorDialog(String message) {
-        if (getUI().isPresent()) {
-            getUI().orElseThrow().access(() -> {
-                DialogClosing dialog = new DialogClosing(message);
-                this.getUI().get().add(dialog);
-                dialog.open();
-            });
+    private void openErrorDetails(ErrorDetail detail) {
+        getUI().ifPresent(ui -> ui.access(() -> new ErrorDetailsDialog(detail).open()));
+    }
+
+    private void access(Runnable action) {
+        getUI().ifPresent(ui -> ui.access(action::run));
+    }
+
+    private RestAPIResponse toResponse(Object data) {
+        if (data == null) {
+            return null;
+        }
+        try {
+            return ObjectUtil.convertValueToObject(data, RestAPIResponse.class);
+        } catch (RuntimeException exception) {
+            return null;
         }
     }
+
+
 
     /**
      * Forwards to the login screen when no JWT token is present in the session.

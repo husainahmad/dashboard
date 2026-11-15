@@ -39,13 +39,33 @@
 
 @import url('./product-form.css');
 
+@import url('./product-list.css');
+
+@import url('./promotion.css');
+
 @import url('./floor-plan.css');
 
 @import url('./table.css');
 
 @import url('./organization.css');
 
+@import url('./tier.css');
+
+@import url('./user.css');
+
+@import url('./category.css');
+
+@import url('./customer.css');
+
+@import url('./service.css');
+
+@import url('./kitchen.css');
+
+@import url('./customization.css');
+
 
 @import url('./dialogs.css');
+
+@import url('./error.css');
 
 @import url('./responsive.css');

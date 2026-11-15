@@ -25,9 +25,12 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -94,10 +97,13 @@ public class KitchenView extends VerticalLayout {
             }
         });
 
-        Button refresh = new Button("Refresh", event -> loadKitchen());
+        Button refresh = new Button(Messages.get("action.refresh"), event -> loadKitchen());
+        refresh.setIcon(VaadinIcon.REFRESH.create());
+        refresh.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         HorizontalLayout storeBar = new HorizontalLayout(storeBox, refresh);
         storeBar.setAlignItems(FlexComponent.Alignment.END);
         storeBar.addClassName(Css.TOOLBAR);
+        storeBar.addClassName("kitchen-toolbar");
 
         TabSheet tabs = new TabSheet();
         tabs.add(new Tab(Messages.get("tab.kitchen.stations")), buildStationsTab());
@@ -113,6 +119,7 @@ public class KitchenView extends VerticalLayout {
         configureStationGrid();
         Button add = new Button(Messages.get("action.newKitchenStation"),
                 event -> openStationDialog(null));
+        add.setIcon(VaadinIcon.PLUS.create());
         add.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         HorizontalLayout toolbar = new HorizontalLayout(add);
@@ -127,7 +134,8 @@ public class KitchenView extends VerticalLayout {
 
     private Component buildCategoryRoutingTab() {
         configureCategoryRoutingGrid();
-        Button add = new Button("Add Category Route", event -> openCategoryRoutingDialog());
+        Button add = new Button(Messages.get("kitchen.category.add"), event -> openCategoryRoutingDialog());
+        add.setIcon(VaadinIcon.PLUS.create());
         add.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         HorizontalLayout toolbar = new HorizontalLayout(add);
         toolbar.addClassName(Css.TOOLBAR);
@@ -141,7 +149,8 @@ public class KitchenView extends VerticalLayout {
 
     private Component buildProductRoutingTab() {
         configureProductRoutingGrid();
-        Button add = new Button("Add Product Route", event -> openProductRoutingDialog());
+        Button add = new Button(Messages.get("kitchen.product.add"), event -> openProductRoutingDialog());
+        add.setIcon(VaadinIcon.PLUS.create());
         add.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         HorizontalLayout toolbar = new HorizontalLayout(add);
         toolbar.addClassName(Css.TOOLBAR);
@@ -156,12 +165,15 @@ public class KitchenView extends VerticalLayout {
     private void configureStationGrid() {
         stationGrid.removeAllColumns();
         stationGrid.setSizeFull();
-        stationGrid.setEmptyStateText("No kitchen stations yet");
+        stationGrid.setEmptyStateText(Messages.get("kitchen.stations.empty"));
         stationGrid.addColumn(KitchenStationDto::getName).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
-        stationGrid.addColumn(KitchenStationDto::getCode).setHeader("Code");
-        stationGrid.addColumn(KitchenStationDto::getStatus).setHeader("Status");
-        stationGrid.addColumn(KitchenStationDto::printerCount).setHeader("Printers");
-        stationGrid.addColumn(KitchenStationDto::primaryPrinterName).setHeader("Primary printer");
+        stationGrid.addColumn(KitchenStationDto::getCode).setHeader(Messages.get("label.kitchenStationCode"));
+        stationGrid.addComponentColumn(station -> statusBadge(station.getStatus()))
+                .setHeader(Messages.get("label.status"));
+        stationGrid.addColumn(KitchenStationDto::printerCount)
+                .setHeader(Messages.get("kitchen.stations.printers"));
+        stationGrid.addColumn(KitchenStationDto::primaryPrinterName)
+                .setHeader(Messages.get("kitchen.stations.primaryPrinter"));
         stationGrid.addComponentColumn(this::stationActions)
                 .setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
         stationGrid.getColumns().forEach(column -> column.setAutoWidth(true));
@@ -169,10 +181,12 @@ public class KitchenView extends VerticalLayout {
 
     private Component stationActions(KitchenStationDto station) {
         Button edit = UiUtil.editButton(event -> openStationDialog(station));
-        Button printers = new Button("Printers", event -> openPrintersDialog(station));
+        Button printers = new Button(Messages.get("action.managePrinters"),
+                event -> openPrintersDialog(station));
+        printers.setIcon(VaadinIcon.PRINT.create());
         printers.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         Button delete = UiUtil.deleteButton(event -> confirmDelete(
-                "Delete kitchen station " + station.getName() + "?",
+                Messages.get("kitchen.stations.delete", station.getName()),
                 () -> kitchenRestClientService.deleteStation(station.getId())
                         .subscribe(response -> onSaved(), this::onError)));
         return new HorizontalLayout(edit, printers, delete);
@@ -181,11 +195,13 @@ public class KitchenView extends VerticalLayout {
     private void configureCategoryRoutingGrid() {
         categoryRoutingGrid.removeAllColumns();
         categoryRoutingGrid.setSizeFull();
-        categoryRoutingGrid.setEmptyStateText("No category routing yet");
-        categoryRoutingGrid.addColumn(KitchenCategoryRoutingDto::getCategoryName).setHeader("Category");
-        categoryRoutingGrid.addColumn(KitchenCategoryRoutingDto::getKitchenStationName).setHeader("Kitchen station");
+        categoryRoutingGrid.setEmptyStateText(Messages.get("kitchen.category.empty"));
+        categoryRoutingGrid.addColumn(KitchenCategoryRoutingDto::getCategoryName)
+                .setHeader(Messages.get("kitchen.category.header"));
+        categoryRoutingGrid.addColumn(KitchenCategoryRoutingDto::getKitchenStationName)
+                .setHeader(Messages.get("label.kitchenStation"));
         categoryRoutingGrid.addComponentColumn(routing -> UiUtil.deleteButton(event -> confirmDelete(
-                        "Remove routing for " + routing.getCategoryName() + "?",
+                        Messages.get("kitchen.category.remove", routing.getCategoryName()),
                         () -> kitchenRestClientService.deleteCategoryRouting(storeId, routing.getCategoryId())
                                 .subscribe(response -> onSaved(), this::onError))))
                 .setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
@@ -195,11 +211,13 @@ public class KitchenView extends VerticalLayout {
     private void configureProductRoutingGrid() {
         productRoutingGrid.removeAllColumns();
         productRoutingGrid.setSizeFull();
-        productRoutingGrid.setEmptyStateText("No product routing yet");
-        productRoutingGrid.addColumn(KitchenProductRoutingDto::getProductName).setHeader("Product");
-        productRoutingGrid.addColumn(KitchenProductRoutingDto::getKitchenStationName).setHeader("Kitchen station");
+        productRoutingGrid.setEmptyStateText(Messages.get("kitchen.product.empty"));
+        productRoutingGrid.addColumn(KitchenProductRoutingDto::getProductName)
+                .setHeader(Messages.get("kitchen.product.header"));
+        productRoutingGrid.addColumn(KitchenProductRoutingDto::getKitchenStationName)
+                .setHeader(Messages.get("label.kitchenStation"));
         productRoutingGrid.addComponentColumn(routing -> UiUtil.deleteButton(event -> confirmDelete(
-                        "Remove routing for " + routing.getProductName() + "?",
+                        Messages.get("kitchen.product.remove", routing.getProductName()),
                         () -> kitchenRestClientService.deleteProductRouting(storeId, routing.getProductId())
                                 .subscribe(response -> onSaved(), this::onError))))
                 .setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
@@ -209,7 +227,7 @@ public class KitchenView extends VerticalLayout {
     private void loadStores() {
         UserDto user = accessService.getUserDetail();
         if (user == null || user.getStoreDto() == null || user.getStoreDto().getChainDto() == null) {
-            UiUtil.error("No store context for the signed-in user");
+            UiUtil.error(Messages.get("kitchen.noStoreContext"));
             return;
         }
         brandId = user.getStoreDto().getChainDto().getBrandId();
@@ -270,16 +288,20 @@ public class KitchenView extends VerticalLayout {
     private void openStationDialog(KitchenStationDto existing) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle(existing == null
-                ? Messages.get("action.newKitchenStation") : "Edit kitchen station");
+                ? Messages.get("action.newKitchenStation") : Messages.get("kitchen.stations.edit"));
 
         TextField name = new TextField(Messages.get(Messages.Keys.LABEL_NAME));
         name.setRequiredIndicatorVisible(true);
-        TextField code = new TextField("Code");
+        name.setWidthFull();
+        TextField code = new TextField(Messages.get("label.kitchenStationCode"));
         code.setRequiredIndicatorVisible(true);
+        code.setWidthFull();
         TextArea description = new TextArea(Messages.get(Messages.Keys.LABEL_DESCRIPTION));
-        ComboBox<String> status = new ComboBox<>("Status");
+        description.setWidthFull();
+        ComboBox<String> status = new ComboBox<>(Messages.get("label.status"));
         status.setItems(STATUS_ACTIVE, STATUS_INACTIVE);
         status.setValue(STATUS_ACTIVE);
+        status.setWidthFull();
 
         if (existing != null) {
             name.setValue(existing.getName());
@@ -290,7 +312,10 @@ public class KitchenView extends VerticalLayout {
 
         Button save = new Button(Messages.get(Messages.Keys.ACTION_SAVE), event -> {
             if (isBlank(name.getValue()) || isBlank(code.getValue())) {
-                UiUtil.error("Name and code are required");
+                name.setInvalid(isBlank(name.getValue()));
+                name.setErrorMessage(Messages.get("validation.kitchen.nameRequired"));
+                code.setInvalid(isBlank(code.getValue()));
+                code.setErrorMessage(Messages.get("validation.kitchen.codeRequired"));
                 return;
             }
             KitchenStationDto dto = new KitchenStationDto();
@@ -311,17 +336,23 @@ public class KitchenView extends VerticalLayout {
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         Button cancel = new Button(Messages.get(Messages.Keys.ACTION_CANCEL), event -> dialog.close());
+        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        VerticalLayout form = new VerticalLayout(name, code, description, status);
-        form.setPadding(false);
-        dialog.add(form, new HorizontalLayout(save, cancel));
-        dialog.setWidth("460px");
+        FormLayout form = new FormLayout();
+        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1),
+                new FormLayout.ResponsiveStep("24em", 2));
+        form.add(name, code);
+        form.add(description, 2);
+        form.add(status, 2);
+        dialog.add(form);
+        dialog.getFooter().add(cancel, save);
+        dialog.setWidth("520px");
         dialog.open();
     }
 
     private void openPrintersDialog(KitchenStationDto station) {
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Printers - " + station.getName());
+        dialog.setHeaderTitle(Messages.get("kitchen.printers.title", station.getName()));
         dialog.setWidth("900px");
 
         Grid<KitchenPrinterDto> printerGrid = new Grid<>(KitchenPrinterDto.class);
@@ -329,6 +360,7 @@ public class KitchenView extends VerticalLayout {
 
         Button add = new Button(Messages.get("action.newKitchenPrinter"),
                 event -> openPrinterForm(station, null, dialog, printerGrid));
+        add.setIcon(VaadinIcon.PLUS.create());
         add.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button close = new Button(Messages.get(Messages.Keys.ACTION_CLOSE), event -> dialog.close());
 
@@ -346,17 +378,20 @@ public class KitchenView extends VerticalLayout {
                                       Dialog parent) {
         grid.removeAllColumns();
         grid.setSizeFull();
-        grid.setEmptyStateText("No printers configured for this station");
+        grid.setEmptyStateText(Messages.get("kitchen.printers.empty"));
         grid.addColumn(KitchenPrinterDto::getName).setHeader(Messages.get(Messages.Keys.LABEL_NAME));
         grid.addColumn(KitchenPrinterDto::getPrinterType).setHeader(Messages.get("label.printerType"));
         grid.addColumn(KitchenPrinterDto::getPaperWidth).setHeader(Messages.get("label.paperWidth"));
-        grid.addColumn(printer -> Boolean.TRUE.equals(printer.getIsPrimary()) ? "Yes" : "No")
+        grid.addColumn(printer -> Boolean.TRUE.equals(printer.getIsPrimary())
+                        ? Messages.get("kitchen.printers.yes")
+                        : Messages.get("kitchen.printers.no"))
                 .setHeader(Messages.get("label.primaryPrinter"));
-        grid.addColumn(KitchenPrinterDto::getStatus).setHeader(Messages.get("label.status"));
+        grid.addComponentColumn(printer -> statusBadge(printer.getStatus()))
+                .setHeader(Messages.get("label.status"));
         grid.addComponentColumn(printer -> {
             Button edit = UiUtil.editButton(event -> openPrinterForm(station, printer, parent, grid));
             Button delete = UiUtil.deleteButton(event -> confirmDelete(
-                    "Delete printer " + printer.getName() + "?",
+                    Messages.get("kitchen.printer.delete", printer.getName()),
                     () -> kitchenRestClientService.deletePrinter(printer.getId())
                             .subscribe(response -> {
                                 loadPrinters(station.getId(), grid);
@@ -370,10 +405,12 @@ public class KitchenView extends VerticalLayout {
     private void openPrinterForm(KitchenStationDto station, KitchenPrinterDto existing,
                                  Dialog parent, Grid<KitchenPrinterDto> grid) {
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle(existing == null ? "New printer" : "Edit printer");
+        dialog.setHeaderTitle(existing == null
+                ? Messages.get("kitchen.printer.new") : Messages.get("kitchen.printer.edit"));
 
         TextField name = new TextField(Messages.get(Messages.Keys.LABEL_NAME));
         name.setRequiredIndicatorVisible(true);
+        name.setWidthFull();
         ComboBox<String> type = new ComboBox<>(Messages.get("label.printerType"));
         type.setItems("NETWORK", "USB", "BLUETOOTH");
         type.setValue("NETWORK");
@@ -387,7 +424,7 @@ public class KitchenView extends VerticalLayout {
         TextArea connection = new TextArea(Messages.get("label.connectionConfig"));
         connection.setWidthFull();
         connection.setValue("{\"host\":\"192.168.1.50\",\"port\":9100}");
-        connection.setHelperText("NETWORK: host/port. USB: queue or device. BLUETOOTH: device.");
+        connection.setHelperText(Messages.get("kitchen.connection.hint"));
 
         type.addValueChangeListener(event -> {
             if (isBlank(connection.getValue())) {
@@ -406,7 +443,10 @@ public class KitchenView extends VerticalLayout {
 
         Button save = new Button(Messages.get(Messages.Keys.ACTION_SAVE), event -> {
             if (isBlank(name.getValue()) || isBlank(connection.getValue())) {
-                UiUtil.error("Name and connection are required");
+                name.setInvalid(isBlank(name.getValue()));
+                name.setErrorMessage(Messages.get("validation.kitchen.nameRequired"));
+                connection.setInvalid(isBlank(connection.getValue()));
+                connection.setErrorMessage(Messages.get("kitchen.printer.nameConnectionRequired"));
                 return;
             }
             KitchenPrinterDto dto = new KitchenPrinterDto();
@@ -429,19 +469,27 @@ public class KitchenView extends VerticalLayout {
         });
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button cancel = new Button(Messages.get(Messages.Keys.ACTION_CANCEL), event -> dialog.close());
+        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        VerticalLayout form = new VerticalLayout(name, type, paper, primary, status, connection);
-        form.setPadding(false);
-        dialog.add(form, new HorizontalLayout(save, cancel));
-        dialog.setWidth("500px");
+        FormLayout form = new FormLayout();
+        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1),
+                new FormLayout.ResponsiveStep("24em", 2));
+        form.add(name, 2);
+        form.add(type, paper);
+        form.add(primary, status);
+        form.add(connection, 2);
+        dialog.add(form);
+        dialog.getFooter().add(cancel, save);
+        dialog.setWidth("560px");
         dialog.open();
     }
 
     private void openCategoryRoutingDialog() {
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Add category route");
+        dialog.setHeaderTitle(Messages.get("kitchen.category.add"));
+        dialog.setWidth("460px");
 
-        ComboBox<CategoryDto> category = new ComboBox<>("Category");
+        ComboBox<CategoryDto> category = new ComboBox<>(Messages.get("kitchen.category.header"));
         category.setItems(categories);
         category.setItemLabelGenerator(CategoryDto::getName);
         category.setWidthFull();
@@ -453,7 +501,10 @@ public class KitchenView extends VerticalLayout {
 
         Button save = new Button(Messages.get(Messages.Keys.ACTION_SAVE), event -> {
             if (category.getValue() == null || station.getValue() == null) {
-                UiUtil.error("Select a category and a station");
+                category.setInvalid(category.getValue() == null);
+                station.setInvalid(station.getValue() == null);
+                category.setErrorMessage(Messages.get("validation.kitchen.selectionRequired"));
+                station.setErrorMessage(Messages.get("validation.kitchen.selectionRequired"));
                 return;
             }
             KitchenCategoryRoutingDto dto = new KitchenCategoryRoutingDto();
@@ -467,22 +518,27 @@ public class KitchenView extends VerticalLayout {
         });
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button cancel = new Button(Messages.get(Messages.Keys.ACTION_CANCEL), event -> dialog.close());
+        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        dialog.add(new VerticalLayout(category, station), new HorizontalLayout(save, cancel));
-        dialog.setWidth("460px");
+        FormLayout form = new FormLayout();
+        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
+        form.add(category, station);
+        dialog.add(form);
+        dialog.getFooter().add(cancel, save);
         dialog.open();
     }
 
     private void openProductRoutingDialog() {
         Dialog dialog = new Dialog();
-        dialog.setHeaderTitle("Add product route");
+        dialog.setHeaderTitle(Messages.get("kitchen.product.add"));
+        dialog.setWidth("460px");
 
-        ComboBox<CategoryDto> category = new ComboBox<>("Category");
+        ComboBox<CategoryDto> category = new ComboBox<>(Messages.get("kitchen.category.header"));
         category.setItems(categories);
         category.setItemLabelGenerator(CategoryDto::getName);
         category.setWidthFull();
 
-        ComboBox<ProductDto> product = new ComboBox<>("Product");
+        ComboBox<ProductDto> product = new ComboBox<>(Messages.get("kitchen.product.header"));
         product.setItemLabelGenerator(ProductDto::getName);
         product.setWidthFull();
         product.setEnabled(false);
@@ -506,7 +562,10 @@ public class KitchenView extends VerticalLayout {
 
         Button save = new Button(Messages.get(Messages.Keys.ACTION_SAVE), event -> {
             if (product.getValue() == null || station.getValue() == null) {
-                UiUtil.error("Select a product and a station");
+                product.setInvalid(product.getValue() == null);
+                station.setInvalid(station.getValue() == null);
+                product.setErrorMessage(Messages.get("validation.kitchen.selectionRequired"));
+                station.setErrorMessage(Messages.get("validation.kitchen.selectionRequired"));
                 return;
             }
             KitchenProductRoutingDto dto = new KitchenProductRoutingDto();
@@ -520,23 +579,24 @@ public class KitchenView extends VerticalLayout {
         });
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         Button cancel = new Button(Messages.get(Messages.Keys.ACTION_CANCEL), event -> dialog.close());
+        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        dialog.add(new VerticalLayout(category, product, station), new HorizontalLayout(save, cancel));
-        dialog.setWidth("460px");
+        FormLayout form = new FormLayout();
+        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
+        form.add(category, product, station);
+        dialog.add(form);
+        dialog.getFooter().add(cancel, save);
         dialog.open();
     }
 
     private void confirmDelete(String message, Runnable onConfirm) {
-        Dialog dialog = new Dialog();
-        dialog.setHeaderTitle(Messages.get(Messages.Keys.DIALOG_CONFIRM_TITLE));
-        dialog.add(new Span(message));
-        Button delete = new Button(Messages.get(Messages.Keys.ACTION_DELETE), event -> {
-            dialog.close();
-            onConfirm.run();
-        });
-        delete.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
-        Button cancel = new Button(Messages.get(Messages.Keys.ACTION_CANCEL), event -> dialog.close());
-        dialog.add(new HorizontalLayout(delete, cancel));
+        ConfirmDialog dialog = new ConfirmDialog();
+        dialog.setHeader(Messages.get(Messages.Keys.DIALOG_CONFIRM_TITLE));
+        dialog.setText(message);
+        dialog.setCancelable(true);
+        dialog.setConfirmText(Messages.get(Messages.Keys.ACTION_DELETE));
+        dialog.setConfirmButtonTheme("error primary");
+        dialog.addConfirmListener(event -> onConfirm.run());
         dialog.open();
     }
 
@@ -554,6 +614,15 @@ public class KitchenView extends VerticalLayout {
     private void onError(Throwable error) {
         log.error("Kitchen configuration request failed", error);
         UiUtil.safeAccess(ui, () -> UiUtil.error(Messages.get("notification.kitchen.loadFailed")));
+    }
+
+    private Component statusBadge(String status) {
+        boolean active = STATUS_ACTIVE.equalsIgnoreCase(status);
+        Span badge = new Span(Messages.get(active
+                ? "kitchen.status.active" : "kitchen.status.inactive"));
+        badge.addClassName("kitchen-status");
+        badge.addClassName(active ? "kitchen-status-active" : "kitchen-status-inactive");
+        return badge;
     }
 
     private static String defaultConnectionConfig(String type) {

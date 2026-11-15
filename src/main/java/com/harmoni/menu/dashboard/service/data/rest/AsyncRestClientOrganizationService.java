@@ -96,6 +96,20 @@ public class AsyncRestClientOrganizationService extends AsyncRestClientBase {
     }
 
     /**
+     * Asynchronously retrieves every tier of a brand, regardless of type.
+     *
+     * @param callback      success callback with the list of tiers
+     * @param errorCallback optional error callback for handling failures
+     * @param brandId       the ID of the brand
+     */
+    public void getAllTierByBrandAsync(AsyncRestCallback<List<TierDto>> callback,
+                                       AsyncRestCallback<Throwable> errorCallback, Integer brandId) {
+        String uri = String.format("%s/brand/%d", menuProperties.getUrl().getTier(), brandId);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback, errorCallback);
+    }
+
+    /**
      * Asynchronously retrieves all tiers for a given brand and tier type.
      *
      * @param callback      success callback with the list of tiers
@@ -194,6 +208,22 @@ public class AsyncRestClientOrganizationService extends AsyncRestClientBase {
     public void getAllServicesAsync(AsyncRestCallback<List<ServiceDto>> callback,
                                     AsyncRestCallback<Throwable> errorCallback) {
         String uri = menuProperties.getUrl().getService();
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback, errorCallback);
+    }
+
+    /**
+     * Asynchronously retrieves one page of services with their sub-services.
+     *
+     * @param callback      success callback with the paged response
+     * @param errorCallback optional error callback for handling failures
+     * @param page          the page number, 1-based
+     * @param size          the number of services per page
+     */
+    public void getAllServicesPageAsync(AsyncRestCallback<Map<String, Object>> callback,
+                                        AsyncRestCallback<Throwable> errorCallback,
+                                        int page, int size) {
+        String uri = String.format(menuProperties.getUrl().getServicePage(), page, size);
         makeAsyncRequest(uri, new TypeReference<>() {
         }, callback, errorCallback);
     }

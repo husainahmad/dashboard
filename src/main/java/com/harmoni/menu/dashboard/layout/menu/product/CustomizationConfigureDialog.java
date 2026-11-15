@@ -14,6 +14,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -170,7 +171,9 @@ public class CustomizationConfigureDialog extends Dialog {
         grid.setAllRowsVisible(true);
         grid.removeAllColumns();
         grid.addColumn(CustomizationOptionDto::getName).setHeader(Messages.get("grid.header.option"));
-        grid.addColumn(this::getOptionPrice).setHeader(Messages.get(Messages.Keys.GRID_HEADER_PRICE));
+        grid.addColumn(this::getOptionPrice)
+                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_PRICE))
+                .setTextAlign(ColumnTextAlign.END);
         grid.addComponentColumn(this::renderActiveColumn).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTIVE)).setWidth("90px");
         if (ObjectUtils.isNotEmpty(dto.getOptions())) {
             grid.setItems(dto.getOptions());

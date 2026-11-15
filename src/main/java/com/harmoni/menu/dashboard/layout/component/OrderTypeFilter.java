@@ -72,15 +72,6 @@ public class OrderTypeFilter extends HorizontalLayout {
         listeners.add(listener);
     }
 
-    /**
-     * Returns the active scope.
-     *
-     * @return the active scope
-     */
-    public Scope getSelected() {
-        return selected;
-    }
-
     private void select(Scope scope) {
         if (scope == selected) {
             return;

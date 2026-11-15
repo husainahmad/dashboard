@@ -12,6 +12,47 @@ vaadin-grid {
 }
 
 
+/* ---------- Money and numeric values ---------- */
+
+/*
+ * Prices are read down a column rather than across a sentence, so they always
+ * align to the right and use tabular figures. The same rule serves plain text
+ * cells, component cells and the editable price fields inside grids.
+ */
+.money-value {
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    text-align:
+        right;
+
+    font-variant-numeric:
+        tabular-nums;
+}
+
+vaadin-number-field.money-field input,
+vaadin-big-decimal-field.money-field input {
+
+    text-align:
+        right;
+
+    font-variant-numeric:
+        tabular-nums;
+}
+
+/* The field itself is a flex host, so push it to the right edge of the cell. */
+vaadin-grid vaadin-number-field.money-field,
+vaadin-grid vaadin-big-decimal-field.money-field {
+
+    margin-left:
+        auto;
+}
+
+
 /* ---------- Grid header ---------- */
 
 vaadin-grid::part(header-cell) {

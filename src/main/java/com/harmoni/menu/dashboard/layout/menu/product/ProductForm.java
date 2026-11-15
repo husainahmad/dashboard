@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.dto.ProductDto;
 import com.harmoni.menu.dashboard.event.product.ProductPersistEventListener;
-import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.menu.ProductFormLayout;
 import com.harmoni.menu.dashboard.layout.util.AsyncUtil;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
@@ -21,6 +20,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
@@ -36,7 +36,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.StatusChangeEvent;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import com.vaadin.flow.router.Route;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +56,6 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * single empty SKU row is shown.</p>
  */
 @RequiredArgsConstructor
-@Route(value = Css.PRODUCT_FORM, layout = MainLayout.class)
 @Slf4j
 public class ProductForm extends ProductFormLayout implements ProductFormDelegate {
 
@@ -85,9 +83,13 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
 
     Button submitButton = new Button();
     Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
+    private final Span dirtyLabel = new Span(Messages.get("product.unsaved"));
     private final LoadingBar savingBar = new LoadingBar();
     private boolean saving;
     private boolean layoutBuilt;
+    private boolean dirty;
+    private boolean loading;
+    private int loadGeneration;
 
     private final RestClientMenuService restClientMenuService;
     private final transient AsyncRestClientMenuService asyncRestClientMenuService;
@@ -109,6 +111,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
     @Override
     public void onContentChanged() {
         firePreviewUpdate();
+        markDirty();
     }
 
     /** The preview kept in step with this form, or {@code null} when none is attached. */
@@ -175,6 +178,17 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
             return;
         }
         layoutBuilt = true;
+        loading = true;
+
+        if (context != null && context.tabManager() != null) {
+            context.tabManager().setCloseGuard(tab -> {
+                if (!dirty) {
+                    return true;
+                }
+                requestClose();
+                return false;
+            });
+        }
 
         // Exactly one action, as this form's own contract says: Update for a product
         // that exists, Save for a new one. They used to both stay visible, and they are
@@ -210,7 +224,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         // The picture is uploaded and cropped before the product is saved, so the
         // preview can show it straight away; without this it would only ever appear
         // after a reload.
-        productImageUploadView.setOnImageChanged(this::firePreviewUpdate);
+        productImageUploadView.setOnImageChanged(this::onImageChanged);
 
         skuSection = new SkuSection(context.tierDtos(), this);
         skuSection.addSku(null);
@@ -227,12 +241,23 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         add(buildSkuCustomizationTabs(), 2);
         add(getButtonBar(), 2);
 
-        productNameField.addValueChangeListener(change -> firePreviewUpdate());
-        productDescTextArea.addValueChangeListener(change -> firePreviewUpdate());
-        categoryBox.addValueChangeListener(change -> firePreviewUpdate());
+        productNameField.addValueChangeListener(change -> {
+            firePreviewUpdate();
+            markDirty();
+        });
+        productDescTextArea.addValueChangeListener(change -> {
+            firePreviewUpdate();
+            markDirty();
+        });
+        categoryBox.addValueChangeListener(change -> {
+            firePreviewUpdate();
+            markDirty();
+        });
+        binder.addValueChangeListener(event -> markDirty());
 
         addValidation();
         bindButtonState();
+        loading = false;
     }
 
     /**
@@ -371,6 +396,8 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
      * cannot drift apart.
      */
     private void repaint() {
+        int generation = ++loadGeneration;
+        loading = true;
         resolveCategoryDto();
         binder.readBean(productDto);
         productDescTextArea.setValue(productDto.getDescription() == null ? "" : productDto.getDescription());
@@ -379,7 +406,13 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         firePreviewUpdate();
         validateForm();
         if (ObjectUtils.isNotEmpty(productDto.getId())) {
-            customizationSection.load(productDto.getId());
+            customizationSection.load(productDto.getId(), () -> {
+                if (generation == loadGeneration) {
+                    loading = false;
+                }
+            });
+        } else {
+            loading = false;
         }
     }
 
@@ -497,7 +530,36 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         if (saving) {
             return;
         }
-        submitButton.setEnabled(!hasErrors);
+        submitButton.setEnabled(!hasErrors && dirty);
+    }
+
+    private void markDirty() {
+        if (loading || dirty) {
+            return;
+        }
+        dirty = true;
+        dirtyLabel.setVisible(true);
+        validateForm();
+    }
+
+    private void onImageChanged() {
+        firePreviewUpdate();
+        markDirty();
+    }
+
+    private void requestClose() {
+        if (!dirty) {
+            removeFromSheet();
+            return;
+        }
+        ConfirmDialog dialog = new ConfirmDialog();
+        dialog.setHeader(Messages.get("dialog.unsaved.title"));
+        dialog.setText(Messages.get("dialog.unsaved.text"));
+        dialog.setCancelable(true);
+        dialog.setConfirmText(Messages.get("action.discard"));
+        dialog.setCancelText(Messages.get(Messages.Keys.ACTION_CANCEL));
+        dialog.addConfirmListener(event -> removeFromSheet());
+        dialog.open();
     }
 
     /**
@@ -516,12 +578,16 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
 
         closeButton.addClickListener(this::onButtonClose);
 
-        HorizontalLayout toolbar = new HorizontalLayout(submitButton, closeButton);
+        dirtyLabel.addClassName("product-dirty-label");
+        dirtyLabel.setVisible(false);
+
+        HorizontalLayout toolbar = new HorizontalLayout(dirtyLabel, submitButton, closeButton);
         toolbar.addClassName(Css.TOOLBAR);
         toolbar.addClassName("form-actions");
         toolbar.setWidthFull();
         toolbar.setAlignItems(FlexComponent.Alignment.CENTER);
         toolbar.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        toolbar.setFlexGrow(1, dirtyLabel);
 
         return toolbar;
     }
@@ -563,7 +629,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
      * @param buttonClickEvent the click event from the close button
      */
     private void onButtonClose(ClickEvent<Button> buttonClickEvent) {
-        removeFromSheet();
+        requestClose();
     }
 
     @Override

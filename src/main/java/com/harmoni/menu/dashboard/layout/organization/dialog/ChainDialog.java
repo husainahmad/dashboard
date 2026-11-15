@@ -25,6 +25,7 @@ public class ChainDialog extends Dialog {
 
     private final RestClientOrganizationService restClientOrganizationService;
     private final Runnable onSaved;
+    private final ChainDto editingChain;
 
     private final TextField nameField = new TextField(Messages.get("organization.chain.name"));
     private final ComboBox<BrandDto> brandBox = new ComboBox<>(Messages.get("organization.chain.brand"));
@@ -36,8 +37,15 @@ public class ChainDialog extends Dialog {
 
     public ChainDialog(RestClientOrganizationService restClientOrganizationService,
                        List<BrandDto> brands, BrandDto defaultBrand, Runnable onSaved) {
+        this(restClientOrganizationService, brands, defaultBrand, null, onSaved);
+    }
+
+    public ChainDialog(RestClientOrganizationService restClientOrganizationService,
+                       List<BrandDto> brands, BrandDto defaultBrand, ChainDto editingChain,
+                       Runnable onSaved) {
         this.restClientOrganizationService = restClientOrganizationService;
         this.onSaved = onSaved;
+        this.editingChain = editingChain;
 
         setHeaderTitle(Messages.get("organization.chain.title"));
         setWidth("560px");
@@ -94,9 +102,40 @@ public class ChainDialog extends Dialog {
 
         Button cancel = new Button(Messages.get("action.cancel"), event -> close());
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        Button save = new Button(Messages.get("organization.chain.create"), event -> save());
+        Button save = new Button(Messages.get(editingChain == null
+                ? "organization.chain.create" : "organization.chain.update"), event -> save());
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         getFooter().add(cancel, save);
+
+        if (editingChain != null) {
+            applyEdit(editingChain, brands, defaultBrand);
+        }
+    }
+
+    private void applyEdit(ChainDto chain, List<BrandDto> brands, BrandDto defaultBrand) {
+        setHeaderTitle(Messages.get("organization.chain.editTitle"));
+        nameField.setValue(chain.getName() == null ? "" : chain.getName());
+        managerEmailField.setValue(chain.getManagerEmail() == null ? "" : chain.getManagerEmail());
+        typeGroup.setValue(chain.getType() == null ? "REGION" : chain.getType());
+
+        Integer brandId = chain.getBrandId();
+        BrandDto brand = brandId == null ? null : brands.stream()
+                .filter(item -> brandId.equals(item.getId()))
+                .findFirst()
+                .orElse(null);
+        brandBox.setValue(brand != null ? brand : defaultBrand);
+
+        String mode = chain.getTaxServiceMode() == null ? "INHERIT" : chain.getTaxServiceMode();
+        taxMode.setValue(mode);
+        boolean own = "OWN".equals(mode);
+        taxField.setVisible(own);
+        serviceField.setVisible(own);
+        if (chain.getTaxPercent() != null) {
+            taxField.setValue(chain.getTaxPercent().doubleValue());
+        }
+        if (chain.getServiceChargePercent() != null) {
+            serviceField.setValue(chain.getServiceChargePercent().doubleValue());
+        }
     }
 
     private void save() {
@@ -111,6 +150,9 @@ public class ChainDialog extends Dialog {
             return;
         }
         ChainDto dto = new ChainDto();
+        if (editingChain != null) {
+            dto.setId(editingChain.getId());
+        }
         dto.setName(nameField.getValue().trim());
         dto.setBrandId(brandBox.getValue().getId());
         dto.setType(typeGroup.getValue());
@@ -121,15 +163,30 @@ public class ChainDialog extends Dialog {
             dto.setServiceChargePercent(BigDecimal.valueOf(serviceField.getValue() == null ? 0d : serviceField.getValue()));
         }
 
-        restClientOrganizationService.createChain(dto).subscribe(
-                response -> UiUtil.safeAccess(getUI().orElse(null), () -> {
-                    UiUtil.success(Messages.get("organization.chain.created"));
-                    close();
-                    if (onSaved != null) {
-                        onSaved.run();
-                    }
-                }),
-                error -> UiUtil.safeAccess(getUI().orElse(null),
-                        () -> UiUtil.error(Messages.get("organization.chain.failed"))));
+        if (editingChain == null) {
+            restClientOrganizationService.createChain(dto).subscribe(
+                    response -> success("organization.chain.created"),
+                    error -> failure("organization.chain.failed"));
+            return;
+        }
+
+        restClientOrganizationService.updateChain(dto).subscribe(
+                response -> success("organization.chain.updated"),
+                error -> failure("organization.chain.updateFailed"));
+    }
+
+    private void success(String messageKey) {
+        UiUtil.safeAccess(getUI().orElse(null), () -> {
+            UiUtil.success(Messages.get(messageKey));
+            close();
+            if (onSaved != null) {
+                onSaved.run();
+            }
+        });
+    }
+
+    private void failure(String messageKey) {
+        UiUtil.safeAccess(getUI().orElse(null),
+                () -> UiUtil.error(Messages.get(messageKey)));
     }
 }

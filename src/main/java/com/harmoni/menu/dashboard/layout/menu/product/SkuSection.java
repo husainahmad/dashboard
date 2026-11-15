@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -187,7 +188,8 @@ public class SkuSection {
         tierDtos.forEach(tier ->
                 grid.addComponentColumn(item -> applyTierPriceField(item, tier))
                         .setHeader(tier.getName().toUpperCase())
-                        .setWidth("116px"));
+                        .setWidth("116px")
+                        .setTextAlign(ColumnTextAlign.END));
         grid.addComponentColumn(this::applyButtonDelete).setWidth("72px");
         grid.setAllRowsVisible(true);
     }
@@ -269,7 +271,7 @@ public class SkuSection {
         NumberField numberField = new NumberField();
         numberField.setValue(skuTreeItem.getTierPrices().get(tier.getId()) == null
                 ? 0.0 : skuTreeItem.getTierPrices().get(tier.getId()));
-        numberField.addClassName("tier-price-field");
+        numberField.addClassNames("tier-price-field", "money-field");
         numberField.addValueChangeListener(changeEvent -> {
             skuTreeItem.getTierPrices().put(tier.getId(),
                     changeEvent.getValue() == null ? 0.0 : changeEvent.getValue());

@@ -1,0 +1,35 @@
+/* ============================================================
+   Product page — shell alignment
+   ============================================================ */
+
+/*
+ * The product page is both a list view and the focus-mode page shell. Inset the
+ * collapse control by the list-view padding so it sits inside the page like the
+ * header and toolbar do, instead of flush against the viewport edge.
+ */
+.list-view.page .focus-toggle {
+    top: var(--lumo-space-m);
+    right: var(--lumo-space-m);
+}
+
+/* ============================================================
+   Product list — tree grid readability
+   ============================================================ */
+
+.product-name-root {
+    font-weight: 700;
+    color: var(--app-text);
+}
+
+.product-sku-count {
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    color: var(--app-text-muted);
+    background: var(--lumo-contrast-5pct);
+    border-radius: 999px;
+    padding: 1px 8px;
+}
+
+.product-name-sku {
+    color: var(--app-text-secondary);
+}

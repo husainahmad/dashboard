@@ -16,4 +16,5 @@ import java.io.Serializable;
 @Data
 public class CategoryProperties implements Serializable {
     private String brand;
+    private String brandPage;
 }

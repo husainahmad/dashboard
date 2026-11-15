@@ -1,12 +1,13 @@
 package com.harmoni.menu.dashboard.layout.organization;
 
-import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.dto.OrganizationTreeDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.Messages;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -14,7 +15,8 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
-import java.math.BigDecimal;
+import java.util.function.Consumer;
+
 
 /**
  * Right-hand card of the organization page. Shows the selected brand, chain or
@@ -27,11 +29,19 @@ public class OrganizationDetail extends VerticalLayout {
 
     private final RestClientOrganizationService restClientOrganizationService;
     private final Runnable onChanged;
+    private final Consumer<OrganizationNode> editListener;
 
     public OrganizationDetail(RestClientOrganizationService restClientOrganizationService,
                               Runnable onChanged) {
+        this(restClientOrganizationService, onChanged, null);
+    }
+
+    public OrganizationDetail(RestClientOrganizationService restClientOrganizationService,
+                              Runnable onChanged,
+                              Consumer<OrganizationNode> editListener) {
         this.restClientOrganizationService = restClientOrganizationService;
         this.onChanged = onChanged;
+        this.editListener = editListener;
         addClassName("org-detail-card");
         setPadding(false);
         setSpacing(false);
@@ -67,6 +77,14 @@ public class OrganizationDetail extends VerticalLayout {
         header.setAlignItems(Alignment.CENTER);
         header.addClassName("org-detail-header");
         header.setFlexGrow(1, name);
+
+        if (editListener != null) {
+            Button edit = new Button(Messages.get("organization.edit"),
+                    event -> editListener.accept(node));
+            edit.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            edit.addClassName("org-detail-edit");
+            header.add(edit);
+        }
         return header;
     }
 
@@ -133,7 +151,7 @@ public class OrganizationDetail extends VerticalLayout {
                 badge(store.getMenuPriceMode()),
                 isOwn(store.getMenuPriceMode()),
                 source(store.getMenuPriceMode(), "organization.source.store", "organization.source.brand"),
-                action(store.getMenuPriceMode(), "organization.action.override", "organization.action.brand"),
+                action(store.getMenuPriceMode(), "organization.action.override", "organization.action.useBrand"),
                 () -> toggleStore(node, StoreDto::setMenuPriceMode, store.getMenuPriceMode())));
 
         rows.add(new SettingRow(
@@ -141,7 +159,7 @@ public class OrganizationDetail extends VerticalLayout {
                 badge(store.getTaxServiceMode()),
                 isOwn(store.getTaxServiceMode()),
                 source(store.getTaxServiceMode(), "organization.source.store", "organization.source.chain"),
-                action(store.getTaxServiceMode(), "organization.action.override", "organization.action.chain"),
+                action(store.getTaxServiceMode(), "organization.action.override", "organization.action.useChain"),
                 () -> changeStoreTax(node)));
 
         rows.add(new SettingRow(
@@ -149,7 +167,7 @@ public class OrganizationDetail extends VerticalLayout {
                 badge(store.getReceiptLogoMode()),
                 isOwn(store.getReceiptLogoMode()),
                 source(store.getReceiptLogoMode(), "organization.source.store", "organization.source.brand"),
-                action(store.getReceiptLogoMode(), "organization.action.override", "organization.action.brand"),
+                action(store.getReceiptLogoMode(), "organization.action.override", "organization.action.useBrand"),
                 () -> toggleStore(node, StoreDto::setReceiptLogoMode, store.getReceiptLogoMode())));
 
         rows.add(new SettingRow(
@@ -157,7 +175,7 @@ public class OrganizationDetail extends VerticalLayout {
                 badge(store.getOrderTypeMode()),
                 isOwn(store.getOrderTypeMode()),
                 source(store.getOrderTypeMode(), "organization.source.store", "organization.source.chain"),
-                action(store.getOrderTypeMode(), "organization.action.override", "organization.action.chain"),
+                action(store.getOrderTypeMode(), "organization.action.override", "organization.action.useChain"),
                 () -> toggleStore(node, StoreDto::setOrderTypeMode, store.getOrderTypeMode())));
         return rows;
     }
@@ -180,7 +198,7 @@ public class OrganizationDetail extends VerticalLayout {
                 badge(chain.getTaxServiceMode()),
                 isOwn(chain.getTaxServiceMode()),
                 source(chain.getTaxServiceMode(), "organization.source.atChain", "organization.source.brand"),
-                action(chain.getTaxServiceMode(), "organization.action.overrideChain", "organization.action.brand"),
+                action(chain.getTaxServiceMode(), "organization.action.overrideChain", "organization.action.useBrand"),
                 () -> changeChainTax(node)));
 
         rows.add(new SettingRow(
@@ -335,19 +353,6 @@ public class OrganizationDetail extends VerticalLayout {
         return dto;
     }
 
-    private BrandDto toBrandDto(OrganizationTreeDto.BrandNode brand) {
-        BrandDto dto = new BrandDto();
-        dto.setId(brand.getId());
-        dto.setName(brand.getName());
-        dto.setLogoUrl(brand.getLogoUrl());
-        dto.setTimeZone(brand.getTimeZone());
-        dto.setCurrency(brand.getCurrency());
-        dto.setAdminEmail(brand.getAdminEmail());
-        dto.setInitialMenuMode(brand.getInitialMenuMode());
-        dto.setSourceBrandId(brand.getSourceBrandId());
-        return dto;
-    }
-
     private boolean isOwn(String mode) {
         return OWN.equalsIgnoreCase(mode);
     }
@@ -366,7 +371,7 @@ public class OrganizationDetail extends VerticalLayout {
 
     private String action(String mode, String overrideKey, String inheritedKey) {
         return isOwn(mode)
-                ? Messages.get("organization.action.back", Messages.get(inheritedKey))
+                ? Messages.get(inheritedKey)
                 : Messages.get(overrideKey);
     }
 }

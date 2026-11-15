@@ -45,6 +45,22 @@ public final class ObjectUtil {
         return objectMapper.writeValueAsString(object);
     }
 
+    /**
+     * Pretty-prints an arbitrary payload for the error details view. Falls back to
+     * {@link String#valueOf(Object)} when the value cannot be serialised, so the
+     * details panel never hides the only clue about a failure.
+     *
+     * @param object the value to print
+     * @return indented JSON, or its string form
+     */
+    public static String objectToPrettyJsonString(Object object) {
+        try {
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+        } catch (JsonProcessingException exception) {
+            return String.valueOf(object);
+        }
+    }
+
     public static Object jsonStringToBroadcastMessageClass(String string) throws JsonProcessingException {
         return objectMapper.readValue(string, BroadcastMessage.class);
     }

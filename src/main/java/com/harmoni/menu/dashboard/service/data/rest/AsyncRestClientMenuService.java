@@ -71,6 +71,24 @@ public class AsyncRestClientMenuService extends AsyncRestClientBase {
     }
 
     /**
+     * Asynchronously retrieves one page of categories for a brand.
+     *
+     * @param callback      success callback with the paged response
+     * @param errorCallback optional error callback for handling failures
+     * @param brandId       the brand id
+     * @param page          the page number, 1-based
+     * @param size          the number of categories per page
+     */
+    public void getAllCategoryByBrandPageAsync(AsyncRestCallback<Map<String, Object>> callback,
+                                               AsyncRestCallback<Throwable> errorCallback,
+                                               Integer brandId, int page, int size) {
+        String url = String.format(menuProperties.getUrl().getCategories().getBrandPage(),
+                brandId, page, size);
+        makeAsyncRequest(url, new TypeReference<>() {
+        }, callback, errorCallback);
+    }
+
+    /**
      * Asynchronously retrieves all brands.
      *
      * @param callback      success callback with the list of brands
@@ -82,6 +100,35 @@ public class AsyncRestClientMenuService extends AsyncRestClientBase {
         String url = String.format(menuProperties.getUrl().getProducts().getCategoryQuery(),
                 categoryId, brandId, page, size, search);
         makeAsyncRequest(url, new TypeReference<>() {
+        }, callback, errorCallback);
+    }
+
+    /**
+     * Asynchronously retrieves one cursor page of products for a brand and tier.
+     *
+     * @param callback      success callback with the cursor page
+     * @param errorCallback optional error callback for handling failures
+     * @param brandId       the brand id
+     * @param tierId        the tier id used to resolve prices
+     * @param beforeId      return only products with an id lower than this; null for the first page
+     * @param search        optional product-name search term
+     * @param limit         the maximum number of products to return
+     */
+    public void getBrandTierCursorAsync(AsyncRestCallback<Map<String, Object>> callback,
+                                        AsyncRestCallback<Throwable> errorCallback,
+                                        Integer brandId, Integer tierId, Integer beforeId,
+                                        String search, int limit) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(
+                        String.format(menuProperties.getUrl().getProducts().getBrandTierCursor(),
+                                brandId, tierId))
+                .queryParam("limit", limit);
+        if (beforeId != null) {
+            builder.queryParam("beforeId", beforeId);
+        }
+        if (search != null && !search.isBlank()) {
+            builder.queryParam("search", search);
+        }
+        makeAsyncRequest(builder.build().toUriString(), new TypeReference<>() {
         }, callback, errorCallback);
     }
 

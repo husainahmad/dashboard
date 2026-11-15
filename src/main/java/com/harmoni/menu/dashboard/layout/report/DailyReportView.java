@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientReportService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -75,10 +76,12 @@ public class DailyReportView extends AbstractReportView {
                 .setAutoWidth(true);
         grid.addColumn(row -> TopProductReportView.money(row.discount()))
                 .setHeader(Messages.get("report.column.discount"))
-                .setAutoWidth(true);
+                .setAutoWidth(true)
+                .setTextAlign(ColumnTextAlign.END);
         grid.addColumn(row -> TopProductReportView.money(row.netSales()))
                 .setHeader(Messages.get("report.column.netSales"))
-                .setAutoWidth(true);
+                .setAutoWidth(true)
+                .setTextAlign(ColumnTextAlign.END);
         return gridSlot(grid, skeleton);
     }
 

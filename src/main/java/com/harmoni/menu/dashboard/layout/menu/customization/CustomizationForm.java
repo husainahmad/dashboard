@@ -25,7 +25,9 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -104,6 +106,7 @@ public class CustomizationForm extends VerticalLayout {
     private final Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
     private final Button updateButton = new Button(Messages.get(Messages.Keys.ACTION_UPDATE));
     private final Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
+    private final Span dirtyLabel = new Span(Messages.get("customization.unsaved"));
 
     // Option tree grid (mirrors the product SKU + tier price layout)
     private final TreeGrid<CustomizationOptionTreeItem> optionGrid = new TreeGrid<>(CustomizationOptionTreeItem.class);
@@ -123,6 +126,8 @@ public class CustomizationForm extends VerticalLayout {
     private transient List<TierDto> tierDtos = new ArrayList<>();
     private boolean initialized;
     private boolean editDataPopulated;
+    private boolean dirty;
+    private boolean loading;
 
     /**
      * Creates the customization form bound to the given services and tab context.
@@ -140,6 +145,16 @@ public class CustomizationForm extends VerticalLayout {
         this.currentTab = currentTab;
         this.brandId = brandId;
         this.editCustomization = editCustomization;
+        addClassName("customization-form");
+        if (tabManager != null) {
+            tabManager.setCloseGuard(tab -> {
+                if (!dirty) {
+                    return true;
+                }
+                requestClose();
+                return false;
+            });
+        }
     }
 
     @Override
@@ -154,7 +169,9 @@ public class CustomizationForm extends VerticalLayout {
         configureOptionGrid();
         configureButtons();
         if (editCustomization != null) {
+            loading = true;
             customizationBinder.readBean(editCustomization);
+            loading = false;
         }
         loadPriceTiers();
     }
@@ -204,6 +221,19 @@ public class CustomizationForm extends VerticalLayout {
         minSelectionField.setValue(0);
         maxSelectionField.setMin(0);
         maxSelectionField.setValue(0);
+
+        nameField.addValueChangeListener(event -> markDirty());
+        descriptionField.addValueChangeListener(event -> markDirty());
+        selectionType.addValueChangeListener(event -> markDirty());
+        requiredField.addValueChangeListener(event -> markDirty());
+        allowQuantityField.addValueChangeListener(event -> markDirty());
+        minSelectionField.addValueChangeListener(event -> markDirty());
+        maxSelectionField.addValueChangeListener(event -> markDirty());
+
+        dirtyLabel.addClassName("customization-dirty-label");
+        dirtyLabel.setVisible(false);
+        saveButton.setEnabled(false);
+        updateButton.setEnabled(false);
 
         FormLayout formLayout = new FormLayout();
         formLayout.add(nameField, descriptionField);
@@ -274,7 +304,8 @@ public class CustomizationForm extends VerticalLayout {
 
         optionGrid.addComponentColumn(this::applyPriceNumberField)
                 .setHeader(Messages.get(Messages.Keys.LABEL_PRICE))
-                .setAutoWidth(true);
+                .setAutoWidth(true)
+                .setTextAlign(ColumnTextAlign.END);
 
         optionGrid.addComponentColumn(this::applyActiveBox)
                 .setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTIVE))
@@ -292,17 +323,23 @@ public class CustomizationForm extends VerticalLayout {
         TextField field = new TextField();
         field.setValue(item.getName() == null ? "" : item.getName());
         field.setPlaceholder(Messages.get("label.optionName"));
-        field.addValueChangeListener(changeEvent -> item.setName(changeEvent.getValue()));
+        field.addValueChangeListener(changeEvent -> {
+            item.setName(changeEvent.getValue());
+            markDirty();
+        });
         return field;
     }
 
     private Component applyPriceNumberField(CustomizationOptionTreeItem item) {
         NumberField numberField = new NumberField();
+        numberField.addClassName("money-field");
         numberField.setValue(item.getPrice() == null ? 0.0 : item.getPrice());
         numberField.setMin(0);
         numberField.setStep(0.01);
-        numberField.addValueChangeListener(changeEvent ->
-                item.setPrice(changeEvent.getValue() == null ? 0.0 : changeEvent.getValue()));
+        numberField.addValueChangeListener(changeEvent -> {
+            item.setPrice(changeEvent.getValue() == null ? 0.0 : changeEvent.getValue());
+            markDirty();
+        });
         return numberField;
     }
 
@@ -313,8 +350,10 @@ public class CustomizationForm extends VerticalLayout {
         if (!root) {
             checkbox.setEnabled(false);
         } else {
-            checkbox.addValueChangeListener(changeEvent ->
-                    item.setStatus(changeEvent.getValue() ? ACTIVE : INACTIVE));
+            checkbox.addValueChangeListener(changeEvent -> {
+                item.setStatus(changeEvent.getValue() ? ACTIVE : INACTIVE);
+                markDirty();
+            });
         }
         return checkbox;
     }
@@ -351,6 +390,7 @@ public class CustomizationForm extends VerticalLayout {
         deleteOptionButton.setEnabled(false);
         treeDataProvider.refreshAll();
         expandAllRoots();
+        markDirty();
     }
 
     private void loadPriceTiers() {
@@ -420,7 +460,9 @@ public class CustomizationForm extends VerticalLayout {
     private void ensureEditData() {
         if (editCustomization != null && !editDataPopulated) {
             editDataPopulated = true;
+            loading = true;
             populateEditCustomization();
+            loading = false;
         }
     }
 
@@ -494,6 +536,7 @@ public class CustomizationForm extends VerticalLayout {
         }
         treeDataProvider.refreshAll();
         expandAllRoots();
+        markDirty();
     }
 
     private CustomizationOptionTreeItem newTierChild(CustomizationOptionTreeItem root, TierDto tier,
@@ -603,12 +646,42 @@ public class CustomizationForm extends VerticalLayout {
         updateButton.addClickListener(
                 new CustomizationPersistEventListener(this, restClientMenuService, true)
         );
-        closeButton.addClickListener(event -> closeTab());
+        closeButton.addClickListener(event -> requestClose());
+    }
+
+    private void markDirty() {
+        if (loading || dirty) {
+            return;
+        }
+        dirty = true;
+        dirtyLabel.setVisible(true);
+        saveButton.setEnabled(true);
+        updateButton.setEnabled(true);
+    }
+
+    private void requestClose() {
+        if (!dirty) {
+            closeTab();
+            return;
+        }
+        ConfirmDialog dialog = new ConfirmDialog();
+        dialog.setHeader(Messages.get("dialog.unsaved.title"));
+        dialog.setText(Messages.get("dialog.unsaved.text"));
+        dialog.setCancelable(true);
+        dialog.setConfirmText(Messages.get("action.discard"));
+        dialog.setCancelText(Messages.get(Messages.Keys.ACTION_CANCEL));
+        dialog.addConfirmListener(event -> closeTab());
+        dialog.open();
     }
 
     private HorizontalLayout createButtonsLayout() {
-        HorizontalLayout horizontalLayout = new HorizontalLayout(closeButton, saveButton, updateButton);
-        horizontalLayout.setPadding(true);
+        HorizontalLayout horizontalLayout = new HorizontalLayout(
+                dirtyLabel, closeButton, saveButton, updateButton);
+        horizontalLayout.addClassName("customization-form-actions");
+        horizontalLayout.setWidthFull();
+        horizontalLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        horizontalLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        horizontalLayout.setFlexGrow(1, dirtyLabel);
         return horizontalLayout;
     }
 
@@ -705,5 +778,7 @@ public class CustomizationForm extends VerticalLayout {
             updateButton.setVisible(true);
         }
         closeButton.setVisible(true);
+        saveButton.setEnabled(dirty);
+        updateButton.setEnabled(dirty);
     }
 }

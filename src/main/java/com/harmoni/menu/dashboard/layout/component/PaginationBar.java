@@ -47,6 +47,21 @@ public class PaginationBar extends HorizontalLayout {
     }
 
     /**
+     * Refreshes the bar for cursor-based paging, where the total page count is
+     * unknown and only the current page and the availability of neighbours can
+     * be shown.
+     *
+     * @param currentPage the page being shown, 1-based
+     * @param hasPrevious whether a previous page can be reached
+     * @param hasNext     whether a next page can be reached
+     */
+    public void updateCursor(int currentPage, boolean hasPrevious, boolean hasNext) {
+        pageInfo.setText(Messages.get("pagination.cursorPage", currentPage));
+        previousButton.setEnabled(hasPrevious);
+        nextButton.setEnabled(hasNext);
+    }
+
+    /**
      * Enables or disables both navigation buttons, e.g. while a fetch is running.
      *
      * @param enabled whether navigation should be available

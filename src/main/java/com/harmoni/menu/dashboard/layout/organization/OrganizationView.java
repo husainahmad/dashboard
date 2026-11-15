@@ -3,6 +3,9 @@ package com.harmoni.menu.dashboard.layout.organization;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.dto.OrganizationTreeDto;
+import com.harmoni.menu.dashboard.dto.StoreDto;
+import com.harmoni.menu.dashboard.dto.TierDto;
+import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.layout.organization.dialog.BrandDialog;
 import com.harmoni.menu.dashboard.layout.organization.dialog.ChainDialog;
 import com.harmoni.menu.dashboard.layout.organization.dialog.StoreDialog;
@@ -19,7 +22,9 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unified Brand / Chain / Store page. A breadcrumb and a tree on the left drive
@@ -43,7 +48,8 @@ public class OrganizationView extends VerticalLayout {
                             RestClientOrganizationService restClientOrganizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
-        this.detail = new OrganizationDetail(restClientOrganizationService, this::loadTree);
+        this.detail = new OrganizationDetail(restClientOrganizationService, this::loadTree,
+                this::openEditDialog);
 
         addClassName("organization-view");
         setSizeFull();
@@ -190,6 +196,122 @@ public class OrganizationView extends VerticalLayout {
         Button button = new Button(label);
         button.addClickListener(event -> action.run());
         return button;
+    }
+
+    private void openEditDialog(OrganizationNode node) {
+        if (node == null) {
+            return;
+        }
+        if (node.isBrand()) {
+            new BrandDialog(restClientOrganizationService, brandDtos(),
+                    toBrandDto(node.getBrand()), this::loadTree).open();
+        } else if (node.isChain()) {
+            new ChainDialog(restClientOrganizationService, brandDtos(),
+                    findBrand(node.getChain().getBrandId()), toChainDto(node.getChain()),
+                    this::loadTree).open();
+        } else {
+            openStoreEditDialog(node.getStore());
+        }
+    }
+
+    private void openStoreEditDialog(OrganizationTreeDto.StoreNode store) {
+        StoreDto dto = toStoreDto(store);
+        Integer brandId = brandIdForChain(store.getChainId());
+        if (brandId == null) {
+            openStoreEditDialog(dto, Map.of());
+            return;
+        }
+        asyncRestClientOrganizationService.getAllTierByBrandAsync(
+                result -> UiUtil.safeAccess(getUI().orElse(null),
+                        () -> openStoreEditDialog(dto, groupTiers(result))),
+                error -> UiUtil.safeAccess(getUI().orElse(null), () -> {
+                    UiUtil.error(Messages.get("organization.store.tierLoadFailed"));
+                    openStoreEditDialog(dto, Map.of());
+                }),
+                brandId);
+    }
+
+    private void openStoreEditDialog(StoreDto store, Map<TierTypeDto, List<TierDto>> tiers) {
+        new StoreDialog(restClientOrganizationService, chainDtos(), findChain(store.getChainId()),
+                store, tiers, this::openChainDialog, this::loadTree).open();
+    }
+
+    private Map<TierTypeDto, List<TierDto>> groupTiers(List<TierDto> tiers) {
+        Map<TierTypeDto, List<TierDto>> grouped = new EnumMap<>(TierTypeDto.class);
+        if (tiers == null) {
+            return grouped;
+        }
+        for (TierDto tier : tiers) {
+            if (tier.getType() != null) {
+                grouped.computeIfAbsent(tier.getType(), key -> new ArrayList<>()).add(tier);
+            }
+        }
+        return grouped;
+    }
+
+    private Integer brandIdForChain(Integer chainId) {
+        ChainDto chain = findChain(chainId);
+        return chain == null ? null : chain.getBrandId();
+    }
+
+    private BrandDto findBrand(Integer id) {
+        return brandDtos().stream()
+                .filter(brand -> java.util.Objects.equals(brand.getId(), id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private ChainDto findChain(Integer id) {
+        return chainDtos().stream()
+                .filter(chain -> java.util.Objects.equals(chain.getId(), id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private BrandDto toBrandDto(OrganizationTreeDto.BrandNode brand) {
+        BrandDto dto = new BrandDto();
+        dto.setId(brand.getId());
+        dto.setName(brand.getName());
+        dto.setLogoUrl(brand.getLogoUrl());
+        dto.setTimeZone(brand.getTimeZone());
+        dto.setCurrency(brand.getCurrency());
+        dto.setAdminEmail(brand.getAdminEmail());
+        dto.setInitialMenuMode(brand.getInitialMenuMode());
+        dto.setSourceBrandId(brand.getSourceBrandId());
+        return dto;
+    }
+
+    private ChainDto toChainDto(OrganizationTreeDto.ChainNode chain) {
+        ChainDto dto = new ChainDto();
+        dto.setId(chain.getId());
+        dto.setName(chain.getName());
+        dto.setBrandId(chain.getBrandId());
+        dto.setType(chain.getType());
+        dto.setManagerEmail(chain.getManagerEmail());
+        dto.setTaxServiceMode(chain.getTaxServiceMode());
+        dto.setTaxPercent(chain.getTaxPercent());
+        dto.setServiceChargePercent(chain.getServiceChargePercent());
+        return dto;
+    }
+
+    private StoreDto toStoreDto(OrganizationTreeDto.StoreNode store) {
+        StoreDto dto = new StoreDto();
+        dto.setId(store.getId());
+        dto.setName(store.getName());
+        dto.setChainId(store.getChainId());
+        dto.setAddress(store.getAddress());
+        dto.setOrderTypes(store.getOrderTypes());
+        dto.setTaxServiceMode(store.getTaxServiceMode());
+        dto.setTaxPercent(store.getTaxPercent());
+        dto.setServiceChargePercent(store.getServiceChargePercent());
+        dto.setReceiptLogoMode(store.getReceiptLogoMode());
+        dto.setLogoUrl(store.getLogoUrl());
+        dto.setMenuPriceMode(store.getMenuPriceMode());
+        dto.setOrderTypeMode(store.getOrderTypeMode());
+        dto.setTierMenuId(store.getTierMenuId());
+        dto.setTierPriceId(store.getTierPriceId());
+        dto.setTierServiceId(store.getTierServiceId());
+        return dto;
     }
 
     private void openBrandDialog() {

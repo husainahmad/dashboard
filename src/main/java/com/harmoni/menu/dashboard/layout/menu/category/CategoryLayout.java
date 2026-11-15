@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.layout.menu.category;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
@@ -10,21 +11,14 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.RequiredArgsConstructor;
-import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
- * Main route for the category administration page.
- *
- * <p>
- * Embeds a single {@link CategoryTabs} tab sheet inside the shared
- * {@link MainLayout}; the page title is {@code Category | POSHarmoni} and all
- * data access flows through the injected (async) menu and organization REST
- * clients plus {@link AccessService}.
- * </p>
+ * Route ({@code /category}) for category administration. Hosts the unified
+ * {@link CategoryView} inside the {@link MainLayout} shell.
  */
 @RequiredArgsConstructor
 @Route(value = "category", layout = MainLayout.class)
-@PageTitle("Category | POSHarmoni")
+@PageTitle("Categories | POSHarmoni")
 public class CategoryLayout extends VerticalLayout {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
@@ -36,7 +30,7 @@ public class CategoryLayout extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         addClassName(Css.LIST_VIEW);
-        add(new CategoryTabs(asyncRestClientMenuService,
+        add(new CategoryView(asyncRestClientMenuService,
                 asyncRestClientOrganizationService, restClientMenuService, accessService));
         setSizeFull();
     }

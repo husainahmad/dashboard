@@ -43,6 +43,15 @@ public class SkuDto {
     @JsonProperty("tierPrices")
     private List<SkuTierPriceDto> skuTierPriceDtos;
 
+    /**
+     * The price of this SKU under the tier the request was scoped to, bound to the
+     * {@code tierPrice} JSON property. Cursor endpoints that join a single tier
+     * populate this instead of the full {@link #skuTierPriceDtos} list.
+     */
+
+    @JsonProperty("tierPrice")
+    private SkuTierPriceDto tierPriceDto;
+
     /** The timestamp the SKU was created, set by the server. */
 
     private Date createdAt;

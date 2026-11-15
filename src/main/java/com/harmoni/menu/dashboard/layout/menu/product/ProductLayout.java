@@ -1,34 +1,66 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.component.FocusModeToggle;
+import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
+import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tabs.Tab;
+import com.vaadin.flow.component.tabs.TabSheet;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
- * The main layout for the product page.
- *
- * <p>
- * Renders a {@link ProductTabs} component inside a {@link VerticalLayout}.
- * </p>
+ * Route ({@code /product}) for product management. Hosts the product browser in
+ * a single tab sheet, with the page header, toolbar and the focus-mode toggle
+ * as siblings of the sheet so the editor can take the full height.
  */
-
 @RequiredArgsConstructor
 @Route(value = "product", layout = MainLayout.class)
+@PageTitle("Products | POSHarmoni")
 public class ProductLayout extends VerticalLayout {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
 
+    @Getter
+    private transient FocusModeToggle focusModeToggle;
+
+    private boolean built;
+
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        addClassName(Css.LIST_VIEW);
-        add(new ProductTabs(asyncRestClientMenuService, restClientMenuService));
+        if (built) {
+            return;
+        }
+        built = true;
+        renderPage();
+    }
+
+    void renderPage() {
+        addClassNames(Css.LIST_VIEW, Css.PAGE);
+
+        ProductListView productListView = new ProductListView(asyncRestClientMenuService,
+                restClientMenuService);
+        TabSheet tabSheet = new TabSheet();
+        tabSheet.add(new Tab(Messages.get("tab.productList")), productListView);
+        tabSheet.setSizeFull();
+
+        add(PageHeader.of(Messages.Keys.PAGE_PRODUCT_TITLE, Messages.Keys.PAGE_PRODUCT_DESCRIPTION));
+        add(productListView.getToolbarComponent());
+        add(tabSheet);
+        setFlexGrow(1, tabSheet);
+        setPadding(false);
         setSizeFull();
+
+        focusModeToggle = new FocusModeToggle(this);
+        add(focusModeToggle);
     }
 }

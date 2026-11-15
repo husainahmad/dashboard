@@ -105,9 +105,25 @@ public class CustomizationSection {
      * @param productId id of the saved product
      */
     public void load(Integer productId) {
+        load(productId, null);
+    }
+
+    /**
+     * Fetches the customization attachments for a persisted product and renders
+     * them into the grid, invoking {@code onComplete} once the render is done.
+     *
+     * @param productId  id of the saved product
+     * @param onComplete callback run after the grid has been repainted, or {@code null}
+     */
+    public void load(Integer productId, Runnable onComplete) {
         AsyncUtil.subscribe(restClientMenuService.getProductCustomizations(productId),
                 delegate.getUi(), Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_LOAD_FAILED),
-                response -> render(customizationsFrom(response)));
+                response -> {
+                    render(customizationsFrom(response));
+                    if (onComplete != null) {
+                        onComplete.run();
+                    }
+                });
     }
 
     /**

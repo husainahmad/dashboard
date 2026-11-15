@@ -40,6 +40,48 @@ public class RestClientMenuService extends RestClientService implements Serializ
     }
 
     /**
+     * Updates an existing menu category.
+     *
+     * @param categoryDto the category to update
+     * @return a {@link Mono} with the server response
+     */
+    public Mono<RestAPIResponse> updateCategory(CategoryDto categoryDto) {
+        return put(URL_FORMAT.formatted(urlMenuProperties.getUrl().getCategory(), categoryDto.getId()),
+                Mono.just(categoryDto), CategoryDto.class);
+    }
+
+    /**
+     * Creates a service.
+     *
+     * @param serviceDto the service to create
+     * @return a {@link Mono} with the server response
+     */
+    public Mono<RestAPIResponse> createService(ServiceDto serviceDto) {
+        return post(urlMenuProperties.getUrl().getService(), Mono.just(serviceDto), ServiceDto.class);
+    }
+
+    /**
+     * Updates an existing service.
+     *
+     * @param serviceDto the service to update
+     * @return a {@link Mono} with the server response
+     */
+    public Mono<RestAPIResponse> updateService(ServiceDto serviceDto) {
+        return put(URL_FORMAT.formatted(urlMenuProperties.getUrl().getService(), serviceDto.getId()),
+                Mono.just(serviceDto), ServiceDto.class);
+    }
+
+    /**
+     * Deletes a service.
+     *
+     * @param serviceDto the service to delete
+     * @return a {@link Mono} with the server response
+     */
+    public Mono<RestAPIResponse> deleteService(ServiceDto serviceDto) {
+        return delete(URL_FORMAT.formatted(urlMenuProperties.getUrl().getService(), serviceDto.getId()));
+    }
+
+    /**
      * Lists all categories of a brand.
      *
      * @param brandId the owning brand id

@@ -1,0 +1,75 @@
+/* ============================================================
+   App-level error feedback
+   ============================================================ */
+
+.app-navbar-stack {
+    width: 100%;
+}
+
+.app-error-banner {
+    width: 100%;
+    gap: var(--lumo-space-s);
+    padding: var(--lumo-space-xs) var(--lumo-space-m);
+    background: var(--lumo-error-color-10pct);
+    border-bottom: 1px solid var(--lumo-error-color-50pct);
+}
+
+.app-error-banner-icon {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    color: var(--lumo-error-text-color);
+}
+
+.app-error-banner-message {
+    font-size: var(--lumo-font-size-s);
+    font-weight: 500;
+    color: var(--app-text);
+    overflow-wrap: anywhere;
+}
+
+.app-error-banner-reference {
+    flex: 0 0 auto;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    color: var(--app-text-secondary);
+    background: var(--lumo-base-color);
+    border: 1px solid var(--lumo-error-color-50pct);
+}
+
+.app-error-banner-action {
+    flex: 0 0 auto;
+}
+
+.app-error-details-dialog {
+    max-width: 640px;
+}
+
+.app-error-details-summary {
+    margin: 0;
+    color: var(--app-text);
+    line-height: 1.5;
+}
+
+.app-error-details-reference {
+    align-self: flex-start;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: var(--lumo-font-size-s);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--app-text-secondary);
+    background: var(--lumo-contrast-5pct);
+}
+
+.app-error-details-technical {
+    margin-top: var(--lumo-space-s);
+}
+
+.app-error-details-json::part(input-field) {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: var(--lumo-font-size-xs);
+    background: var(--lumo-contrast-5pct);
+}

@@ -48,6 +48,7 @@ final class TierPriceCell extends NumberField {
         this.restClientMenuService = service;
         this.ui = ui;
 
+        addClassName("money-field");
         setValueChangeMode(ValueChangeMode.ON_CHANGE);
         setPlaceholder("0");
         setMin(0);

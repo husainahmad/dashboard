@@ -339,3 +339,17 @@ input[slot="input"] {
     font-variant-numeric:
         tabular-nums;
 }
+
+/* ---------- Dirty state ---------- */
+
+.product-dirty-label {
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    font-weight:
+        600;
+
+    color:
+        var(--app-accent);
+}

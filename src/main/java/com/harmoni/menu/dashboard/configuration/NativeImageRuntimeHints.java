@@ -42,7 +42,6 @@ import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.organization.tier.menu.TierMenuTreeItem;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceTreeItem;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
-import com.harmoni.menu.dashboard.layout.setting.service.ServiceTreeItem;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
@@ -113,7 +112,6 @@ public class NativeImageRuntimeHints {
                 SelectionType.class,
                 FormAction.class,
                 TreeLevel.class,
-                ServiceTreeItem.class,
                 ProductTreeItem.class,
                 SkuTreeItem.class,
                 TierServiceTreeItem.class,

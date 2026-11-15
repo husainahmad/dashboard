@@ -22,8 +22,10 @@ import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.treegrid.ExpandEvent;
 import com.vaadin.flow.component.treegrid.TreeGrid;
@@ -124,14 +126,16 @@ public class CustomizationListView extends AbstractListView implements Broadcast
         customizationGrid.setEmptyStateText(Messages.get("grid.empty.customizationList"));
         customizationGrid.removeAllColumns();
         customizationGrid.addComponentHierarchyColumn(this::applyNameLabel).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME)).setAutoWidth(true);
-        customizationGrid.addColumn(item -> item.getSelectionTypeLabel() == null ? "-" : item.getSelectionTypeLabel())
+        customizationGrid.addComponentColumn(this::applyTypeBadge)
                 .setHeader(Messages.get(Messages.Keys.GRID_HEADER_TYPE)).setAutoWidth(true);
-        customizationGrid.addColumn(item -> item.getTierName() == null ? "-" : item.getTierName())
+        customizationGrid.addComponentColumn(this::applyTierLabel)
                 .setHeader(Messages.get("grid.header.tier")).setAutoWidth(true);
-        customizationGrid.addColumn(item -> item.getPrice() == null ? "-"
-                        : String.format("%,.2f", item.getPrice())).setHeader(Messages.get(Messages.Keys.GRID_HEADER_PRICE)).setAutoWidth(true);
-        customizationGrid.addColumn(item -> item.getOptionStatus() == null ? "-" : item.getOptionStatus())
-                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTIVE)).setAutoWidth(true);
+        customizationGrid.addComponentColumn(this::applyPriceLabel)
+                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_PRICE))
+                .setAutoWidth(true)
+                .setTextAlign(ColumnTextAlign.END);
+        customizationGrid.addComponentColumn(this::applyStatusPill)
+                .setHeader(Messages.get("grid.header.status")).setAutoWidth(true);
         customizationGrid.addComponentColumn(this::applyActionButtons).setHeader(Messages.get("grid.header.actions")).setAutoWidth(true);
         customizationGrid.getColumns().forEach(column -> column.setResizable(true));
         customizationGrid.addExpandListener(this::onComponentEventExpandListener);
@@ -139,12 +143,65 @@ public class CustomizationListView extends AbstractListView implements Broadcast
         customizationGrid.setDataProvider(treeDataProvider);
     }
 
-    private Span applyNameLabel(CustomizationTreeItem item) {
+    private Component applyNameLabel(CustomizationTreeItem item) {
         Span label = new Span(item.getName());
         if (CustomizationItemType.CUSTOMIZATION.equals(item.getType())) {
-            label.getElement().getStyle().set(Css.FONT_WEIGHT, "bold");
+            label.addClassName("customization-name-root");
+            HorizontalLayout row = new HorizontalLayout(label);
+            row.setAlignItems(FlexComponent.Alignment.CENTER);
+            row.setSpacing(true);
+            if (item.getOptionCount() != null) {
+                Span count = new Span(Messages.get("customization.optionCount", item.getOptionCount()));
+                count.addClassName("customization-count-badge");
+                row.add(count);
+            }
+            return row;
+        }
+        if (CustomizationItemType.TIER_PRICE.equals(item.getType())) {
+            label.setText(Messages.get("customization.tierPrice"));
+            label.addClassName("customization-tier-label");
         }
         return label;
+    }
+
+    private Component applyTypeBadge(CustomizationTreeItem item) {
+        if (!CustomizationItemType.CUSTOMIZATION.equals(item.getType())
+                || item.getSelectionTypeLabel() == null) {
+            return new Span();
+        }
+        Span badge = new Span(item.getSelectionTypeLabel());
+        badge.addClassName("customization-type-badge");
+        return badge;
+    }
+
+    private Component applyTierLabel(CustomizationTreeItem item) {
+        if (!CustomizationItemType.TIER_PRICE.equals(item.getType())
+                || item.getTierName() == null) {
+            return new Span();
+        }
+        return new Span(item.getTierName());
+    }
+
+    private Component applyPriceLabel(CustomizationTreeItem item) {
+        if (!CustomizationItemType.TIER_PRICE.equals(item.getType())
+                || item.getPrice() == null) {
+            return new Span();
+        }
+        Span price = new Span(UiUtil.rupiah(item.getPrice()));
+        price.addClassName("customization-price");
+        return price;
+    }
+
+    private Component applyStatusPill(CustomizationTreeItem item) {
+        if (!CustomizationItemType.OPTION.equals(item.getType())
+                || item.getOptionStatus() == null) {
+            return new Span();
+        }
+        boolean active = !"Inactive".equalsIgnoreCase(item.getOptionStatus());
+        Span pill = new Span(item.getOptionStatus());
+        pill.addClassName("customization-status-pill");
+        pill.addClassName(active ? "customization-status-active" : "customization-status-inactive");
+        return pill;
     }
 
     private HorizontalLayout applyActionButtons(CustomizationTreeItem item) {
@@ -326,6 +383,8 @@ public class CustomizationListView extends AbstractListView implements Broadcast
                 .name(customization.getName())
                 .type(CustomizationItemType.CUSTOMIZATION)
                 .customizationId(customization.getId())
+                .optionCount(customization.getCustomizationOptions() == null
+                        ? 0 : customization.getCustomizationOptions().size())
                 .selectionTypeLabel(customization.getSelectionType() != null
                         ? customization.getSelectionType().getLabel() : null)
                 .customizationDto(customization)

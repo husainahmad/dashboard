@@ -17,6 +17,7 @@ public class CustomizationTreeItem {
     private String name;
     private CustomizationItemType type;
     private Integer customizationId;
+    private Integer optionCount;
     private Long optionId;
     private String optionStatus;
     private Integer tierId;

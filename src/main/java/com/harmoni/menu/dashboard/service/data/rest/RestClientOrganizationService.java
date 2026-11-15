@@ -85,16 +85,6 @@ public class RestClientOrganizationService extends RestClientService {
     }
 
     /**
-     * Deletes a brand.
-     *
-     * @param brandDto the brand to delete
-     * @return a {@link Mono} with the server response
-     */
-    public Mono<RestAPIResponse> deleteBrand(BrandDto brandDto) {
-        return delete(URL_FORMAT.formatted(menuProperties.getUrl().getBrand(), brandDto.getId()));
-    }
-
-    /**
      * Creates a tier.
      *
      * @param tierDto the tier to create
@@ -147,16 +137,6 @@ public class RestClientOrganizationService extends RestClientService {
      */
     public Mono<RestAPIResponse> deleteTier(TierDto tierDto) {
         return delete(URL_FORMAT.formatted(menuProperties.getUrl().getTier(), tierDto.getId()));
-    }
-
-    /**
-     * Deletes a chain.
-     *
-     * @param chainDto the chain to delete
-     * @return a {@link Mono} with the server response
-     */
-    public Mono<RestAPIResponse> deleteChain(ChainDto chainDto) {
-        return delete(URL_FORMAT.formatted(menuProperties.getUrl().getChain(), chainDto.getId()));
     }
 
     /**

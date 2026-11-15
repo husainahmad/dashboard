@@ -5,15 +5,17 @@ import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientCustomerService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Main route ({@code /customers}) for the customer domain. Hosts the
- * {@link CustomerTabs} component inside the {@link MainLayout} shell.
+ * Route ({@code /customers}) for the customer domain. Hosts the unified
+ * {@link CustomerView} inside the {@link MainLayout} shell.
  */
 @RequiredArgsConstructor
 @Route(value = "customers", layout = MainLayout.class)
+@PageTitle("Customers | POSHarmoni")
 public class CustomerLayout extends VerticalLayout {
 
     private final AsyncRestClientCustomerService asyncRestClientCustomerService;
@@ -22,7 +24,7 @@ public class CustomerLayout extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         addClassName(Css.LIST_VIEW);
-        add(new CustomerTabs(asyncRestClientCustomerService));
+        add(new CustomerView(asyncRestClientCustomerService));
         setSizeFull();
     }
 }

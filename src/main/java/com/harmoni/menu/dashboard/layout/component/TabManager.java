@@ -40,6 +40,13 @@ public final class TabManager {
     private Tab returnTab;
 
     /**
+     * Optional guard consulted before a tab is closed. Returning {@code false}
+     * keeps the tab open, which lets a form intercept the close and ask the
+     * operator to confirm discarding unsaved changes.
+     */
+    private Function<Tab, Boolean> closeGuard;
+
+    /**
      * Finds the first tab whose stored label equals the given one.
      *
      * @param label the label to search for
@@ -76,8 +83,22 @@ public final class TabManager {
 
         Tab tab = new Tab(header);
         tab.getElement().setProperty(LABEL_PROPERTY, label);
-        closeButton.addClickListener(event -> closeAndSelectFirst(tab));
+        closeButton.addClickListener(event -> {
+            if (closeGuard == null || Boolean.TRUE.equals(closeGuard.apply(tab))) {
+                closeAndSelectFirst(tab);
+            }
+        });
         return tab;
+    }
+
+    /**
+     * Registers a guard consulted before a tab is closed through its inline
+     * close button.
+     *
+     * @param closeGuard returns {@code true} when the tab may close
+     */
+    public void setCloseGuard(Function<Tab, Boolean> closeGuard) {
+        this.closeGuard = closeGuard;
     }
 
     /**

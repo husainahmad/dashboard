@@ -53,7 +53,7 @@ class ProductPageFocusModeTest {
 
     @Test
     void theControl_isASiblingOfWhatItHides() {
-        ProductTabs page = shell();
+        ProductLayout page = shell();
         Component toggle = page.getFocusModeToggle();
         Component header = childCarrying(page, Css.PAGE_HEADER);
         Component toolbar = childCarrying(page, Css.TOOLBAR);
@@ -73,7 +73,7 @@ class ProductPageFocusModeTest {
 
     @Test
     void collapsingTheShell_marksTheShellItself() {
-        ProductTabs page = shell();
+        ProductLayout page = shell();
         page.getFocusModeToggle().click();
 
         assertTrue(page.getClassNames().contains(Css.FOCUS_MODE),
@@ -126,25 +126,24 @@ class ProductPageFocusModeTest {
     /**
      * The product page shell, built without a UI.
      *
-     * <p>{@code renderTabSheet} is run by hand because {@code onAttach} never fires with
+     * <p>{@code renderPage} is run by hand because {@code onAttach} never fires with
      * no session, the same limitation {@code ProductFormWithPreviewTest} works around.</p>
      */
-    private static ProductTabs shell() {
-        ProductTabs page = new ProductTabs(null, null);
-        page.addClassName(Css.PAGE);
-        renderTabSheet(page);
+    private static ProductLayout shell() {
+        ProductLayout page = new ProductLayout(null, null);
+        renderPage(page);
         return page;
     }
 
-    private static void renderTabSheet(ProductTabs page) {
+    private static void renderPage(ProductLayout page) {
         try {
-            java.lang.reflect.Method render = ProductTabs.class.getDeclaredMethod("renderTabSheet");
+            java.lang.reflect.Method render = ProductLayout.class.getDeclaredMethod("renderPage");
             render.setAccessible(true);
             render.invoke(page);
         } catch (java.lang.reflect.InvocationTargetException e) {
-            throw new AssertionError("renderTabSheet failed", e.getCause());
+            throw new AssertionError("renderPage failed", e.getCause());
         } catch (ReflectiveOperationException e) {
-            throw new AssertionError("renderTabSheet is not reachable", e);
+            throw new AssertionError("renderPage is not reachable", e);
         }
     }
 
