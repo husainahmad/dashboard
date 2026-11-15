@@ -3,8 +3,7 @@ package com.harmoni.menu.dashboard.layout.menu.product;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.dto.ProductDto;
-import com.harmoni.menu.dashboard.event.product.ProductSaveEventListener;
-import com.harmoni.menu.dashboard.event.product.ProductUpdateEventListener;
+import com.harmoni.menu.dashboard.event.product.ProductPersistEventListener;
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.menu.ProductFormLayout;
 import com.harmoni.menu.dashboard.layout.util.AsyncUtil;
@@ -48,31 +47,14 @@ import java.util.Objects;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
- * Thin orchestrator for the product editor tab.
+ * Orchestrator for the product editor tab: wires the binder, category/name
+ * fields, image upload and action bar, and delegates editing to
+ * {@link SkuSection} (SKU rows and tier prices) and
+ * {@link CustomizationSection} (attachments and overrides).
  *
- * <p>
- * This view only wires the shared pieces together (binder, category / naming
- * fields, image upload, the save/update button bar) and delegates the real
- * editing to its sections:
- * </p>
- *
- * <ul>
- *     <li>{@link SkuSection} — SKU rows and per-tier prices</li>
- *     <li>{@link CustomizationSection} — customization attachments and overrides</li>
- * </ul>
- *
- * <p>
- * Persistence is handled by {@link ProductSaveEventListener} and
- * {@link ProductUpdateEventListener}. The constructor takes the two exchanged
- * services plus the {@link ProductEditorContext} the list view assembled, which is
- * where the brand, categories, tiers, tab and edited product all come from.
- * </p>
- *
- * <p>
- * When the tab is opened for an existing product, {@link #fetchProduct()} loads the
- * details and populates the fields; for a new product a single empty SKU row is
- * shown. {@link ProductEditorContext#isEditingExistingProduct()} is that test.
- * </p>
+ * <p>Persistence is handled by {@link ProductPersistEventListener}. For an
+ * existing product {@link #fetchProduct()} loads the details; for a new one a
+ * single empty SKU row is shown.</p>
  */
 @RequiredArgsConstructor
 @Route(value = Css.PRODUCT_FORM, layout = MainLayout.class)
@@ -101,11 +83,11 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
     @Getter
     CustomizationSection customizationSection;
 
-    Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
-    Button updateButton = new Button(Messages.get(Messages.Keys.ACTION_UPDATE));
+    Button submitButton = new Button();
     Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
     private final LoadingBar savingBar = new LoadingBar();
     private boolean saving;
+    private boolean layoutBuilt;
 
     private final RestClientMenuService restClientMenuService;
     private final transient AsyncRestClientMenuService asyncRestClientMenuService;
@@ -189,6 +171,11 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
      * grids, then wires validation and the action buttons.
      */
     private void renderLayout() {
+        if (layoutBuilt) {
+            return;
+        }
+        layoutBuilt = true;
+
         // Exactly one action, as this form's own contract says: Update for a product
         // that exists, Save for a new one. They used to both stay visible, and they are
         // not interchangeable - create answers 201, update answers 200, and each
@@ -320,29 +307,12 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         if (ObjectUtils.isEmpty(productTreeItem)) {
             return;
         }
-        if (ObjectUtils.isEmpty(productDto)) {
-            productDto = new ProductDto();
-        }
-        productDto.setId(productTreeItem.getProductId());
-        productDto.setCategoryId(productTreeItem.getCategoryId());
-        productDto.setName(productTreeItem.getName());
-        productDto.setSkuDtos(productTreeItem.getSkus());
-
-        if (ObjectUtils.isNotEmpty(productTreeItem.getCategoryId())) {
-            context.categoryDtos().stream()
-                    .filter(c -> Objects.equals(c.getId(), productTreeItem.getCategoryId()))
-                    .findFirst()
-                    .ifPresent(categoryBox::setValue);
-        }
-
-        productNameField.setValue(productTreeItem.getName() == null ? "" : productTreeItem.getName());
-        productDescTextArea.setValue(productDto.getDescription() == null ? "" : productDto.getDescription());
-        skuSection.load(productDto.getSkuDtos());
-        firePreviewUpdate();
-        updateButtonStates();
-        if (ObjectUtils.isNotEmpty(productDto.getId())) {
-            customizationSection.load(productDto.getId());
-        }
+        ProductDto target = ensureProductDto();
+        target.setId(productTreeItem.getProductId());
+        target.setCategoryId(productTreeItem.getCategoryId());
+        target.setName(productTreeItem.getName());
+        target.setSkuDtos(productTreeItem.getSkus());
+        repaint();
     }
 
     /**
@@ -357,46 +327,79 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         }
         ProductDto fetched = ObjectUtil.convertObjectToObject(restAPIResponse.getData(), new TypeReference<>() {
         });
-        if (ObjectUtils.isEmpty(productDto)) {
-            productDto = new ProductDto();
-        }
+        ProductDto target = ensureProductDto();
 
         if (ObjectUtils.isNotEmpty(fetched.getId())) {
-            productDto.setId(fetched.getId());
+            target.setId(fetched.getId());
         }
         if (ObjectUtils.isNotEmpty(fetched.getCategoryId())) {
-            productDto.setCategoryId(fetched.getCategoryId());
-        }
-        if (ObjectUtils.isNotEmpty(fetched.getName())) {
-            productDto.setName(fetched.getName());
-            productNameField.setValue(fetched.getName());
-        }
-        if (fetched.getDescription() != null) {
-            productDto.setDescription(fetched.getDescription());
-            productDescTextArea.setValue(fetched.getDescription());
+            target.setCategoryId(fetched.getCategoryId());
         }
         if (ObjectUtils.isNotEmpty(fetched.getCategoryDto())) {
-            productDto.setCategoryDto(fetched.getCategoryDto());
-            if (ObjectUtils.isNotEmpty(fetched.getCategoryDto().getId())) {
-                context.categoryDtos().stream()
-                        .filter(c -> Objects.equals(c.getId(), fetched.getCategoryDto().getId()))
-                        .findFirst()
-                        .ifPresent(categoryBox::setValue);
-            }
+            target.setCategoryDto(fetched.getCategoryDto());
+        }
+        if (ObjectUtils.isNotEmpty(fetched.getName())) {
+            target.setName(fetched.getName());
+        }
+        if (fetched.getDescription() != null) {
+            target.setDescription(fetched.getDescription());
         }
         if (ObjectUtils.isNotEmpty(fetched.getSkuDtos())) {
-            productDto.setSkuDtos(fetched.getSkuDtos());
-            skuSection.load(fetched.getSkuDtos());
+            target.setSkuDtos(fetched.getSkuDtos());
         }
         if (ObjectUtils.isNotEmpty(fetched.getProductImageDto())) {
-            productDto.setProductImageDto(fetched.getProductImageDto());
-            refreshImage();
+            target.setProductImageDto(fetched.getProductImageDto());
         }
+        repaint();
+    }
 
-        updateButtonStates();
+    /**
+     * Returns the product bean, creating it on first use and handing it to the
+     * binder so name and category edits are written through to it.
+     */
+    private ProductDto ensureProductDto() {
+        if (productDto == null) {
+            productDto = new ProductDto();
+        }
+        binder.setBean(productDto);
+        return productDto;
+    }
+
+    /**
+     * Pushes the product bean onto the widgets and repaints the preview. Both
+     * the tree seed and the detail response end here, so the two load paths
+     * cannot drift apart.
+     */
+    private void repaint() {
+        resolveCategoryDto();
+        binder.readBean(productDto);
+        productDescTextArea.setValue(productDto.getDescription() == null ? "" : productDto.getDescription());
+        skuSection.load(productDto.getSkuDtos());
+        refreshImage();
+        firePreviewUpdate();
+        validateForm();
         if (ObjectUtils.isNotEmpty(productDto.getId())) {
             customizationSection.load(productDto.getId());
         }
+    }
+
+    /**
+     * Makes sure the bean's category matches the category the widget will show.
+     * The tree seed only carries a category id, so the display object is looked
+     * up from the categories handed over by the list.
+     */
+    private void resolveCategoryDto() {
+        if (productDto.getCategoryId() == null) {
+            return;
+        }
+        if (productDto.getCategoryDto() != null
+                && Objects.equals(productDto.getCategoryDto().getId(), productDto.getCategoryId())) {
+            return;
+        }
+        context.categoryDtos().stream()
+                .filter(category -> Objects.equals(category.getId(), productDto.getCategoryId()))
+                .findFirst()
+                .ifPresent(productDto::setCategoryDto);
     }
 
     /**
@@ -456,67 +459,45 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
     }
 
     /**
-     * Subscribes to binder status changes so the save/update buttons mirror the
-     * current validation result, and applies the initial button state.
-     *
-     * <p>
-     * The {@link StatusChangeEvent} listener is the single place that reads the
-     * validation outcome; it must never call {@code binder.validate()} itself,
-     * as that would fire another status change and recurse until a
-     * {@link StackOverflowError}.
-     * </p>
+     * Subscribes to binder status changes so the action buttons mirror the
+     * current validation result, and applies the initial state.
      */
     private void bindButtonState() {
-        binder.addStatusChangeListener(this::updateButtonStates);
-        updateButtonStates();
+        binder.addStatusChangeListener(this::onBinderStatusChange);
+        validateForm();
     }
 
     /**
-     * Consumes a {@link StatusChangeEvent} and mirrors its validation outcome
-     * onto the save/update buttons.
-     *
-     * @param event the validation status change, carrying the outcome
-     */
-    /**
-     * Shows Update for a product that already exists and Save for a new one.
+     * Turns the single submit button into either Update (existing product) or
+     * Save (new product). The two actions answer different endpoints and treat
+     * each other's status as a failure, so only one may ever be wired.
      *
      * @param existing whether the product is already stored
      */
     private void applyActionFor(boolean existing) {
-        saveButton.setVisible(!existing);
-        updateButton.setVisible(existing);
+        submitButton.setText(Messages.get(existing ? Messages.Keys.ACTION_UPDATE : Messages.Keys.ACTION_SAVE));
+        submitButton.setIcon(new Icon(existing ? VaadinIcon.REFRESH : VaadinIcon.CHECK));
+        submitButton.addClickListener(new ProductPersistEventListener(this, restClientMenuService, existing));
+    }
+
+    private void onBinderStatusChange(StatusChangeEvent event) {
+        applyValidation(event.hasValidationErrors());
     }
 
     /**
-     * Updates the save/update buttons to reflect the current validation state.
-     *
-     * <p>
-     * This is the only place that reads the validation outcome; it must never
-     * call {@code binder.validate()} itself, as that would fire another status
-     * change and recurse until a {@link StackOverflowError}.
-     * </p>
-     *
-     * @param event the validation status change, carrying the outcome
+     * Runs a validation pass and mirrors the result onto the buttons. Unlike the
+     * status listener this is safe to call directly: it does not itself listen
+     * for the status change it triggers.
      */
-    private void updateButtonStates(StatusChangeEvent event) {
-        if (saving) {
-            return;
-        }
-        boolean valid = !event.hasValidationErrors();
-        saveButton.setEnabled(valid);
-        updateButton.setEnabled(valid);
+    private void validateForm() {
+        applyValidation(binder.validate().hasErrors());
     }
 
-    /**
-     * Requests a fresh validation pass. The resulting status change is handled
-     * by {@link #updateButtonStates(StatusChangeEvent)}, which performs the
-     * actual button state updates.
-     */
-    private void updateButtonStates() {
+    private void applyValidation(boolean hasErrors) {
         if (saving) {
             return;
         }
-        binder.validate();
+        submitButton.setEnabled(!hasErrors);
     }
 
     /**
@@ -526,24 +507,16 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
      * @return the footer toolbar
      */
     private HorizontalLayout getButtonBar() {
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        updateButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        submitButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         closeButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-
-        saveButton.setIcon(new Icon(VaadinIcon.CHECK));
-        updateButton.setIcon(new Icon(VaadinIcon.REFRESH));
         closeButton.setIcon(new Icon(VaadinIcon.CLOSE_SMALL));
 
-        saveButton.addClickShortcut(Key.ENTER);
-        updateButton.addClickShortcut(Key.ENTER);
+        submitButton.addClickShortcut(Key.ENTER);
         closeButton.addClickShortcut(Key.ESCAPE);
 
-        updateButton.addClickListener(new ProductUpdateEventListener(this, restClientMenuService));
-        saveButton.addClickListener(new ProductSaveEventListener(this, restClientMenuService));
         closeButton.addClickListener(this::onButtonClose);
 
-        HorizontalLayout toolbar = new HorizontalLayout(
-                (context.isEditingExistingProduct() ? updateButton : saveButton), closeButton);
+        HorizontalLayout toolbar = new HorizontalLayout(submitButton, closeButton);
         toolbar.addClassName(Css.TOOLBAR);
         toolbar.addClassName("form-actions");
         toolbar.setWidthFull();
@@ -562,8 +535,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         UI ui = getUi();
         if (ui != null) {
             UiUtil.safeAccess(ui, () -> {
-                saveButton.setEnabled(false);
-                updateButton.setEnabled(false);
+                submitButton.setEnabled(false);
                 savingBar.start();
             });
         }
@@ -575,12 +547,12 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
      * loading bar. Also called by the error path.
      */
     public void onSaveEnd() {
+        saving = false;
         UI ui = getUi();
         if (ui != null) {
             UiUtil.safeAccess(ui, () -> {
-                saving = false;
                 savingBar.stop();
-                updateButtonStates();
+                validateForm();
             });
         }
     }

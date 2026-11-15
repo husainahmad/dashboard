@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -35,6 +36,21 @@ public class ChainDto {
 
     @JsonProperty("brand")
     private BrandDto brandDto;
+
+    /** The chain type: {@code REGION}, {@code FRANCHISE} or {@code OTHER}. */
+    private String type;
+
+    /** The email address of the chain manager. */
+    private String managerEmail;
+
+    /** Whether tax/service settings are inherited from the brand or set on the chain. */
+    private String taxServiceMode;
+
+    /** The tax percentage when {@link #taxServiceMode} is {@code OWN}. */
+    private BigDecimal taxPercent;
+
+    /** The service-charge percentage when {@link #taxServiceMode} is {@code OWN}. */
+    private BigDecimal serviceChargePercent;
 
     /** The timestamp the chain was created, set by the server. */
 

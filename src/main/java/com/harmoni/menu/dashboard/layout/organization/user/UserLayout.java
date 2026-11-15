@@ -7,14 +7,14 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationServic
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Main route ({@code /users}) for the user administration domain. Hosts the
  * {@link UserTabs} component inside the {@link MainLayout} shell.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Route(value = "users", layout = MainLayout.class)
 public class UserLayout extends VerticalLayout {
 

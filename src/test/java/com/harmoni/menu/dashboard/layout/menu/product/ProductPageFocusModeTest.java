@@ -130,7 +130,7 @@ class ProductPageFocusModeTest {
      * no session, the same limitation {@code ProductFormWithPreviewTest} works around.</p>
      */
     private static ProductTabs shell() {
-        ProductTabs page = new ProductTabs(null, null, null);
+        ProductTabs page = new ProductTabs(null, null);
         page.addClassName(Css.PAGE);
         renderTabSheet(page);
         return page;

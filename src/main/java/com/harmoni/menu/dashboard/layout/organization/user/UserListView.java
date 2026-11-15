@@ -63,8 +63,8 @@ public class UserListView extends AbstractListView {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
-        refreshOnBroadcast(Set.of(BroadcastMessage.STORE_INSERT_SUCCESS,
-                BroadcastMessage.STORE_UPDATED_SUCCESS), this::fetchUsers);
+        refreshOnBroadcast(Set.of(BroadcastMessage.USER_INSERT_SUCCESS,
+                BroadcastMessage.USER_UPDATED_SUCCESS), this::fetchUsers);
 
         renderLayout();
         fetchUsers();
@@ -120,8 +120,7 @@ public class UserListView extends AbstractListView {
                 && ObjectUtils.isNotEmpty(userDto.getUsername())
                 ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, userDto.getUsername()) : title;
         new TabManager(tabSheet).addOrSelect(tabLabel, tab ->
-                new UserForm(this.asyncRestClientOrganizationService,
-                        this.restClientOrganizationService, this.accessService, tab, action, userDto));
+                new UserForm(this.restClientOrganizationService, this.accessService, tab, action, userDto));
     }
 
     /**

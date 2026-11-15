@@ -10,6 +10,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import org.apache.commons.lang3.ObjectUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -53,6 +56,30 @@ public final class ObjectUtil {
 
     public static <T> T convertValueToObject(Object object, Class<T> tClass) {
         return objectMapper.convertValue(object, tClass);
+    }
+
+    /**
+     * Converts the {@code data} array of a paginated backend payload into a list
+     * of the given type. Rows that fail to convert or come back {@code null} are
+     * skipped, so callers always receive a mutable, null-free list.
+     *
+     * @param result the payload whose {@code data} key holds the rows
+     * @param type   the target row type
+     * @param <T>    the row type
+     * @return the converted rows, never {@code null}
+     */
+    public static <T> List<T> extractDataList(Map<String, Object> result, Class<T> type) {
+        List<T> items = new ArrayList<>();
+        if (result == null || !(result.get("data") instanceof List<?> rows)) {
+            return items;
+        }
+        for (Object row : rows) {
+            T item = objectMapper.convertValue(row, type);
+            if (item != null) {
+                items.add(item);
+            }
+        }
+        return items;
     }
 
     public static boolean isNotEmpty(Object object) {

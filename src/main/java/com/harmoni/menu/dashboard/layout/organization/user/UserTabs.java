@@ -1,14 +1,11 @@
 package com.harmoni.menu.dashboard.layout.organization.user;
 
-import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.Messages;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.Route;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,36 +17,29 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 @Route("users-tabs")
-public class UserTabs extends VerticalLayout {
+public class UserTabs extends AbstractListViewTabs {
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
 
-    /**
-     * Renders the tab sheet with the "All Users" tab and the
-     * {@link UserListView}. Adds the toolbar above the tab sheet.
-     */
-    private void renderTabSheet() {
-        TabSheet tabSheet = new TabSheet();
-        Tab browseTab = new Tab();
-        browseTab.setLabel(Messages.get("tab.userList"));
-        UserListView userListView = new UserListView(asyncRestClientOrganizationService,
-                restClientOrganizationService, accessService);
-        tabSheet.add(browseTab, userListView);
-        tabSheet.setSizeFull();
-
-        add(PageHeader.of(Messages.Keys.PAGE_USER_TITLE, Messages.Keys.PAGE_USER_DESCRIPTION));
-        add(userListView.getToolbarComponent());
-        add(tabSheet);
-        setFlexGrow(1, tabSheet);
-        setPadding(false);
-        setSizeFull();
+    @Override
+    protected String tabLabelKey() {
+        return "tab.userList";
     }
 
     @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        renderTabSheet();
+    protected String pageTitleKey() {
+        return Messages.Keys.PAGE_USER_TITLE;
+    }
+
+    @Override
+    protected String pageDescriptionKey() {
+        return Messages.Keys.PAGE_USER_DESCRIPTION;
+    }
+
+    @Override
+    protected AbstractListView createListView() {
+        return new UserListView(asyncRestClientOrganizationService, restClientOrganizationService, accessService);
     }
 }

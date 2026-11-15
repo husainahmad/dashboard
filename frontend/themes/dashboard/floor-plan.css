@@ -1,0 +1,338 @@
+/* ============================================================
+   FLOOR PLAN ("Meja & Denah")
+   ============================================================ */
+
+.floor-plan-topbar {
+    gap: var(--lumo-space-m, 1rem);
+    flex-wrap: wrap;
+}
+
+.floor-plan-tabs {
+    gap: var(--lumo-space-s, 0.5rem);
+    flex-wrap: wrap;
+}
+
+.floor-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: 36px;
+    min-height: 36px;
+    padding: 0 1rem;
+    border: 1px solid var(--app-border);
+    border-radius: 999px;
+    background: var(--app-surface);
+    color: var(--app-text);
+    font-weight: 600;
+    line-height: 1;
+    box-shadow: none;
+}
+
+.floor-tab::part(label) {
+    line-height: 1;
+}
+
+.floor-tab.selected {
+    background: var(--app-text);
+    color: var(--app-surface);
+    border-color: var(--app-text);
+}
+
+.floor-plan-canvas-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.floor-plan-canvas {
+    position: relative;
+    height: 560px;
+    width: 100%;
+    border: 1px solid var(--app-border);
+    border-radius: var(--lumo-border-radius-l, 12px);
+    background-color: var(--app-surface);
+    background-image: radial-gradient(var(--lumo-contrast-20pct) 1px, transparent 1px);
+    background-size: 18px 18px;
+    overflow: hidden;
+}
+
+.floor-plan-table {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-width: 54px;
+    min-height: 44px;
+    background: var(--app-surface);
+    border: 2px solid var(--app-border-strong);
+    border-radius: 12px;
+    color: var(--app-text);
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.floor-plan-table.shape-ROUND {
+    border-radius: 50%;
+}
+
+.floor-plan-table.shape-RECTANGLE {
+    border-radius: 10px;
+}
+
+.floor-plan-table.inactive {
+    opacity: 0.55;
+    background: var(--lumo-contrast-5pct);
+    border-style: dashed;
+}
+
+.floor-plan-table.selected {
+    border-color: var(--lumo-primary-color);
+    box-shadow: 0 0 0 3px var(--lumo-primary-color-10pct);
+}
+
+.floor-plan-table.dragging {
+    cursor: grabbing;
+    box-shadow: 0 10px 22px -10px rgba(0, 0, 0, 0.35);
+    z-index: 5;
+}
+
+.fp-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.15;
+    pointer-events: none;
+}
+
+.fp-name {
+    font-weight: 700;
+    font-size: var(--lumo-font-size-s, 0.875rem);
+}
+
+.fp-cap {
+    font-size: var(--lumo-font-size-xs, 0.75rem);
+    color: var(--app-text-muted);
+}
+
+.resize-handle {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    background: var(--app-surface);
+    border: 2px solid var(--lumo-primary-color);
+    cursor: nwse-resize;
+    display: none;
+    touch-action: none;
+}
+
+.floor-plan-table.selected .resize-handle {
+    display: block;
+}
+
+.floor-plan-kitchen {
+    position: absolute;
+    right: 2%;
+    top: 8%;
+    width: 11%;
+    height: 40%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--lumo-contrast-10pct);
+    border-radius: 10px;
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-s, 0.875rem);
+    pointer-events: none;
+}
+
+.floor-plan-entrance {
+    position: absolute;
+    left: 2%;
+    bottom: 2%;
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-s, 0.875rem);
+    pointer-events: none;
+}
+
+.floor-plan-properties {
+    width: 320px;
+    flex: 0 0 320px;
+    border: 1px solid var(--app-border);
+    border-radius: var(--lumo-border-radius-l, 12px);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow);
+}
+
+.floor-plan-properties-title {
+    font-weight: 700;
+    font-size: var(--lumo-font-size-l, 1.125rem);
+}
+
+.floor-plan-field-label {
+    font-weight: 600;
+    color: var(--app-text-secondary);
+    font-size: var(--lumo-font-size-s, 0.875rem);
+}
+
+.floor-plan-value {
+    color: var(--app-text);
+}
+
+.shape-button {
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    background: var(--app-surface);
+    color: var(--app-text);
+    min-height: 36px;
+}
+
+.shape-button.selected {
+    background: var(--app-text);
+    color: var(--app-surface);
+    border-color: var(--app-text);
+}
+
+.floor-plan-footer {
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-s, 0.875rem);
+}
+
+.floor-plan-stats {
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.floor-plan-floor-tools {
+    gap: 2px;
+}
+
+/* ---------- Table nodes ---------- */
+
+.floor-plan-table::after {
+    content: "";
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--lumo-success-color, #16a34a);
+    box-shadow: 0 0 0 2px var(--app-surface);
+}
+
+.floor-plan-table.inactive::after {
+    background: var(--lumo-contrast-30pct);
+}
+
+.floor-plan-table:hover {
+    border-color: var(--lumo-primary-color-50pct);
+}
+
+.floor-plan-table.selected:hover {
+    border-color: var(--lumo-primary-color);
+}
+
+/* ---------- Properties panel ---------- */
+
+.floor-plan-properties {
+    overflow: auto;
+}
+
+.floor-plan-properties-title {
+    display: block;
+}
+
+.floor-plan-properties-subtitle {
+    display: block;
+    margin-top: calc(-1 * var(--lumo-space-xs));
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-xs);
+    line-height: 1.4;
+}
+
+.floor-plan-properties-body {
+    gap: var(--lumo-space-s);
+}
+
+.floor-plan-properties-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: var(--lumo-space-xs);
+    padding: var(--lumo-space-l) var(--lumo-space-s);
+    border: 1px dashed var(--app-border);
+    border-radius: var(--lumo-border-radius-m);
+    background: var(--lumo-contrast-5pct);
+    min-height: 240px;
+}
+
+.floor-plan-empty-icon {
+    --vaadin-icon-size: 28px;
+    color: var(--app-text-muted);
+    opacity: 0.7;
+}
+
+.floor-plan-empty-title {
+    color: var(--app-text);
+    font-weight: 700;
+    font-size: var(--lumo-font-size-m);
+}
+
+.floor-plan-empty-hint {
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-s);
+    line-height: 1.5;
+    max-width: 28ch;
+}
+
+/* ---------- Empty plan overlay ---------- */
+
+.floor-plan-canvas-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--lumo-space-xs);
+    text-align: center;
+    padding: var(--lumo-space-l);
+    pointer-events: none;
+}
+
+.floor-plan-canvas-empty .floor-plan-empty-icon {
+    --vaadin-icon-size: 40px;
+    margin-bottom: var(--lumo-space-xs);
+}
+
+@media (max-width: 900px) {
+    .floor-plan-canvas {
+        height: 420px;
+    }
+
+    .floor-plan-properties {
+        width: 100%;
+        flex: 1 1 auto;
+    }
+
+    .floor-plan-topbar {
+        align-items: stretch;
+    }
+
+    .floor-plan-stats {
+        display: none;
+    }
+}

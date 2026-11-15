@@ -4,17 +4,16 @@ import com.harmoni.menu.dashboard.layout.DashboardView;
 import com.harmoni.menu.dashboard.layout.customer.CustomerLayout;
 import com.harmoni.menu.dashboard.layout.menu.customization.CustomizationLayout;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductLayout;
-import com.harmoni.menu.dashboard.layout.organization.store.StoreLayout;
+import com.harmoni.menu.dashboard.layout.organization.OrganizationLayout;
 import com.harmoni.menu.dashboard.layout.organization.tier.menu.TierMenuLayout;
+import com.harmoni.menu.dashboard.layout.organization.tier.price.TierPriceLayout;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TierServiceLayout;
+import com.harmoni.menu.dashboard.layout.organization.store.kitchen.KitchenLayout;
 import com.harmoni.menu.dashboard.layout.organization.user.UserLayout;
 import com.harmoni.menu.dashboard.layout.setting.service.ServiceLayout;
 import com.harmoni.menu.dashboard.layout.setting.table.TableLayout;
-import com.harmoni.menu.dashboard.layout.organization.brand.BrandLayout;
 import com.harmoni.menu.dashboard.layout.menu.category.CategoryLayout;
 import com.harmoni.menu.dashboard.layout.menu.promotion.PromotionLayout;
-import com.harmoni.menu.dashboard.layout.organization.chain.ChainLayout;
-import com.harmoni.menu.dashboard.layout.organization.tier.price.TierPriceLayout;
 import com.harmoni.menu.dashboard.layout.report.DailyReportView;
 import com.harmoni.menu.dashboard.layout.report.OrderVolumeReportView;
 import com.harmoni.menu.dashboard.layout.report.SalesReportView;
@@ -50,21 +49,6 @@ public class SideNavMenu extends Div {
         sideNavOverview.setCollapsible(true);
         sideNavOverview.addItem(new SideNavItem(Messages.get("nav.dashboard"), DashboardView.class, VaadinIcon.HOME.create()));
 
-        SideNav sideNavOrganization = new SideNav();
-        sideNavOrganization.setLabel(Messages.get("nav.organization"));
-        sideNavOrganization.setCollapsible(true);
-        sideNavOrganization.addItem(new SideNavItem(Messages.get("nav.brand"), BrandLayout.class, VaadinIcon.SHOP.create()));
-        sideNavOrganization.addItem(new SideNavItem(Messages.get("nav.chain"), ChainLayout.class, VaadinIcon.BUILDING_O.create()));
-
-        SideNavItem sideNavTier = new SideNavItem(Messages.get("nav.tier"));
-        sideNavTier.setPrefixComponent(VaadinIcon.GRID_BEVEL.create());
-        sideNavTier.addItem(new SideNavItem(Messages.get("nav.tierPrice"), TierPriceLayout.class, VaadinIcon.DOLLAR.create()));
-        sideNavTier.addItem(new SideNavItem(Messages.get("nav.tierService"), TierServiceLayout.class, VaadinIcon.COG_O.create()));
-        sideNavTier.addItem(new SideNavItem(Messages.get("nav.tierMenu"), TierMenuLayout.class, VaadinIcon.LIST.create()));
-
-        sideNavOrganization.addItem(sideNavTier);
-        sideNavOrganization.addItem(new SideNavItem(Messages.get("nav.store"), StoreLayout.class, VaadinIcon.STORAGE.create()));
-
         SideNav sideNavCatalog = new SideNav();
         sideNavCatalog.setLabel(Messages.get("nav.catalog"));
         sideNavCatalog.setCollapsible(true);
@@ -72,6 +56,7 @@ public class SideNavMenu extends Div {
         sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.customization"), CustomizationLayout.class, VaadinIcon.SLIDERS.create()));
         sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.product"), ProductLayout.class, VaadinIcon.COFFEE.create()));
         sideNavCatalog.addItem(new SideNavItem(Messages.get("nav.promotion"), PromotionLayout.class, VaadinIcon.MONEY_EXCHANGE.create()));
+        sideNavCatalog.addItem(placeholderItem(Messages.get("nav.inventoryStock"), VaadinIcon.CUBES.create()));
 
         SideNav sideNavCustomers = new SideNav();
         sideNavCustomers.setLabel(Messages.get("nav.customers"));
@@ -79,10 +64,12 @@ public class SideNavMenu extends Div {
         sideNavCustomers.addItem(new SideNavItem(Messages.get("nav.customerList"),
                 CustomerLayout.class, VaadinIcon.USERS.create()));
 
-        SideNav sideNavInventory = new SideNav();
-        sideNavInventory.setLabel(Messages.get("nav.inventory"));
-        sideNavInventory.setCollapsible(true);
-        sideNavInventory.addItem(placeholderItem(Messages.get("nav.inventoryStock"), VaadinIcon.CUBES.create()));
+        SideNav sideNavOperations = new SideNav();
+        sideNavOperations.setLabel(Messages.get("nav.operations"));
+        sideNavOperations.setCollapsible(true);
+        sideNavOperations.addItem(new SideNavItem(Messages.get("nav.kitchen"), KitchenLayout.class, VaadinIcon.PRINT.create()));
+        sideNavOperations.addItem(new SideNavItem(Messages.get("nav.table"), TableLayout.class, VaadinIcon.TABLE.create()));
+        sideNavOperations.addItem(new SideNavItem(Messages.get("nav.service"), ServiceLayout.class, VaadinIcon.COG.create()));
 
         SideNav sideNavReport = new SideNav();
         sideNavReport.setLabel(Messages.get("nav.report"));
@@ -101,33 +88,40 @@ public class SideNavMenu extends Div {
         SideNav sideNavAdministration = new SideNav();
         sideNavAdministration.setLabel(Messages.get("nav.administration"));
         sideNavAdministration.setCollapsible(true);
-        sideNavAdministration.addItem(new SideNavItem(Messages.get("nav.user"), UserLayout.class, VaadinIcon.USER.create()));
+        sideNavAdministration.addItem(new SideNavItem(Messages.get("nav.organization"),
+                OrganizationLayout.class, VaadinIcon.SITEMAP.create()));
 
-        SideNav sideNavSettings = new SideNav();
-        sideNavSettings.setLabel(Messages.get("nav.settings"));
-        sideNavSettings.setCollapsible(true);
-        sideNavSettings.addItem(new SideNavItem(Messages.get("nav.service"), ServiceLayout.class, VaadinIcon.COG.create()));
-        sideNavSettings.addItem(new SideNavItem(Messages.get("nav.table"), TableLayout.class, VaadinIcon.TABLE.create()));
+        SideNavItem sideNavTier = new SideNavItem(Messages.get("nav.tier"));
+        sideNavTier.setPrefixComponent(VaadinIcon.GRID_BEVEL.create());
+        sideNavTier.addItem(new SideNavItem(Messages.get("nav.tierPrice"), TierPriceLayout.class, VaadinIcon.DOLLAR.create()));
+        sideNavTier.addItem(new SideNavItem(Messages.get("nav.tierService"), TierServiceLayout.class, VaadinIcon.COG_O.create()));
+        sideNavTier.addItem(new SideNavItem(Messages.get("nav.tierMenu"), TierMenuLayout.class, VaadinIcon.LIST.create()));
+
+        sideNavAdministration.addItem(sideNavTier);
+        sideNavAdministration.addItem(new SideNavItem(Messages.get("nav.user"), UserLayout.class, VaadinIcon.USER.create()));
 
         VerticalLayout navWrapper = new VerticalLayout(
                 sideNavOverview,
-                sideNavOrganization,
+                sideNavAdministration,
                 sideNavCatalog,
                 sideNavCustomers,
-                sideNavInventory,
-                sideNavReport,
-                sideNavAdministration,
-                sideNavSettings);
+                sideNavOperations,
+                sideNavReport);
         navWrapper.setSpacing(true);
         navWrapper.setSizeUndefined();
         sideNavOverview.setWidthFull();
-        sideNavOrganization.setWidthFull();
+        sideNavAdministration.setWidthFull();
         sideNavCatalog.setWidthFull();
         sideNavCustomers.setWidthFull();
-        sideNavInventory.setWidthFull();
+        sideNavOperations.setWidthFull();
         sideNavReport.setWidthFull();
-        sideNavAdministration.setWidthFull();
-        sideNavSettings.setWidthFull();
+
+        sideNavOverview.setExpanded(true);
+        sideNavAdministration.setExpanded(false);
+        sideNavCatalog.setExpanded(true);
+        sideNavCustomers.setExpanded(false);
+        sideNavOperations.setExpanded(false);
+        sideNavReport.setExpanded(false);
 
         Scroller scroller = new Scroller(new Div(navWrapper));
         scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);

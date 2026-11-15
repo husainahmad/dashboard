@@ -1,16 +1,13 @@
 package com.harmoni.menu.dashboard.layout.menu.category;
 
-import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.Messages;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.TabSheet;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -21,39 +18,33 @@ import lombok.extern.slf4j.Slf4j;
  * places the list's toolbar above the sheet.
  * </p>
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
-public class CategoryTabs extends VerticalLayout {
+public class CategoryTabs extends AbstractListViewTabs {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
     private final AccessService accessService;
 
-    /**
-     * Renders the tab sheet with a single "All Categories" tab and the list's
-     * toolbar above it.
-     */
-    private void renderTabSheet() {
-        TabSheet tabSheet = new TabSheet();
-        Tab browseTab = new Tab();
-        browseTab.setLabel(Messages.get("tab.categoryList"));
-        CategoryListView categoryListView = new CategoryListView(asyncRestClientMenuService,
-                asyncRestClientOrganizationService, restClientMenuService, accessService);
-        tabSheet.add(browseTab, categoryListView);
-        tabSheet.setSizeFull();
-
-        add(PageHeader.of(Messages.Keys.PAGE_CATEGORY_TITLE, Messages.Keys.PAGE_CATEGORY_DESCRIPTION));
-        add(categoryListView.getToolbarComponent());
-        add(tabSheet);
-        setFlexGrow(1, tabSheet);
-        setPadding(false);
-        setSizeFull();
+    @Override
+    protected String tabLabelKey() {
+        return "tab.categoryList";
     }
 
     @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        renderTabSheet();
+    protected String pageTitleKey() {
+        return Messages.Keys.PAGE_CATEGORY_TITLE;
+    }
+
+    @Override
+    protected String pageDescriptionKey() {
+        return Messages.Keys.PAGE_CATEGORY_DESCRIPTION;
+    }
+
+    @Override
+    protected AbstractListView createListView() {
+        return new CategoryListView(asyncRestClientMenuService, asyncRestClientOrganizationService,
+                restClientMenuService, accessService);
     }
 }

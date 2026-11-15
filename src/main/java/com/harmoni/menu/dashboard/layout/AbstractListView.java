@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
+import com.harmoni.menu.dashboard.dto.StoreDto;
+import com.harmoni.menu.dashboard.layout.component.PaginationBar;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
@@ -13,12 +15,9 @@ import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -61,9 +60,7 @@ public abstract class AbstractListView extends VerticalLayout {
     /** Pagination state shared by the paged lists. */
     protected int currentPage = 1;
     protected int totalPages;
-    protected final Text pageInfoText = new Text("");
-    protected Button previousPageButton;
-    protected Button nextPageButton;
+    protected PaginationBar paginationBar;
 
     private Registration broadcasterRegistration;
 
@@ -257,29 +254,28 @@ public abstract class AbstractListView extends VerticalLayout {
      * @return the session brand id
      */
     protected Integer sessionBrandId(AccessService access) {
-        return access.getUserDetail().getStoreDto().getChainDto().getBrandId();
+        if (access == null || access.getUserDetail() == null) {
+            return null;
+        }
+        StoreDto store = access.getUserDetail().getStoreDto();
+        if (store == null || store.getChainDto() == null) {
+            return null;
+        }
+        return store.getChainDto().getBrandId();
     }
 
     /**
-     * Builds the standard pagination footer wired to the given actions. The
-     * buttons are also kept in {@link #previousPageButton} /
-     * {@link #nextPageButton} so {@link #updatePagination()} can enable them
-     * according to the current page.
+     * Builds the standard pagination footer wired to the given actions, keeping
+     * a reference so {@link #updatePagination()} can refresh it.
      *
      * @param onPrevious action going to the previous page
      * @param onNext     action going to the next page
-     * @return the footer layout
+     * @return the shared pagination bar
      */
     protected HorizontalLayout paginationFooter(Runnable onPrevious, Runnable onNext) {
-        previousPageButton = new Button(Messages.get("action.previous"), event -> onPrevious.run());
-        nextPageButton = new Button(Messages.get("action.next"), event -> onNext.run());
-        HorizontalLayout footer = new HorizontalLayout(previousPageButton, pageInfoText, nextPageButton);
-        footer.addClassName("pagination");
-        footer.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
-        footer.setWidthFull();
-        footer.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        paginationBar = new PaginationBar(onPrevious, onNext);
         updatePagination();
-        return footer;
+        return paginationBar;
     }
 
     /**
@@ -287,10 +283,18 @@ public abstract class AbstractListView extends VerticalLayout {
      * {@link #currentPage} and {@link #totalPages}.
      */
     protected void updatePagination() {
-        pageInfoText.setText(Messages.get("pagination.page", currentPage, totalPages));
-        if (previousPageButton != null) {
-            previousPageButton.setEnabled(currentPage > 1);
-            nextPageButton.setEnabled(currentPage < totalPages);
+        if (paginationBar != null) {
+            paginationBar.update(currentPage, totalPages);
         }
+    }
+
+    /**
+     * Returns the toolbar shown above the list. Views that have no toolbar
+     * inherit an empty row; the list views override this with their own.
+     *
+     * @return the toolbar component
+     */
+    public Component getToolbarComponent() {
+        return new HorizontalLayout();
     }
 }

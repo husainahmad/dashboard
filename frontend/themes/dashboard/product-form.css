@@ -324,6 +324,12 @@ vaadin-tabsheet::part(content) {
 
 /* ---------- SKU tier price alignment ---------- */
 
+vaadin-number-field.tier-price-field {
+
+    width:
+        104px;
+}
+
 vaadin-number-field.tier-price-field
 input[slot="input"] {
 

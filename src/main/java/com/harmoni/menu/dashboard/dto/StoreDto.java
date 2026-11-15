@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -51,6 +52,38 @@ public class StoreDto {
     /** The street address of the store. */
 
     private String address;
+
+    /** The order types enabled at the store, comma separated. */
+
+    private String orderTypes;
+
+    /** Whether tax/service settings are inherited from the chain or set on the store. */
+
+    private String taxServiceMode;
+
+    /** The tax percentage when {@link #taxServiceMode} is {@code OWN}. */
+
+    private BigDecimal taxPercent;
+
+    /** The service-charge percentage when {@link #taxServiceMode} is {@code OWN}. */
+
+    private BigDecimal serviceChargePercent;
+
+    /** Whether the receipt logo is inherited from the brand or set on the store. */
+
+    private String receiptLogoMode;
+
+    /** The store-specific receipt logo URL when {@link #receiptLogoMode} is {@code OWN}. */
+
+    private String logoUrl;
+
+    /** Whether menu/price settings are inherited from the brand or set on the store. */
+
+    private String menuPriceMode;
+
+    /** Whether order types are inherited from the chain or set on the store. */
+
+    private String orderTypeMode;
 
     /** The timestamp the store was created, set by the server. */
 

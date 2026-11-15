@@ -10,7 +10,6 @@ import com.harmoni.menu.dashboard.event.chain.ChainUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
-import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -62,7 +61,6 @@ public class ChainForm extends FormLayout {
     Button updateButton = UiUtil.updateButton();
 
     private final RestClientOrganizationService restClientOrganizationService;
-    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final TabManager tabManager;
     private final Tab currentTab;
     private final FormAction formAction;

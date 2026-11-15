@@ -39,6 +39,9 @@ public class TableUpdateEventListener implements ComponentEventListener<ClickEve
         if (this.tableForm.getStoreBox().getValue() != null) {
             tableDto.setStoreId(this.tableForm.getStoreBox().getValue().getId());
         }
+        if (this.tableForm.getFloorBox().getValue() != null) {
+            tableDto.setFloorId(this.tableForm.getFloorBox().getValue().getId());
+        }
         restClientSettingService.updateTable(tableDto)
                 .subscribe(this::accept);
     }

@@ -11,12 +11,12 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Main route for the promotion administration page.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Route(value = "promotion", layout = MainLayout.class)
 @PageTitle("Promotion | POSHarmoni")
 public class PromotionLayout extends VerticalLayout {

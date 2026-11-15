@@ -25,6 +25,24 @@ public class BrandDto {
     @NotEmpty
     private String name;
 
+    /** The hosted URL of the brand logo. */
+    private String logoUrl;
+
+    /** The IANA time zone of the brand, e.g. {@code Asia/Jakarta}. */
+    private String timeZone;
+
+    /** The ISO currency code of the brand, e.g. {@code IDR}. */
+    private String currency;
+
+    /** The email address of the brand administrator. */
+    private String adminEmail;
+
+    /** How the initial menu is created: {@code EMPTY} or {@code COPY}. */
+    private String initialMenuMode;
+
+    /** The brand whose menu is copied when {@link #initialMenuMode} is {@code COPY}. */
+    private Integer sourceBrandId;
+
     /** The timestamp the brand was created, set by the server. */
 
     private Date createdAt;

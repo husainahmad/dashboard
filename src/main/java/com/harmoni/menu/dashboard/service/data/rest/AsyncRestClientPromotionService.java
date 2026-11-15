@@ -5,7 +5,6 @@ import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import org.springframework.stereotype.Service;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,19 +57,6 @@ public class AsyncRestClientPromotionService extends AsyncRestClientBase impleme
     String buildPromotionUri(int page, int size, String status, String promotionType, String search) {
         return String.format(menuProperties.getUrl().getPromotions().getQuery(),
                 page, size, orEmpty(status), orEmpty(promotionType), orEmpty(search));
-    }
-
-    /**
-     * Fetches the promotions that may be redeemed right now.
-     *
-     * @param callback      receives the promotions, ordered by priority
-     * @param errorCallback receives the failure
-     */
-    public void getRedeemablePromotionsAsync(AsyncRestCallback<List<Map<String, Object>>> callback,
-                                              AsyncRestCallback<Throwable> errorCallback) {
-        makeAsyncRequest(menuProperties.getUrl().getPromotions().getRedeemable(),
-                new TypeReference<>() {
-                }, callback, errorCallback);
     }
 
     private static String orEmpty(String value) {

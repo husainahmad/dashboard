@@ -26,11 +26,15 @@ public class BroadcastMessage {
     public static final String STORE_INSERT_SUCCESS = "STORE_INSERT_SUCCESS";
     public static final String STORE_UPDATED_SUCCESS = "STORE_UPDATED_SUCCESS";
 
+    public static final String USER_INSERT_SUCCESS = "USER_INSERT_SUCCESS";
+    public static final String USER_UPDATED_SUCCESS = "USER_UPDATED_SUCCESS";
+
     public static final String CATEGORY_INSERT_SUCCESS = "CATEGORY_INSERT_SUCCESS";
     public static final String CATEGORY_UPDATED_SUCCESS = "CATEGORY_UPDATED_SUCCESS";
 
     public static final String PRODUCT_INSERT_SUCCESS = "PRODUCT_INSERT_SUCCESS";
     public static final String PRODUCT_UPDATE_SUCCESS = "PRODUCT_UPDATE_SUCCESS";
+    public static final String PRODUCT_DELETE_SUCCESS = "PRODUCT_DELETE_SUCCESS";
 
     public static final String CHAIN_INSERT_FAILED = "CHAIN_INSERT_FAILED";
     public static final String BRAND_INSERT_FAILED = "BRAND_INSERT_FAILED";
@@ -51,6 +55,10 @@ public class BroadcastMessage {
     public static final String TABLE_INSERT_SUCCESS = "TABLE_INSERT_SUCCESS";
     public static final String TABLE_UPDATED_SUCCESS = "TABLE_UPDATED_SUCCESS";
     public static final String TABLE_DELETED_SUCCESS = "TABLE_DELETED_SUCCESS";
+
+    public static final String FLOOR_INSERT_SUCCESS = "FLOOR_INSERT_SUCCESS";
+    public static final String FLOOR_UPDATED_SUCCESS = "FLOOR_UPDATED_SUCCESS";
+    public static final String FLOOR_DELETED_SUCCESS = "FLOOR_DELETED_SUCCESS";
 
     public static final String ADD_PRODUCT = "ADD_PRODUCT";
     public static final String UPDATE_PRODUCT = "UPDATE_PRODUCT";

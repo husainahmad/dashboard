@@ -8,14 +8,14 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * Main route ({@code /tier-price}) for the tier-price administration domain.
  * Hosts the {@link TierPriceTabs} component inside the {@link MainLayout} shell.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Route(value = "tier-price", layout = MainLayout.class)
 @PageTitle("Tier Price | POSHarmoni")
 public class TierPriceLayout extends VerticalLayout {

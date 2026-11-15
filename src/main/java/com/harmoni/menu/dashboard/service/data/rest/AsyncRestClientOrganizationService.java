@@ -61,6 +61,18 @@ public class AsyncRestClientOrganizationService extends AsyncRestClientBase {
     }
 
     /**
+     * Asynchronously retrieves the nested brand → chain → store tree.
+     *
+     * @param callback      success callback with the tree
+     * @param errorCallback optional error callback for handling failures
+     */
+    public void getOrganizationTreeAsync(AsyncRestCallback<OrganizationTreeDto> callback,
+                                         AsyncRestCallback<Throwable> errorCallback) {
+        makeAsyncRequest(menuProperties.getUrl().getOrganizationTree(), new TypeReference<>() {
+        }, callback, errorCallback);
+    }
+
+    /**
      * Asynchronously retrieves all brands.
      *
      * @param callback      success callback with the list of brands

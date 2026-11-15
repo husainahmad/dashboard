@@ -6,7 +6,6 @@ import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CustomizationDto;
-import com.harmoni.menu.dashboard.dto.CustomizationOptionDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.event.customization.CustomizationDeleteEventListener;
@@ -33,9 +32,7 @@ import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
-import com.vaadin.flow.data.value.ValueChangeMode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -67,7 +64,6 @@ import com.harmoni.menu.dashboard.layout.util.Css;
 public class CustomizationListView extends AbstractListView implements BroadcastMessageService {
 
     private static final int PAGE_SIZE = 15;
-    private static final long SEARCH_TIMEOUT_MS = 400;
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
@@ -87,6 +83,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
     private transient int pendingTierGeneration;
     private TreeDataProvider<CustomizationTreeItem> treeDataProvider;
     private final Map<Integer, String> tierIdToName = new HashMap<>();
+    private boolean layoutBuilt;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
@@ -98,12 +95,18 @@ public class CustomizationListView extends AbstractListView implements Broadcast
     }
 
     private void buildLayout() {
+        if (layoutBuilt) {
+            return;
+        }
+        layoutBuilt = true;
+
         setSizeFull();
         setPadding(false);
 
         configureGrid();
         configureSearch();
         configureBrandSelector();
+        configureTierSelector();
 
         VerticalLayout browsePanel = new VerticalLayout(getContent(), getPaginationFooter());
         browsePanel.setSizeFull();
@@ -177,14 +180,21 @@ public class CustomizationListView extends AbstractListView implements Broadcast
             if (!change.isFromClient()) {
                 return;
             }
-            if (change.getValue() == null) {
-                if (!brandDtos.isEmpty()) {
-                    brandDtoComboBox.setValue(brandDtos.getFirst());
+            BrandDto brand = change.getValue();
+            if (brand == null) {
+                if (brandDtos.isEmpty()) {
+                    return;
                 }
+                // Restoring the selection programmatically fires a non-client
+                // change that this listener ignores, so reload here explicitly.
+                brandDtoComboBox.setValue(brandDtos.getFirst());
+                brand = brandDtoComboBox.getValue();
+            }
+            if (brand == null) {
                 return;
             }
             currentPage = 1;
-            fetchTiersForBrand(change.getValue().getId());
+            fetchTiersForBrand(brand.getId());
             fetchCustomizations();
         });
     }
@@ -196,7 +206,6 @@ public class CustomizationListView extends AbstractListView implements Broadcast
      * @return the toolbar row for this list view
      */
     public HorizontalLayout getToolbarComponent() {
-        configureTierSelector();
         Button addButton = UiUtil.addButton(Messages.get("action.newCustomization"), this::onAddCustomizationListener);
         HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, tierDtoComboBox, filterText, addButton);
         toolbar.addClassName(Css.TOOLBAR);
@@ -358,13 +367,11 @@ public class CustomizationListView extends AbstractListView implements Broadcast
 
     private Integer currentBrandId() {
         BrandDto brand = brandDtoComboBox.getValue();
-        if (brand != null) {
+        if (brand != null && brand.getId() != null) {
             return brand.getId();
         }
-        if (brandDtos.isEmpty()) {
-            return null;
-        }
-        return defaultBrand().getId();
+        BrandDto fallback = defaultBrand();
+        return fallback == null ? null : fallback.getId();
     }
 
     private void fetchBrands() {
@@ -431,15 +438,29 @@ public class CustomizationListView extends AbstractListView implements Broadcast
     }
 
     private BrandDto defaultBrand() {
-        try {
-            Integer brandId = accessService.getUserDetail().getStoreDto().getChainDto().getBrandId();
-            return brandDtos.stream()
-                    .filter(brand -> brandId != null && brandId.equals(brand.getId()))
-                    .findFirst()
-                    .orElse(brandDtos.getFirst());
-        } catch (NullPointerException e) {
-            return brandDtos.getFirst();
+        if (brandDtos.isEmpty()) {
+            return null;
         }
+        Integer brandId = sessionBrandId();
+        if (brandId != null) {
+            BrandDto match = brandDtos.stream()
+                    .filter(brand -> brandId.equals(brand.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (match != null) {
+                return match;
+            }
+        }
+        return brandDtos.getFirst();
+    }
+
+    private Integer sessionBrandId() {
+        if (accessService == null || accessService.getUserDetail() == null
+                || accessService.getUserDetail().getStoreDto() == null
+                || accessService.getUserDetail().getStoreDto().getChainDto() == null) {
+            return null;
+        }
+        return accessService.getUserDetail().getStoreDto().getChainDto().getBrandId();
     }
 
     private void fetchCustomizations() {
@@ -478,8 +499,8 @@ public class CustomizationListView extends AbstractListView implements Broadcast
 
     private void applyCustomizations(Map<String, Object> result) {
         Object data = result.get("data");
-        treeData.clear();
         if (data instanceof List<?> list && !list.isEmpty()) {
+            treeData.clear();
             list.forEach(object -> {
                 CustomizationDto customization = ObjectUtil.convertValueToObject(object, CustomizationDto.class);
                 CustomizationTreeItem root = toRootItem(customization);
@@ -489,9 +510,19 @@ public class CustomizationListView extends AbstractListView implements Broadcast
                 }
             });
             totalPages = result.get("page") == null ? 0 : Integer.parseInt(result.get("page").toString());
-        } else {
-            totalPages = 0;
+            treeDataProvider.refreshAll();
+            updatePagination();
+            return;
         }
+
+        if (currentPage > 1) {
+            // Deleting the last row of a page leaves it empty; step back and refetch.
+            currentPage--;
+            fetchCustomizations();
+            return;
+        }
+        treeData.clear();
+        totalPages = 0;
         treeDataProvider.refreshAll();
         updatePagination();
     }

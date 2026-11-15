@@ -8,13 +8,13 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationServic
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Called when the user clicks Save on the user form: validates the binder,
  * posts the new user and broadcasts the result.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
@@ -36,6 +36,6 @@ public class UserSaveEventListener implements ComponentEventListener<ClickEvent<
     }
 
     private void accept(RestAPIResponse restAPIResponse) {
-        broadcastMessage(BroadcastMessage.STORE_INSERT_SUCCESS, restAPIResponse);
+        broadcastMessage(BroadcastMessage.USER_INSERT_SUCCESS, restAPIResponse);
     }
 }

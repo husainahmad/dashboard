@@ -18,4 +18,8 @@ public class SettingUrlProperties implements Serializable {
     private String service;
     private String table;
     private String tableByStore;
+    private String tableByFloor;
+    private String floor;
+    private String floorByStore;
+    private String floorReorder;
 }

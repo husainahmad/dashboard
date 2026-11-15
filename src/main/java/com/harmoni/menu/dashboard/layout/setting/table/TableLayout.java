@@ -9,7 +9,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
@@ -17,7 +17,7 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * sheet and hands it the async and blocking REST clients, plus the
  * {@link AccessService} used to scope tables to the current store.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Route(value = "table", layout = MainLayout.class)
 @PageTitle("Table | POSHarmoni")
 public class TableLayout extends VerticalLayout {

@@ -16,9 +16,6 @@ import com.vaadin.flow.component.button.Button;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * Called when the user saves a promotion opened in {@code STATUS} mode: applies
  * only the chosen lifecycle state through the dedicated status endpoint, leaving
@@ -72,14 +69,4 @@ public class PromotionStatusEventListener
         }
     }
 
-    /**
-     * The states an operator may move a promotion to from the grid, offered in the
-     * order they normally happen in.
-     *
-     * @return the transitions available for a live promotion
-     */
-    public static List<PromotionStatus> commonTransitions() {
-        return Arrays.asList(PromotionStatus.ACTIVE, PromotionStatus.PAUSED,
-                PromotionStatus.SCHEDULED, PromotionStatus.EXPIRED, PromotionStatus.CANCELLED);
-    }
 }

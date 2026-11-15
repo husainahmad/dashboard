@@ -13,7 +13,6 @@ import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
-import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
@@ -24,23 +23,18 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
-import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.treegrid.ExpandEvent;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
-import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.UIScope;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -49,10 +43,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
+import com.vaadin.flow.component.ItemLabelGenerator;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
@@ -77,10 +72,6 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
-    private final AccessService accessService;
-
-    @Getter
-    private final Tab defaultTab;
 
     ComboBox<TierDto> tierDtoComboBox = new ComboBox<>();
     ComboBox<BrandDto> brandDtoComboBox = new ComboBox<>();
@@ -89,7 +80,9 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
 
     transient List<BrandDto> brandDtos = new ArrayList<>();
     transient List<TierDto> tierDtos = new ArrayList<>();
-    private final GridSkeleton gridSkeleton = new GridSkeleton(15);
+    private static final int PAGE_SIZE = 15;
+
+    private final GridSkeleton gridSkeleton = new GridSkeleton(PAGE_SIZE);
 
     transient ProductTreeItem expandTreeItem;
 
@@ -183,13 +176,13 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
             if (currentPage > 1) {
                 currentPage--;
                 persistFilters();
-                fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
+                fetchProducts();
             }
         }, () -> {
             if (currentPage < totalPages) {
                 currentPage++;
                 persistFilters();
-                fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
+                fetchProducts();
             }
         });
     }
@@ -205,19 +198,44 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         productDtoGrid.addExpandListener(this::onComponentEventExpandListener);
     }
 
+    /** Signature of the tier columns currently rendered, so an unchanged tier set is a no-op. */
+    private String tierColumnSignature = "";
+
     /**
      * Rebuilds all columns in display order: name hierarchy, category, one
-     * price column per price tier, and the action column. Called once on
-     * attach and again whenever the tier list finishes loading so the matrix
-     * columns stay in sync with the brand's price tiers.
+     * price column per price tier, and the action column.
+     *
+     * <p>Called once on attach and again when the tier list finishes loading.
+     * The rebuild is skipped when the tier set is unchanged, so re-selecting the
+     * same brand no longer resets column widths and sort state.</p>
      */
     private void refreshGridColumns() {
+        String signature = tierSignature();
+        if (signature.equals(tierColumnSignature) && !productDtoGrid.getColumns().isEmpty()) {
+            return;
+        }
+        tierColumnSignature = signature;
+
         productDtoGrid.removeAllColumns();
-        productDtoGrid.addHierarchyColumn(ProductTreeItem::getName).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
-        productDtoGrid.addColumn(ProductTreeItem::getCategoryName).setHeader(Messages.get("grid.header.category"));
+        addBaseColumns();
         addTierPriceColumns();
         productDtoGrid.addComponentColumn(this::applyButton).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
         productDtoGrid.getColumns().forEach(productDtoColumn -> productDtoColumn.setAutoWidth(true));
+    }
+
+    private void addBaseColumns() {
+        productDtoGrid.addHierarchyColumn(ProductTreeItem::getName).setHeader(Messages.get(Messages.Keys.GRID_HEADER_NAME));
+        productDtoGrid.addColumn(ProductTreeItem::getCategoryName).setHeader(Messages.get("grid.header.category"));
+    }
+
+    private String tierSignature() {
+        if (tierDtos == null) {
+            return "";
+        }
+        return tierDtos.stream()
+                .filter(tier -> tier.getId() != null && tier.getId() > 0)
+                .map(tier -> tier.getId() + ":" + tier.getName())
+                .collect(java.util.stream.Collectors.joining(","));
     }
 
     /**
@@ -235,15 +253,12 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
                 .filter(tier -> tier.getId() != null && tier.getId() > 0)
                 .forEach(tier -> productDtoGrid.addComponentColumn(item -> tierPriceCell(item, tier.getId()))
                         .setKey("tier-price-".concat(String.valueOf(tier.getId())))
-                        .setHeader(tier.getName().toUpperCase()));
+                        .setHeader(tier.getName() == null ? "" : tier.getName().toUpperCase(Locale.ROOT)));
     }
 
     /**
      * Builds the price cell for a tree item under the given tier: an editable
-     * number field for SKU rows and a placeholder for product rows. The value
-     * is committed to the backend on Enter or blur, the field is disabled
-     * while the request is in flight, and it reverts with an error toast when
-     * the save fails.
+     * number field for SKU rows and a placeholder for product rows.
      *
      * @param productTreeItem the item (product or SKU node)
      * @param tierId          the price tier id
@@ -253,17 +268,7 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         if (!isSkuRow(productTreeItem)) {
             return new Text("\u2013");
         }
-        NumberField priceField = newPriceField();
-        UiUtil.guardShortcutField(typingFields, priceField);
-        AtomicReference<Double> committed = new AtomicReference<>(tierPrice(productTreeItem, tierId));
-        Double initial = committed.get();
-        if (initial != null) {
-            priceField.setValue(initial);
-        }
-        final boolean[] saving = {false};
-        wirePriceDirtyTracking(priceField, saving);
-        wirePriceCommit(productTreeItem, tierId, priceField, committed, saving);
-        return priceField;
+        return new TierPriceCell(productTreeItem, tierId, restClientMenuService, ui, typingFields);
     }
 
     /**
@@ -274,194 +279,6 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
      */
     private boolean isSkuRow(ProductTreeItem productTreeItem) {
         return productTreeItem.getProductItemType().equals(ProductItemType.SKU);
-    }
-
-    /**
-     * Creates a new NumberField for editing prices, with appropriate configuration
-     * such as placeholder, minimum value, width, and tooltip.
-     *
-     * @return a configured NumberField for price input
-     */
-    private NumberField newPriceField() {
-        NumberField priceField = new NumberField();
-        priceField.setValueChangeMode(ValueChangeMode.ON_CHANGE);
-        priceField.setPlaceholder("0");
-        priceField.setMin(0);
-        priceField.setWidth("7em");
-        priceField.setTitle(Messages.get("label.priceHint"));
-        return priceField;
-    }
-
-    /**
-     * Wires the dirty tracking for the price field, adding a visual hint when
-     * the value has been changed but not yet committed. The hint is removed
-     * when the field loses focus or when a save is in progress.
-     *
-     * @param priceField the NumberField to wire
-     * @param saving     a boolean array indicating if a save operation is in progress
-     */
-    private void wirePriceDirtyTracking(NumberField priceField, boolean[] saving) {
-        Span commitHint = new Span("\u21b5");
-        commitHint.addClassName("price-commit-hint");
-        priceField.addFocusListener(event -> {
-            if (!saving[0]) {
-                priceField.addClassName(Css.PRICE_DIRTY);
-                priceField.setSuffixComponent(commitHint);
-            }
-        });
-        priceField.addBlurListener(event -> {
-            if (!saving[0]) {
-                priceField.removeClassName(Css.PRICE_DIRTY);
-                priceField.setSuffixComponent(null);
-            }
-        });
-    }
-
-    /**
-     * Wires the commit logic for the price field, saving the new value to the backend
-     * when it changes. If the new value is invalid, it reverts to the previous value.
-     * The field is disabled while the save request is in flight, and visual hints are
-     * provided for saving and error states.
-     *
-     * @param productTreeItem the item (product or SKU node)
-     * @param tierId          the price tier id
-     * @param priceField      the NumberField to wire
-     * @param committed       an AtomicReference holding the last committed value
-     * @param saving          a boolean array indicating if a save operation is in progress
-     */
-    private void wirePriceCommit(ProductTreeItem productTreeItem, Integer tierId, NumberField priceField,
-                                 AtomicReference<Double> committed, boolean[] saving) {
-        priceField.addValueChangeListener(event -> {
-            if (saving[0]) {
-                return;
-            }
-            Double previous = committed.get();
-            Double next = event.getValue();
-            if (Objects.equals(previous, next)) {
-                return;
-            }
-            if (isInvalidPrice(next)) {
-                revertPrice(priceField, previous, saving);
-                return;
-            }
-            savePrice(productTreeItem, tierId, priceField, committed, previous, next, saving);
-        });
-    }
-
-    /**
-     * Checks if the given price value is invalid (null or less than or equal to zero).
-     *
-     * @param next the price value to check
-     * @return {@code true} if the price is invalid, {@code false} otherwise
-     */
-    private boolean isInvalidPrice(Double next) {
-        return next == null || next <= 0;
-    }
-
-    /**
-     * Reverts the price field to the previous value and resets the saving state.
-     *
-     * @param priceField the NumberField to revert
-     * @param previous   the previous committed value
-     * @param saving     a boolean array indicating if a save operation is in progress
-     */
-    private void revertPrice(NumberField priceField, Double previous, boolean[] saving) {
-        saving[0] = true;
-        priceField.setValue(previous);
-        saving[0] = false;
-    }
-
-    /**
-     * Saves the new price value to the backend for the given product tree item and tier.
-     * Disables the price field while the save request is in flight, and provides visual
-     * hints for saving and error states. On success, updates the committed value and
-     * the product tree item's tier prices.
-     *
-     * @param productTreeItem the item (product or SKU node)
-     * @param tierId          the price tier id
-     * @param priceField      the NumberField to save
-     * @param committed       an AtomicReference holding the last committed value
-     * @param previous        the previous committed value
-     * @param next            the new value to save
-     * @param saving          a boolean array indicating if a save operation is in progress
-     */
-    private void savePrice(ProductTreeItem productTreeItem, Integer tierId, NumberField priceField,
-                           AtomicReference<Double> committed, Double previous, Double next, boolean[] saving) {
-        saving[0] = true;
-        priceField.setEnabled(false);
-        priceField.setSuffixComponent(null);
-        priceField.addClassName(Css.PRICE_SAVING);
-        priceField.removeClassName(Css.PRICE_DIRTY);
-        committed.set(next);
-        SkuTierPriceDto skuTierPriceDto = new SkuTierPriceDto();
-        skuTierPriceDto.setSkuId(productTreeItem.getSkuId());
-        skuTierPriceDto.setTierId(tierId);
-        skuTierPriceDto.setPrice(next);
-        restClientMenuService.updateSkuTierPrice(skuTierPriceDto)
-                .doOnError(error -> UiUtil.safeAccess(ui, () ->
-                        onPriceSaveError(priceField, committed, previous, saving)))
-                .subscribe(response -> UiUtil.safeAccess(ui, () ->
-                        onPriceSaved(productTreeItem, tierId, priceField, next, saving)));
-    }
-
-    /**
-     * Handles the error case when saving the price fails. Reverts the price field
-     * to the previous value, re-enables the field, and shows an error notification.
-     *
-     * @param priceField the NumberField that failed to save
-     * @param committed  an AtomicReference holding the last committed value
-     * @param previous   the previous committed value
-     * @param saving     a boolean array indicating if a save operation is in progress
-     */
-    private void onPriceSaveError(NumberField priceField, AtomicReference<Double> committed,
-                                  Double previous, boolean[] saving) {
-        saving[0] = false;
-        priceField.setEnabled(true);
-        priceField.removeClassName(Css.PRICE_SAVING);
-        priceField.addClassName(Css.PRICE_ERROR);
-        UiUtil.flash(priceField, Css.PRICE_ERROR, 1500);
-        committed.set(previous);
-        priceField.setValue(previous);
-        UiUtil.error(Messages.get("notification.price.saveFailed"));
-    }
-
-    /**
-     * Handles the successful save of the price. Updates the product tree item's
-     * tier prices, re-enables the price field, and shows a success notification.
-     *
-     * @param productTreeItem the item (product or SKU node)
-     * @param tierId          the price tier id
-     * @param priceField      the NumberField that was saved
-     * @param next            the new value that was saved
-     * @param saving          a boolean array indicating if a save operation is in progress
-     */
-    private void onPriceSaved(ProductTreeItem productTreeItem, Integer tierId, NumberField priceField,
-                              Double next, boolean[] saving) {
-        saving[0] = false;
-        priceField.setEnabled(true);
-        priceField.removeClassName(Css.PRICE_SAVING);
-        priceField.addClassName(Css.PRICE_SAVED);
-        UiUtil.flash(priceField, Css.PRICE_SAVED, 1200);
-        if (productTreeItem.getTierPrices() == null) {
-            productTreeItem.setTierPrices(new HashMap<>());
-        }
-        productTreeItem.getTierPrices().put(tierId, next);
-        UiUtil.success(Messages.get("notification.price.updated"));
-    }
-
-    /**
-     * Resolves the price of a tree item under the given tier, or {@code null}
-     * when the tier is not offered for that SKU.
-     *
-     * @param productTreeItem the item (product or SKU node)
-     * @param tierId          the price tier id
-     * @return the price, or {@code null} when the item has no entry for the tier
-     */
-    private Double tierPrice(ProductTreeItem productTreeItem, Integer tierId) {
-        if (productTreeItem.getTierPrices() == null) {
-            return null;
-        }
-        return productTreeItem.getTierPrices().get(tierId);
     }
 
     /**
@@ -512,41 +329,16 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         configureSearchFilter();
         filterText.addValueChangeListener(changeEvent -> {
             if (changeEvent.isFromClient()) {
-                currentPage = 1;
-                persistFilters();
-                fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), changeEvent.getValue());
+                onFilterChanged(this::fetchProducts);
             }
         });
 
-        brandDtoComboBox.setItems(brandDtos);
-        brandDtoComboBox.setLabel(Messages.get(Messages.Keys.LABEL_BRAND));
-        brandDtoComboBox.setItemLabelGenerator(BrandDto::getName);
-        brandDtoComboBox.addValueChangeListener(valueChangeEvent -> {
-            if (valueChangeEvent.isFromClient()) {
-                persistFilters();
-                fetchCategories(accessService.getUserDetail().getStoreDto().getChainDto().getBrandId());
-            }
-        });
-
-        categoryDtoComboBox.setItems(categoryDtos);
-        categoryDtoComboBox.setLabel(Messages.get(Messages.Keys.LABEL_CATEGORY));
-        categoryDtoComboBox.setItemLabelGenerator(CategoryDto::getName);
-        categoryDtoComboBox.addValueChangeListener(valueChangeEvent -> {
-           if (valueChangeEvent.isFromClient()) {
-               persistFilters();
-               fetchTier(brandDtoComboBox.getValue().getId());
-           }
-        });
-
-        tierDtoComboBox.setItems(tierDtos);
-        tierDtoComboBox.setLabel(Messages.get(Messages.Keys.LABEL_TIER));
-        tierDtoComboBox.setItemLabelGenerator(TierDto::getName);
-        tierDtoComboBox.addValueChangeListener(valueChangeEvent -> {
-            if (valueChangeEvent.isFromClient()) {
-                persistFilters();
-                fetchProducts(getCategoryId(), brandDtoComboBox.getValue().getId(), filterText.getValue());
-            }
-        });
+        configureFilter(brandDtoComboBox, brandDtos, Messages.Keys.LABEL_BRAND, BrandDto::getName,
+                () -> fetchCategories(selectedBrandId()));
+        configureFilter(categoryDtoComboBox, categoryDtos, Messages.Keys.LABEL_CATEGORY, CategoryDto::getName,
+                () -> fetchTier(selectedBrandId()));
+        configureFilter(tierDtoComboBox, tierDtos, Messages.Keys.LABEL_TIER, TierDto::getName,
+                this::fetchProducts);
         Button addProduct = UiUtil.addButton(Messages.get(Messages.Keys.ACTION_NEW_PRODUCT), this::onAddProductListener);
         Button shortcutsHelpButton = new Button(new Icon(VaadinIcon.QUESTION_CIRCLE_O));
         shortcutsHelpButton.setTooltipText(Messages.get(Messages.Keys.UI_KEYS_TITLE));
@@ -560,6 +352,40 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         toolbar.addClassName(Css.TOOLBAR);
         toolbar.setAlignItems(Alignment.BASELINE);
         return toolbar;
+    }
+
+    /**
+     * Resets paging, remembers the filters and runs the reload the changed
+     * filter needs.
+     *
+     * @param reload the fetch triggered by the changed filter
+     */
+    private void onFilterChanged(Runnable reload) {
+        currentPage = 1;
+        persistFilters();
+        reload.run();
+    }
+
+    /**
+     * Wires one toolbar combo box: items, label, display text and the client-side
+     * change handling shared by every filter.
+     *
+     * @param comboBox        the filter combo box
+     * @param items           the options backing it
+     * @param labelKey        message key of the combo box label
+     * @param labelGenerator  renders an option's display text
+     * @param reload          the fetch triggered when the selection changes
+     */
+    private <T> void configureFilter(ComboBox<T> comboBox, List<T> items, String labelKey,
+                                     ItemLabelGenerator<T> labelGenerator, Runnable reload) {
+        comboBox.setItems(items);
+        comboBox.setLabel(Messages.get(labelKey));
+        comboBox.setItemLabelGenerator(labelGenerator);
+        comboBox.addValueChangeListener(event -> {
+            if (event.isFromClient()) {
+                onFilterChanged(reload);
+            }
+        });
     }
 
     /**
@@ -593,28 +419,17 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
      * Fetches the list of brands from the REST client service and updates the brand filter.
      */
     private void fetchBrands() {
-        restClientMenuService.getAllBrand().subscribe(this::acceptBrand);
+        restClientMenuService.getAllBrand()
+                .subscribe(this::acceptBrand, error -> UiUtil.safeAccess(ui, () ->
+                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_BRAND_LOAD_FAILED),
+                                this::fetchBrands)));
     }
 
     /**
      * Opens the "New Product" form in a new tab or selects the existing tab if already open.
      */
     private void addProduct() {
-        productDtoGrid.asSingleSelect().clear();
-        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
-            return;
-        }
-        TabManager tabManager = new TabManager(tabSheet);
-        tabManager.addOrSelect(Messages.get(Messages.Keys.ACTION_NEW_PRODUCT), tab ->
-                new ProductFormWithPreview(this.restClientMenuService,
-                        this.asyncRestClientMenuService,
-                        ProductEditorContext.builder()
-                                .brandDto(this.brandDtoComboBox.getValue())
-                                .categoryDtos(this.categoryDtos)
-                                .tierDtos(this.tierDtos)
-                                .productTab(tab)
-                                .tabManager(tabManager)
-                                .build()));
+        openEditor(Messages.get(Messages.Keys.ACTION_NEW_PRODUCT), null);
     }
 
     /**
@@ -623,22 +438,36 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
      * @param productTreeItem the product tree item to be edited
      */
     private void editProduct(ProductTreeItem productTreeItem) {
+        openEditor(Messages.get(Messages.Keys.ACTION_EDIT_NAME, productTreeItem.getName()), productTreeItem);
+    }
+
+    /**
+     * Opens (or selects) the editor tab for a product.
+     *
+     * @param title           the tab title
+     * @param productTreeItem the product being edited, or {@code null} for a new one
+     */
+    private void openEditor(String title, ProductTreeItem productTreeItem) {
         productDtoGrid.asSingleSelect().clear();
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
         TabManager tabManager = new TabManager(tabSheet);
-        tabManager.addOrSelect(Messages.get(Messages.Keys.ACTION_EDIT_NAME, productTreeItem.getName()), tab ->
-                new ProductFormWithPreview(this.restClientMenuService,
-                        this.asyncRestClientMenuService,
-                        ProductEditorContext.builder()
-                                .brandDto(this.brandDtoComboBox.getValue())
-                                .categoryDtos(this.categoryDtos)
-                                .tierDtos(this.tierDtos)
-                                .productTab(tab)
-                                .productTreeItem(productTreeItem)
-                                .tabManager(tabManager)
-                                .build()));
+        tabManager.addOrSelect(title, tab -> new ProductFormWithPreview(
+                this.restClientMenuService,
+                this.asyncRestClientMenuService,
+                editorContext(productTreeItem, tab, tabManager)));
+    }
+
+    private ProductEditorContext editorContext(ProductTreeItem productTreeItem, Tab tab, TabManager tabManager) {
+        return ProductEditorContext.builder()
+                .brandDto(this.brandDtoComboBox.getValue())
+                .categoryDtos(this.categoryDtos)
+                .tierDtos(this.tierDtos)
+                .productTab(tab)
+                .productTreeItem(productTreeItem)
+                .tabManager(tabManager)
+                .build();
     }
 
     /**
@@ -648,7 +477,9 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
      */
     private void fetchCategories(Integer brandId) {
         restClientMenuService.getAllCategoryByBrand(brandId)
-            .subscribe(this::acceptCategories);
+            .subscribe(this::acceptCategories, error -> UiUtil.safeAccess(ui, () ->
+                    UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_CATEGORY_LOAD_FAILED),
+                            () -> fetchCategories(brandId))));
     }
 
     /**
@@ -662,6 +493,9 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
                 if (!ObjectUtils.isEmpty(restAPIResponse.getData())) {
                     tierDtos = convertJsonToObject(restAPIResponse.getData(), new TypeReference<>() {
                     });
+                    if (ObjectUtils.isEmpty(tierDtos)) {
+                        return;
+                    }
 
                     UiUtil.safeAccess(ui, ()-> {
                         TierDto defaultTier = tierDtos.getFirst();
@@ -677,7 +511,20 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
                         fetchProducts(getCategoryId(), brandId, filterText.getValue());
                     });
                 }
-            });
+            }, error -> UiUtil.safeAccess(ui, () ->
+                    UiUtil.errorWithRetry(Messages.get("notification.tierPrice.loadFailed"),
+                            () -> fetchTier(brandId))));
+    }
+
+    /**
+     * Fetches products for the filters currently shown in the toolbar.
+     */
+    private void fetchProducts() {
+        fetchProducts(getCategoryId(), selectedBrandId(), filterText.getValue());
+    }
+
+    private Integer selectedBrandId() {
+        return brandDtoComboBox.getValue() == null ? null : brandDtoComboBox.getValue().getId();
     }
 
     /**
@@ -689,7 +536,6 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
      * @param searchProduct the search text for filtering products by name
      */
     private void fetchProducts(Integer categoryId, Integer brandId, String searchProduct) {
-        int pageSize = 15;
         gridSkeleton.show();
         asyncRestClientMenuService.getAllProductCategoryBrandAsync(result -> UiUtil.safeAccess(ui, () -> {
             gridSkeleton.hide();
@@ -709,6 +555,12 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
                         productDtoGrid.expand(expandTreeItem);
                     }
                     updatePagination();
+                } else if (currentPage > 1) {
+                    // Deleting the last row of a page leaves it empty; step back one
+                    // page and refetch instead of showing an empty grid.
+                    currentPage--;
+                    persistFilters();
+                    fetchProducts(categoryId, brandId, searchProduct);
                 } else {
                     productDtoGrid.setTreeData(new TreeData<>());
                     expandTreeItem = null;
@@ -718,7 +570,7 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         }), error -> UiUtil.safeAccess(ui, () -> {
             gridSkeleton.hide();
             UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_PRODUCT_LOAD_FAILED), () -> fetchProducts(categoryId, brandId, searchProduct));
-        }), categoryId, brandId, currentPage, pageSize, searchProduct);
+        }), categoryId, brandId, currentPage, PAGE_SIZE, searchProduct);
     }
 
     /**
@@ -763,7 +615,6 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
                     .productId(productDto.getId())
                     .skuId(skuDto.getId())
                     .categoryName("")
-                    .price(0.0)
                     .tierPrices(tierPrices)
                     .build());
         });
@@ -858,11 +709,13 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         try {
             BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
             if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())) {
-                if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_INSERT_SUCCESS)) {
-                    UiUtil.safeAccess(ui, this::fetchBrands);
-                } else if (broadcastMessage.getType().equals(BroadcastMessage.PRODUCT_UPDATE_SUCCESS)) {
-                    UiUtil.safeAccess(ui, () -> fetchProducts(getCategoryId(),
-                            brandDtoComboBox.getValue().getId(), filterText.getValue()));
+                switch (broadcastMessage.getType()) {
+                    case BroadcastMessage.PRODUCT_INSERT_SUCCESS, BroadcastMessage.PRODUCT_UPDATE_SUCCESS,
+                         BroadcastMessage.PRODUCT_DELETE_SUCCESS ->
+                            UiUtil.safeAccess(ui, this::fetchProducts);
+                    default -> {
+                        // ignore unrelated broadcast types
+                    }
                 }
             }
         } catch (JsonProcessingException e) {
@@ -881,16 +734,27 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
     private void onComponentEventExpandListener(ExpandEvent<ProductTreeItem, TreeGrid<ProductTreeItem>> event) {
         event.getItems().forEach(productTreeItem -> {
             expandTreeItem = productTreeItem;
-            List<Integer> skuIds = new ArrayList<>();
             List<ProductTreeItem> skuItems = new ArrayList<>();
-            event.getSource().getTreeData().getChildren(productTreeItem).forEach(productTreeItemChild -> {
-                skuIds.add(productTreeItemChild.getSkuId());
-                skuItems.add(productTreeItemChild);
-            });
+            event.getSource().getTreeData().getChildren(productTreeItem).forEach(skuItems::add);
+
+            List<Integer> skuIds = skuItems.stream()
+                    .map(ProductTreeItem::getSkuId)
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            // The product payload already carries each SKU's tier prices, so only
+            // fetch the tiers that are actually missing. This used to fire one
+            // request per tier on every expand even when nothing was needed.
             tierDtos.stream()
                     .filter(tier -> tier.getId() != null && tier.getId() > 0)
+                    .filter(tier -> hasMissingPrice(skuItems, tier.getId()))
                     .forEach(tier -> fetchPriceByTier(skuIds, skuItems, tier));
         });
+    }
+
+    private boolean hasMissingPrice(List<ProductTreeItem> skuItems, Integer tierId) {
+        return skuItems.stream()
+                .anyMatch(item -> item.getTierPrices() == null || item.getTierPrices().get(tierId) == null);
     }
 
     /**

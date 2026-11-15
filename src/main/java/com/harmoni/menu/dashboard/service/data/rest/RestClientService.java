@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.service.data.rest;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
 import com.harmoni.menu.dashboard.exception.TokenRefreshRequiredException;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
+import io.netty.channel.ChannelOption;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -11,7 +12,9 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
+import reactor.netty.http.client.HttpClient;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -21,6 +24,8 @@ import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.io.Serializable;
+import java.time.Duration;
+import java.util.function.Function;
 
 /**
  * Base blocking REST client for the POSHarmoni backend, built on Spring
@@ -40,7 +45,21 @@ public class RestClientService implements Serializable {
     private static final String LOG_UN_AUTHORIZED = "LOG_UN_AUTHORIZED Server Response {}";
     private static final String LOG_INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR Server Response {}";
     private static final String BEARER = "Bearer ";
-    private static final WebClient webClient = WebClient.builder().build();
+    /**
+     * Shared client with a bounded connect/response window. A save that cannot
+     * reach the backend should fail and surface an error instead of leaving the
+     * dialog waiting indefinitely.
+     */
+    private static final WebClient webClient = buildWebClient();
+
+    private static WebClient buildWebClient() {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)
+                .responseTimeout(Duration.ofSeconds(30));
+        return WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .build();
+    }
 
     /** Formats a resource base path plus an id, e.g. {@code "/brands/5"}. */
     protected static final String URL_FORMAT = "%s/%d";
@@ -257,10 +276,15 @@ public class RestClientService implements Serializable {
      */
     private <T> Mono<T> toResponse(WebClient.ResponseSpec responseSpec, Class<T> responseClass) {
         return responseSpec
-                .onStatus(HttpStatus.NO_CONTENT::equals, this::handleNoContent)
-                .onStatus(HttpStatus.BAD_REQUEST::equals, this::handleBadRequest)
-                .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals, this::handleInternalServerError)
-                .onStatus(HttpStatus.UNAUTHORIZED::equals, this::handleUnAuthorized)
+                .onStatus(HttpStatus.NO_CONTENT::equals,
+                        response -> handleError(response, LOG_NO_CONTENT, BusinessBadRequestException::new))
+                .onStatus(HttpStatus.BAD_REQUEST::equals,
+                        response -> handleError(response, LOG_BAD_REQUEST, BusinessBadRequestException::new))
+                .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals,
+                        response -> handleError(response, LOG_INTERNAL_SERVER_ERROR, BusinessBadRequestException::new))
+                .onStatus(HttpStatus.UNAUTHORIZED::equals,
+                        response -> handleError(response, LOG_UN_AUTHORIZED,
+                                restAPIResponse -> new TokenRefreshRequiredException(restAPIResponse.toString())))
                 .bodyToMono(responseClass);
     }
 
@@ -287,63 +311,21 @@ public class RestClientService implements Serializable {
     }
 
     /**
-     * Handles a 400 Bad Request response by logging the error and throwing a
-     * {@link BusinessBadRequestException}.
+     * Maps an error response to the exception produced by {@code exceptionFactory},
+     * logging the HTTP status first.
      *
-     * @param clientResponse the client response to process
+     * @param clientResponse   the client response to process
+     * @param logMessage       the log message for this status
+     * @param exceptionFactory builds the exception from the response body
      * @return a {@link Mono} that emits the exception
      */
-    private Mono<? extends Throwable> handleBadRequest(ClientResponse clientResponse) {
+    private Mono<? extends Throwable> handleError(ClientResponse clientResponse, String logMessage,
+                                                  Function<RestAPIResponse, Throwable> exceptionFactory) {
         return clientResponse.bodyToMono(RestAPIResponse.class)
-                .handle(((restAPIResponse, throwableSynchronousSink) -> {
-                    logError(LOG_BAD_REQUEST, restAPIResponse);
-                    throwableSynchronousSink.error(new BusinessBadRequestException(restAPIResponse));
-                }));
-    }
-
-    /**
-     * Handles a 204 No Content response by logging the error and throwing a
-     * {@link BusinessBadRequestException}.
-     *
-     * @param clientResponse the client response to process
-     * @return a {@link Mono} that emits the exception
-     */
-    private Mono<? extends Throwable> handleNoContent(ClientResponse clientResponse) {
-        return clientResponse.bodyToMono(RestAPIResponse.class)
-                .handle(((restAPIResponse, throwableSynchronousSink) -> {
-                    logError(LOG_NO_CONTENT, restAPIResponse);
-                    throwableSynchronousSink.error(new BusinessBadRequestException(restAPIResponse));
-                }));
-    }
-
-    /**
-     * Handles a 401 Unauthorized response by logging the error and throwing a
-     * {@link TokenRefreshRequiredException}.
-     *
-     * @param clientResponse the client response to process
-     * @return a {@link Mono} that emits the exception
-     */
-    private Mono<? extends Throwable> handleUnAuthorized(ClientResponse clientResponse) {
-        return clientResponse.bodyToMono(RestAPIResponse.class)
-                .handle(((restAPIResponse, throwableSynchronousSink) -> {
-                    logError(LOG_UN_AUTHORIZED, restAPIResponse);
-                    throwableSynchronousSink.error(new TokenRefreshRequiredException(restAPIResponse.toString()));
-                }));
-    }
-
-    /**
-     * Handles a 500 Internal Server Error response by logging the error and throwing a
-     * {@link BusinessBadRequestException}.
-     *
-     * @param clientResponse the client response to process
-     * @return a {@link Mono} that emits the exception
-     */
-    private Mono<? extends Throwable> handleInternalServerError(ClientResponse clientResponse) {
-        return clientResponse.bodyToMono(RestAPIResponse.class)
-                .handle(((restAPIResponse, throwableSynchronousSink) -> {
-                    logError(LOG_INTERNAL_SERVER_ERROR, restAPIResponse);
-                    throwableSynchronousSink.error(new BusinessBadRequestException(restAPIResponse));
-                }));
+                .handle((restAPIResponse, throwableSynchronousSink) -> {
+                    logError(logMessage, restAPIResponse);
+                    throwableSynchronousSink.error(exceptionFactory.apply(restAPIResponse));
+                });
     }
 
 }

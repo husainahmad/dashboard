@@ -144,8 +144,8 @@ public class CategoryListView extends AbstractListView {
                     TabManager tabManager = new TabManager(tabSheet);
                     String tabLabel = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(categoryDto.getName())
                             ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, categoryDto.getName()) : Messages.get(Messages.Keys.ACTION_NEW_CATEGORY);
-                    tabManager.addOrSelect(tabLabel, tab -> new CategoryForm(this.asyncRestClientOrganizationService,
-                            this.restClientMenuService, tabManager, tab, formAction, categoryDto, brands));
+                    tabManager.addOrSelect(tabLabel, tab -> new CategoryForm(this.restClientMenuService,
+                            tabManager, tab, formAction, categoryDto, brands));
                 }));
     }
 

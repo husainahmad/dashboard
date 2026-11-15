@@ -2,11 +2,14 @@ package com.harmoni.menu.dashboard.service.data.rest;
 
 import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
+import com.harmoni.menu.dashboard.util.ImageUtil;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -25,6 +28,18 @@ public class RestClientOrganizationService extends RestClientService {
                                          TokenRefreshService tokenRefreshService) {
         super(tokenRefreshService);
         this.menuProperties = menuProperties;
+    }
+
+    /**
+     * Uploads a brand or store logo and returns the hosted URL.
+     *
+     * @param imageDto the image to upload
+     * @return a {@link Mono} with the server response
+     * @throws IOException when the image cannot be written to a file
+     */
+    public Mono<RestAPIResponse> uploadImage(ImageDto imageDto) throws IOException {
+        File file = ImageUtil.convertImageDtoToFile(imageDto);
+        return upload(menuProperties.getUrl().getImageUpload(), file);
     }
 
     /**
@@ -65,7 +80,7 @@ public class RestClientOrganizationService extends RestClientService {
      * @return a {@link Mono} with the server response
      */
     public Mono<RestAPIResponse> updateBrand(BrandDto brandDto) {
-        return put(URL_FORMAT.formatted(menuProperties.getUrl().getChain(), brandDto.getId()),
+        return put(URL_FORMAT.formatted(menuProperties.getUrl().getBrand(), brandDto.getId()),
                 Mono.just(brandDto), BrandDto.class);
     }
 

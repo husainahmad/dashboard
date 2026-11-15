@@ -12,7 +12,6 @@ import com.vaadin.flow.router.Route;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Best selling products for a date range, ranked by revenue.

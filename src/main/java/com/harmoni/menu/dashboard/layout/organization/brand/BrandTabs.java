@@ -1,51 +1,41 @@
 package com.harmoni.menu.dashboard.layout.organization.brand;
 
-import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.Messages;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.TabSheet;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Tab sheet hosting the brand browse view. Adds the "All Brands" tab with the
  * {@link BrandListView} and its toolbar.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
-public class BrandTabs extends VerticalLayout {
+public class BrandTabs extends AbstractListViewTabs {
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
 
-    /**
-     * Renders the tab sheet with the "All Brands" tab and the {@link BrandListView}.
-     * Adds the toolbar above the tab sheet.
-     */
-    private void renderTabSheet() {
-        TabSheet tabSheet = new TabSheet();
-        Tab browseTab = new Tab();
-        browseTab.setLabel(Messages.get("tab.brandList"));
-        BrandListView brandListView = new BrandListView(asyncRestClientOrganizationService,
-                restClientOrganizationService);
-        tabSheet.add(browseTab, brandListView);
-        tabSheet.setSizeFull();
-
-        add(PageHeader.of(Messages.Keys.PAGE_BRAND_TITLE, Messages.Keys.PAGE_BRAND_DESCRIPTION));
-        add(brandListView.getToolbarComponent());
-        add(tabSheet);
-        setFlexGrow(1, tabSheet);
-        setPadding(false);
-        setSizeFull();
+    @Override
+    protected String tabLabelKey() {
+        return "tab.brandList";
     }
 
     @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        renderTabSheet();
+    protected String pageTitleKey() {
+        return Messages.Keys.PAGE_BRAND_TITLE;
+    }
+
+    @Override
+    protected String pageDescriptionKey() {
+        return Messages.Keys.PAGE_BRAND_DESCRIPTION;
+    }
+
+    @Override
+    protected AbstractListView createListView() {
+        return new BrandListView(asyncRestClientOrganizationService, restClientOrganizationService);
     }
 }

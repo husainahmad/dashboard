@@ -1,55 +1,46 @@
 package com.harmoni.menu.dashboard.layout.organization.tier.menu;
 
-import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.Messages;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.TabSheet;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Tab sheet hosting the tier-menu browse view. Adds the "All Tier Menus" tab
  * with the {@link TierMenuListView} and its toolbar.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
-public class TierMenuTabs extends VerticalLayout {
+public class TierMenuTabs extends AbstractListViewTabs {
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final AccessService accessService;
     private final RestClientOrganizationService restClientOrganizationService;
 
-    /**
-     * Renders the tab sheet with the "All Tier Menus" tab and the
-     * {@link TierMenuListView}. Adds the toolbar above the tab sheet.
-     */
-    private void renderTabSheet() {
-        TabSheet tabSheet = new TabSheet();
-        Tab browseTab = new Tab();
-        browseTab.setLabel(Messages.get("tab.tierMenuList"));
-        TierMenuListView tierMenuListView = new TierMenuListView(asyncRestClientOrganizationService,
-                asyncRestClientMenuService, accessService, restClientOrganizationService);
-        tabSheet.add(browseTab, tierMenuListView);
-        tabSheet.setSizeFull();
-
-        add(PageHeader.of(Messages.Keys.PAGE_TIER_MENU_TITLE, Messages.Keys.PAGE_TIER_MENU_DESCRIPTION));
-        add(tierMenuListView.getToolbarComponent());
-        add(tabSheet);
-        setFlexGrow(1, tabSheet);
-        setPadding(false);
-        setSizeFull();
+    @Override
+    protected String tabLabelKey() {
+        return "tab.tierMenuList";
     }
 
     @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        renderTabSheet();
+    protected String pageTitleKey() {
+        return Messages.Keys.PAGE_TIER_MENU_TITLE;
+    }
+
+    @Override
+    protected String pageDescriptionKey() {
+        return Messages.Keys.PAGE_TIER_MENU_DESCRIPTION;
+    }
+
+    @Override
+    protected AbstractListView createListView() {
+        return new TierMenuListView(asyncRestClientOrganizationService, asyncRestClientMenuService,
+                accessService, restClientOrganizationService);
     }
 }

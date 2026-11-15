@@ -9,7 +9,6 @@ import com.harmoni.menu.dashboard.event.category.CategorySaveEventListener;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
-import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -77,7 +76,6 @@ public class CategoryForm extends FormLayout {
     @Getter
     UI ui;
 
-    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
     private final TabManager tabManager;
     private final Tab currentTab;

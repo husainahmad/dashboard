@@ -52,7 +52,7 @@ public class ProductDeleteEventListener implements ComponentEventListener<ClickE
         productDto.setId(productTreeItem.getProductId());
         this.restClientMenuService.deleteProduct(productDto).subscribe(restAPIResponse -> {
             if (restAPIResponse.getHttpStatus() == HttpStatus.OK.value()) {
-                broadcastMessage(BroadcastMessage.PRODUCT_UPDATE_SUCCESS, restAPIResponse);
+                broadcastMessage(BroadcastMessage.PRODUCT_DELETE_SUCCESS, restAPIResponse);
             }
         });
     }

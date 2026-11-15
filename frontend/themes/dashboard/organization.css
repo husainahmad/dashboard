@@ -1,0 +1,331 @@
+/* ============================================================
+   Organization page — unified Brand / Chain / Store
+   ============================================================ */
+
+.organization-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lumo-space-m);
+    padding: 0;
+    background: transparent;
+    min-height: 100%;
+}
+
+.org-top-row {
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: var(--lumo-space-m);
+}
+
+.org-actions {
+    flex-wrap: wrap;
+}
+
+.org-breadcrumb {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    gap: var(--lumo-space-s);
+}
+
+.org-breadcrumb-separator {
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-l);
+    padding: 0 var(--lumo-space-xs);
+}
+
+.org-header {
+    margin-top: var(--lumo-space-s);
+}
+
+.org-body {
+    align-items: stretch;
+    gap: var(--lumo-space-m);
+    min-height: 0;
+}
+
+.org-tree-card,
+.org-detail-card {
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--lumo-border-radius-l);
+    box-shadow: var(--lumo-box-shadow-xs);
+    padding: var(--lumo-space-m);
+    min-height: 0;
+}
+
+.org-tree-card {
+    flex: 1 1 46%;
+    max-width: 720px;
+}
+
+.org-detail-card {
+    flex: 1.2 1 54%;
+    display: flex;
+    flex-direction: column;
+}
+
+.org-card-title {
+    font-size: var(--lumo-font-size-m);
+    font-weight: 700;
+    color: var(--app-text);
+    margin: 0 0 var(--lumo-space-s);
+}
+
+/* ---------- Tree ---------- */
+
+.org-tree {
+    --vaadin-grid-cell-background: transparent;
+    --vaadin-grid-row-border-width: 0;
+    --vaadin-grid-cell-padding: var(--lumo-space-xs) var(--lumo-space-s);
+    border: none;
+    background: transparent;
+}
+
+.org-tree::part(row) {
+    border-radius: var(--lumo-border-radius-m);
+}
+
+.org-tree::part(selected-row) {
+    background: var(--lumo-primary-color-10pct);
+}
+
+.org-tree::part(cell) {
+    padding: var(--lumo-space-xs) var(--lumo-space-s);
+}
+
+.org-tree-name {
+    display: flex;
+    align-items: center;
+    gap: var(--lumo-space-s);
+    min-width: 0;
+}
+
+.org-tree-label {
+    font-weight: 600;
+    color: var(--app-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.org-tree-count {
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-s);
+    white-space: nowrap;
+}
+
+.org-tree-status {
+    font-size: var(--lumo-font-size-xs);
+    color: var(--app-text-muted);
+    white-space: nowrap;
+}
+
+.org-status-active {
+    color: var(--lumo-success-text-color);
+    font-weight: 600;
+}
+
+/* ---------- Badges ---------- */
+
+.org-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    line-height: 1.6;
+    white-space: nowrap;
+}
+
+.org-badge-brand {
+    background: var(--lumo-primary-color-10pct);
+    color: var(--lumo-primary-text-color);
+}
+
+.org-badge-chain {
+    background: var(--lumo-contrast-10pct);
+    color: var(--app-text-secondary);
+}
+
+.org-badge-store {
+    background: var(--lumo-success-color-10pct);
+    color: var(--lumo-success-text-color);
+}
+
+.org-badge-inherit {
+    background: var(--lumo-contrast-10pct);
+    color: var(--app-text-secondary);
+    font-style: italic;
+}
+
+.org-badge-override {
+    background: var(--app-text);
+    color: var(--app-surface);
+}
+
+.org-badge-managed {
+    background: var(--lumo-contrast-10pct);
+    color: var(--app-text-secondary);
+}
+
+.org-badge-count {
+    background: var(--lumo-contrast-5pct);
+    color: var(--app-text-secondary);
+    font-weight: 500;
+}
+
+/* ---------- Detail ---------- */
+
+.org-detail-header {
+    gap: var(--lumo-space-s);
+    flex-wrap: wrap;
+}
+
+.org-detail-name {
+    font-size: var(--lumo-font-size-xl);
+    font-weight: 700;
+    color: var(--app-text);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.org-detail-subtitle {
+    margin: var(--lumo-space-xs) 0 var(--lumo-space-m);
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-s);
+}
+
+.org-section-title {
+    display: block;
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--app-text-muted);
+    margin-bottom: var(--lumo-space-xs);
+}
+
+.org-settings {
+    border-top: 1px solid var(--app-border);
+}
+
+.org-setting-row {
+    padding: var(--lumo-space-s) 0;
+    border-bottom: 1px solid var(--app-border);
+    gap: var(--lumo-space-s);
+    flex-wrap: wrap;
+}
+
+.org-setting-label {
+    font-weight: 600;
+    color: var(--app-text);
+    min-width: 160px;
+}
+
+.org-setting-value {
+    gap: var(--lumo-space-s);
+    flex-wrap: wrap;
+}
+
+.org-setting-source {
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-s);
+}
+
+.org-setting-action {
+    margin-left: auto;
+    border-radius: var(--lumo-border-radius-m);
+    font-weight: 600;
+}
+
+.org-detail-note {
+    margin-top: auto;
+    padding-top: var(--lumo-space-l);
+    color: var(--app-text-muted);
+    font-size: var(--lumo-font-size-s);
+    line-height: 1.5;
+}
+
+/* ---------- Dialogs ---------- */
+
+.org-dialog-info {
+    background: var(--lumo-success-color-10pct);
+    border: 1px solid var(--lumo-success-color-50pct);
+    border-radius: var(--lumo-border-radius-m);
+    padding: var(--lumo-space-s) var(--lumo-space-m);
+    color: var(--app-text-secondary);
+    font-size: var(--lumo-font-size-s);
+    line-height: 1.5;
+}
+
+.org-inline-add {
+    white-space: nowrap;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+    .org-body {
+        flex-direction: column;
+    }
+
+    .org-tree-card,
+    .org-detail-card {
+        max-width: none;
+        width: 100%;
+    }
+
+    .org-setting-label {
+        min-width: 0;
+    }
+
+    .org-setting-action {
+        margin-left: 0;
+    }
+}
+
+/* ---------- Chip / card choice groups in dialogs ---------- */
+
+.org-choice-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--lumo-space-s);
+}
+
+.org-choice-chips vaadin-radio-button,
+.org-choice-chips vaadin-checkbox {
+    border: 1px solid var(--app-border);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 120ms ease, background 120ms ease;
+}
+
+.org-choice-chips vaadin-radio-button[checked],
+.org-choice-chips vaadin-checkbox[checked] {
+    border-color: var(--app-text);
+    background: var(--app-text);
+    color: var(--app-surface);
+}
+
+.org-choice-cards {
+    display: grid;
+    gap: var(--lumo-space-s);
+}
+
+.org-choice-cards vaadin-radio-button {
+    border: 1px solid var(--app-border);
+    border-radius: var(--lumo-border-radius-m);
+    padding: var(--lumo-space-s) var(--lumo-space-m);
+    width: 100%;
+    cursor: pointer;
+    transition: border-color 120ms ease, background 120ms ease;
+}
+
+.org-choice-cards vaadin-radio-button[checked] {
+    border-color: var(--lumo-primary-color);
+    background: var(--lumo-primary-color-10pct);
+}

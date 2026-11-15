@@ -1,0 +1,938 @@
+/* ============================================================
+   TABLE ("Meja & Denah")
+
+   The list tab's two-row toolbar and summary caption, the
+   richer grid cells and the create/edit form.
+   ============================================================ */
+
+
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+
+/*
+ * The shared .toolbar is a single flex row; this page needs two:
+ * scope filters on top, the destructive floor actions and the
+ * primary "New Table" button below. Padding moves to the rows
+ * so the card keeps one continuous surface.
+ */
+.list-view .toolbar.table-toolbar {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: stretch;
+
+    padding:
+        var(--lumo-space-s);
+}
+
+.table-toolbar-row {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: var(--lumo-space-s);
+}
+
+.table-toolbar-row vaadin-combo-box {
+
+    min-width: 180px;
+}
+
+.table-toolbar-actions {
+
+    border-top:
+        1px solid var(--lumo-contrast-10pct);
+
+    padding-top:
+        var(--lumo-space-s);
+}
+
+
+/* ============================================================
+   SUMMARY
+   ============================================================ */
+
+/*
+ * Sits at the start of the action row and is the only flexible
+ * child there, so the floor actions and "New Table" stay pinned
+ * to the right however long the counts are.
+ */
+.table-summary {
+
+    color:
+        var(--app-text-secondary);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    font-weight:
+        600;
+
+    white-space:
+        nowrap;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+}
+
+
+/* ============================================================
+   GRID CELLS
+   ============================================================ */
+
+.table-name-cell {
+
+    line-height:
+        1.25;
+}
+
+.table-name {
+
+    color:
+        var(--app-text);
+
+    font-weight:
+        600;
+}
+
+.table-name-sub {
+
+    color:
+        var(--app-text-muted);
+
+    font-size:
+        var(--lumo-font-size-xs);
+}
+
+.seat-pill {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    padding:
+        2px var(--lumo-space-s);
+
+    border-radius:
+        999px;
+
+    background:
+        var(--lumo-contrast-5pct);
+
+    color:
+        var(--app-text-secondary);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    font-weight:
+        600;
+
+    white-space:
+        nowrap;
+}
+
+.table-status {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    gap: var(--lumo-space-xs);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    font-weight:
+        600;
+}
+
+.table-status::before {
+
+    content:
+        "\25cf";
+
+    font-size:
+        var(--lumo-font-size-xs);
+
+    line-height:
+        1;
+}
+
+/*
+ * The dot carries the colour and the label stays readable, so the
+ * status reads at a glance without a filled badge competing with
+ * the capacity pill in the next column.
+ */
+.table-status--active {
+
+    color:
+        var(--lumo-success-text-color, #16a34a);
+}
+
+.table-status--inactive {
+
+    color:
+        var(--lumo-tertiary-text-color);
+}
+
+/* A table switched off at the cashier recedes without disappearing. */
+vaadin-grid::part(table-row-inactive) {
+
+    opacity:
+        0.6;
+}
+
+
+/* ============================================================
+   TABS
+   ============================================================ */
+
+.table-tab-icon {
+
+    --vaadin-icon-size:
+        16px;
+
+    margin-inline-end:
+        var(--lumo-space-xs);
+
+    color:
+        var(--app-text-muted);
+}
+
+vaadin-tab[selected] .table-tab-icon {
+
+    color:
+        var(--lumo-primary-text-color);
+}
+
+
+/* ============================================================
+   FORM
+   ============================================================ */
+
+.table-form {
+
+    width:
+        100%;
+
+    max-width: 880px;
+
+    margin-inline:
+        auto;
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow);
+
+    padding:
+        var(--lumo-space-l);
+
+    align-content:
+        start;
+}
+
+.form-header {
+
+    margin-bottom:
+        var(--lumo-space-s);
+}
+
+.form-header-title {
+
+    margin:
+        0;
+
+    color:
+        var(--app-text);
+
+    font-size:
+        var(--lumo-font-size-xl);
+
+    font-weight:
+        700;
+}
+
+.form-header-caption {
+
+    color:
+        var(--app-text-muted);
+
+    font-size:
+        var(--lumo-font-size-s);
+}
+
+.form-section-card {
+
+    padding-top:
+        var(--lumo-space-m);
+
+    border-top:
+        1px solid var(--lumo-contrast-10pct);
+}
+
+.form-section-title {
+
+    margin:
+        0 0 var(--lumo-space-2xs);
+
+    color:
+        var(--app-text);
+
+    font-size:
+        var(--lumo-font-size-m);
+
+    font-weight:
+        700;
+}
+
+.form-section-caption {
+
+    display:
+        block;
+
+    margin-bottom:
+        var(--lumo-space-s);
+
+    color:
+        var(--app-text-muted);
+
+    font-size:
+        var(--lumo-font-size-s);
+}
+
+.form-section-fields {
+
+    gap:
+        var(--lumo-space-s) var(--lumo-space-m);
+}
+
+.table-form-actions {
+
+    margin-top:
+        var(--lumo-space-s);
+
+    padding-top:
+        var(--lumo-space-m);
+
+    border-top:
+        1px solid var(--app-border);
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+/* ============================================================
+   TOOLBAR STACK & OVERVIEW CARDS
+   ============================================================ */
+
+.table-toolbar-stack {
+
+    gap:
+        var(--lumo-space-s) var(--lumo-space-m);
+}
+
+.table-stats {
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap:
+        var(--lumo-space-s) var(--lumo-space-m);
+}
+
+.stat-card {
+
+    gap:
+        var(--lumo-space-s);
+
+    padding:
+        var(--lumo-space-s) var(--lumo-space-m);
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    box-shadow:
+        var(--app-shadow);
+
+    min-width:
+        0;
+}
+
+.stat-icon {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        36px;
+
+    height:
+        36px;
+
+    padding:
+        8px;
+
+    box-sizing:
+        border-box;
+
+    border-radius:
+        10px;
+
+    background:
+        var(--lumo-primary-color-10pct);
+
+    color:
+        var(--lumo-primary-text-color);
+
+    flex-shrink:
+        0;
+}
+
+.stat-body {
+
+    gap:
+        2px;
+
+    min-width:
+        0;
+}
+
+.stat-value {
+
+    color:
+        var(--app-text);
+
+    font-size:
+        var(--lumo-font-size-xl);
+
+    font-weight:
+        700;
+
+    line-height:
+        1.1;
+
+    font-variant-numeric:
+        tabular-nums;
+}
+
+.stat-label {
+
+    color:
+        var(--app-text-muted);
+
+    font-size:
+        var(--lumo-font-size-xs);
+
+    font-weight:
+        600;
+
+    letter-spacing:
+        0.03em;
+
+    text-transform:
+        uppercase;
+
+    white-space:
+        nowrap;
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+}
+
+.stat-card--seats .stat-icon {
+
+    background:
+        rgba(59, 130, 246, 0.14);
+
+    color:
+        #3b82f6;
+}
+
+.stat-card--floors .stat-icon {
+
+    background:
+        rgba(245, 158, 11, 0.16);
+
+    color:
+        #f59e0b;
+}
+
+.stat-card--active .stat-icon {
+
+    background:
+        rgba(16, 185, 129, 0.16);
+
+    color:
+        var(--lumo-success-text-color, #10b981);
+}
+
+/* ============================================================
+   RICHER GRID CELLS
+   ============================================================ */
+
+.table-name-cell {
+
+    gap:
+        var(--lumo-space-s);
+
+    min-width:
+        0;
+}
+
+.table-avatar {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        34px;
+
+    height:
+        34px;
+
+    border-radius:
+        10px;
+
+    background:
+        var(--app-gradient);
+
+    color:
+        var(--app-brand-contrast);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        0.02em;
+
+    flex-shrink:
+        0;
+}
+
+.table-avatar--inactive {
+
+    background:
+        var(--lumo-contrast-10pct);
+
+    color:
+        var(--app-text-muted);
+}
+
+.table-name-labels {
+
+    min-width:
+        0;
+}
+
+.table-floor-row {
+
+    gap:
+        var(--lumo-space-2xs);
+
+    min-width:
+        0;
+}
+
+.table-floor-icon {
+
+    --vaadin-icon-size:
+        12px;
+
+    color:
+        var(--app-text-muted);
+
+    flex-shrink:
+        0;
+}
+
+.seat-pill {
+
+    gap:
+        var(--lumo-space-2xs);
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    padding:
+        2px var(--lumo-space-s);
+
+    border-radius:
+        999px;
+
+    background:
+        var(--lumo-contrast-5pct);
+
+    color:
+        var(--app-text-secondary);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    font-weight:
+        600;
+
+    white-space:
+        nowrap;
+}
+
+.seat-pill-icon {
+
+    --vaadin-icon-size:
+        13px;
+
+    color:
+        var(--app-text-muted);
+}
+
+.table-store-cell {
+
+    gap:
+        var(--lumo-space-2xs);
+
+    min-width:
+        0;
+}
+
+.table-store-icon {
+
+    --vaadin-icon-size:
+        14px;
+
+    color:
+        var(--app-text-muted);
+
+    flex-shrink:
+        0;
+}
+
+.table-store-name {
+
+    color:
+        var(--app-text-secondary);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+
+    white-space:
+        nowrap;
+}
+
+.table-floor-name {
+
+    color:
+        var(--app-text-secondary);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    overflow:
+        hidden;
+
+    text-overflow:
+        ellipsis;
+
+    white-space:
+        nowrap;
+}
+
+.table-floor-actions {
+
+    gap:
+        var(--lumo-space-2xs);
+}
+
+/* ============================================================
+   FLOOR DIALOG
+   ============================================================ */
+
+.floor-form-caption {
+
+    display:
+        block;
+
+    color:
+        var(--app-text-muted);
+
+    font-size:
+        var(--lumo-font-size-s);
+
+    line-height:
+        1.5;
+
+    margin-bottom:
+        var(--lumo-space-xs);
+}
+
+/* ============================================================
+   FORM PREVIEW
+   ============================================================ */
+
+.table-preview-card {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        var(--lumo-space-m);
+
+    padding:
+        var(--lumo-space-m);
+
+    border:
+        1px dashed var(--app-border-strong);
+
+    border-radius:
+        var(--lumo-border-radius-l);
+
+    background:
+        var(--lumo-contrast-5pct);
+}
+
+.table-preview-shape {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    width:
+        58px;
+
+    height:
+        58px;
+
+    border-radius:
+        14px;
+
+    background:
+        var(--app-surface);
+
+    border:
+        2px solid var(--app-border-strong);
+
+    flex-shrink:
+        0;
+}
+
+.table-preview-shape.shape-ROUND {
+
+    border-radius:
+        50%;
+}
+
+.table-preview-shape.shape-RECTANGLE {
+
+    border-radius:
+        10px;
+
+    width:
+        74px;
+}
+
+.table-preview-shape-icon {
+
+    --vaadin-icon-size:
+        26px;
+
+    color:
+        var(--lumo-primary-text-color);
+}
+
+.table-preview-name {
+
+    color:
+        var(--app-text);
+
+    font-size:
+        var(--lumo-font-size-l);
+
+    font-weight:
+        700;
+
+    flex-grow:
+        1;
+
+    min-width:
+        0;
+    overflow:
+        hidden;
+    text-overflow:
+        ellipsis;
+    white-space:
+        nowrap;
+}
+
+.table-preview-meta {
+
+    flex-wrap:
+        wrap;
+}
+
+.table-preview-chip {
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    padding:
+        2px var(--lumo-space-s);
+
+    border-radius:
+        999px;
+
+    background:
+        var(--app-surface);
+
+    border:
+        1px solid var(--app-border);
+
+    color:
+        var(--app-text-secondary);
+
+    font-size:
+        var(--lumo-font-size-xs);
+
+    font-weight:
+        600;
+
+    white-space:
+        nowrap;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1100px) {
+
+    .table-stats {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+
+    .table-toolbar-row vaadin-combo-box {
+
+        flex:
+            1 1 100%;
+    }
+
+    .table-toolbar-actions {
+
+        justify-content:
+            flex-start;
+
+        flex-wrap:
+            wrap;
+    }
+
+    .table-form {
+
+        padding:
+            var(--lumo-space-m);
+    }
+
+    .table-preview-card {
+
+        flex-wrap:
+            wrap;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .table-stats {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .table-stats .stat-card {
+
+        padding:
+            var(--lumo-space-xs) var(--lumo-space-s);
+    }
+
+    .stat-icon {
+
+        width:
+            30px;
+
+        height:
+            30px;
+
+        padding:
+            6px;
+    }
+}

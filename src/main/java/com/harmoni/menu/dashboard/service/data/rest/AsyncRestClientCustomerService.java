@@ -11,10 +11,10 @@ import org.springframework.web.util.UriComponentsBuilder;
  *
  * <p>Unlike the organization and menu clients, the customer service answers
  * with plain JSON rather than the {@link RestAPIResponse} envelope, so the
- * requests go through {@link AsyncRestClientBase#makeAsyncRawRequest}. The
- * bearer token is still attached and refreshed transparently via
- * {@link TokenRefreshService} so the calls keep working once the API gateway
- * enforces authentication.</p>
+ * requests go through {@link AsyncRestClientBase#makeAsyncRawRequestWithoutLogout}.
+ * The bearer token is still attached when present, but a rejected call is shown
+ * as a page-level load failure instead of triggering the global token refresh
+ * and logout: a 401 while browsing customers must not sign the operator out.</p>
  *
  * <p>Server-side paging is zero-based, so callers pass {@code page} exactly as
  * the service expects it.</p>
@@ -48,7 +48,7 @@ public class AsyncRestClientCustomerService extends AsyncRestClientBase {
     public void searchCustomersAsync(AsyncRestCallback<CustomerPageDto> callback,
                                      AsyncRestCallback<Throwable> errorCallback,
                                      String search, int page, int size) {
-        makeAsyncRawRequest(buildSearchUri(search, page, size), CustomerPageDto.class, callback, errorCallback);
+        makeAsyncRawRequestWithoutLogout(buildSearchUri(search, page, size), CustomerPageDto.class, callback, errorCallback);
     }
 
     /**
@@ -78,7 +78,7 @@ public class AsyncRestClientCustomerService extends AsyncRestClientBase {
     public void getCustomerAsync(AsyncRestCallback<CustomerDto> callback,
                                  AsyncRestCallback<Throwable> errorCallback,
                                  Long customerId) {
-        makeAsyncRawRequest(buildCustomerUri(customerId), CustomerDto.class, callback, errorCallback);
+        makeAsyncRawRequestWithoutLogout(buildCustomerUri(customerId), CustomerDto.class, callback, errorCallback);
     }
 
     /**

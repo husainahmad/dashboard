@@ -6,7 +6,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
@@ -14,7 +14,7 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * tab sheet and provides the {@link AsyncRestClientSettingService} used to
  * fetch service data.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Route(value = "service", layout = MainLayout.class)
 @PageTitle("Service | POSHarmoni")
 public class ServiceLayout extends VerticalLayout {

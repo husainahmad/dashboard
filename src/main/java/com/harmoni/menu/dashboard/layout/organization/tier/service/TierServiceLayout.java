@@ -8,7 +8,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
@@ -16,7 +16,7 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * domain. Hosts the {@link TierServiceTabs} component inside the
  * {@link MainLayout} shell.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Route(value = "tier-service", layout = MainLayout.class)
 @PageTitle("Tier Service | POSHarmoni")
 public class TierServiceLayout extends VerticalLayout {

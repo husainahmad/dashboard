@@ -21,6 +21,8 @@ auth.url.refresh-token=${auth.url}/api/v1/auth/refresh-token
 
 menu.url.brand=${menu.url}/api/v1/brand
 menu.url.chain=${menu.url}/api/v1/chain
+menu.url.organizationTree=${menu.url}/api/v1/organization/tree
+menu.url.imageUpload=${menu.url}/api/v1/image/upload
 menu.url.tier=${menu.url}/api/v1/tier
 menu.url.user=${menu.url}/api/v1/user
 
@@ -62,6 +64,15 @@ menu.url.products.customization=${menu.url.product}/%d/customization
 
 menu.url.sku=${menu.url}/api/v1/sku
 menu.url.skutierprice=${menu.url}/api/v1/skutier
+
+# Kitchen printer management
+menu.url.kitchen.stations=${menu.url}/api/v1/stores/%d/kitchen-stations
+menu.url.kitchen.stationById=${menu.url}/api/v1/kitchen-stations/%d
+menu.url.kitchen.printersByStation=${menu.url}/api/v1/kitchen-stations/%d/printers
+menu.url.kitchen.printerById=${menu.url}/api/v1/kitchen-printers/%d
+menu.url.kitchen.routings=${menu.url}/api/v1/stores/%d/kitchen-routings
+menu.url.kitchen.routingCategories=${menu.url}/api/v1/stores/%d/kitchen-routings/categories
+menu.url.kitchen.routingProducts=${menu.url}/api/v1/stores/%d/kitchen-routings/products
 
 customer.url.customers=${customer.url}/api/v1/customers
 customer.url.customersById=${customer.url.customers}/%d

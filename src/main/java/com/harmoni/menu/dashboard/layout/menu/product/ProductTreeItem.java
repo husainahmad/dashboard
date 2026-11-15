@@ -4,6 +4,7 @@ import com.harmoni.menu.dashboard.dto.SkuDto;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,15 @@ import java.util.Map;
  */
 @Data
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ProductTreeItem {
 
-    /** Stable client id used by the tree grid to expand and render this node. */
+    /**
+     * Stable client id used by the tree grid to expand and render this node.
+     * Also the node's identity: the tier-price map and SKU list mutate while
+     * rows are edited, so equality must not depend on them.
+     */
+    @EqualsAndHashCode.Include
     private String id;
     /** Display name shown in the tree. */
     private String name;
@@ -35,10 +42,6 @@ public class ProductTreeItem {
     private Integer categoryId;
     /** The category display name. */
     private String categoryName;
-    /** Selling price carried by the node. */
-    private Double price;
-    /** Display name of the price tier. */
-    private String tierName;
     /** The product's SKUs, used to seed the edit form. */
     private List<SkuDto> skus;
     /** Per-tier selling prices keyed by tier id, populated on SKU rows. */

@@ -3,8 +3,10 @@ package com.harmoni.menu.dashboard.layout.setting.table;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ChainDto;
+import com.harmoni.menu.dashboard.dto.FloorDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.TableDto;
+import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.event.table.TableDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
@@ -21,11 +23,18 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
-import com.vaadin.flow.data.provider.ListDataProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -34,25 +43,36 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
  * List of tables shown inside the table tab sheet: a {@link Grid} with name,
- * capacity, store and action columns, a filterable toolbar with cascading
- * brand/chain/store selectors and a "New Table" button. Refreshes on
- * {@link Broadcaster} messages; the fetch is scoped to the store selected in
- * the toolbar, falling back to all tables when none is chosen.
+ * capacity, store, floor, status and action columns. The two-row toolbar
+ * narrows the list by brand/chain/store/floor, keeps the floor management
+ * actions together and ends with the "New Table" button; a summary line reports
+ * the visible tables, seats and floors. Refreshes on {@link Broadcaster}
+ * messages; the fetch is scoped to the store selected in the toolbar, falling
+ * back to all tables when none is chosen.
  */
 @RequiredArgsConstructor
 @Slf4j
-public class TableListView extends AbstractListView {
+public class TableListView extends AbstractListView implements BroadcastMessageService {
 
-    private static final int PAGE_SIZE = 1000;
+    private static final int STORE_PAGE_SIZE = 1000;
+
+    /** Rows shown per page; the table API returns the full list, so paging is client-side. */
+    private static final int TABLE_PAGE_SIZE = 25;
 
     private final Grid<TableDto> tableDtoGrid = new Grid<>(TableDto.class);
+
+    /** Every table returned by the current filter, before client-side paging. */
+    private final List<TableDto> allTables = new ArrayList<>();
+
+    /** The tables matching the search box, used for the summary and page count. */
+    private List<TableDto> filteredTables = new ArrayList<>();
 
     private final AsyncRestClientSettingService asyncRestClientSettingService;
     private final RestClientSettingService restClientSettingService;
@@ -62,6 +82,14 @@ public class TableListView extends AbstractListView {
 
     private final ComboBox<ChainDto> chainFilter = new ComboBox<>();
     private final ComboBox<StoreDto> storeFilter = new ComboBox<>();
+    private final ComboBox<FloorDto> floorFilter = new ComboBox<>();
+    private final Span summaryText = new Span();
+    private final HorizontalLayout statsRow = new HorizontalLayout();
+    private final Span tablesStatValue = new Span("0");
+    private final Span seatsStatValue = new Span("0");
+    private final Span floorsStatValue = new Span("0");
+    private final Span activeStatValue = new Span("0");
+    private boolean layoutBuilt;
 
     /**
      * Options for the brand filter, used to select a default when the user has one.
@@ -71,7 +99,7 @@ public class TableListView extends AbstractListView {
         setPadding(false);
         configureGrid();
 
-        add(getContent());
+        add(getContent(), getPaginationFooter());
     }
 
     @Override
@@ -79,24 +107,164 @@ public class TableListView extends AbstractListView {
         super.onAttach(attachEvent);
         refreshOnBroadcast(Set.of(BroadcastMessage.TABLE_INSERT_SUCCESS,
                 BroadcastMessage.TABLE_UPDATED_SUCCESS,
-                BroadcastMessage.TABLE_DELETED_SUCCESS), this::fetchTables);
+                BroadcastMessage.TABLE_DELETED_SUCCESS,
+                BroadcastMessage.FLOOR_INSERT_SUCCESS,
+                BroadcastMessage.FLOOR_UPDATED_SUCCESS,
+                BroadcastMessage.FLOOR_DELETED_SUCCESS), this::onFloorOrTableChanged);
 
-        renderLayout();
+        if (!layoutBuilt) {
+            layoutBuilt = true;
+            renderLayout();
+        }
+        // The list now lives on a non-default tab, so it attaches only when the
+        // operator opens it. The toolbar is built before that, when the UI is
+        // still unset, so its async brand load is dropped. Load the filter
+        // options here, once the UI is available.
+        if (brandOptions.isEmpty()) {
+            loadBrandsForFilter();
+        }
     }
 
     /**
-     * Configures the {@link Grid} with name, capacity, store and action columns,
-     * and adds edit/delete buttons to the action column.
+     * Configures the {@link Grid}: the name with an initial avatar, a capacity
+     * pill, the store and floor as plain text, an active/inactive status chip
+     * and the edit/delete action column. Rows whose table is switched off are
+     * dimmed through a part name rather than by overriding the theme.
      */
     private void configureGrid() {
         tableDtoGrid.setSizeFull();
+        tableDtoGrid.setSelectionMode(Grid.SelectionMode.NONE);
         tableDtoGrid.setEmptyStateText(Messages.get("grid.empty.tables"));
-        tableDtoGrid.setColumns("name", "capacity");
-        tableDtoGrid.getColumnByKey("name").setHeader(Messages.get(Messages.Keys.LABEL_FIELD_TABLE_NAME));
-        tableDtoGrid.getColumnByKey("capacity").setHeader(Messages.get(Messages.Keys.LABEL_CAPACITY));
-        tableDtoGrid.addColumn(this::getStoreName).setHeader(Messages.get("grid.header.store")).setKey("store");
-        tableDtoGrid.getColumns().forEach(tableDtoColumn -> tableDtoColumn.setAutoWidth(true));
-        tableDtoGrid.addComponentColumn(this::applyButton).setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION));
+        tableDtoGrid.removeAllColumns();
+
+        tableDtoGrid.addComponentColumn(this::nameCell)
+                .setHeader(Messages.get(Messages.Keys.LABEL_FIELD_TABLE_NAME))
+                .setKey("name")
+                .setWidth("280px")
+                .setFlexGrow(1);
+        tableDtoGrid.addComponentColumn(this::capacityCell)
+                .setHeader(Messages.get(Messages.Keys.LABEL_CAPACITY))
+                .setKey("capacity")
+                .setWidth("130px")
+                .setFlexGrow(0);
+        tableDtoGrid.addComponentColumn(this::storeCell)
+                .setHeader(Messages.get("grid.header.store"))
+                .setKey("store")
+                .setFlexGrow(1);
+        tableDtoGrid.addComponentColumn(this::floorCell)
+                .setHeader(Messages.get("grid.header.floor"))
+                .setKey("floor")
+                .setFlexGrow(1);
+        tableDtoGrid.addComponentColumn(this::statusCell)
+                .setHeader(Messages.get("grid.header.status"))
+                .setKey("status")
+                .setWidth("130px")
+                .setFlexGrow(0);
+        tableDtoGrid.addComponentColumn(this::applyButton)
+                .setHeader(Messages.get(Messages.Keys.GRID_HEADER_ACTION))
+                .setKey("actions")
+                .setWidth("120px")
+                .setFlexGrow(0);
+
+        tableDtoGrid.addItemDoubleClickListener(event -> editTable(event.getItem(), FormAction.EDIT));
+
+        tableDtoGrid.setPartNameGenerator(tableDto ->
+                Boolean.FALSE.equals(tableDto.getActive()) ? "table-row-inactive" : null);
+    }
+
+    /**
+     * Renders the table name with its initial as a quiet avatar. The floor lives
+     * in its own column now, so the cell stays a single, scannable line.
+     *
+     * @param tableDto the table to render
+     * @return the name cell
+     */
+    private Component nameCell(TableDto tableDto) {
+        String nameText = StringUtils.defaultIfBlank(tableDto.getName(), "-");
+
+        Div avatar = new Div();
+        avatar.addClassName("table-avatar");
+        avatar.setText(initialOf(nameText));
+        if (Boolean.FALSE.equals(tableDto.getActive())) {
+            avatar.addClassName("table-avatar--inactive");
+        }
+
+        Span name = new Span(nameText);
+        name.addClassName("table-name");
+
+        HorizontalLayout cell = new HorizontalLayout(avatar, name);
+        cell.addClassName("table-name-cell");
+        cell.setPadding(false);
+        cell.setSpacing(true);
+        cell.setAlignItems(FlexComponent.Alignment.CENTER);
+        return cell;
+    }
+
+    private static String initialOf(String name) {
+        String trimmed = StringUtils.trimToEmpty(name);
+        return trimmed.isEmpty() ? "?" : trimmed.substring(0, 1).toUpperCase();
+    }
+
+    /**
+     * Renders the seating capacity as a compact pill, without an icon so the
+     * column stays a plain numeric value.
+     *
+     * @param tableDto the table to render
+     * @return the capacity cell
+     */
+    private Component capacityCell(TableDto tableDto) {
+        Integer capacity = tableDto.getCapacity();
+        Span value = new Span(capacity == null ? "-" : Messages.get("label.seats", capacity));
+        HorizontalLayout pill = new HorizontalLayout(value);
+        pill.addClassName("seat-pill");
+        pill.setPadding(false);
+        pill.setSpacing(false);
+        pill.setAlignItems(FlexComponent.Alignment.CENTER);
+        return pill;
+    }
+
+    /**
+     * Renders the store as a quiet name, without an icon so the column reads as
+     * plain metadata.
+     *
+     * @param tableDto the table to render
+     * @return the store cell
+     */
+    private Component storeCell(TableDto tableDto) {
+        String storeName = getStoreName(tableDto);
+        Span label = new Span(storeName.isBlank() ? "-" : storeName);
+        label.addClassName("table-store-name");
+        return label;
+    }
+
+    /**
+     * Renders the floor the table stands on, or a muted "no floor" hint when it
+     * is not assigned yet.
+     *
+     * @param tableDto the table to render
+     * @return the floor cell
+     */
+    private Component floorCell(TableDto tableDto) {
+        String floorName = getFloorName(tableDto);
+        Span label = new Span(floorName.isBlank()
+                ? Messages.get("table.unassigned") : floorName);
+        label.addClassName("table-floor-name");
+        return label;
+    }
+
+    /**
+     * Renders the active state as a status chip. A missing flag is treated as
+     * active, matching the floor plan.
+     *
+     * @param tableDto the table to render
+     * @return the status cell
+     */
+    private Component statusCell(TableDto tableDto) {
+        boolean active = !Boolean.FALSE.equals(tableDto.getActive());
+        Span status = new Span(Messages.get(active ? "table.status.active" : "table.status.inactive"));
+        status.addClassName("table-status");
+        status.addClassName(active ? "table-status--active" : "table-status--inactive");
+        return status;
     }
 
     /**
@@ -108,7 +276,19 @@ public class TableListView extends AbstractListView {
      */
     private String getStoreName(TableDto tableDto) {
         return ObjectUtils.isNotEmpty(tableDto.getStoreDto())
-                ? tableDto.getStoreDto().getName() : StringUtils.EMPTY;
+                ? StringUtils.defaultString(tableDto.getStoreDto().getName()) : StringUtils.EMPTY;
+    }
+
+    /**
+     * Returns the floor name for the given table, or an empty string when the
+     * table is not attached to a floor yet.
+     *
+     * @param tableDto the table to get the floor name for
+     * @return the floor name or an empty string
+     */
+    private String getFloorName(TableDto tableDto) {
+        return ObjectUtils.isNotEmpty(tableDto.getFloorDto())
+                ? StringUtils.defaultString(tableDto.getFloorDto().getName()) : StringUtils.EMPTY;
     }
 
     /**
@@ -161,22 +341,145 @@ public class TableListView extends AbstractListView {
     }
 
     /**
-     * Toolbar with cascading brand/chain/store selectors, a lazy name filter
-     * and a "New Table" button that opens the create tab.
+     * Builds the client-side paging footer. The table endpoints return the whole
+     * list, so the buttons only move the window over {@link #filteredTables}.
      *
-     * @return the toolbar layout
+     * @return the pagination footer
      */
-    public HorizontalLayout getToolbarComponent() {
+    private HorizontalLayout getPaginationFooter() {
+        return paginationFooter(() -> {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPage();
+            }
+        }, () -> {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderPage();
+            }
+        });
+    }
+
+    /**
+     * Overview cards above a two-row toolbar: the upper row narrows the list by
+     * scope (brand, chain, store, floor) with the search field, the lower row
+     * holds the scope summary, floor management actions and the primary
+     * "New Table" button.
+     *
+     * @return the stats + toolbar stack
+     */
+    public VerticalLayout getToolbarComponent() {
         configureSearchFilter();
-        filterText.addValueChangeListener(event -> filterTables(event.getValue()));
+        filterText.addValueChangeListener(event -> {
+            currentPage = 1;
+            renderPage();
+        });
 
         configureFilters();
 
         Button addTableButton = UiUtil.addButton(Messages.get(Messages.Keys.ACTION_NEW_TABLE), event -> addTable());
-        HorizontalLayout toolbar = new HorizontalLayout(brandFilter, chainFilter, storeFilter, filterText, addTableButton);
-        registerNewShortcut(this::addTable);
+        Button addFloorButton = new Button(Messages.get("action.newFloor"), event -> openFloorDialog(null));
+        addFloorButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        addFloorButton.setPrefixComponent(VaadinIcon.PLUS.create());
+        Button editFloorButton = UiUtil.editButton(Messages.get("label.floor"), event -> openFloorDialog(floorFilter.getValue()));
+        Button deleteFloorButton = UiUtil.deleteButton(event -> deleteFloor(floorFilter.getValue()));
+        editFloorButton.setEnabled(false);
+        deleteFloorButton.setEnabled(false);
+        floorFilter.addValueChangeListener(event -> {
+            boolean selected = event.getValue() != null;
+            editFloorButton.setEnabled(selected);
+            deleteFloorButton.setEnabled(selected);
+        });
+
+        HorizontalLayout filters = new HorizontalLayout(brandFilter, chainFilter, storeFilter,
+                floorFilter, filterText);
+        filters.addClassName("table-toolbar-row");
+        filters.addClassName("table-filter-bar");
+        filters.setWidthFull();
+        filters.setAlignItems(FlexComponent.Alignment.BASELINE);
+        filters.setFlexGrow(1, filterText);
+
+        summaryText.addClassName("table-summary");
+
+        HorizontalLayout floorActions = new HorizontalLayout(addFloorButton, editFloorButton, deleteFloorButton);
+        floorActions.addClassName("table-floor-actions");
+        floorActions.setPadding(false);
+        floorActions.setSpacing(true);
+        floorActions.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        HorizontalLayout actions = new HorizontalLayout(summaryText, floorActions, addTableButton);
+        actions.addClassName("table-toolbar-row");
+        actions.addClassName("table-toolbar-actions");
+        actions.setWidthFull();
+        actions.setAlignItems(FlexComponent.Alignment.CENTER);
+        actions.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        actions.setFlexGrow(1, summaryText);
+
+        VerticalLayout toolbar = new VerticalLayout(filters, actions);
         toolbar.addClassName(Css.TOOLBAR);
-        return toolbar;
+        toolbar.addClassName("table-toolbar");
+        toolbar.setWidthFull();
+        toolbar.setPadding(false);
+        toolbar.setSpacing(false);
+
+        renderStats();
+
+        VerticalLayout stack = new VerticalLayout(statsRow, toolbar);
+        stack.addClassName("table-toolbar-stack");
+        stack.setWidthFull();
+        stack.setPadding(false);
+        stack.setSpacing(false);
+        registerNewShortcut(this::addTable);
+        return stack;
+    }
+
+    /**
+     * Builds the overview cards above the toolbar: total tables, seats, floors
+     * and active tables for the current selection. Values are refreshed by
+     * {@link #updateSummary()}.
+     */
+    private void renderStats() {
+        statsRow.removeAll();
+        statsRow.addClassName("table-stats");
+        statsRow.setWidthFull();
+        statsRow.setPadding(false);
+        statsRow.setSpacing(false);
+        statsRow.add(
+                statCard(VaadinIcon.TABLE, tablesStatValue, Messages.get("table.stats.tables"), "tables"),
+                statCard(VaadinIcon.USERS, seatsStatValue, Messages.get("table.stats.seats"), "seats"),
+                statCard(VaadinIcon.BUILDING, floorsStatValue, Messages.get("table.stats.floors"), "floors"),
+                statCard(VaadinIcon.CHECK_CIRCLE, activeStatValue, Messages.get("table.stats.active"), "active"));
+    }
+
+    /**
+     * One overview card: an accent icon, the current value and its label.
+     *
+     * @param icon    the glyph shown in the tinted square
+     * @param value   the value span, kept so summary refreshes can update it
+     * @param label   the card caption
+     * @param variant the accent variant class suffix
+     * @return the card
+     */
+    private Component statCard(VaadinIcon icon, Span value, String label, String variant) {
+        Icon glyph = icon.create();
+        glyph.addClassName("stat-icon");
+
+        value.addClassName("stat-value");
+        Span caption = new Span(label);
+        caption.addClassName("stat-label");
+
+        VerticalLayout body = new VerticalLayout(value, caption);
+        body.addClassName("stat-body");
+        body.setPadding(false);
+        body.setSpacing(false);
+
+        HorizontalLayout card = new HorizontalLayout(glyph, body);
+        card.addClassName("stat-card");
+        card.addClassName("stat-card--" + variant);
+        card.setPadding(false);
+        card.setSpacing(false);
+        card.setAlignItems(FlexComponent.Alignment.CENTER);
+        return card;
     }
 
     /**
@@ -194,10 +497,18 @@ public class TableListView extends AbstractListView {
         storeFilter.setLabel(Messages.get(Messages.Keys.LABEL_STORE));
         storeFilter.setItemLabelGenerator(StoreDto::getName);
 
+        floorFilter.setLabel(Messages.get("label.floor"));
+        floorFilter.setItemLabelGenerator(FloorDto::getName);
+        floorFilter.setClearButtonVisible(true);
+        floorFilter.addValueChangeListener(event -> {
+            if (event.isFromClient()) {
+                fetchTables();
+            }
+        });
+
         brandFilter.addValueChangeListener(this::onBrandFilterChange);
         chainFilter.addValueChangeListener(this::onChainFilterChange);
         storeFilter.addValueChangeListener(this::onStoreFilterChange);
-        loadBrandsForFilter();
     }
 
     /**
@@ -219,6 +530,9 @@ public class TableListView extends AbstractListView {
             chainFilter.clear();
             storeFilter.setItems(Collections.emptyList());
             storeFilter.clear();
+            floorFilter.setItems(Collections.emptyList());
+            floorFilter.clear();
+            fetchFloors();
             fetchTables();
             return;
         }
@@ -238,6 +552,9 @@ public class TableListView extends AbstractListView {
         if (change.isFromClient() && change.getValue() == null && change.getOldValue() != null) {
             storeFilter.setItems(Collections.emptyList());
             storeFilter.clear();
+            floorFilter.setItems(Collections.emptyList());
+            floorFilter.clear();
+            fetchFloors();
             fetchTables();
             return;
         }
@@ -253,6 +570,9 @@ public class TableListView extends AbstractListView {
      * @param change the value change event for the store filter
      */
     private void onStoreFilterChange(HasValue.ValueChangeEvent<StoreDto> change) {
+        floorFilter.setItems(Collections.emptyList());
+        floorFilter.clear();
+        fetchFloors();
         fetchTables();
     }
 
@@ -356,14 +676,14 @@ public class TableListView extends AbstractListView {
         }
         asyncRestClientOrganizationService.getAllStoreAsync(
                 result -> UiUtil.safeAccess(ui, () -> {
-                    List<StoreDto> stores = extractStores(result);
+                    List<StoreDto> stores = ObjectUtil.extractDataList(result, StoreDto.class);
                     storeFilter.setItems(stores);
                     selectDefaultStoreFilter();
                 }),
                 error -> UiUtil.safeAccess(ui, () ->
                         UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_STORE_LOAD_FAILED),
                                 this::loadStoresForFilter)),
-                chain.getId(), 1, PAGE_SIZE, "");
+                chain.getId(), 1, STORE_PAGE_SIZE, "");
     }
 
     /**
@@ -416,66 +736,199 @@ public class TableListView extends AbstractListView {
     }
 
     /**
-     * Extracts a list of {@link StoreDto} from the given result map. If the
-     * result is null or does not contain a "data" key with a list, it returns an
-     * empty list.
-     *
-     * @param result the result map containing store data
-     * @return a list of {@link StoreDto} extracted from the result
+     * Applies the search box to {@link #allTables}, recomputes the page count and
+     * shows the current page in the grid. Client-side paging keeps the summary
+     * and the footer in sync with the whole filtered selection, not just the
+     * rows on screen.
      */
-    private List<StoreDto> extractStores(Map<String, Object> result) {
-        List<StoreDto> stores = new ArrayList<>();
-        if (result == null || !(result.get("data") instanceof List<?> dataList)) {
-            return stores;
-        }
-        for (Object row : dataList) {
-            StoreDto store = ObjectUtil.convertValueToObject(row, StoreDto.class);
-            if (store != null) {
-                stores.add(store);
-            }
-        }
-        return stores;
-    }
+    private void renderPage() {
+        String filter = StringUtils.trimToEmpty(filterText.getValue());
+        filteredTables = allTables.stream()
+                .filter(table -> StringUtils.containsIgnoreCase(table.getName(), filter))
+                .toList();
 
-    @SuppressWarnings("unchecked")
-    private void filterTables(String filter) {
-        if (tableDtoGrid.getDataProvider() instanceof ListDataProvider) {
-            ListDataProvider<TableDto> dataProvider = (ListDataProvider<TableDto>) tableDtoGrid.getDataProvider();
-            dataProvider.setFilter(tableDto ->
-                    StringUtils.containsIgnoreCase(tableDto.getName(), StringUtils.trimToEmpty(filter)));
+        totalPages = filteredTables.isEmpty()
+                ? 0 : (int) Math.ceil((double) filteredTables.size() / TABLE_PAGE_SIZE);
+        if (totalPages == 0) {
+            currentPage = 1;
+        } else if (currentPage > totalPages) {
+            currentPage = totalPages;
         }
+
+        int from = Math.min((currentPage - 1) * TABLE_PAGE_SIZE, filteredTables.size());
+        int to = Math.min(from + TABLE_PAGE_SIZE, filteredTables.size());
+        tableDtoGrid.setItems(filteredTables.subList(from, to));
+
+        updatePagination();
+        updateSummary();
     }
 
     /**
-     * Fetches the tables from the server based on the selected store filter. If
-     * a store is selected, it fetches tables for that store; otherwise, it fetches
-     * all tables. The grid skeleton is shown while fetching, and any errors are
-     * handled with a retry option.
+     * Refreshes the caption above the grid with the number of tables, seats and
+     * floors in the filtered selection, so the operator can read its size
+     * without counting rows.
+     */
+    private void updateSummary() {
+        List<TableDto> visible = filteredTables;
+        int seats = visible.stream()
+                .mapToInt(table -> table.getCapacity() == null ? 0 : table.getCapacity())
+                .sum();
+        long floors = visible.stream()
+                .map(this::getFloorName)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .count();
+        long active = visible.stream()
+                .filter(table -> !Boolean.FALSE.equals(table.getActive()))
+                .count();
+
+        tablesStatValue.setText(String.valueOf(visible.size()));
+        seatsStatValue.setText(String.valueOf(seats));
+        floorsStatValue.setText(String.valueOf(floors));
+        activeStatValue.setText(String.valueOf(active));
+        summaryText.setText(scopeSummary(visible.size()));
+    }
+
+    /**
+     * Builds the line shown in the action row. It names the scope the counts
+     * belong to, so the cards above and the grid below are unambiguous when a
+     * floor or store filter is active.
+     *
+     * @param visibleCount the number of tables currently listed
+     * @return the scope caption
+     */
+    private String scopeSummary(int visibleCount) {
+        FloorDto floor = floorFilter.getValue();
+        if (floor != null && floor.getName() != null && !floor.getName().isBlank()) {
+            return Messages.get("table.scope.floor", visibleCount, floor.getName());
+        }
+        StoreDto store = storeFilter.getValue();
+        if (store != null && store.getName() != null && !store.getName().isBlank()) {
+            return Messages.get("table.scope.store", visibleCount, store.getName());
+        }
+        return Messages.get("table.scope.all", visibleCount);
+    }
+
+    /**
+     * Opens the create/edit dialog for a floor of the current store.
+     *
+     * @param floor the floor to edit, or {@code null} to create one
+     */
+    private void openFloorDialog(FloorDto floor) {
+        StoreDto store = storeFilter.getValue();
+        if (ObjectUtils.isEmpty(store) && accessService.getUserDetail() != null) {
+            store = accessService.getUserDetail().getStoreDto();
+        }
+        if (store == null) {
+            store = new StoreDto();
+        }
+        new FloorFormDialog(floor == null ? new FloorDto() : floor, store,
+                restClientSettingService, asyncRestClientOrganizationService, accessService,
+                this::fetchFloors).open();
+    }
+
+    /**
+     * Confirms and deletes a floor. The server refuses while the floor still has
+     * tables; that refusal is shown as a clear message.
+     *
+     * @param floor the floor to delete
+     */
+    private void deleteFloor(FloorDto floor) {
+        if (floor == null || floor.getId() == null) {
+            return;
+        }
+        ConfirmDialog dialog = new ConfirmDialog();
+        dialog.setHeader(Messages.get(Messages.Keys.DIALOG_CONFIRM_TITLE));
+        dialog.setText(Messages.get("dialog.confirmDeleteFloor", floor.getName()));
+        dialog.setCancelable(true);
+        dialog.addConfirmListener(event -> restClientSettingService.deleteFloor(floor)
+                .subscribe(response -> UiUtil.safeAccess(ui, () -> {
+                    broadcastMessage(BroadcastMessage.FLOOR_DELETED_SUCCESS, response);
+                    UiUtil.success(Messages.get("notification.floor.deleted"));
+                    fetchFloors();
+                }), error -> UiUtil.safeAccess(ui, () ->
+                        UiUtil.error(Messages.get("notification.floor.deleteHasTables")))));
+        dialog.open();
+    }
+
+    /**
+     * Fetches the tables from the server. A selected floor wins; otherwise the
+     * store filter is used, falling back to all tables when neither is chosen.
+     * The grid skeleton is shown while fetching, and errors offer a retry.
      */
     private void fetchTables() {
         gridSkeleton.show();
+        FloorDto floor = floorFilter.getValue();
+        if (floor != null && floor.getId() != null) {
+            asyncRestClientSettingService.getAllTablesByFloor(
+                    this::onTablesLoaded, this::onTablesLoadFailed, floor.getId());
+            return;
+        }
+
         StoreDto store = storeFilter.getValue();
         if (ObjectUtils.isNotEmpty(store) && ObjectUtils.isNotEmpty(store.getId())) {
-            asyncRestClientSettingService.getAllTablesByStore(result ->
-                    UiUtil.safeAccess(ui, () -> {
-                        gridSkeleton.hide();
-                        tableDtoGrid.setItems(result);
-                        filterTables(filterText.getValue());
-                    }), error -> UiUtil.safeAccess(ui, () -> {
-                        gridSkeleton.hide();
-                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_TABLE_LOAD_FAILED), this::fetchTables);
-                    }), store.getId());
+            asyncRestClientSettingService.getAllTablesByStore(
+                    this::onTablesLoaded, this::onTablesLoadFailed, store.getId());
         } else {
-            asyncRestClientSettingService.getAllTables(result ->
-                    UiUtil.safeAccess(ui, () -> {
-                        gridSkeleton.hide();
-                        tableDtoGrid.setItems(result);
-                        filterTables(filterText.getValue());
-                    }), error -> UiUtil.safeAccess(ui, () -> {
-                        gridSkeleton.hide();
-                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_TABLE_LOAD_FAILED), this::fetchTables);
-                    }));
+            asyncRestClientSettingService.getAllTables(
+                    this::onTablesLoaded, this::onTablesLoadFailed);
         }
+    }
+
+    private void onTablesLoaded(List<TableDto> tables) {
+        UiUtil.safeAccess(ui, () -> {
+            gridSkeleton.hide();
+            applyTables(tables);
+        });
+    }
+
+    private void onTablesLoadFailed(Throwable error) {
+        UiUtil.safeAccess(ui, () -> {
+            gridSkeleton.hide();
+            UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_TABLE_LOAD_FAILED), this::fetchTables);
+        });
+    }
+
+    private void applyTables(List<TableDto> tables) {
+        allTables.clear();
+        if (tables != null) {
+            allTables.addAll(tables);
+        }
+        currentPage = 1;
+        renderPage();
+    }
+
+    /**
+     * Loads the floors of the selected store into the floor filter.
+     */
+    private void fetchFloors() {
+        Integer storeId = currentStoreId();
+        if (storeId == null) {
+            floorFilter.setItems(Collections.emptyList());
+            floorFilter.clear();
+            return;
+        }
+        asyncRestClientSettingService.getAllFloorsByStore(result ->
+                UiUtil.safeAccess(ui, () -> floorFilter.setItems(
+                        result == null ? Collections.emptyList() : result)),
+                error -> UiUtil.safeAccess(ui, () ->
+                        UiUtil.errorWithRetry(Messages.get("notification.floor.loadFailed"), this::fetchFloors)),
+                storeId);
+    }
+
+    private Integer currentStoreId() {
+        StoreDto store = storeFilter.getValue();
+        if (store != null && store.getId() != null) {
+            return store.getId();
+        }
+        StoreDto sessionStore = accessService.getUserDetail() == null
+                ? null : accessService.getUserDetail().getStoreDto();
+        return sessionStore == null ? null : sessionStore.getId();
+    }
+
+    private void onFloorOrTableChanged() {
+        fetchFloors();
+        fetchTables();
     }
 
     /**
@@ -486,7 +939,9 @@ public class TableListView extends AbstractListView {
      * @param formAction whether the form creates or edits
      */
     public void editTable(TableDto tableDto, FormAction formAction) {
-        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+        TabSheet tabSheet = enclosingTabSheet();
+        if (tabSheet == null) {
+            log.warn("Cannot open the table form: no TabSheet ancestor found for TableListView");
             return;
         }
         TabManager tabManager = new TabManager(tabSheet);
@@ -494,7 +949,34 @@ public class TableListView extends AbstractListView {
                 ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, tableDto.getName()) : Messages.get(Messages.Keys.ACTION_NEW_TABLE);
         tabManager.addOrSelect(tabLabel, tab ->
                 new TableForm(tabManager, tab, formAction, prepareDto(tableDto),
-                        restClientSettingService, asyncRestClientOrganizationService, accessService));
+                        restClientSettingService, asyncRestClientOrganizationService,
+                        asyncRestClientSettingService, accessService));
+    }
+
+    /**
+     * Finds the {@link TabSheet} that hosts this list.
+     *
+     * <p>The list is wrapped in a panel with the toolbar before it is added to
+     * the tab sheet, so its direct parent is that panel, not the tab sheet.
+     * Walking up the ancestor chain is what makes the "New Table" button open a
+     * tab; checking only the direct parent silently did nothing.</p>
+     *
+     * @return the hosting tab sheet, or {@code null} when the list is detached
+     */
+    private TabSheet enclosingTabSheet() {
+        return findTabSheetAncestor(this).orElse(null);
+    }
+
+    private static Optional<TabSheet> findTabSheetAncestor(Component component) {
+        Optional<Component> parent = component.getParent();
+        while (parent.isPresent()) {
+            Component current = parent.get();
+            if (current instanceof TabSheet tabSheet) {
+                return Optional.of(tabSheet);
+            }
+            parent = current.getParent();
+        }
+        return Optional.empty();
     }
 
     /**
@@ -532,7 +1014,6 @@ public class TableListView extends AbstractListView {
      * new tab.
      */
     private void addTable() {
-        tableDtoGrid.asSingleSelect().clear();
         editTable(new TableDto(), FormAction.CREATE);
     }
 }

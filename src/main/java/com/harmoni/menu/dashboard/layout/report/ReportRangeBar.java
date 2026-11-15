@@ -56,15 +56,6 @@ public class ReportRangeBar extends HorizontalLayout {
     }
 
     /**
-     * Registers an extra listener notified with the range once it is applied.
-     *
-     * @param listener the listener to notify
-     */
-    public void addRangeListener(Consumer<DateRange> listener) {
-        listeners.add(listener);
-    }
-
-    /**
      * Returns the currently selected range.
      *
      * @return the selected range

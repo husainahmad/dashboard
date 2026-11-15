@@ -1,17 +1,15 @@
 package com.harmoni.menu.dashboard.util;
 
 import com.harmoni.menu.dashboard.dto.ImageDto;
-import com.vaadin.flow.server.StreamResource;
 
 import java.io.*;
 import java.util.UUID;
 
 /**
- * File and stream helpers for product images.
+ * File helpers for product images.
  *
  * <p>Converts an uploaded {@link ImageDto} into a temp file for the upload
- * request and exposes raw image bytes as a Vaadin {@link StreamResource} for
- * previewing.</p>
+ * request.</p>
  */
 public class ImageUtil {
 
@@ -25,10 +23,5 @@ public class ImageUtil {
             fos.write(imageDto.getFileStream().readAllBytes()); // Assuming imageDto has byte[] data
         }
         return tempFile;
-    }
-
-    public static StreamResource createStreamResource(byte[] imageBytes, String fileName) {
-        return new StreamResource(fileName,
-                () -> new ByteArrayInputStream(imageBytes));
     }
 }

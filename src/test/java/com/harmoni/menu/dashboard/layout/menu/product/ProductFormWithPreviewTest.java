@@ -5,6 +5,7 @@ import com.vaadin.flow.component.html.Div;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
+import com.harmoni.menu.dashboard.util.Messages;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -99,12 +100,11 @@ class ProductFormWithPreviewTest {
 
         rendered(editor.getProductForm());
 
-        assertFalse(editor.getProductForm().saveButton.isVisible(),
+        assertEquals(Messages.get(Messages.Keys.ACTION_UPDATE),
+                editor.getProductForm().submitButton.getText(),
                 "create answers 201 and update answers 200, and each listener treats the "
                         + "other status as a failure, so offering Save on an existing "
                         + "product can only fail quietly");
-        assertTrue(editor.getProductForm().updateButton.isVisible(),
-                "an existing product is updated, not created");
     }
 
     @Test
@@ -119,8 +119,8 @@ class ProductFormWithPreviewTest {
 
         rendered(editor.getProductForm());
 
-        assertTrue(editor.getProductForm().saveButton.isVisible());
-        assertFalse(editor.getProductForm().updateButton.isVisible(),
+        assertEquals(Messages.get(Messages.Keys.ACTION_SAVE),
+                editor.getProductForm().submitButton.getText(),
                 "updating a product that was never saved has no id to update");
     }
 

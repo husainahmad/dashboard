@@ -3,7 +3,6 @@ package com.harmoni.menu.dashboard.layout.menu.product;
 import com.harmoni.menu.dashboard.layout.component.FocusModeToggle;
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.util.Css;
-import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -35,7 +34,6 @@ public class ProductTabs extends VerticalLayout {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
-    private final AccessService accessService;
 
     /**
      * Hides this shell's header and toolbar, and brings them back.
@@ -51,8 +49,7 @@ public class ProductTabs extends VerticalLayout {
         TabSheet tabSheet = new TabSheet();
         Tab browseTab = new Tab();
         browseTab.setLabel(Messages.get("tab.productList"));
-        ProductListView productListView = new ProductListView(asyncRestClientMenuService, restClientMenuService,
-                accessService, browseTab);
+        ProductListView productListView = new ProductListView(asyncRestClientMenuService, restClientMenuService);
         tabSheet.add(browseTab, productListView);
         tabSheet.setSizeFull();
 

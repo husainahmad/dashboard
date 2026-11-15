@@ -33,11 +33,13 @@ import java.io.IOException;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
- * Uploads a product image to the REST API and shows it as a compact thumbnail.
- * The image is uploaded immediately when the user selects a file, and the
- * resulting {@link ProductImageDto} is stored in this view for later retrieval
- * by the owner form. The menu service hosts the image on ImgBB and returns the
- * hosted URL in {@link ProductImageDto#url}.
+ * Uploads a product image to the REST API and keeps the resulting
+ * {@link ProductImageDto} for the owner form.
+ *
+ * <p>The tile owns picking, cropping and removing the image, but not viewing it:
+ * the thumbnail is hidden so the image is shown only in the product preview, and
+ * the operator is not shown the same picture twice. The menu service hosts the
+ * image on ImgBB and returns the hosted URL in {@link ProductImageDto#url}.</p>
  */
 @RequiredArgsConstructor
 @Route("product-image-upload")
@@ -125,7 +127,7 @@ public class ProductImageUploadView extends VerticalLayout {
         thumbnail.setAlignItems(FlexComponent.Alignment.CENTER);
         thumbnail.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         thumbnail.add(image, placeholderIcon);
-        thumbnail.setVisible(true);
+        thumbnail.setVisible(false);
 
         VerticalLayout labels = new VerticalLayout(imageTitle, imageHint);
         labels.setPadding(false);

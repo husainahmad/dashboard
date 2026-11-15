@@ -8,7 +8,7 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
@@ -21,7 +21,7 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * {@link AccessService}.
  * </p>
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Route(value = "customization", layout = MainLayout.class)
 @PageTitle("Customization | POSHarmoni")
 public class CustomizationLayout extends VerticalLayout {

@@ -61,11 +61,12 @@ public class SkuSection {
     public void load(List<SkuDto> skuDtos) {
         skuItems.clear();
         if (skuDtos != null && !skuDtos.isEmpty()) {
-            skuDtos.forEach(this::addSku);
+            skuDtos.forEach(skuDto -> skuItems.add(toItem(skuDto)));
         } else {
-            addSku(null);
+            skuItems.add(toItem(null));
         }
         dataProvider.refreshAll();
+        delegate.onContentChanged();
     }
 
     /**
@@ -75,19 +76,20 @@ public class SkuSection {
      *               start from an empty row
      */
     public void addSku(SkuDto skuDto) {
+        skuItems.add(toItem(skuDto));
+        dataProvider.refreshAll();
+        delegate.onContentChanged();
+    }
+
+    private SkuTreeItem toItem(SkuDto skuDto) {
         Map<Integer, Double> prices = new HashMap<>();
         tierDtos.forEach(tier -> prices.put(tier.getId(), priceByTier(skuDto, tier)));
-
-        SkuTreeItem item = SkuTreeItem.builder()
+        return SkuTreeItem.builder()
                 .skuId(skuDto == null ? null : skuDto.getId())
                 .skuName(skuDto == null ? "" : skuDto.getName())
                 .skuDesc(skuDto == null ? "" : skuDto.getDescription())
                 .tierPrices(prices)
                 .build();
-
-        skuItems.add(item);
-        dataProvider.refreshAll();
-        delegate.onContentChanged();
     }
 
     /**
@@ -108,6 +110,30 @@ public class SkuSection {
      */
     public boolean hasDefinedSku() {
         return skuItems.stream().anyMatch(item -> item.getSkuName() != null && !item.getSkuName().trim().isEmpty());
+    }
+
+    /**
+     * Validates the editable rows before save: every SKU needs a name, and every
+     * tier needs a price greater than zero. Shows an error dialog describing the
+     * first problem found.
+     *
+     * @return {@code true} when every row is valid
+     */
+    public boolean validate() {
+        for (SkuTreeItem item : skuItems) {
+            if (item.getSkuName() == null || item.getSkuName().trim().isEmpty()) {
+                delegate.showErrorDialog(Messages.get("validation.sku.name"));
+                return false;
+            }
+            for (TierDto tier : tierDtos) {
+                Double price = item.getTierPrices().get(tier.getId());
+                if (price == null || price <= 0) {
+                    delegate.showErrorDialog(Messages.get("validation.sku.price"));
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -227,8 +253,10 @@ public class SkuSection {
     private TextField applySkuDescTextField(SkuTreeItem skuTreeItem) {
         TextField textField = new TextField();
         textField.setValue(skuTreeItem.getSkuDesc() == null ? "" : skuTreeItem.getSkuDesc());
-        textField.addValueChangeListener(changeEvent ->
-                skuTreeItem.setSkuDesc(changeEvent.getValue() == null ? "" : changeEvent.getValue()));
+        textField.addValueChangeListener(changeEvent -> {
+            skuTreeItem.setSkuDesc(changeEvent.getValue() == null ? "" : changeEvent.getValue());
+            delegate.onContentChanged();
+        });
         return textField;
     }
 
@@ -241,7 +269,6 @@ public class SkuSection {
         NumberField numberField = new NumberField();
         numberField.setValue(skuTreeItem.getTierPrices().get(tier.getId()) == null
                 ? 0.0 : skuTreeItem.getTierPrices().get(tier.getId()));
-        numberField.setWidth("104px");
         numberField.addClassName("tier-price-field");
         numberField.addValueChangeListener(changeEvent -> {
             skuTreeItem.getTierPrices().put(tier.getId(),

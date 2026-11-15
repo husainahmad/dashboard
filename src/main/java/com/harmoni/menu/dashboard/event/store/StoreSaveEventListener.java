@@ -8,13 +8,13 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationServic
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Called when the user clicks Save on the store form: validates the binder,
  * posts the new store and broadcasts the result.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class StoreSaveEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 

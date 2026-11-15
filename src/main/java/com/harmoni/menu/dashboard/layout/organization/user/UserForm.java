@@ -12,7 +12,6 @@ import com.harmoni.menu.dashboard.layout.enums.RoleType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
-import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -67,7 +66,6 @@ public class UserForm extends FormLayout  {
     Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
     Button updateButton = new Button(Messages.get(Messages.Keys.ACTION_UPDATE));
 
-    private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
 
@@ -124,8 +122,8 @@ public class UserForm extends FormLayout  {
             try {
                 BroadcastMessage broadcastMessage = (BroadcastMessage) ObjectUtil.jsonStringToBroadcastMessageClass(message);
                 if (ObjectUtils.isNotEmpty(broadcastMessage) && ObjectUtils.isNotEmpty(broadcastMessage.getType())
-                        && (broadcastMessage.getType().equals(BroadcastMessage.STORE_INSERT_SUCCESS) ||
-                        broadcastMessage.getType().equals(BroadcastMessage.STORE_UPDATED_SUCCESS))) {
+                        && (broadcastMessage.getType().equals(BroadcastMessage.USER_INSERT_SUCCESS) ||
+                        broadcastMessage.getType().equals(BroadcastMessage.USER_UPDATED_SUCCESS))) {
                         removeFromSheet();
                     }
             } catch (JsonProcessingException e) {

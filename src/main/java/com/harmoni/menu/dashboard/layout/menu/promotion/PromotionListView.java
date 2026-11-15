@@ -2,7 +2,6 @@ package com.harmoni.menu.dashboard.layout.menu.promotion;
 
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.dto.PromotionDto;
-import com.harmoni.menu.dashboard.dto.PromotionScheduleDto;
 import com.harmoni.menu.dashboard.event.promotion.PromotionDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.component.TabManager;

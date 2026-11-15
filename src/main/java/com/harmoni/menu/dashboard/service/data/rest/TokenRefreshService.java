@@ -80,6 +80,28 @@ public class TokenRefreshService {
     }
 
     /**
+     * Like {@link #withTokenRefresh(TokenRequest)}, but a 401 that survives the
+     * refresh is returned to the caller instead of logging the user out.
+     *
+     * <p>Used for non-session-critical lookups, where a rejected call should
+     * surface as a page error rather than tear down the whole Vaadin session.
+     * The access token is still refreshed when possible, so an expired token
+     * recovers transparently.</p>
+     *
+     * @param request the request to wrap
+     * @param <T>     the type of the response
+     * @return a {@link Mono} with the response or the error, without broadcasting logout
+     */
+    public <T> Mono<T> withTokenRefreshWithoutLogout(TokenRequest<T> request) {
+        VaadinSession session = VaadinSession.getCurrent();
+        String refreshToken = VaadinSessionUtil.getAttribute(VaadinSessionUtil.REFRESH_TOKEN, String.class);
+
+        return request.request(null)
+                .onErrorResume(TokenRefreshRequiredException.class,
+                        error -> refreshAndRetry(request, session, refreshToken, error));
+    }
+
+    /**
      * Attempts to refresh the access token and retry the original request.
      *
      * @param request       the original request

@@ -37,18 +37,6 @@ public class PromotionDeleteEventListener
     private UI ui;
 
     /**
-     * Builds the delete button shown in the footer of an edit form, so removing a
-     * promotion does not require going back to the grid first.
-     *
-     * @return a delete button wired to this listener
-     */
-    public Button asDeleteButton() {
-        Button button = UiUtil.deleteButton(Messages.get(Messages.Keys.ACTION_DELETE));
-        button.addClickListener(this::onComponentEvent);
-        return button;
-    }
-
-    /**
      * Opens the delete confirmation dialog when the delete button is clicked.
      *
      * @param buttonClickEvent the click event that triggered the listener

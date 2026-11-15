@@ -27,6 +27,8 @@ public class ProductFormLayout extends FormLayout  {
 
     public ProductFormLayout() {
         addClassName(Css.PRODUCT_FORM);
+        // Keep list-level shortcuts (n, /, ...) from firing while the operator is
+        // typing in the editor: keydown on the form must not bubble to the view.
         this.getElement().addEventListener("keydown", domEvent -> {}).stopPropagation();
     }
 

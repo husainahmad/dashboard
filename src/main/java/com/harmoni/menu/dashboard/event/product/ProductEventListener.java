@@ -54,7 +54,7 @@ public class ProductEventListener implements
         // existing products manage the relationship via the customization endpoints
         // so per-product settings are never wiped by a plain product update.
         if (ObjectUtils.isEmpty(productDto.getId())) {
-            productDto.setCustomizationIds(productForm.getCustomizationSection().getProductCustomizations().stream()
+            productDto.setCustomizationIds(productForm.getCustomizationSection().productCustomizations().stream()
                     .map(ProductCustomizationDto::getCustomizationId)
                     .toList());
         }

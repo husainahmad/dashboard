@@ -63,16 +63,6 @@ public class RestClientPromotionService extends RestClientService implements Ser
     }
 
     /**
-     * Retrieves a promotion by its unique code.
-     *
-     * @param code the promotion code
-     * @return the promotion
-     */
-    public Mono<RestAPIResponse> getPromotionByCode(String code) {
-        return get(menuProperties.getUrl().getPromotions().getByCode().formatted(code));
-    }
-
-    /**
      * Moves a promotion to a new lifecycle state.
      *
      * @param promotionId the promotion id
@@ -92,24 +82,5 @@ public class RestClientPromotionService extends RestClientService implements Ser
      */
     public Mono<RestAPIResponse> deletePromotion(Long promotionId) {
         return delete(URL_FORMAT.formatted(menuProperties.getUrl().getPromotions().getPromotion(), promotionId));
-    }
-
-    /**
-     * Deletes every promotion matching the given filter, mirroring the list query.
-     *
-     * @param status        optional lifecycle state filter
-     * @param promotionType optional mechanism filter
-     * @param search        optional keyword matched against code and name
-     * @return the number of deleted rows
-     */
-    public Mono<RestAPIResponse> deletePromotionsByFilter(String status, String promotionType, String search) {
-        String url = String.format("%s?status=%s&promotionType=%s&search=%s",
-                menuProperties.getUrl().getPromotions().getPromotion(),
-                orEmpty(status), orEmpty(promotionType), orEmpty(search));
-        return delete(url);
-    }
-
-    private static String orEmpty(String value) {
-        return value == null ? "" : value;
     }
 }

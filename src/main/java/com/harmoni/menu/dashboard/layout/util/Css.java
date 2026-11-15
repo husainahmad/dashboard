@@ -53,13 +53,10 @@ public final class Css {
 
     public static final String ALIGN_ITEMS = "align-items";
     public static final String BACKGROUND_COLOR = "background-color";
-    public static final String BORDER = "border";
     public static final String BORDER_BOTTOM = "border-bottom";
-    public static final String BORDER_TOP = "border-top";
     public static final String COLOR = "color";
     public static final String DISPLAY = "display";
     public static final String FLEX = "flex";
-    public static final String FLEX_GROW = "flex-grow";
     public static final String FONT_SIZE = "font-size";
     public static final String FONT_WEIGHT = "font-weight";
     public static final String HEIGHT = "height";

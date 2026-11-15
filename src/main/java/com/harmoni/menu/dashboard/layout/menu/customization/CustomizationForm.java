@@ -7,8 +7,7 @@ import com.harmoni.menu.dashboard.dto.CustomizationOptionDto;
 import com.harmoni.menu.dashboard.dto.CustomizationOptionTierPriceDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.dto.TierTypeDto;
-import com.harmoni.menu.dashboard.event.customization.CustomizationSaveEventListener;
-import com.harmoni.menu.dashboard.event.customization.CustomizationUpdateEventListener;
+import com.harmoni.menu.dashboard.event.customization.CustomizationPersistEventListener;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.enums.SelectionType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
@@ -50,10 +49,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,9 +68,8 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * </p>
  *
  * <p>
- * Save and update are handled by {@link CustomizationSaveEventListener} and
- * {@link CustomizationUpdateEventListener}; on success the hosting tab is
- * closed through {@link TabManager}.
+ * Save and update are handled by {@link CustomizationPersistEventListener}; on
+ * success the hosting tab is closed through {@link TabManager}.
  * </p>
  */
 @Slf4j
@@ -115,12 +110,6 @@ public class CustomizationForm extends VerticalLayout {
     private final TreeData<CustomizationOptionTreeItem> treeData = new TreeData<>();
     private TreeDataProvider<CustomizationOptionTreeItem> treeDataProvider;
 
-    /** Edited option names keyed by tree-item id. */
-    @Getter
-    private final Map<String, String> optionNames = new HashMap<>();
-    /** Edited per-tier prices keyed by tree-item id. */
-    @Getter
-    private final Map<String, Double> tierPrices = new HashMap<>();
     /** Captured on attach; used to marshal UI updates onto the UI thread. */
     @Getter
     private UI ui;
@@ -266,7 +255,7 @@ public class CustomizationForm extends VerticalLayout {
             return true;
         }
         CustomizationOptionTreeItem last = treeData.getRootItems().getLast();
-        String name = optionNames.getOrDefault(last.getId(), last.getName());
+        String name = last.getName();
         return name != null && !name.trim().isEmpty();
     }
 
@@ -301,23 +290,19 @@ public class CustomizationForm extends VerticalLayout {
             return new Span("");
         }
         TextField field = new TextField();
-        field.setValue(Optional.ofNullable(optionNames.get(item.getId())).orElse(item.getName()));
+        field.setValue(item.getName() == null ? "" : item.getName());
         field.setPlaceholder(Messages.get("label.optionName"));
-        field.addValueChangeListener(changeEvent ->
-                optionNames.put(item.getId(),
-                        changeEvent.getValue() == null ? "" : changeEvent.getValue().trim()));
+        field.addValueChangeListener(changeEvent -> item.setName(changeEvent.getValue()));
         return field;
     }
 
     private Component applyPriceNumberField(CustomizationOptionTreeItem item) {
         NumberField numberField = new NumberField();
-        numberField.setValue(Optional.ofNullable(tierPrices.get(item.getId()))
-                .orElse(item.getPrice() != null ? item.getPrice() : 0.0));
+        numberField.setValue(item.getPrice() == null ? 0.0 : item.getPrice());
         numberField.setMin(0);
         numberField.setStep(0.01);
         numberField.addValueChangeListener(changeEvent ->
-                tierPrices.put(item.getId(), changeEvent.getValue() == null ? 0.0 : changeEvent.getValue()));
-        tierPrices.putIfAbsent(item.getId(), numberField.getValue());
+                item.setPrice(changeEvent.getValue() == null ? 0.0 : changeEvent.getValue()));
         return numberField;
     }
 
@@ -361,10 +346,7 @@ public class CustomizationForm extends VerticalLayout {
         if (root == null) {
             return;
         }
-        treeData.getChildren(root).forEach(child -> tierPrices.remove(child.getId()));
         treeData.removeItem(root);
-        optionNames.remove(root.getId());
-        tierPrices.remove(root.getId());
         optionGrid.deselectAll();
         deleteOptionButton.setEnabled(false);
         treeDataProvider.refreshAll();
@@ -411,7 +393,11 @@ public class CustomizationForm extends VerticalLayout {
     private void handleTierLoadFailure(Throwable error) {
         log.error("Failed to load price tiers", error);
         if (ui != null) {
-            UiUtil.safeAccess(ui, this::ensureEditData);
+            UiUtil.safeAccess(ui, () -> {
+                ensureEditData();
+                UiUtil.show(Messages.get("notification.tierPrice.loadFailed"),
+                        NotificationVariant.LUMO_ERROR, 3000);
+            });
         }
     }
 
@@ -451,7 +437,6 @@ public class CustomizationForm extends VerticalLayout {
                 root.setTierId(firstTier.getId());
                 root.setTierName(firstTier.getName());
                 root.setPrice(price);
-                tierPrices.put(root.getId(), price);
             }
 
             Set<Integer> presentTiers = new HashSet<>();
@@ -466,16 +451,8 @@ public class CustomizationForm extends VerticalLayout {
                     return;
                 }
                 Double price = source != null ? getPriceByTier(source, tier.getId()) : 0.0;
-                CustomizationOptionTreeItem child = CustomizationOptionTreeItem.builder()
-                        .id(root.getId().concat("-tier-").concat(String.valueOf(i.incrementAndGet())))
-                        .optionId(root.getOptionId())
-                        .tierId(tier.getId())
-                        .tierName(tier.getName())
-                        .price(price)
-                        .treeLevel(TreeLevel.PARENT)
-                        .build();
-                treeData.addItems(root, child);
-                tierPrices.putIfAbsent(child.getId(), price);
+                String childId = root.getId().concat("-tier-").concat(String.valueOf(i.incrementAndGet()));
+                treeData.addItems(root, newTierChild(root, tier, price, childId));
             });
         }
     }
@@ -506,27 +483,29 @@ public class CustomizationForm extends VerticalLayout {
                 .treeLevel(TreeLevel.ROOT)
                 .build();
 
-        optionNames.put(rootId, root.getName());
         treeData.addItem(null, root);
 
         if (firstTier != null) {
             AtomicInteger i = new AtomicInteger();
             tierDtos.stream().skip(1).forEach(tier -> {
-                CustomizationOptionTreeItem child = CustomizationOptionTreeItem.builder()
-                        .id(rootId.concat("-").concat(String.valueOf(i.getAndIncrement())))
-                        .optionId(root.getOptionId())
-                        .tierId(tier.getId())
-                        .tierName(tier.getName())
-                        .price(getPriceByTier(option, tier.getId()))
-                        .treeLevel(TreeLevel.PARENT)
-                        .build();
-                treeData.addItems(root, child);
-                tierPrices.putIfAbsent(child.getId(), child.getPrice());
+                String childId = rootId.concat("-").concat(String.valueOf(i.getAndIncrement()));
+                treeData.addItems(root, newTierChild(root, tier, getPriceByTier(option, tier.getId()), childId));
             });
         }
-        tierPrices.putIfAbsent(root.getId(), root.getPrice());
         treeDataProvider.refreshAll();
         expandAllRoots();
+    }
+
+    private CustomizationOptionTreeItem newTierChild(CustomizationOptionTreeItem root, TierDto tier,
+                                                     Double price, String childId) {
+        return CustomizationOptionTreeItem.builder()
+                .id(childId)
+                .optionId(root.getOptionId())
+                .tierId(tier.getId())
+                .tierName(tier.getName())
+                .price(price)
+                .treeLevel(TreeLevel.PARENT)
+                .build();
     }
 
     private void expandAllRoots() {
@@ -546,8 +525,6 @@ public class CustomizationForm extends VerticalLayout {
 
     private void populateEditCustomization() {
         treeData.clear();
-        optionNames.clear();
-        tierPrices.clear();
         List<CustomizationOptionDto> options = editCustomization.getCustomizationOptions();
         if (!ObjectUtils.isEmpty(options)) {
             options.forEach(this::addOptionRow);
@@ -557,25 +534,29 @@ public class CustomizationForm extends VerticalLayout {
     }
 
     /**
-     * Assembles the current option grid into a list of option DTOs with their
-     * tier prices, ready for persistence.
+     * Whether any root option is still missing a name. Callers validate this
+     * before {@link #buildOptions()} so the builder itself never fails.
      *
-     * @return the collected options, or {@code null} if any root option has no name
+     * @return {@code true} when a root option name is null or blank
+     */
+    public boolean hasBlankOptionName() {
+        return treeData.getRootItems().stream()
+                .anyMatch(root -> root.getName() == null || root.getName().trim().isEmpty());
+    }
+
+    /**
+     * Assembles the current option grid into a list of option DTOs with their
+     * tier prices, ready for persistence. Assumes
+     * {@link #hasBlankOptionName()} has been checked.
+     *
+     * @return the collected options
      */
     public List<CustomizationOptionDto> buildOptions() {
         List<CustomizationOptionDto> options = new ArrayList<>();
-        if (treeData.getRootItems().isEmpty()) {
-            return options;
-        }
         for (CustomizationOptionTreeItem root : new ArrayList<>(treeData.getRootItems())) {
-            String name = optionNames.getOrDefault(root.getId(), root.getName());
-            if (name == null || name.trim().isEmpty()) {
-                return null;
-            }
-
             CustomizationOptionDto option = CustomizationOptionDto.builder()
                     .id(root.getOptionId())
-                    .name(name)
+                    .name(root.getName() == null ? "" : root.getName().trim())
                     .status(root.getStatus() != null ? root.getStatus() : ACTIVE)
                     .build();
 
@@ -583,13 +564,13 @@ public class CustomizationForm extends VerticalLayout {
             if (root.getTierId() != null) {
                 tierPriceDtos.add(CustomizationOptionTierPriceDto.builder()
                         .tierId(root.getTierId())
-                        .price(getTreeItemPrice(root))
+                        .price(priceOf(root))
                         .build());
             }
             treeData.getChildren(root).forEach(child ->
                     tierPriceDtos.add(CustomizationOptionTierPriceDto.builder()
                             .tierId(child.getTierId())
-                            .price(getTreeItemPrice(child))
+                            .price(priceOf(child))
                             .build()));
             option.setTierPrices(tierPriceDtos);
             options.add(option);
@@ -597,9 +578,8 @@ public class CustomizationForm extends VerticalLayout {
         return options;
     }
 
-    private Double getTreeItemPrice(CustomizationOptionTreeItem item) {
-        Double price = tierPrices.get(item.getId());
-        return price != null ? price : (item.getPrice() != null ? item.getPrice() : 0.0);
+    private double priceOf(CustomizationOptionTreeItem item) {
+        return item.getPrice() == null ? 0.0 : item.getPrice();
     }
 
     /**
@@ -618,10 +598,10 @@ public class CustomizationForm extends VerticalLayout {
         updateButton.addClickShortcut(Key.ENTER);
         closeButton.addClickShortcut(Key.ESCAPE);
         saveButton.addClickListener(
-                new CustomizationSaveEventListener(this, restClientMenuService)
+                new CustomizationPersistEventListener(this, restClientMenuService, false)
         );
         updateButton.addClickListener(
-                new CustomizationUpdateEventListener(this, restClientMenuService)
+                new CustomizationPersistEventListener(this, restClientMenuService, true)
         );
         closeButton.addClickListener(event -> closeTab());
     }

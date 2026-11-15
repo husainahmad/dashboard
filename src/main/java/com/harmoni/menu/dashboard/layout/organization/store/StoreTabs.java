@@ -1,14 +1,11 @@
 package com.harmoni.menu.dashboard.layout.organization.store;
 
-import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.Messages;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.Route;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,32 +17,29 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 @Route("store-tabs")
-public class StoreTabs extends VerticalLayout {
+public class StoreTabs extends AbstractListViewTabs {
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
 
-    private void renderTabSheet() {
-        TabSheet tabSheet = new TabSheet();
-        Tab browseTab = new Tab();
-        browseTab.setLabel(Messages.get("tab.storeList"));
-        StoreListView storeListView = new StoreListView(asyncRestClientOrganizationService,
-                restClientOrganizationService, accessService);
-        tabSheet.add(browseTab, storeListView);
-        tabSheet.setSizeFull();
-
-        add(PageHeader.of(Messages.Keys.PAGE_STORE_TITLE, Messages.Keys.PAGE_STORE_DESCRIPTION));
-        add(storeListView.getToolbarComponent());
-        add(tabSheet);
-        setFlexGrow(1, tabSheet);
-        setPadding(false);
-        setSizeFull();
+    @Override
+    protected String tabLabelKey() {
+        return "tab.storeList";
     }
 
     @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        renderTabSheet();
+    protected String pageTitleKey() {
+        return Messages.Keys.PAGE_STORE_TITLE;
+    }
+
+    @Override
+    protected String pageDescriptionKey() {
+        return Messages.Keys.PAGE_STORE_DESCRIPTION;
+    }
+
+    @Override
+    protected AbstractListView createListView() {
+        return new StoreListView(asyncRestClientOrganizationService, restClientOrganizationService, accessService);
     }
 }

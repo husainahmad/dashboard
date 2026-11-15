@@ -4,13 +4,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CustomizationDto;
 import com.harmoni.menu.dashboard.dto.ProductCustomizationDto;
+import com.harmoni.menu.dashboard.layout.component.PaginationBar;
 import com.harmoni.menu.dashboard.layout.util.AsyncUtil;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
@@ -56,9 +56,7 @@ public class CustomizationAddDialog extends Dialog {
     private List<CustomizationDto> currentPageItems = new ArrayList<>();
 
     private final TextField searchField = new TextField();
-    private final Text pageInfoText = new Text("");
-    private Button previousPageButton;
-    private Button nextPageButton;
+    private final PaginationBar pagination;
     private Button addSelectedButton;
     private final AtomicInteger requestGeneration = new AtomicInteger();
 
@@ -79,7 +77,7 @@ public class CustomizationAddDialog extends Dialog {
         this.asyncRestClientMenuService = asyncRestClientMenuService;
         this.brandDto = brandDto;
 
-        this.attachedIds = section.getProductCustomizations().stream()
+        this.attachedIds = section.productCustomizations().stream()
                 .map(ProductCustomizationDto::getCustomizationId)
                 .collect(Collectors.toSet());
 
@@ -87,10 +85,22 @@ public class CustomizationAddDialog extends Dialog {
         setHeaderTitle(Messages.get("label.addCustomization"));
         setWidth("920px");
 
+        pagination = new PaginationBar(() -> {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchCustomizations();
+            }
+        }, () -> {
+            if (currentPage < totalPages) {
+                currentPage++;
+                fetchCustomizations();
+            }
+        });
+
         configureSearch();
         configureGrid();
 
-        VerticalLayout dialogContent = new VerticalLayout(searchField, grid, buildPaginationFooter());
+        VerticalLayout dialogContent = new VerticalLayout(searchField, grid, pagination);
         dialogContent.setPadding(false);
         dialogContent.setSpacing(true);
         add(dialogContent);
@@ -142,10 +152,7 @@ public class CustomizationAddDialog extends Dialog {
     }
 
     private void fetchCustomizations() {
-        if (previousPageButton != null) {
-            previousPageButton.setEnabled(false);
-            nextPageButton.setEnabled(false);
-        }
+        pagination.setNavigationEnabled(false);
         int generation = requestGeneration.incrementAndGet();
         asyncRestClientMenuService.getAllCustomizationAsync(
                 result -> AsyncUtil.onUi(delegate.getUi(), () -> {
@@ -158,14 +165,14 @@ public class CustomizationAddDialog extends Dialog {
                     });
                     totalPages = result.get("page") == null ? 0 : Integer.parseInt(result.get("page").toString());
                     applyPage(list);
-                    updatePagination();
+                    pagination.update(currentPage, totalPages);
                 }),
                 throwable -> AsyncUtil.onUi(delegate.getUi(), () -> {
                     if (generation != requestGeneration.get()) {
                         return;
                     }
                     delegate.showErrorDialog(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_LOAD_FAILED));
-                    updatePagination();
+                    pagination.update(currentPage, totalPages);
                 }),
                 brandDto.getId(), currentPage, PAGE_SIZE, normalizeSearch(searchField.getValue()));
     }
@@ -187,36 +194,6 @@ public class CustomizationAddDialog extends Dialog {
     private void updateAddSelectedState() {
         if (addSelectedButton != null) {
             addSelectedButton.setEnabled(!selectedById.isEmpty());
-        }
-    }
-
-    private HorizontalLayout buildPaginationFooter() {
-        previousPageButton = new Button(Messages.get("action.previous"), event -> {
-            if (currentPage > 1) {
-                currentPage--;
-                fetchCustomizations();
-            }
-        });
-        nextPageButton = new Button(Messages.get("action.next"), event -> {
-            if (currentPage < totalPages) {
-                currentPage++;
-                fetchCustomizations();
-            }
-        });
-        HorizontalLayout footer = new HorizontalLayout(previousPageButton, pageInfoText, nextPageButton);
-        footer.addClassName("pagination");
-        footer.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
-        footer.setWidthFull();
-        footer.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        updatePagination();
-        return footer;
-    }
-
-    private void updatePagination() {
-        pageInfoText.setText(Messages.get("pagination.page", currentPage, totalPages));
-        if (previousPageButton != null) {
-            previousPageButton.setEnabled(currentPage > 1);
-            nextPageButton.setEnabled(currentPage < totalPages);
         }
     }
 

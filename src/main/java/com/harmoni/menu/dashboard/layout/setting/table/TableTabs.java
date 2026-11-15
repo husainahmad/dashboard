@@ -7,19 +7,23 @@ import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingServic
 import com.harmoni.menu.dashboard.service.data.rest.RestClientSettingService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Tab sheet for the table setting, hosting the {@link TableListView} as its
- * "All Tables" tab together with the shared toolbar. Delegates data access to
+ * Tab sheet for the table setting, hosting the floor plan and the table list.
+ * The plan is the first tab because arranging tables is the page's primary
+ * job; the list tab carries its own two-row toolbar. Delegates data access to
  * the async client and persistence to the blocking
  * {@link RestClientSettingService}.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class TableTabs extends VerticalLayout {
 
@@ -34,20 +38,50 @@ public class TableTabs extends VerticalLayout {
      */
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
-        Tab browseTab = new Tab();
-        browseTab.setLabel(Messages.get("tab.tableList"));
+        tabSheet.addClassName("table-tabs");
+
+        Tab planTab = tab(Messages.get("tab.floorPlan"), VaadinIcon.GRID.create());
+        FloorPlanView floorPlanView = new FloorPlanView(
+                asyncRestClientSettingService, restClientSettingService, accessService,
+                asyncRestClientOrganizationService);
+        tabSheet.add(planTab, floorPlanView);
+
+        Tab browseTab = tab(Messages.get("tab.tableList"), VaadinIcon.TABLE.create());
         TableListView tableListView = new TableListView(
                 asyncRestClientSettingService, restClientSettingService, accessService,
                 asyncRestClientOrganizationService);
-        tabSheet.add(browseTab, tableListView);
+        VerticalLayout listPanel = new VerticalLayout(tableListView.getToolbarComponent(), tableListView);
+        listPanel.addClassName("table-list-panel");
+        listPanel.setPadding(false);
+        listPanel.setSpacing(true);
+        listPanel.setSizeFull();
+        listPanel.setFlexGrow(1, tableListView);
+        tabSheet.add(browseTab, listPanel);
+
         tabSheet.setSizeFull();
+        tabSheet.addClassName("table-workspace");
 
         add(PageHeader.of(Messages.Keys.PAGE_TABLE_TITLE, Messages.Keys.PAGE_TABLE_DESCRIPTION));
-        add(tableListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);
         setPadding(false);
+        setSpacing(true);
         setSizeFull();
+    }
+
+    /**
+     * Builds a tab whose label sits beside an icon, so the two views of this
+     * page read as a plan and a list at a glance.
+     *
+     * @param label the tab caption
+     * @param icon  the icon shown before the caption
+     * @return the tab
+     */
+    private static Tab tab(String label, Icon icon) {
+        icon.addClassName("table-tab-icon");
+        Tab tab = new Tab(icon, new Span(label));
+        tab.addClassName("table-tab");
+        return tab;
     }
 
     @Override

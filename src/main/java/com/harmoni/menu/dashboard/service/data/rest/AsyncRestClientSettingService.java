@@ -67,4 +67,30 @@ public class AsyncRestClientSettingService extends AsyncRestClientBase {
         String uri = String.format(settingProperties.getUrl().getTableByStore(), storeId);
         makeAsyncRequest(uri, new TypeReference<List<TableDto>>() {}, callback, errorCallback);
     }
+
+    /**
+     * Asynchronously retrieves the tables on a given floor.
+     *
+     * @param callback      success callback with the list of tables
+     * @param errorCallback optional error callback for handling failures
+     * @param floorId       the floor to filter tables by
+     */
+    public void getAllTablesByFloor(AsyncRestCallback<List<TableDto>> callback,
+                                    AsyncRestCallback<Throwable> errorCallback, Integer floorId) {
+        String uri = String.format(settingProperties.getUrl().getTableByFloor(), floorId);
+        makeAsyncRequest(uri, new TypeReference<List<TableDto>>() {}, callback, errorCallback);
+    }
+
+    /**
+     * Asynchronously retrieves the floors of a given store.
+     *
+     * @param callback      success callback with the list of floors
+     * @param errorCallback optional error callback for handling failures
+     * @param storeId       the store to list floors for
+     */
+    public void getAllFloorsByStore(AsyncRestCallback<List<FloorDto>> callback,
+                                    AsyncRestCallback<Throwable> errorCallback, Integer storeId) {
+        String uri = String.format(settingProperties.getUrl().getFloorByStore(), storeId);
+        makeAsyncRequest(uri, new TypeReference<List<FloorDto>>() {}, callback, errorCallback);
+    }
 }

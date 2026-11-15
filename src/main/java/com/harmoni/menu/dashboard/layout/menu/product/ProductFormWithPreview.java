@@ -10,20 +10,11 @@ import lombok.Getter;
 /**
  * The product editor: a {@link ProductForm} beside a live {@link ProductPreview}.
  *
- * <p>Mirrors {@code PromotionFormWithPreview} so the two editors read the same way, and
- * borrows its column sizing: both columns are described by stylesheet class names rather
- * than widths set in Java. An inline {@code width} outranks every rule in the stylesheet
- * however specific, which is what used to make the single-column fallback unreachable on
- * a narrow screen.</p>
- *
- * <p>Not a route. The editor is only ever built by {@link ProductListView} inside its
- * parent {@code TabSheet}, and it needs the {@code Tab} it was opened on, which is not a
- * Spring bean, so it is constructed directly rather than autowired.</p>
- *
- * <p>The action buttons stay inside {@link ProductForm} rather than moving down here as
- * they do for promotions: the product form already lays out its own footer, and lifting
- * it out would have meant reimplementing the binder-driven Save/Update visibility that
- * form already owns.</p>
+ * <p>Column sizing lives in the stylesheet, not in Java, so the single-column
+ * fallback stays reachable on narrow screens. Not a route: the editor is built by
+ * {@link ProductListView} inside its tab and needs the tab it was opened on, so it
+ * is constructed directly. The action bar stays inside {@link ProductForm}, which
+ * owns the binder-driven Save/Update state.</p>
  */
 @Getter
 public class ProductFormWithPreview extends VerticalLayout {

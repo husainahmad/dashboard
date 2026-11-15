@@ -12,11 +12,16 @@ import com.harmoni.menu.dashboard.exception.TokenRefreshRequiredException;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import io.netty.channel.ChannelOption;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.Objects;
 
 /**
@@ -32,7 +37,22 @@ public abstract class AsyncRestClientBase implements Serializable {
     /** Formats a resource base path plus an id, e.g. {@code "/brands/5"}. */
     protected static final String URL_FORMAT = "%s/%d";
 
-    protected final transient WebClient webClient = WebClient.builder().build();
+    /**
+     * Shared client. The timeouts are what keep a dropdown from spinning
+     * forever: without a connect/response deadline a request to a stalled
+     * upstream never completes and never errors, so the combo box has nothing
+     * to render and no failure to report.
+     */
+    protected final transient WebClient webClient = buildWebClient();
+
+    private static WebClient buildWebClient() {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)
+                .responseTimeout(Duration.ofSeconds(30));
+        return WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .build();
+    }
 
     private final transient TokenRefreshService tokenRefreshService;
 
@@ -81,20 +101,11 @@ public abstract class AsyncRestClientBase implements Serializable {
      */
     protected <T> void makeAsyncRequest(String uri, TypeReference<T> typeReference, AsyncRestCallback<T> callback,
                                         AsyncRestCallback<Throwable> errorCallback) {
-        TokenRefreshService.TokenRequest<RestAPIResponse> request = accessToken -> webClient.get()
-                .uri(uri)
-                .header(HttpHeaders.AUTHORIZATION, resolveToken(accessToken))
-                .retrieve()
-                .onStatus(HttpStatus.BAD_REQUEST::equals,
-                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
-                                .map(BusinessBadRequestException::new))
-                .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals,
-                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
-                                .map(BusinessServerRequestException::new))
-                .onStatus(HttpStatus.UNAUTHORIZED::equals,
-                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
-                                .map(response -> new TokenRefreshRequiredException(response.toString())))
-                .bodyToMono(RestAPIResponse.class);
+        TokenRefreshService.TokenRequest<RestAPIResponse> request = accessToken ->
+                toBody(webClient.get()
+                        .uri(uri)
+                        .header(HttpHeaders.AUTHORIZATION, resolveToken(accessToken))
+                        .retrieve(), RestAPIResponse.class, false);
 
         tokenRefreshService.withTokenRefresh(request)
                 .subscribe(result -> {
@@ -112,10 +123,15 @@ public abstract class AsyncRestClientBase implements Serializable {
     }
 
     /**
-     * Performs a GET for {@code uri} against a service that answers with a
-     * plain body instead of the {@link RestAPIResponse} envelope, refreshing
-     * the token when needed and reporting business errors through
-     * {@code errorCallback}.
+     * Performs a GET against a service that answers with a plain body, without
+     * entering the token-refresh / global-logout flow.
+     *
+     * <p>A 401 is reported through {@code errorCallback} like any other failure,
+     * so a read-only lookup cannot tear down the whole session. That matters for
+     * the standalone customer service, which is reached through the same gateway
+     * but is not a session-critical endpoint: a rejected token there should show
+     * the page's retry feedback, not navigate the operator to the login screen.
+     * The session token is still attached when present.</p>
      *
      * @param uri           endpoint to call
      * @param responseClass expected type of the raw response body
@@ -123,28 +139,16 @@ public abstract class AsyncRestClientBase implements Serializable {
      * @param errorCallback optional error callback
      * @param <T>           payload type
      */
-    protected <T> void makeAsyncRawRequest(String uri, Class<T> responseClass,
-                                           AsyncRestCallback<T> callback,
-                                           AsyncRestCallback<Throwable> errorCallback) {
-        TokenRefreshService.TokenRequest<T> request = accessToken -> webClient.get()
-                .uri(uri)
-                .header(HttpHeaders.AUTHORIZATION, resolveToken(accessToken))
-                .retrieve()
-                .onStatus(HttpStatus.BAD_REQUEST::equals,
-                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
-                                .map(BusinessBadRequestException::new))
-                .onStatus(HttpStatus.NOT_FOUND::equals,
-                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
-                                .map(BusinessBadRequestException::new))
-                .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals,
-                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
-                                .map(BusinessServerRequestException::new))
-                .onStatus(HttpStatus.UNAUTHORIZED::equals,
-                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
-                                .map(response -> new TokenRefreshRequiredException(response.toString())))
-                .bodyToMono(responseClass);
+    protected <T> void makeAsyncRawRequestWithoutLogout(String uri, Class<T> responseClass,
+                                                        AsyncRestCallback<T> callback,
+                                                        AsyncRestCallback<Throwable> errorCallback) {
+        TokenRefreshService.TokenRequest<T> request = accessToken ->
+                toBody(webClient.get()
+                        .uri(uri)
+                        .header(HttpHeaders.AUTHORIZATION, resolveToken(accessToken))
+                        .retrieve(), responseClass, true);
 
-        tokenRefreshService.withTokenRefresh(request)
+        tokenRefreshService.withTokenRefreshWithoutLogout(request)
                 .subscribe(result -> {
                     if (result != null) {
                         callback.operationFinished(result);
@@ -155,6 +159,36 @@ public abstract class AsyncRestClientBase implements Serializable {
                         errorCallback.operationFinished(error);
                     }
                 });
+    }
+
+    /**
+     * Applies the shared error-status mapping to a retrieved response and decodes
+     * the body into {@code responseClass}.
+     *
+     * @param responseSpec          the response to post-process
+     * @param responseClass         the expected body type
+     * @param notFoundAsBadRequest  whether a 404 should map to a bad-request error
+     * @param <T>                   the body type
+     * @return a {@link Mono} with the decoded body
+     */
+    private static <T> Mono<T> toBody(WebClient.ResponseSpec responseSpec, Class<T> responseClass,
+                                      boolean notFoundAsBadRequest) {
+        WebClient.ResponseSpec spec = notFoundAsBadRequest
+                ? responseSpec.onStatus(HttpStatus.NOT_FOUND::equals,
+                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
+                                .map(BusinessBadRequestException::new))
+                : responseSpec;
+        return spec
+                .onStatus(HttpStatus.BAD_REQUEST::equals,
+                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
+                                .map(BusinessBadRequestException::new))
+                .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals,
+                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
+                                .map(BusinessServerRequestException::new))
+                .onStatus(HttpStatus.UNAUTHORIZED::equals,
+                        clientResponse -> clientResponse.createException()
+                                .map(error -> new TokenRefreshRequiredException(error.getResponseBodyAsString())))
+                .bodyToMono(responseClass);
     }
 
     /**

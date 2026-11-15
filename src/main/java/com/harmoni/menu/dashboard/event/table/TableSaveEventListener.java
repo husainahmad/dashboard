@@ -38,6 +38,9 @@ public class TableSaveEventListener implements ComponentEventListener<ClickEvent
         if (this.tableForm.getStoreBox().getValue() != null) {
             tableDto.setStoreId(this.tableForm.getStoreBox().getValue().getId());
         }
+        if (this.tableForm.getFloorBox().getValue() != null) {
+            tableDto.setFloorId(this.tableForm.getFloorBox().getValue().getId());
+        }
         restClientSettingService.createTable(tableDto)
                 .subscribe(this::accept);
     }

@@ -25,7 +25,6 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import lombok.Getter;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.ArrayList;
@@ -50,7 +49,6 @@ public class CustomizationSection {
     private final SkuSection skuSection;
     private final ProductFormDelegate delegate;
 
-    @Getter
     private final List<ProductCustomizationDto> productCustomizations = new ArrayList<>();
     private final Grid<ProductCustomizationDto> grid = new Grid<>();
 

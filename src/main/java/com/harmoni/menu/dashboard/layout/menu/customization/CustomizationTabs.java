@@ -1,15 +1,12 @@
 package com.harmoni.menu.dashboard.layout.menu.customization;
 
-import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.Messages;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.TabSheet;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -20,34 +17,31 @@ import lombok.extern.slf4j.Slf4j;
  * and places the list's toolbar above the sheet.
  * </p>
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
-public class CustomizationTabs extends VerticalLayout {
+public class CustomizationTabs extends AbstractListViewTabs {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
     private final AccessService accessService;
 
-    private void renderTabSheet() {
-        TabSheet tabSheet = new TabSheet();
-        Tab browseTab = new Tab();
-        browseTab.setLabel(Messages.get("tab.customizationList"));
-        CustomizationListView customizationListView = new CustomizationListView(
-                asyncRestClientMenuService, restClientMenuService, accessService);
-        tabSheet.add(browseTab, customizationListView);
-        tabSheet.setSizeFull();
-
-        add(PageHeader.of(Messages.Keys.PAGE_CUSTOMIZATION_TITLE, Messages.Keys.PAGE_CUSTOMIZATION_DESCRIPTION));
-        add(customizationListView.getToolbarComponent());
-        add(tabSheet);
-        setFlexGrow(1, tabSheet);
-        setPadding(false);
-        setSizeFull();
+    @Override
+    protected String tabLabelKey() {
+        return "tab.customizationList";
     }
 
     @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        renderTabSheet();
+    protected String pageTitleKey() {
+        return Messages.Keys.PAGE_CUSTOMIZATION_TITLE;
+    }
+
+    @Override
+    protected String pageDescriptionKey() {
+        return Messages.Keys.PAGE_CUSTOMIZATION_DESCRIPTION;
+    }
+
+    @Override
+    protected AbstractListView createListView() {
+        return new CustomizationListView(asyncRestClientMenuService, restClientMenuService, accessService);
     }
 }

@@ -11,6 +11,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.harmoni.menu.dashboard.util.Messages;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -22,6 +23,7 @@ import java.util.function.Function;
  * first (list) tab. Every tab created here except the fixed "All <Entity>" list tab
  * carries an inline close (X) button.
  */
+@RequiredArgsConstructor
 public final class TabManager {
 
     /** Label stored on the tab element so any TabManager view can resolve it. */
@@ -30,13 +32,12 @@ public final class TabManager {
     private final TabSheet tabSheet;
 
     /**
-     * Creates a manager bound to the given tab sheet.
-     *
-     * @param tabSheet the tab sheet this manager operates on
+     * Tab that was selected when the current form tab was opened. Closing the
+     * form returns here, so a page whose first tab is not the list (for example
+     * the table page, where the floor plan comes first) still lands back on the
+     * list the operator came from.
      */
-    public TabManager(TabSheet tabSheet) {
-        this.tabSheet = tabSheet;
-    }
+    private Tab returnTab;
 
     /**
      * Finds the first tab whose stored label equals the given one.
@@ -94,15 +95,20 @@ public final class TabManager {
                     return existing;
                 })
                 .orElseGet(() -> {
+                    Tab previous = tabSheet.getSelectedTab();
                     Tab tab = createClosableTab(label);
                     tabSheet.add(tab, contentFactory.apply(tab));
+                    if (previous != null && previous != tab) {
+                        returnTab = previous;
+                    }
                     tabSheet.setSelectedTab(tab);
                     return tab;
                 });
     }
 
     /**
-     * Closes the given tab and selects the first (list) tab if any remain.
+     * Closes the given tab and selects the tab that was active before it was
+     * opened, falling back to the first (list) tab when that tab is gone.
      *
      * @param tab the tab to close; ignored when {@code null} or not present
      */
@@ -111,7 +117,9 @@ public final class TabManager {
             return;
         }
         tabSheet.remove(tab);
-        if (tabSheet.getTabCount() > 0) {
+        if (returnTab != null && returnTab != tab && indexOf(returnTab) >= 0) {
+            tabSheet.setSelectedTab(returnTab);
+        } else if (tabSheet.getTabCount() > 0) {
             tabSheet.setSelectedIndex(0);
         }
     }

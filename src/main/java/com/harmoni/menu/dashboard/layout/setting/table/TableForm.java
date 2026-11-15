@@ -5,19 +5,23 @@ import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ChainDto;
+import com.harmoni.menu.dashboard.dto.FloorDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.TableDto;
 import com.harmoni.menu.dashboard.event.table.TableSaveEventListener;
 import com.harmoni.menu.dashboard.event.table.TableUpdateEventListener;
+import com.harmoni.menu.dashboard.layout.component.StoreCascade;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientSettingService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
@@ -25,7 +29,14 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.HasValidation;
 import com.vaadin.flow.component.textfield.IntegerField;
@@ -38,10 +49,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -55,8 +64,6 @@ import java.util.Objects;
 @Slf4j
 public class TableForm extends FormLayout {
 
-    private static final int PAGE_SIZE = 1000;
-
     Registration broadcasterRegistration;
 
     /** Binder that drives field validation and reads/writes the {@link TableDto}. */
@@ -65,6 +72,12 @@ public class TableForm extends FormLayout {
 
     /** Only true while saving, so the binder only shows errors after Save/Update. */
     private transient boolean saveValidationInProgress;
+
+    /** True while the edit bean is pushed into the fields, so option reloads do not clear them. */
+    private transient boolean populatingBean;
+
+    /** Guards the one-time layout build; re-attaching only re-registers the broadcaster. */
+    private boolean rendered;
 
     /** Text field holding the table name. */
     @Getter
@@ -86,9 +99,19 @@ public class TableForm extends FormLayout {
     @Getter
     ComboBox<StoreDto> storeBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_STORE));
 
+    /** Floor the table stands on; its id is sent in the save/update payload. */
+    @Getter
+    ComboBox<FloorDto> floorBox = new ComboBox<>(Messages.get("label.floor"));
+
     Button saveButton = new Button(Messages.get(Messages.Keys.ACTION_SAVE));
     Button closeButton = new Button(Messages.get(Messages.Keys.ACTION_CANCEL));
     Button updateButton = UiUtil.updateButton();
+
+    /** Live preview parts, updated as the operator edits the form. */
+    private final Div previewCard = new Div();
+    private final Span previewName = new Span();
+    private final Span previewCapacity = new Span();
+    private final Span previewFloor = new Span();
 
     private final TabManager tabManager;
     private final Tab currentTab;
@@ -107,6 +130,9 @@ public class TableForm extends FormLayout {
     /** Organization client used to load the brand and store options. */
     private final transient AsyncRestClientOrganizationService asyncRestClientOrganizationService;
 
+    /** Settings client used to load the floor options. */
+    private final transient AsyncRestClientSettingService asyncRestClientSettingService;
+
     /** Access service resolving the session store/brand used as default selection. */
     private final transient AccessService accessService;
 
@@ -114,6 +140,10 @@ public class TableForm extends FormLayout {
     protected void onAttach(AttachEvent attachEvent) {
         this.ui = attachEvent.getUI();
         broadcasterRegistration = Broadcaster.register(this::receiptBroadcast);
+        if (rendered) {
+            return;
+        }
+        rendered = true;
         binder.setFieldsValidationStatusChangeListenerEnabled(false);
         binder.setValidationStatusHandler(this::handleValidationStatus);
         addValidation();
@@ -124,29 +154,163 @@ public class TableForm extends FormLayout {
 
         configureBrandAndStore();
 
-        add(brandBox);
-        add(chainBox);
-        add(storeBox);
-        add(nameField);
-        add(capacityField);
+        addClassName("table-form");
+        setResponsiveSteps(new ResponsiveStep("0", 1), new ResponsiveStep("720px", 2));
+
+        VerticalLayout locationSection = section(null, null,
+                brandBox, chainBox, storeBox, floorBox);
+        VerticalLayout detailsSection = section(Messages.get("table.section.details"),
+                null, nameField, capacityField);
+
+        VerticalLayout previewBlock = previewSection();
+
+        add(locationSection, detailsSection, previewBlock);
+        setColspan(locationSection, 2);
+        setColspan(detailsSection, 2);
+        setColspan(previewBlock, 2);
+
         binder.bindInstanceFields(this);
         restructureButton(formAction);
 
         if (formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(tableDto)) {
-            binder.readBean(tableDto);
+            // A ComboBox rejects a non-null value while it has no items, so seed the
+            // current store/floor first; the async option load replaces them later.
+            seedSelectionItems();
+            populatingBean = true;
+            try {
+                binder.readBean(tableDto);
+            } finally {
+                populatingBean = false;
+            }
             capacityField.setReadOnly(false);
             capacityField.setEnabled(true);
             log.info("TableForm [{}] capacity enabled={} readOnly={}", formAction,
                     capacityField.isEnabled(), capacityField.isReadOnly());
         }
 
+        nameField.addValueChangeListener(event -> updatePreview());
+        capacityField.addValueChangeListener(event -> updatePreview());
+        floorBox.addValueChangeListener(event -> updatePreview());
         addFooterButtons();
+        updatePreview();
     }
 
     @Override
     protected void onDetach(DetachEvent detachEvent) {
         broadcasterRegistration.remove();
         broadcasterRegistration = null;
+    }
+
+    /**
+     * Puts the edit target's store and floor into their combo boxes before the
+     * bean is read. A {@code ComboBox} refuses a non-null value while it has no
+     * items, and the async option load has not run yet at attach time, so
+     * without this the read aborts and the form stays empty.
+     */
+    private void seedSelectionItems() {
+        if (ObjectUtils.isNotEmpty(tableDto.getStoreDto())) {
+            storeBox.setItems(tableDto.getStoreDto());
+        }
+        if (ObjectUtils.isNotEmpty(tableDto.getFloorDto())) {
+            floorBox.setItems(tableDto.getFloorDto());
+        }
+    }
+
+    /**
+     * Builds one labelled group of fields for the form. The heading and caption
+     * are optional, so a section can also be used for fields that need no
+     * introduction.
+     *
+     * @param title   the section heading, or {@code null} to omit it
+     * @param caption the explanatory line under the heading, or {@code null}
+     * @param fields  the fields belonging to the section
+     * @return the section layout
+     */
+    private static VerticalLayout section(String title, String caption, Component... fields) {
+        FormLayout fieldLayout = new FormLayout(fields);
+        fieldLayout.addClassName("form-section-fields");
+        fieldLayout.setResponsiveSteps(new ResponsiveStep("0", 1),
+                new ResponsiveStep("420px", 2));
+        fieldLayout.setWidthFull();
+
+        VerticalLayout section = new VerticalLayout();
+        if (title != null) {
+            H3 heading = new H3(title);
+            heading.addClassName("form-section-title");
+            section.add(heading);
+        }
+        if (caption != null) {
+            Span note = new Span(caption);
+            note.addClassName("form-section-caption");
+            section.add(note);
+        }
+        section.add(fieldLayout);
+        section.addClassName("form-section-card");
+        section.setPadding(false);
+        section.setSpacing(false);
+        section.setWidthFull();
+        return section;
+    }
+
+    /**
+     * Builds the live preview block: a miniature table with the name and the
+     * two values that identify it at the cashier. It sits under the fields so
+     * the operator can confirm the result before saving without leaving the
+     * form.
+     *
+     * @return the preview section
+     */
+    private VerticalLayout previewSection() {
+        Icon shapeIcon = VaadinIcon.TABLE.create();
+        shapeIcon.addClassName("table-preview-shape-icon");
+        Div shape = new Div(shapeIcon);
+        shape.addClassName("table-preview-shape");
+        String shapeName = tableDto == null || tableDto.getShape() == null
+                ? "SQUARE" : tableDto.getShape().toUpperCase();
+        shape.addClassName("shape-" + shapeName);
+
+        previewName.addClassName("table-preview-name");
+        previewCapacity.addClassName("table-preview-chip");
+        previewFloor.addClassName("table-preview-chip");
+
+        HorizontalLayout meta = new HorizontalLayout(previewCapacity, previewFloor);
+        meta.addClassName("table-preview-meta");
+        meta.setPadding(false);
+        meta.setSpacing(true);
+        meta.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        previewCard.add(shape, previewName, meta);
+        previewCard.addClassName("table-preview-card");
+
+        H3 heading = new H3(Messages.get("table.form.previewTitle"));
+        heading.addClassName("form-section-title");
+        Span note = new Span(Messages.get("table.form.previewCaption"));
+        note.addClassName("form-section-caption");
+
+        VerticalLayout section = new VerticalLayout(heading, note, previewCard);
+        section.addClassName("form-section-card");
+        section.addClassName("table-preview-section");
+        section.setPadding(false);
+        section.setSpacing(false);
+        section.setWidthFull();
+        return section;
+    }
+
+    /**
+     * Mirrors the current name, capacity and floor into the preview card.
+     */
+    private void updatePreview() {
+        String name = nameField.getValue();
+        previewName.setText(name == null || name.isBlank()
+                ? Messages.get("table.form.previewUnnamed") : name);
+
+        Integer capacity = capacityField.getValue();
+        previewCapacity.setText(capacity == null
+                ? Messages.get("table.form.previewNoCapacity") : Messages.get("label.seats", capacity));
+
+        FloorDto floor = floorBox.getValue();
+        previewFloor.setText(floor == null || floor.getName() == null || floor.getName().isBlank()
+                ? Messages.get("table.form.previewNoFloor") : floor.getName());
     }
 
     /**
@@ -168,6 +332,10 @@ public class TableForm extends FormLayout {
         binder.forField(storeBox)
                 .withValidator(value -> value != null, Messages.get("validation.store.required"))
                 .bind(TableDto::getStoreDto, TableDto::setStoreDto);
+
+        binder.forField(floorBox)
+                .withValidator(value -> value != null, Messages.get("validation.floor.required"))
+                .bind(TableDto::getFloorDto, TableDto::setFloorDto);
 
         binder.forField(nameField)
                 .withValidator(value -> {
@@ -229,163 +397,83 @@ public class TableForm extends FormLayout {
     }
 
     private void configureBrandAndStore() {
-        brandBox.setItemLabelGenerator(BrandDto::getName);
-        brandBox.setPlaceholder(Messages.get(Messages.Keys.PLACEHOLDER_SELECT_BRAND));
-        brandBox.setAllowCustomValue(false);
+        floorBox.setItemLabelGenerator(FloorDto::getName);
+        floorBox.setPlaceholder(Messages.get("label.floor"));
+        floorBox.setAllowCustomValue(false);
 
-        chainBox.setItemLabelGenerator(ChainDto::getName);
-        chainBox.setPlaceholder(Messages.get(Messages.Keys.LABEL_CHAIN));
-        chainBox.setAllowCustomValue(false);
-
-        storeBox.setItemLabelGenerator(StoreDto::getName);
-        storeBox.setPlaceholder(Messages.get("placeholder.selectStore"));
-        storeBox.setAllowCustomValue(false);
-
-        brandBox.addValueChangeListener(event -> loadChains());
-        chainBox.addValueChangeListener(event -> loadStores());
-        loadBrands();
+        StoreCascade cascade = new StoreCascade(asyncRestClientOrganizationService, () -> ui,
+                brandBox, chainBox, storeBox, cascadeDefaults(), false);
+        storeBox.addValueChangeListener(event -> {
+            if (!populatingBean) {
+                loadFloors();
+            }
+        });
+        cascade.load();
     }
 
-    private void loadBrands() {
-        asyncRestClientOrganizationService.getAllBrandAsync(
-                result -> UiUtil.safeAccess(ui, () -> {
-                    if (ObjectUtils.isEmpty(result)) {
-                        return;
-                    }
-                    brandBox.setItems(result);
-                    selectDefaultBrand();
-                }),
-                error -> UiUtil.safeAccess(ui, () ->
-                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_BRAND_LOAD_FAILED), this::loadBrands)));
-    }
+    /**
+     * Resolves the brand, chain and store to preselect: the edit target's store
+     * when editing, otherwise the session store.
+     *
+     * @return the ids to preselect in the cascade
+     */
+    private StoreCascade.Defaults cascadeDefaults() {
+        boolean editing = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(tableDto);
+        ChainDto chain = editing && tableDto.getStoreDto() != null
+                ? tableDto.getStoreDto().getChainDto() : null;
+        Integer brandId = chain != null ? chain.getBrandId() : accessService.getBrandId();
+        Integer chainId = chain != null ? chain.getId() : accessService.getChainId();
 
-    private void selectDefaultBrand() {
-        Integer brandId = resolveDefaultBrandId();
-        if (ObjectUtils.isEmpty(brandId)) {
-            return;
-        }
-        brandBox.getListDataView().getItems()
-                .filter(brand -> Objects.equals(brand.getId(), brandId))
-                .findFirst()
-                .ifPresent(brandBox::setValue);
-    }
-
-    private Integer resolveDefaultBrandId() {
-        if (formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(tableDto)
-                && ObjectUtils.isNotEmpty(tableDto.getStoreDto())
-                && ObjectUtils.isNotEmpty(tableDto.getStoreDto().getChainDto())) {
-            return tableDto.getStoreDto().getChainDto().getBrandId();
-        }
-        StoreDto sessionStore = accessService.getUserDetail().getStoreDto();
-        if (ObjectUtils.isNotEmpty(sessionStore) && ObjectUtils.isNotEmpty(sessionStore.getChainDto())) {
-            return sessionStore.getChainDto().getBrandId();
-        }
-        return null;
-    }
-
-    private void loadChains() {
-        BrandDto brand = brandBox.getValue();
-        chainBox.setItems(Collections.emptyList());
-        chainBox.clear();
-        storeBox.setItems(Collections.emptyList());
-        storeBox.clear();
-        if (brand == null || brand.getId() == null) {
-            return;
-        }
-        asyncRestClientOrganizationService.getAllChainByBrandIdAsync(
-                result -> UiUtil.safeAccess(ui, () -> {
-                    if (ObjectUtils.isEmpty(result)) {
-                        return;
-                    }
-                    chainBox.setItems(result);
-                    selectDefaultChain();
-                }),
-                error -> UiUtil.safeAccess(ui, () ->
-                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_CHAIN_LOAD_FAILED), this::loadChains)),
-                brand.getId());
-    }
-
-    private void selectDefaultChain() {
-        Integer chainId = resolveDefaultChainId();
-        if (ObjectUtils.isEmpty(chainId)) {
-            return;
-        }
-        chainBox.getListDataView().getItems()
-                .filter(chain -> Objects.equals(chain.getId(), chainId))
-                .findFirst()
-                .ifPresent(chainBox::setValue);
-    }
-
-    private Integer resolveDefaultChainId() {
-        if (formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(tableDto)
-                && ObjectUtils.isNotEmpty(tableDto.getStoreDto())
-                && ObjectUtils.isNotEmpty(tableDto.getStoreDto().getChainDto())) {
-            return tableDto.getStoreDto().getChainDto().getId();
-        }
-        StoreDto sessionStore = accessService.getUserDetail().getStoreDto();
-        if (ObjectUtils.isNotEmpty(sessionStore) && ObjectUtils.isNotEmpty(sessionStore.getChainDto())) {
-            return sessionStore.getChainDto().getId();
-        }
-        return null;
-    }
-
-    private void loadStores() {
-        ChainDto chain = chainBox.getValue();
-        storeBox.setItems(Collections.emptyList());
-        storeBox.clear();
-        if (chain == null || chain.getId() == null) {
-            return;
-        }
-        asyncRestClientOrganizationService.getAllStoreAsync(
-                result -> UiUtil.safeAccess(ui, () -> {
-                    storeBox.setItems(extractStores(result));
-                    restoreStoreSelection();
-                }),
-                error -> UiUtil.safeAccess(ui, () ->
-                        UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_STORE_LOAD_FAILED), this::loadStores)),
-                chain.getId(), 1, PAGE_SIZE, "");
-    }
-
-    private List<StoreDto> extractStores(Map<String, Object> result) {
-        List<StoreDto> stores = new ArrayList<>();
-        if (result == null || !(result.get("data") instanceof List<?> dataList)) {
-            return stores;
-        }
-        for (Object row : dataList) {
-            StoreDto store = ObjectUtil.convertValueToObject(row, StoreDto.class);
-            if (store != null) {
-                stores.add(store);
+        Integer storeId = null;
+        if (editing) {
+            StoreDto store = tableDto.getStoreDto();
+            if (store != null && store.getId() != null) {
+                storeId = store.getId();
+            } else if (tableDto.getStoreId() != null) {
+                storeId = tableDto.getStoreId();
             }
         }
-        return stores;
+        if (storeId == null) {
+            storeId = accessService.getStoreId();
+        }
+        return new StoreCascade.Defaults(brandId, chainId, storeId);
     }
 
-    private void restoreStoreSelection() {
-        Integer storeId = resolveDefaultStoreId();
-        if (ObjectUtils.isEmpty(storeId)) {
+    /**
+     * Loads the floors of the currently selected store. The edit target's floor
+     * is restored when it is still present in the list.
+     */
+    private void loadFloors() {
+        floorBox.setItems(Collections.emptyList());
+        floorBox.clear();
+        StoreDto store = storeBox.getValue();
+        if (store == null || store.getId() == null) {
             return;
         }
-        storeBox.getListDataView().getItems()
-                .filter(store -> Objects.equals(store.getId(), storeId))
-                .findFirst()
-                .ifPresent(storeBox::setValue);
+        asyncRestClientSettingService.getAllFloorsByStore(
+                result -> UiUtil.safeAccess(ui, () -> {
+                    List<FloorDto> floors = result == null ? Collections.emptyList() : result;
+                    floorBox.setItems(floors);
+                    selectDefaultFloor(floors);
+                }),
+                error -> UiUtil.safeAccess(ui, () ->
+                        UiUtil.errorWithRetry(Messages.get("notification.floor.loadFailed"), this::loadFloors)),
+                store.getId());
     }
 
-    private Integer resolveDefaultStoreId() {
-        if (formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(tableDto)) {
-            if (ObjectUtils.isNotEmpty(tableDto.getStoreDto())
-                    && ObjectUtils.isNotEmpty(tableDto.getStoreDto().getId())) {
-                return tableDto.getStoreDto().getId();
-            }
-            if (ObjectUtils.isNotEmpty(tableDto.getStoreId())) {
-                return tableDto.getStoreId();
-            }
+    private void selectDefaultFloor(List<FloorDto> floors) {
+        Integer floorId = Objects.nonNull(tableDto) ? tableDto.getFloorId() : null;
+        if (floorId == null && Objects.nonNull(tableDto) && tableDto.getFloorDto() != null) {
+            floorId = tableDto.getFloorDto().getId();
         }
-        StoreDto sessionStore = accessService.getUserDetail().getStoreDto();
-        if (ObjectUtils.isNotEmpty(sessionStore)) {
-            return sessionStore.getId();
+        if (floorId == null) {
+            return;
         }
-        return null;
+        Integer wanted = floorId;
+        floors.stream()
+                .filter(floor -> Objects.equals(floor.getId(), wanted))
+                .findFirst()
+                .ifPresent(floorBox::setValue);
     }
 
     private void addFooterButtons() {
@@ -401,9 +489,13 @@ public class TableForm extends FormLayout {
         saveButton.addClickListener(new TableSaveEventListener(this, restClientSettingService));
         closeButton.addClickListener(event -> close());
 
-        HorizontalLayout footer = new HorizontalLayout(saveButton, updateButton, closeButton);
+        HorizontalLayout footer = new HorizontalLayout(closeButton, saveButton, updateButton);
+        footer.addClassName("table-form-actions");
         footer.setWidthFull();
+        footer.setAlignItems(FlexComponent.Alignment.CENTER);
+        footer.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         add(footer);
+        setColspan(footer, 2);
     }
 
     /**

@@ -28,6 +28,8 @@ public class UrlProperties implements Serializable {
     private String brand;
     private String chain;
     private String chainByBrand;
+    private String organizationTree;
+    private String imageUpload;
     private String tier;
     private String product;
     private String service;
@@ -37,4 +39,5 @@ public class UrlProperties implements Serializable {
     private transient ProductProperties products;
     private transient UserProperties users;
     private transient PromotionProperties promotions;
+    private transient KitchenProperties kitchen;
 }

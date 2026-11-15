@@ -1,12 +1,9 @@
 package com.harmoni.menu.dashboard.layout.customer;
 
-import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientCustomerService;
 import com.harmoni.menu.dashboard.util.Messages;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.router.Route;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,33 +16,27 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 @Route("customer-tabs")
-public class CustomerTabs extends VerticalLayout {
+public class CustomerTabs extends AbstractListViewTabs {
 
     private final AsyncRestClientCustomerService asyncRestClientCustomerService;
 
-    /**
-     * Renders the tab sheet with the "All Customers" tab and the
-     * {@link CustomerListView}. Adds the toolbar above the tab sheet.
-     */
-    private void renderTabSheet() {
-        TabSheet tabSheet = new TabSheet();
-        Tab browseTab = new Tab();
-        browseTab.setLabel(Messages.get("tab.customerList"));
-        CustomerListView customerListView = new CustomerListView(asyncRestClientCustomerService);
-        tabSheet.add(browseTab, customerListView);
-        tabSheet.setSizeFull();
-
-        add(PageHeader.of(Messages.Keys.PAGE_CUSTOMER_TITLE, Messages.Keys.PAGE_CUSTOMER_DESCRIPTION));
-        add(customerListView.getToolbarComponent());
-        add(tabSheet);
-        setFlexGrow(1, tabSheet);
-        setPadding(false);
-        setSizeFull();
+    @Override
+    protected String tabLabelKey() {
+        return "tab.customerList";
     }
 
     @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        renderTabSheet();
+    protected String pageTitleKey() {
+        return Messages.Keys.PAGE_CUSTOMER_TITLE;
+    }
+
+    @Override
+    protected String pageDescriptionKey() {
+        return Messages.Keys.PAGE_CUSTOMER_DESCRIPTION;
+    }
+
+    @Override
+    protected AbstractListView createListView() {
+        return new CustomerListView(asyncRestClientCustomerService);
     }
 }

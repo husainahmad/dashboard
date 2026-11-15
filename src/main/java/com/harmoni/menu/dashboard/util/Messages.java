@@ -53,8 +53,6 @@ public class Messages implements ApplicationContextAware {
         public static final String ACTION_UPDATE = "action.update";
         public static final String ACTION_VIEW_DETAIL = "action.viewDetail";
         public static final String ACTION_VIEW_NAME = "action.view.name";
-        public static final String DASHBOARD_PRODUCT = "dashboard.product";
-        public static final String DASHBOARD_SKU = "dashboard.sku";
         public static final String DIALOG_CONFIRM_TITLE = "dialog.confirmTitle";
         public static final String GRID_HEADER_ACTION = "grid.header.action";
         public static final String GRID_HEADER_ACTIVE = "grid.header.active";
@@ -98,7 +96,6 @@ public class Messages implements ApplicationContextAware {
         public static final String NOTIFICATION_CUSTOMIZATION_LOAD_FAILED = "notification.customization.loadFailed";
         public static final String NOTIFICATION_CUSTOMIZATION_REMOVED = "notification.customization.removed";
         public static final String NOTIFICATION_CUSTOMIZATION_UPDATED = "notification.customization.updated";
-        public static final String NOTIFICATION_CUSTOMER_LOAD_FAILED = "notification.customer.loadFailed";
         public static final String NOTIFICATION_CUSTOMER_NOT_FOUND = "notification.customer.notFound";
         public static final String NOTIFICATION_LOGIN_FAILED = "notification.login.failed";
         public static final String NOTIFICATION_PRODUCT_LOAD_FAILED = "notification.product.loadFailed";

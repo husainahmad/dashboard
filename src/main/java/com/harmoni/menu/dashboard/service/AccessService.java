@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.service;
 
+import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +25,45 @@ public class AccessService implements Serializable {
      */
     public UserDto getUserDetail() {
         return VaadinSessionUtil.getAttribute(VaadinSessionUtil.USER_DETAIL, UserDto.class);
+    }
+
+    /**
+     * Returns the store the logged-in user belongs to.
+     *
+     * @return the session {@link StoreDto}, or {@code null} when not logged in
+     */
+    public StoreDto getStore() {
+        UserDto user = getUserDetail();
+        return user == null ? null : user.getStoreDto();
+    }
+
+    /**
+     * Returns the id of the store the logged-in user belongs to.
+     *
+     * @return the session store id, or {@code null} when not logged in
+     */
+    public Integer getStoreId() {
+        StoreDto store = getStore();
+        return store == null ? null : store.getId();
+    }
+
+    /**
+     * Returns the id of the chain the logged-in user's store belongs to.
+     *
+     * @return the session chain id, or {@code null} when not logged in
+     */
+    public Integer getChainId() {
+        StoreDto store = getStore();
+        return store == null || store.getChainDto() == null ? null : store.getChainDto().getId();
+    }
+
+    /**
+     * Returns the id of the brand the logged-in user's store belongs to.
+     *
+     * @return the session brand id, or {@code null} when not logged in
+     */
+    public Integer getBrandId() {
+        StoreDto store = getStore();
+        return store == null || store.getChainDto() == null ? null : store.getChainDto().getBrandId();
     }
 }

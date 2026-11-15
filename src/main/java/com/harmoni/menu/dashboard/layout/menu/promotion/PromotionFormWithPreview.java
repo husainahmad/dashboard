@@ -1,9 +1,8 @@
 package com.harmoni.menu.dashboard.layout.menu.promotion;
 
 import com.harmoni.menu.dashboard.dto.PromotionDto;
-import com.harmoni.menu.dashboard.event.promotion.PromotionSaveEventListener;
+import com.harmoni.menu.dashboard.event.promotion.PromotionPersistEventListener;
 import com.harmoni.menu.dashboard.event.promotion.PromotionStatusEventListener;
-import com.harmoni.menu.dashboard.event.promotion.PromotionUpdateEventListener;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -185,8 +184,8 @@ public class PromotionFormWithPreview extends VerticalLayout {
         statusButton.addClickShortcut(Key.ENTER);
         closeButton.addClickShortcut(Key.ESCAPE);
 
-        saveButton.addClickListener(new PromotionSaveEventListener(promotionForm, restClientPromotionService));
-        updateButton.addClickListener(new PromotionUpdateEventListener(promotionForm, restClientPromotionService));
+        saveButton.addClickListener(new PromotionPersistEventListener(promotionForm, restClientPromotionService, false));
+        updateButton.addClickListener(new PromotionPersistEventListener(promotionForm, restClientPromotionService, true));
         statusButton.addClickListener(new PromotionStatusEventListener(promotionForm, restClientPromotionService));
         closeButton.addClickListener(event -> close());
 

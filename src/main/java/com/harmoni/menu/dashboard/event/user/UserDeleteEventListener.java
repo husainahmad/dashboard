@@ -10,14 +10,14 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Called when the user clicks Delete on the user form: shows a confirmation
  * dialog and, once confirmed, removes the user via the REST API and broadcasts
  * the result so every open grid refreshes.
  */
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserDeleteEventListener implements ComponentEventListener<ClickEvent<Button>>,
         BroadcastMessageService {
 
@@ -49,6 +49,6 @@ public class UserDeleteEventListener implements ComponentEventListener<ClickEven
     }
 
     private void accept(RestAPIResponse restAPIResponse) {
-        broadcastMessage(BroadcastMessage.STORE_UPDATED_SUCCESS, restAPIResponse);
+        broadcastMessage(BroadcastMessage.USER_UPDATED_SUCCESS, restAPIResponse);
     }
 }

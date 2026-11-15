@@ -222,7 +222,7 @@ public class ChainListView extends AbstractListView {
                     String tabLabel = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(chainDto.getName())
                             ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, chainDto.getName()) : Messages.get(Messages.Keys.ACTION_NEW_CHAIN);
                     tabManager.addOrSelect(tabLabel, tab -> new ChainForm(this.restClientOrganizationService,
-                            this.asyncRestClientOrganizationService, tabManager, tab, formAction, chainDto, brands));
+                            tabManager, tab, formAction, chainDto, brands));
                 }));
     }
 
