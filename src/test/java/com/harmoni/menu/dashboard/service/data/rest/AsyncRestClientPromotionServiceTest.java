@@ -29,7 +29,7 @@ class AsyncRestClientPromotionServiceTest {
     void setUp() {
         PromotionProperties promotions = new PromotionProperties();
         promotions.setPromotion(BASE_URL);
-        promotions.setQuery(BASE_URL + "?page=%d&size=%d&status=%s&promotionType=%s&search=%s");
+        promotions.setQuery(BASE_URL + "?page=%d&size=%d&status=%s&promotionType=%s&search=%s&brandId=%s");
         promotions.setRedeemable(BASE_URL + "/redeemable");
         promotions.setByCode(BASE_URL + "/code/%s");
         promotions.setStatus(BASE_URL + "/%d/status");
@@ -43,7 +43,7 @@ class AsyncRestClientPromotionServiceTest {
 
     @Test
     void buildPromotionUri_keepsPagingAndEveryFilter() {
-        String uri = client.buildPromotionUri(2, 15, "ACTIVE", "PERCENTAGE", "happy");
+        String uri = client.buildPromotionUri(2, 15, "ACTIVE", "PERCENTAGE", "happy", 7);
 
         assertTrue(uri.startsWith(BASE_URL), uri);
         assertTrue(uri.contains("page=2"), uri);
@@ -51,21 +51,22 @@ class AsyncRestClientPromotionServiceTest {
         assertTrue(uri.contains("status=ACTIVE"), uri);
         assertTrue(uri.contains("promotionType=PERCENTAGE"), uri);
         assertTrue(uri.contains("search=happy"), uri);
+        assertTrue(uri.contains("brandId=7"), uri);
     }
 
     @Test
     void buildPromotionUri_sendsUnsetFiltersBlankSoTheyStayUnfiltered() {
-        String uri = client.buildPromotionUri(1, 15, null, null, null);
+        String uri = client.buildPromotionUri(1, 15, null, null, null, null);
 
         assertTrue(uri.contains("status=&"), uri);
         assertTrue(uri.contains("promotionType=&"), uri);
-        assertTrue(uri.endsWith("search="), uri);
+        assertTrue(uri.endsWith("brandId="), uri);
     }
 
     @Test
     void buildPromotionUri_treatsBlankSearchAsUnfiltered() {
-        assertEquals(client.buildPromotionUri(1, 15, null, null, null),
-                client.buildPromotionUri(1, 15, null, null, ""));
+        assertEquals(client.buildPromotionUri(1, 15, null, null, null, null),
+                client.buildPromotionUri(1, 15, null, null, "", null));
     }
 
     @Test

@@ -181,7 +181,7 @@ public class ProductForm extends ProductFormLayout implements ProductFormDelegat
         loading = true;
 
         if (context != null && context.tabManager() != null) {
-            context.tabManager().setCloseGuard(tab -> {
+            context.tabManager().setCloseGuard(context.productTab(), tab -> {
                 if (!dirty) {
                     return true;
                 }

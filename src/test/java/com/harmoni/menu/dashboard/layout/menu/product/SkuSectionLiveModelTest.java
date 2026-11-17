@@ -156,7 +156,7 @@ class SkuSectionLiveModelTest {
         }
 
         @Override
-        public void showErrorDialog(String message) {
+        public void showError(String message) {
             errors++;
         }
 

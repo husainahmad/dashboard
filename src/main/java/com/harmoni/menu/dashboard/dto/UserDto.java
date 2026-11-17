@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Represents an application user who signs in to the dashboard.
@@ -20,9 +22,29 @@ public class UserDto {
 
     private Integer id;
 
-    /** The id of the linked authentication record. */
+    /** Legacy role id kept for backward compatibility. */
 
     private Integer authId;
+
+    /** The id of the linked authentication user record. */
+
+    private Long authUserId;
+
+    /** The roles assigned to the user in the authentication service. */
+
+    private Set<Long> roleIds;
+
+    /** Scoped role assignments. */
+
+    private List<AssignmentDto> assignments;
+
+    /** Human-readable employee code. */
+
+    private String employeeCode;
+
+    /** Employee status: ACTIVE or INACTIVE. */
+
+    private String status;
 
     /** The login username of the user. */
 

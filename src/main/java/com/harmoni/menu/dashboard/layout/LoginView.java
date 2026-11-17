@@ -2,12 +2,15 @@ package com.harmoni.menu.dashboard.layout;
 
 import com.harmoni.menu.dashboard.dto.LoginDto;
 import com.harmoni.menu.dashboard.event.user.LoginEventListener;
-import com.harmoni.menu.dashboard.service.data.rest.RestClientLoginService;
+import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.LanguageSelector;
 import com.harmoni.menu.dashboard.layout.util.ThemeUtil;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientLoginService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientRbacService;
 import com.harmoni.menu.dashboard.util.Messages;
-import com.harmoni.menu.dashboard.layout.util.Css;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -26,19 +29,39 @@ import lombok.RequiredArgsConstructor;
 /**
  * The sign-in screen at {@code /login}. Shows the POSHarmoni branding next to
  * a username/password form and delegates authentication to
- * {@link RestClientLoginService}. The layout is re-drawn entirely on every
- * attach to apply the persisted theme, so a browser reload rebuilds the page.
+ * {@link LoginEventListener}. The layout is re-drawn on every attach to apply
+ * the persisted theme, while the click listener is wired once on first attach
+ * so re-attaching cannot register it twice.
  */
-@RequiredArgsConstructor
 @Route(value = "login")
+@RequiredArgsConstructor
 public class LoginView extends VerticalLayout {
 
     private final RestClientLoginService restClientLoginService;
+    private final RestClientRbacService restClientRbacService;
+    private final AuthorizationService authorizationService;
 
-    TextField usernameField = new TextField(Messages.get("label.username"));
-    PasswordField passwordField = new PasswordField(Messages.get(Messages.Keys.LABEL_PASSWORD));
-    Button loginButton = new Button(Messages.get("action.signIn"));
-    Span messageSpan = new Span("");
+    private final TextField usernameField = new TextField(Messages.get("label.username"));
+    private final PasswordField passwordField = new PasswordField(Messages.get(Messages.Keys.LABEL_PASSWORD));
+    private final Button loginButton = new Button(Messages.get("action.signIn"));
+    private final Span messageSpan = new Span();
+
+    private boolean loginWired;
+
+    /**
+     * Wires the click listener and Enter shortcut exactly once. It runs on the
+     * first attach because the view can be re-attached without being rebuilt.
+     */
+    private void wireLogin() {
+        if (loginWired) {
+            return;
+        }
+        loginWired = true;
+        messageSpan.addClassName("login-message");
+        loginButton.addClickListener(new LoginEventListener(
+                restClientLoginService, restClientRbacService, authorizationService, this));
+        loginButton.addClickShortcut(Key.ENTER);
+    }
 
     /**
      * Draws the login view with a two-column layout: the left side shows the
@@ -65,8 +88,6 @@ public class LoginView extends VerticalLayout {
         root.setFlexGrow(2, brandPanel);
         root.setFlexGrow(3, formSidePanel);
         add(root);
-
-        loginButton.addClickListener(new LoginEventListener(restClientLoginService, this));
     }
 
     /**
@@ -109,11 +130,9 @@ public class LoginView extends VerticalLayout {
 
         usernameField.setWidthFull();
         passwordField.setWidthFull();
-        messageSpan.addClassName("login-message");
 
         loginButton.setWidthFull();
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-        loginButton.setAutofocus(true);
 
         VerticalLayout panel = new VerticalLayout(
                 welcome, subtitle, usernameField, passwordField, loginButton, messageSpan);
@@ -141,9 +160,41 @@ public class LoginView extends VerticalLayout {
         return loginDto;
     }
 
+    /**
+     * Shows an inline error under the form.
+     *
+     * @param message the message to display, or {@code null} to clear it
+     */
+    public void showError(String message) {
+        messageSpan.setText(message == null ? "" : message);
+    }
+
+    /**
+     * Clears the inline error message.
+     */
+    public void clearError() {
+        messageSpan.setText("");
+    }
+
+    /**
+     * Locks the form while a login request is in flight.
+     *
+     * @param busy whether the request is running
+     */
+    public void setBusy(boolean busy) {
+        loginButton.setEnabled(!busy);
+        usernameField.setReadOnly(busy);
+        passwordField.setReadOnly(busy);
+        loginButton.setText(Messages.get(busy
+                ? Messages.Keys.ACTION_SIGNING_IN
+                : "action.signIn"));
+    }
+
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         ThemeUtil.applySavedTheme(attachEvent.getUI());
+        wireLogin();
         drawLayout();
+        usernameField.focus();
     }
 }

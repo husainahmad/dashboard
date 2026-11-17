@@ -12,8 +12,6 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 
 /**
  * How many orders the store took over a date range, split by peak and off-peak
@@ -23,12 +21,8 @@ import com.vaadin.flow.router.Route;
  * question about order volume is usually how lopsided the day was rather than
  * the raw numbers.</p>
  */
-@Route(value = OrderVolumeReportView.ROUTE, layout = com.harmoni.menu.dashboard.layout.MainLayout.class)
-@PageTitle("Order volume | POSHarmoni")
 public class OrderVolumeReportView extends AbstractReportView {
 
-    /** Route the order volume report is reachable at. */
-    public static final String ROUTE = "report/order-volume";
 
     private final transient AsyncRestClientReportService reportService;
 
@@ -97,7 +91,7 @@ public class OrderVolumeReportView extends AbstractReportView {
             onReportLoaded();
             render(result);
         }), error -> UiUtil.safeAccess(ui, () -> onReportFailed(error)),
-                range.startDateTime(), range.endDateTime());
+                range.startDateTime(), range.endDateTime(), storeIds);
     }
 
     /**

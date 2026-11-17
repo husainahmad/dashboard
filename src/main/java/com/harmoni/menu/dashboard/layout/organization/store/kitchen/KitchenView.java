@@ -12,6 +12,7 @@ import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.KitchenRestClientService;
@@ -234,14 +235,18 @@ public class KitchenView extends VerticalLayout {
         Integer chainId = user.getStoreDto().getChainDto().getId();
 
         asyncRestClientOrganizationService.getAllStoreAsync(result -> UiUtil.safeAccess(ui, () -> {
+            ScopeService.ScopeSnapshot scope = scope();
+            List<StoreDto> loaded = toList(result.get("data"), StoreDto.class);
+            List<StoreDto> allowed = scope == null ? loaded : scope.filterStores(loaded);
             stores.clear();
-            stores.addAll(toList(result.get("data"), StoreDto.class));
+            stores.addAll(allowed);
             storeBox.setItems(stores);
+            storeBox.setEnabled(scope == null || (!scope.isStoreLocked() && stores.size() > 1));
 
             StoreDto selected = stores.stream()
                     .filter(store -> Objects.equals(store.getId(), user.getStoreId()))
                     .findFirst()
-                    .orElse(stores.isEmpty() ? null : stores.get(0));
+                    .orElse(scope == null ? (stores.isEmpty() ? null : stores.get(0)) : scope.defaultStore(stores));
             storeBox.setValue(selected);
         }), this::onError, chainId, 1, 100, "");
     }
@@ -648,5 +653,10 @@ public class KitchenView extends VerticalLayout {
             result.add(ObjectUtil.convertValueToObject(value, type));
         }
         return result;
+    }
+
+    private static ScopeService.ScopeSnapshot scope() {
+        ScopeService service = ScopeService.current();
+        return service == null ? null : service.snapshot();
     }
 }

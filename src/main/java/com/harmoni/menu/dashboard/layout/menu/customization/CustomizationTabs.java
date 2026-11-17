@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.Messages;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +39,11 @@ public class CustomizationTabs extends AbstractListViewTabs {
     @Override
     protected String pageDescriptionKey() {
         return Messages.Keys.PAGE_CUSTOMIZATION_DESCRIPTION;
+    }
+
+    @Override
+    protected VaadinIcon tabIcon() {
+        return VaadinIcon.COG;
     }
 
     @Override

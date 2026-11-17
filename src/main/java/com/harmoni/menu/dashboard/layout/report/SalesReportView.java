@@ -8,8 +8,6 @@ import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 
 import java.util.ArrayList;
 
@@ -20,12 +18,8 @@ import java.util.ArrayList;
  * <p>Unlike the daily report this one is already flat: the service returns one
  * row per product with its category attached.</p>
  */
-@Route(value = SalesReportView.ROUTE, layout = com.harmoni.menu.dashboard.layout.MainLayout.class)
-@PageTitle("Sales by product | POSHarmoni")
 public class SalesReportView extends AbstractReportView {
 
-    /** Route the sales by product report is reachable at. */
-    public static final String ROUTE = "report/sales";
 
     private static final int SKELETON_ROWS = 10;
 
@@ -101,6 +95,6 @@ public class SalesReportView extends AbstractReportView {
             onReportLoaded();
             grid.setItems(result == null ? new ArrayList<>() : result);
         }), error -> UiUtil.safeAccess(ui, () -> onReportFailed(error)),
-                range.startDateTime(), range.endDateTime());
+                range.startDateTime(), range.endDateTime(), storeIds);
     }
 }

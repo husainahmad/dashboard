@@ -37,23 +37,26 @@ class AsyncRestClientCustomerServiceTest {
 
     @Test
     void buildSearchUri_keepsZeroBasedPageAndSearch() {
-        String uri = client.buildSearchUri("ahmad", 2, 10);
+        String uri = client.buildSearchUri("ahmad", 1, 2, 10);
 
         assertTrue(uri.startsWith(BASE_URL), uri);
         assertTrue(uri.contains("search=ahmad"), uri);
+        assertTrue(uri.contains("brandId=1"), uri);
         assertTrue(uri.contains("page=2"), uri);
         assertTrue(uri.contains("size=10"), uri);
     }
 
     @Test
     void buildSearchUri_encodesBlankAndSpecialSearchValues() {
-        String blank = client.buildSearchUri("", 0, 20);
-        String nullSearch = client.buildSearchUri(null, 0, 20);
-        String special = client.buildSearchUri("a b&c", 0, 20);
+        String blank = client.buildSearchUri("", null, 0, 20);
+        String nullSearch = client.buildSearchUri(null, null, 0, 20);
+        String special = client.buildSearchUri("a b&c", 3, 0, 20);
 
         assertTrue(blank.contains("search="), blank);
+        assertTrue(blank.contains("brandId=") == false, blank);
         assertEquals(blank, nullSearch);
         assertTrue(special.contains("search=a%20b%26c") || special.contains("search=a b&c"), special);
+        assertTrue(special.contains("brandId=3"), special);
     }
 
     @Test

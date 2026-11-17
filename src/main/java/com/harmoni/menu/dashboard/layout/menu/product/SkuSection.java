@@ -123,13 +123,13 @@ public class SkuSection {
     public boolean validate() {
         for (SkuTreeItem item : skuItems) {
             if (item.getSkuName() == null || item.getSkuName().trim().isEmpty()) {
-                delegate.showErrorDialog(Messages.get("validation.sku.name"));
+                delegate.showError(Messages.get("validation.sku.name"));
                 return false;
             }
             for (TierDto tier : tierDtos) {
                 Double price = item.getTierPrices().get(tier.getId());
                 if (price == null || price <= 0) {
-                    delegate.showErrorDialog(Messages.get("validation.sku.price"));
+                    delegate.showError(Messages.get("validation.sku.price"));
                     return false;
                 }
             }
@@ -218,7 +218,7 @@ public class SkuSection {
      */
     private void removeSku(SkuTreeItem skuTreeItem) {
         if (skuItems.size() <= MIN_SKUS) {
-            delegate.showErrorDialog(Messages.get("notification.sku.deleteRejected"));
+            delegate.showError(Messages.get("notification.sku.deleteRejected"));
             return;
         }
         skuItems.remove(skuTreeItem);

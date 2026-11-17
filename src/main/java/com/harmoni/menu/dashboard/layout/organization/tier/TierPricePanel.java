@@ -85,6 +85,7 @@ public class TierPricePanel extends TierPanel {
     }
 
     private void configureToolbar() {
+        search.setLabel(Messages.get(Messages.Keys.LABEL_SEARCH));
         search.setPlaceholder(Messages.get("tier.price.search"));
         search.setClearButtonVisible(true);
         search.setPrefixComponent(VaadinIcon.SEARCH.create());

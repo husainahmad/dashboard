@@ -195,7 +195,7 @@ public class CustomizationSection {
 
     private void onAddCustomization() {
         if (!skuSection.hasDefinedSku()) {
-            delegate.showErrorDialog(Messages.get("validation.sku.required"));
+            delegate.showError(Messages.get("validation.sku.required"));
             return;
         }
         new CustomizationAddDialog(this, delegate, asyncRestClientMenuService, brandDto).open();

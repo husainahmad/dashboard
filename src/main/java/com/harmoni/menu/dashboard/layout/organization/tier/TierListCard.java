@@ -42,6 +42,7 @@ public class TierListCard extends VerticalLayout {
         H3 title = new H3(Messages.get("tier.list.title"));
         title.addClassName("org-card-title");
 
+        search.setLabel(Messages.get(Messages.Keys.LABEL_SEARCH));
         search.setPlaceholder(Messages.get("tier.list.search"));
         search.setClearButtonVisible(true);
         search.setPrefixComponent(VaadinIcon.SEARCH.create());

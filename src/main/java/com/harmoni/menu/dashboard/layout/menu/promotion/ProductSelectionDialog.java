@@ -97,6 +97,7 @@ public class ProductSelectionDialog extends Dialog {
         searchLayout.setSpacing(true);
         searchLayout.setAlignItems(FlexComponent.Alignment.CENTER);
 
+        searchField.setLabel(Messages.get(Messages.Keys.LABEL_SEARCH));
         searchField.setPlaceholder(Messages.get("dialog.productSelection.searchPlaceholder"));
         searchField.setPrefixComponent(VaadinIcon.SEARCH.create());
         searchField.setClearButtonVisible(true);

@@ -16,6 +16,7 @@ public class VaadinSessionUtil {
     public static final String JWT_TOKEN = "JWT_TOKEN";
     public static final String REFRESH_TOKEN = "REFRESH_TOKEN";
     public static final String USER_DETAIL = "USER_DETAIL";
+    public static final String AUTHORITIES = "AUTHORITIES";
     public static final String LOCALE = "LOCALE";
 
     private VaadinSessionUtil() {

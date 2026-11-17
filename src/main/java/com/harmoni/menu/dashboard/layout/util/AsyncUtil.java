@@ -1,6 +1,5 @@
 package com.harmoni.menu.dashboard.layout.util;
 
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.vaadin.flow.component.UI;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +11,7 @@ import java.util.function.Consumer;
  * Shared helpers for the REST-callback style used across the dashboard:
  * {@code .subscribe(...)} calls arrive on a non-UI thread, so every success and
  * error handler has to be marshalled back with {@code UI.access}. These helpers
- * do that once and log/show the error dialog in a single place.
+ * do that once and log and toast the failure in a single place.
  */
 @Slf4j
 public final class AsyncUtil {
@@ -35,12 +34,11 @@ public final class AsyncUtil {
 
     /**
      * Subscribes to a REST call with a default error handler that logs the
-     * failure and opens a {@link DialogClosing} error dialog. Success is
-     * handled on the UI thread.
+     * failure and shows an error toast. Success is handled on the UI thread.
      *
      * @param mono        the reactive result to subscribe to
      * @param ui          the UI to marshal callbacks onto
-     * @param errorMessage message shown in the error dialog
+     * @param errorMessage message shown in the error toast
      * @param onSuccess   success callback, invoked with the response on the UI thread
      */
     public static void subscribe(Mono<RestAPIResponse> mono, UI ui, String errorMessage,
@@ -64,18 +62,16 @@ public final class AsyncUtil {
     }
 
     /**
-     * Logs the error and shows a {@link DialogClosing} with the given message.
+     * Logs the error and shows an error toast with the given message.
      *
-     * @param ui        the UI to add the dialog to, or {@code null} to skip
-     * @param message   the message to show in the dialog
+     * @param ui        the UI to show the toast on, or {@code null} to skip
+     * @param message   the message to show in the toast
      * @param throwable the cause of the error, logged for debugging
      */
     private static void showError(UI ui, String message, Throwable throwable) {
         log.error(message, throwable);
         if (ui != null) {
-            DialogClosing dialog = new DialogClosing(message);
-            ui.add(dialog);
-            dialog.open();
+            UiUtil.error(message);
         }
     }
 }

@@ -42,28 +42,34 @@ public class AsyncRestClientCustomerService extends AsyncRestClientBase {
      * @param callback      success callback with one page of customers
      * @param errorCallback error callback for handling failures
      * @param search        free-text filter, blank to list every customer
+     * @param brandId       optional brand filter
      * @param page          zero-based page index
      * @param size          page size
      */
     public void searchCustomersAsync(AsyncRestCallback<CustomerPageDto> callback,
                                      AsyncRestCallback<Throwable> errorCallback,
-                                     String search, int page, int size) {
-        makeAsyncRawRequestWithoutLogout(buildSearchUri(search, page, size), CustomerPageDto.class, callback, errorCallback);
+                                     String search, Integer brandId, int page, int size) {
+        makeAsyncRawRequestWithoutLogout(buildSearchUri(search, brandId, page, size),
+                CustomerPageDto.class, callback, errorCallback);
     }
 
     /**
      * Builds the search URI for the given filter and zero-based page.
      *
-     * @param search free-text filter, blank to list every customer
-     * @param page   zero-based page index
-     * @param size   page size
+     * @param search  free-text filter, blank to list every customer
+     * @param brandId optional brand filter
+     * @param page    zero-based page index
+     * @param size    page size
      * @return the fully built search URI
      */
-    String buildSearchUri(String search, int page, int size) {
-        return UriComponentsBuilder
+    String buildSearchUri(String search, Integer brandId, int page, int size) {
+        UriComponentsBuilder builder = UriComponentsBuilder
                 .fromUriString(customerProperties.getUrl().getCustomers())
-                .queryParam("search", search == null ? "" : search)
-                .queryParam("page", page)
+                .queryParam("search", search == null ? "" : search);
+        if (brandId != null) {
+            builder.queryParam("brandId", brandId);
+        }
+        return builder.queryParam("page", page)
                 .queryParam("size", size)
                 .toUriString();
     }

@@ -8,6 +8,9 @@ import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
@@ -50,7 +53,10 @@ public class ProductLayout extends VerticalLayout {
         ProductListView productListView = new ProductListView(asyncRestClientMenuService,
                 restClientMenuService);
         TabSheet tabSheet = new TabSheet();
-        tabSheet.add(new Tab(Messages.get("tab.productList")), productListView);
+        Icon listIcon = new Icon(VaadinIcon.PACKAGE);
+        listIcon.setSize("16px");
+        listIcon.addClassName("tab-icon");
+        tabSheet.add(new Tab(listIcon, new Span(Messages.get("tab.productList"))), productListView);
         tabSheet.setSizeFull();
 
         add(PageHeader.of(Messages.Keys.PAGE_PRODUCT_TITLE, Messages.Keys.PAGE_PRODUCT_DESCRIPTION));

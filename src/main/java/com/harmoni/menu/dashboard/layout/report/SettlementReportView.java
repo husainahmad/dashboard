@@ -12,8 +12,6 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.math.BigDecimal;
@@ -30,12 +28,8 @@ import java.util.Map;
  * reports on this menu are correctly scoped, which makes settlement look larger
  * than the neighbouring reports until that is fixed server-side.</p>
  */
-@Route(value = SettlementReportView.ROUTE, layout = com.harmoni.menu.dashboard.layout.MainLayout.class)
-@PageTitle("Settlement | POSHarmoni")
 public class SettlementReportView extends AbstractReportView {
 
-    /** Route the settlement report is reachable at. */
-    public static final String ROUTE = "report/settlement";
 
     private final transient AsyncRestClientReportService reportService;
 
@@ -109,7 +103,7 @@ public class SettlementReportView extends AbstractReportView {
             onReportLoaded();
             render(result);
         }), error -> UiUtil.safeAccess(ui, () -> onReportFailed(error)),
-                range.startDateTime(), range.endDateTime());
+                range.startDateTime(), range.endDateTime(), storeIds);
     }
 
     /**

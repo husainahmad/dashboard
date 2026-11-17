@@ -14,6 +14,7 @@ import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
+import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -138,9 +139,10 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
      * These options are added to the respective lists if they are not already present.
      */
     private void initTempOptions() {
-        if (brandDtos.stream().noneMatch(dto -> Objects.equals(dto.getId(), -1))) {
-            brandDtos.add(getTempBrandDto());
+        if (categoryDtos.stream().noneMatch(dto -> Objects.equals(dto.getId(), -1))) {
             categoryDtos.add(getTempCategoryDto());
+        }
+        if (tierDtos.stream().noneMatch(dto -> Objects.equals(dto.getId(), -1))) {
             tierDtos.add(getTempTierDtp());
         }
     }
@@ -307,18 +309,6 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
     }
 
     /**
-     * Creates a temporary BrandDto with ID -1 and name "All" to represent the "All" option in the brand filter.
-     *
-     * @return a temporary BrandDto for the "All" option
-     */
-    private BrandDto getTempBrandDto() {
-        BrandDto brandDto = new BrandDto();
-        brandDto.setId(-1);
-        brandDto.setName(Messages.get(Messages.Keys.LABEL_ALL));
-        return brandDto;
-    }
-
-    /**
      * Creates a temporary CategoryDto with ID -1 and name "All" to represent the "All" option in the category filter.
      *
      * @return a temporary CategoryDto for the "All" option
@@ -435,7 +425,6 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         }
         trackBroadcast(Broadcaster.register(this::acceptNotification));
         renderLayout();
-        brandDtoComboBox.setValue(brandDtos.getFirst());
         categoryDtoComboBox.setValue(categoryDtos.getFirst());
         tierDtoComboBox.setValue(tierDtos.getFirst());
     }
@@ -478,7 +467,9 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
             return;
         }
         TabManager tabManager = new TabManager(tabSheet);
-        tabManager.addOrSelect(title, tab -> new ProductFormWithPreview(
+        String tabKey = productTreeItem == null ? "product:new" : "product:" + productTreeItem.getId();
+        VaadinIcon tabIcon = productTreeItem == null ? VaadinIcon.PLUS_CIRCLE : VaadinIcon.PACKAGE;
+        tabManager.addOrSelect(tabKey, title, tabIcon, tab -> new ProductFormWithPreview(
                 this.restClientMenuService,
                 this.asyncRestClientMenuService,
                 editorContext(productTreeItem, tab, tabManager)));
@@ -594,7 +585,8 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
                 }
         }), error -> UiUtil.safeAccess(ui, () -> {
             gridSkeleton.hide();
-            UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_PRODUCT_LOAD_FAILED), () -> fetchProducts(categoryId, brandId, searchProduct));
+            UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_PRODUCT_LOAD_FAILED), error,
+                    () -> fetchProducts(categoryId, brandId, searchProduct));
         }), categoryId, brandId, currentPage, PAGE_SIZE, searchProduct);
     }
 
@@ -675,24 +667,32 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
            brandDtos = convertJsonToObject(restAPIResponse.getData(),
                     new TypeReference<>() {});
 
-            if (!ObjectUtils.isEmpty(brandDtos)) {
-
-                brandDtos.addFirst(getTempBrandDto());
-                if (ObjectUtils.isNotEmpty(ui)) {
-                    UiUtil.safeAccess(ui, () -> {
-                        BrandDto defaultBrand = brandDtos.get(1);
-                        ProductFilters saved = savedFilters();
-                        if (saved != null && saved.brandId() != null) {
-                            defaultBrand = brandDtos.stream()
-                                    .filter(brand -> brand.getId().equals(saved.brandId()))
-                                    .findFirst().orElse(defaultBrand);
-                        }
+            if (ObjectUtils.isNotEmpty(ui)) {
+                UiUtil.safeAccess(ui, () -> {
+                    ScopeService scopeService = ScopeService.current();
+                    ScopeService.ScopeSnapshot scope = scopeService == null ? null : scopeService.snapshot();
+                    List<BrandDto> allowed = scope == null ? brandDtos : scope.filterBrands(brandDtos);
+                    brandDtos = allowed == null ? new ArrayList<>() : new ArrayList<>(allowed);
+                    if (brandDtos.isEmpty()) {
                         brandDtoComboBox.setItems(brandDtos);
-                        brandDtoComboBox.setValue(defaultBrand);
-                        fetchCategories(brandDtoComboBox.getValue().getId());
-                        fetchTier(brandDtoComboBox.getValue().getId());
-                    });
-                }
+                        brandDtoComboBox.clear();
+                        return;
+                    }
+                    BrandDto defaultBrand = scope == null
+                            ? brandDtos.getFirst() : scope.defaultBrand(brandDtos);
+                    ProductFilters saved = savedFilters();
+                    if (saved != null && saved.brandId() != null) {
+                        defaultBrand = brandDtos.stream()
+                                .filter(brand -> brand.getId().equals(saved.brandId()))
+                                .findFirst().orElse(defaultBrand);
+                    }
+                    brandDtoComboBox.setItems(brandDtos);
+                    brandDtoComboBox.setEnabled(scope == null ? brandDtos.size() > 1
+                            : scope.canSelectBrand(brandDtos.size()));
+                    brandDtoComboBox.setValue(defaultBrand);
+                    fetchCategories(brandDtoComboBox.getValue().getId());
+                    fetchTier(brandDtoComboBox.getValue().getId());
+                });
             }
         }
     }

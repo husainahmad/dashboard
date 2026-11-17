@@ -72,8 +72,9 @@ public class CategoryDialog extends Dialog {
         brandBox.setItems(brands);
         brandBox.setItemLabelGenerator(BrandDto::getName);
         brandBox.setWidthFull();
+        brandBox.setEnabled(brands != null && brands.size() > 1);
         brandBox.setValue(defaultBrand != null ? defaultBrand
-                : brands.isEmpty() ? null : brands.getFirst());
+                : brands == null || brands.isEmpty() ? null : brands.getFirst());
     }
 
     private FormLayout form() {

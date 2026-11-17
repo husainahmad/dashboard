@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
+import com.harmoni.menu.dashboard.exception.BusinessForbiddenException;
 import com.harmoni.menu.dashboard.exception.BusinessServerRequestException;
 import com.harmoni.menu.dashboard.exception.TokenRefreshRequiredException;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
@@ -182,6 +183,9 @@ public abstract class AsyncRestClientBase implements Serializable {
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
                         clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
                                 .map(BusinessBadRequestException::new))
+                .onStatus(HttpStatus.FORBIDDEN::equals,
+                        clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
+                                .map(BusinessForbiddenException::new))
                 .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals,
                         clientResponse -> clientResponse.bodyToMono(RestAPIResponse.class)
                                 .map(BusinessServerRequestException::new))

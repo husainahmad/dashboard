@@ -90,3 +90,16 @@ setting.url.tableByStore=${setting.url.table}/store/%d
 
 logging.level.org.springframework=DEBUG
 logging.level.com.harmoni=DEBUG
+
+# Access control (RBAC). Served by the authentication service through the gateway.
+rbac.enabled=true
+rbac.url=${menu.url}
+rbac.url.roles=${rbac.url}/api/v1/auth/roles
+rbac.url.roleById=${rbac.url.roles}/%d
+rbac.url.rolePermissions=${rbac.url.roles}/%d/permissions
+rbac.url.permissions=${rbac.url}/api/v1/auth/permissions
+rbac.url.permissionById=${rbac.url.permissions}/%d
+rbac.url.userRoles=${rbac.url}/api/v1/auth/users/%d/roles
+rbac.url.me=${rbac.url}/api/v1/auth/me/authorities
+rbac.url.assignmentsBatch=${rbac.url}/api/v1/auth/assignments/batch
+rbac.url.roleDuplicate=${rbac.url.roles}/%d/duplicate

@@ -6,6 +6,7 @@ import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
@@ -109,12 +110,17 @@ public class CategoryView extends VerticalLayout {
         asyncRestClientOrganizationService.getAllBrandAsync(
                 result -> UiUtil.safeAccess(getUI().orElse(null), () -> {
                     brandsLoaded = true;
+                    ScopeService scopeService = ScopeService.current();
+                    ScopeService.ScopeSnapshot scope = scopeService == null ? null : scopeService.snapshot();
+                    List<BrandDto> allowed = scope == null ? result : scope.filterBrands(result);
                     brands.clear();
-                    if (result != null) {
-                        brands.addAll(result);
+                    if (allowed != null) {
+                        brands.addAll(allowed);
                     }
                     brandBox.setItems(brands);
-                    addButton.setEnabled(true);
+                    brandBox.setEnabled(scope == null ? brands.size() > 1
+                            : scope.canSelectBrand(brands.size()));
+                    addButton.setEnabled(!brands.isEmpty());
                     BrandDto selected = preferredBrand();
                     if (selected != null) {
                         brandBox.setValue(selected);
@@ -129,6 +135,14 @@ public class CategoryView extends VerticalLayout {
                                 })));
     }
 
+    /**
+     * Resolves the brand to preselect: the brand of the signed-in user's store.
+     * Matching by id is tried first, then by name, because the user payload and
+     * the brand list can come from different services. Only when neither matches
+     * does it fall back to the first brand.
+     *
+     * @return the brand to select by default, or {@code null} when none loaded
+     */
     private BrandDto preferredBrand() {
         if (brands.isEmpty()) {
             return null;
@@ -137,6 +151,16 @@ public class CategoryView extends VerticalLayout {
         if (sessionBrandId != null) {
             BrandDto match = brands.stream()
                     .filter(brand -> sessionBrandId.equals(brand.getId()))
+                    .findFirst()
+                    .orElse(null);
+            if (match != null) {
+                return match;
+            }
+        }
+        BrandDto loginBrand = accessService.getBrand();
+        if (loginBrand != null && loginBrand.getName() != null) {
+            BrandDto match = brands.stream()
+                    .filter(brand -> loginBrand.getName().equalsIgnoreCase(brand.getName()))
                     .findFirst()
                     .orElse(null);
             if (match != null) {

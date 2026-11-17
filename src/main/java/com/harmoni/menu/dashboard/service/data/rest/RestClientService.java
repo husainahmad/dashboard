@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.service.data.rest;
 
 import com.harmoni.menu.dashboard.exception.BusinessBadRequestException;
+import com.harmoni.menu.dashboard.exception.BusinessForbiddenException;
 import com.harmoni.menu.dashboard.exception.BusinessServerRequestException;
 import com.harmoni.menu.dashboard.exception.TokenRefreshRequiredException;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
@@ -44,6 +45,7 @@ public class RestClientService implements Serializable {
     private static final String LOG_BAD_REQUEST = "BAD_REQUEST Server Response {}";
     private static final String LOG_NO_CONTENT = "LOG_NO_CONTENT Server Response {}";
     private static final String LOG_UN_AUTHORIZED = "LOG_UN_AUTHORIZED Server Response {}";
+    private static final String LOG_FORBIDDEN = "FORBIDDEN Server Response {}";
     private static final String LOG_INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR Server Response {}";
     private static final String BEARER = "Bearer ";
     /**
@@ -157,6 +159,27 @@ public class RestClientService implements Serializable {
     }
 
     /**
+     * POSTs a payload to a public endpoint without attaching the session token
+     * or entering the token-refresh flow. Used for login, where a stale token
+     * would otherwise be rejected by the gateway before the request reaches the
+     * public endpoint.
+     *
+     * @param url           the target endpoint
+     * @param publisher     the reactive body to publish
+     * @param bodyClass     the body element class
+     * @param responseClass the expected response type
+     * @param <T>           the response type
+     * @return a {@link Mono} with the decoded response
+     */
+    public <T> Mono<T> postPublic(String url, Publisher<?> publisher, Class<?> bodyClass, Class<T> responseClass) {
+        return toResponse(webClient.post()
+                .uri(url)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body(publisher, bodyClass)
+                .retrieve(), responseClass);
+    }
+
+    /**
      * GETs a resource using the default session token.
      *
      * @param url the target endpoint
@@ -177,6 +200,25 @@ public class RestClientService implements Serializable {
     public Mono<RestAPIResponse> get(String url, String token) {
         log.debug("GET {} auth={}", url, ObjectUtils.isNotEmpty(getTokenString(token)));
         return tokenRefreshService.withTokenRefresh(accessToken ->
+                toResponse(webClient.get()
+                        .uri(url)
+                        .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, token)))
+                        .retrieve(), RestAPIResponse.class));
+    }
+
+    /**
+     * GETs a resource with an explicit bearer token without tearing the session
+     * down when the call is rejected. Used for the best-effort profile lookups
+     * during login, where a 401 on an auxiliary endpoint must not broadcast a
+     * global logout before the session has even been established.
+     *
+     * @param url   the target endpoint
+     * @param token the token to use, or {@code null} for the session token
+     * @return a {@link Mono} with the server response or the error
+     */
+    public Mono<RestAPIResponse> getWithoutLogout(String url, String token) {
+        log.debug("GET {} auth={}", url, ObjectUtils.isNotEmpty(getTokenString(token)));
+        return tokenRefreshService.withTokenRefreshWithoutLogout(accessToken ->
                 toResponse(webClient.get()
                         .uri(url)
                         .headers(headers -> applyDefaultHeaders(headers, resolveToken(accessToken, token)))
@@ -281,6 +323,8 @@ public class RestClientService implements Serializable {
                         response -> handleError(response, LOG_NO_CONTENT, BusinessBadRequestException::new))
                 .onStatus(HttpStatus.BAD_REQUEST::equals,
                         response -> handleError(response, LOG_BAD_REQUEST, BusinessBadRequestException::new))
+                .onStatus(HttpStatus.FORBIDDEN::equals,
+                        response -> handleError(response, LOG_FORBIDDEN, BusinessForbiddenException::new))
                 .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals,
                         response -> handleError(response, LOG_INTERNAL_SERVER_ERROR, BusinessServerRequestException::new))
                 .onStatus(HttpStatus.UNAUTHORIZED::equals,

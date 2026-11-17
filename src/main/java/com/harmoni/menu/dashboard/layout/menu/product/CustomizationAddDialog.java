@@ -171,7 +171,7 @@ public class CustomizationAddDialog extends Dialog {
                     if (generation != requestGeneration.get()) {
                         return;
                     }
-                    delegate.showErrorDialog(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_LOAD_FAILED));
+                    delegate.showError(Messages.get(Messages.Keys.NOTIFICATION_CUSTOMIZATION_LOAD_FAILED));
                     pagination.update(currentPage, totalPages);
                 }),
                 brandDto.getId(), currentPage, PAGE_SIZE, normalizeSearch(searchField.getValue()));

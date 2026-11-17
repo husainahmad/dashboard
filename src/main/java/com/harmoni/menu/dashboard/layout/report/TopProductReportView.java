@@ -8,8 +8,6 @@ import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -21,12 +19,8 @@ import java.util.ArrayList;
  * products, which is a sensible length for a "top products" board, so the limit
  * is left at the service default.</p>
  */
-@Route(value = TopProductReportView.ROUTE, layout = com.harmoni.menu.dashboard.layout.MainLayout.class)
-@PageTitle("Top products | POSHarmoni")
 public class TopProductReportView extends AbstractReportView {
 
-    /** Route the top products report is reachable at. */
-    public static final String ROUTE = "report/top-products";
 
     private static final int SKELETON_ROWS = 8;
 
@@ -90,7 +84,7 @@ public class TopProductReportView extends AbstractReportView {
             onReportLoaded();
             grid.setItems(result == null ? new ArrayList<>() : result);
         }), error -> UiUtil.safeAccess(ui, () -> onReportFailed(error)),
-                range.startDateTime(), range.endDateTime(), 0);
+                range.startDateTime(), range.endDateTime(), 0, storeIds);
     }
 
     /**

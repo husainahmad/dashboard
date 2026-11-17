@@ -8,6 +8,7 @@ import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationS
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientPromotionService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientPromotionService;
 import com.harmoni.menu.dashboard.util.Messages;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,6 +39,11 @@ public class PromotionTabs extends AbstractListViewTabs {
     @Override
     protected String pageDescriptionKey() {
         return Messages.Keys.PAGE_PROMOTION_DESCRIPTION;
+    }
+
+    @Override
+    protected VaadinIcon tabIcon() {
+        return VaadinIcon.TAGS;
     }
 
     @Override

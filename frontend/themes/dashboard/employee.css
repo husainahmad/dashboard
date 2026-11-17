@@ -1,0 +1,171 @@
+/* ============================================================
+   Karyawan & Peran — employee table + role workspace
+   ============================================================ */
+
+.employee-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.employee-name {
+    font-weight: 600;
+    color: var(--lumo-body-text-color);
+}
+
+.employee-code {
+    font-size: var(--lumo-font-size-xs);
+    color: var(--lumo-secondary-text-color);
+}
+
+.employee-scope-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.employee-scope-detail {
+    color: var(--lumo-secondary-text-color);
+    font-size: var(--lumo-font-size-s);
+}
+
+.scope-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    background: var(--lumo-contrast-10pct);
+    color: var(--lumo-body-text-color);
+}
+
+.scope-badge-brand {
+    background: rgba(16, 122, 87, 0.12);
+    color: #0f6b4c;
+}
+
+.scope-badge-chain {
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+}
+
+.scope-badge-store {
+    background: rgba(217, 119, 6, 0.14);
+    color: #b45309;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-dot-active {
+    background: #10b981;
+}
+
+.status-dot-inactive {
+    background: var(--lumo-contrast-40pct);
+}
+
+.role-list-panel {
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--lumo-border-radius-l);
+    padding: var(--lumo-space-m);
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.role-list-item {
+    padding: var(--lumo-space-s) var(--lumo-space-m);
+    border-radius: var(--lumo-border-radius-m);
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.role-list-item:hover {
+    background: var(--lumo-contrast-5pct);
+}
+
+.role-list-item-selected {
+    background: rgba(16, 122, 87, 0.08);
+    border-color: rgba(16, 122, 87, 0.35);
+}
+
+.role-list-name {
+    display: block;
+    font-weight: 600;
+}
+
+.role-list-meta {
+    display: block;
+    font-size: var(--lumo-font-size-xs);
+    color: var(--lumo-secondary-text-color);
+}
+
+.role-editor-host {
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--lumo-border-radius-l);
+    padding: var(--lumo-space-l);
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.role-editor-title {
+    margin: 0;
+}
+
+.role-scope-hint {
+    display: block;
+    font-size: var(--lumo-font-size-s);
+    color: var(--lumo-secondary-text-color);
+}
+
+.role-editor-footer {
+    display: block;
+    margin-top: var(--lumo-space-m);
+    font-size: var(--lumo-font-size-s);
+    color: var(--lumo-secondary-text-color);
+}
+
+.permission-matrix {
+    border-top: 1px solid var(--app-border);
+    margin-top: var(--lumo-space-m);
+}
+
+.matrix-row {
+    border-bottom: 1px solid var(--app-border);
+    padding: var(--lumo-space-s) 0;
+    gap: var(--lumo-space-m);
+}
+
+.matrix-header {
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--lumo-secondary-text-color);
+    text-transform: uppercase;
+    min-width: 72px;
+    text-align: center;
+}
+
+.matrix-header:first-child {
+    min-width: 0;
+    text-align: left;
+}
+
+.matrix-module {
+    font-weight: 500;
+}
+
+.matrix-cell {
+    min-width: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--lumo-secondary-text-color);
+}

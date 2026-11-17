@@ -53,6 +53,7 @@ public class CategoryListCard extends VerticalLayout {
         heading.setAlignItems(Alignment.CENTER);
         heading.setFlexGrow(1, title);
 
+        search.setLabel(Messages.get(Messages.Keys.LABEL_SEARCH));
         search.setPlaceholder(Messages.get("category.search.placeholder"));
         search.setClearButtonVisible(true);
         search.setPrefixComponent(VaadinIcon.SEARCH.create());

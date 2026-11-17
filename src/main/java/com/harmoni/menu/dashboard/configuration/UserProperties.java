@@ -17,6 +17,7 @@ import java.io.Serializable;
 public class UserProperties implements Serializable {
     private String chain;
     private String chainPage;
+    private String page;
     private String byId;
     private String byName;
 }

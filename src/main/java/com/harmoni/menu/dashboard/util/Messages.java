@@ -50,6 +50,7 @@ public class Messages implements ApplicationContextAware {
         public static final String ACTION_NEW_TABLE = "action.newTable";
         public static final String ACTION_NEW_USER = "action.newUser";
         public static final String ACTION_SAVE = "action.save";
+        public static final String ACTION_SIGNING_IN = "action.signingIn";
         public static final String ACTION_UPDATE = "action.update";
         public static final String ACTION_VIEW_DETAIL = "action.viewDetail";
         public static final String ACTION_VIEW_NAME = "action.view.name";

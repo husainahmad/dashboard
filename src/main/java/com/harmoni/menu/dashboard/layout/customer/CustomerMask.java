@@ -1,9 +1,8 @@
 package com.harmoni.menu.dashboard.layout.customer;
 
 /**
- * Privacy helpers for customer contact data. Phone numbers keep a short prefix
- * and suffix; emails keep only the first local-part character and the domain,
- * so the list and detail stay readable without exposing the full value.
+ * Privacy helpers for the customer list. Phone numbers keep a short prefix and
+ * suffix so the list stays readable without exposing the full value.
  */
 final class CustomerMask {
 
@@ -26,18 +25,6 @@ final class CustomerMask {
             return value.substring(0, 2) + mask(length - 4) + value.substring(length - 2);
         }
         return value.substring(0, 4) + mask(length - 7) + value.substring(length - 3);
-    }
-
-    static String email(String email) {
-        if (email == null || email.isBlank()) {
-            return "";
-        }
-        String value = email.trim();
-        int at = value.indexOf('@');
-        if (at <= 0) {
-            return mask(value.length());
-        }
-        return value.charAt(0) + mask(3) + value.substring(at);
     }
 
     static String initials(String name) {

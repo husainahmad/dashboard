@@ -4,6 +4,7 @@ import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
+import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -195,9 +196,16 @@ public class StoreSelectionDialog extends Dialog {
     }
 
     private void applyBrands(List<BrandDto> brands) {
-        brandSelect.setItems(brands);
-        BrandDto preferred = pickById(brands, preferredBrandId, StoreSelectionDialog::brandId);
-        brandSelect.setValue(preferred != null ? preferred : firstOrNull(brands));
+        ScopeService.ScopeSnapshot scope = scope();
+        List<BrandDto> allowed = scope == null ? brands : scope.filterBrands(brands);
+        brandSelect.setItems(allowed);
+        brandSelect.setEnabled(scope == null ? allowed.size() > 1
+                : scope.canSelectBrand(allowed.size()));
+        BrandDto preferred = pickById(allowed, preferredBrandId, StoreSelectionDialog::brandId);
+        if (preferred == null && scope != null) {
+            preferred = scope.defaultBrand(allowed);
+        }
+        brandSelect.setValue(preferred != null ? preferred : firstOrNull(allowed));
         loadChains();
     }
 
@@ -214,14 +222,20 @@ public class StoreSelectionDialog extends Dialog {
     }
 
     private void applyChains(List<ChainDto> chains) {
-        chainSelect.setItems(chains);
+        ScopeService.ScopeSnapshot scope = scope();
+        List<ChainDto> allowed = scope == null ? chains : scope.filterChains(chains);
+        chainSelect.setItems(allowed);
+        chainSelect.setEnabled(scope == null || (!scope.isChainLocked() && allowed.size() > 1));
         // These chains were fetched for the brand now in hand, so finding the preferred id
         // among them is itself the check that it belongs to this brand. An earlier version
         // also compared the chain id against the brand id, which compares two unrelated
         // numbers: it was almost never equal, so the form's chain was quietly dropped
         // every time the picker was opened and reopened on an existing promotion.
-        ChainDto preferred = pickById(chains, preferredChainId, StoreSelectionDialog::chainId);
-        chainSelect.setValue(preferred != null ? preferred : firstOrNull(chains));
+        ChainDto preferred = pickById(allowed, preferredChainId, StoreSelectionDialog::chainId);
+        if (preferred == null && scope != null) {
+            preferred = scope.defaultChain(allowed);
+        }
+        chainSelect.setValue(preferred != null ? preferred : firstOrNull(allowed));
         loadStores();
     }
 
@@ -243,10 +257,13 @@ public class StoreSelectionDialog extends Dialog {
     }
 
     private void applyStores(List<StoreDto> stores) {
-        storeSelect.setItems(stores);
+        ScopeService.ScopeSnapshot scope = scope();
+        List<StoreDto> allowed = scope == null ? stores : scope.filterStores(stores);
+        storeSelect.setItems(allowed);
+        storeSelect.setEnabled(scope == null || (!scope.isStoreLocked() && allowed.size() > 1));
         // Linked, not a plain Set: the stores keep the order the chain listed them in,
         // so the ones already chosen do not shuffle each time the list is refilled.
-        storeSelect.setValue(stores.stream()
+        storeSelect.setValue(allowed.stream()
                 .filter(store -> storeId(store) != null)
                 .filter(store -> containsId(preSelectedStores, StoreDto::getId, storeId(store)))
                 .collect(Collectors.toCollection(LinkedHashSet::new)));
@@ -356,5 +373,10 @@ public class StoreSelectionDialog extends Dialog {
 
     private static <T> T firstOrNull(List<T> items) {
         return items.isEmpty() ? null : items.getFirst();
+    }
+
+    private static ScopeService.ScopeSnapshot scope() {
+        ScopeService service = ScopeService.current();
+        return service == null ? null : service.snapshot();
     }
 }

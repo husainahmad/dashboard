@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.service;
 
+import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
@@ -65,5 +66,17 @@ public class AccessService implements Serializable {
     public Integer getBrandId() {
         StoreDto store = getStore();
         return store == null || store.getChainDto() == null ? null : store.getChainDto().getBrandId();
+    }
+
+    /**
+     * Returns the brand the logged-in user's store belongs to.
+     *
+     * @return the session {@link BrandDto}, or {@code null} when not logged in
+     *         or the nested brand was not included in the user payload
+     */
+    public BrandDto getBrand() {
+        StoreDto store = getStore();
+        return store == null || store.getChainDto() == null
+                ? null : store.getChainDto().getBrandDto();
     }
 }

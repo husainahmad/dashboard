@@ -147,7 +147,7 @@ public class CustomizationForm extends VerticalLayout {
         this.editCustomization = editCustomization;
         addClassName("customization-form");
         if (tabManager != null) {
-            tabManager.setCloseGuard(tab -> {
+            tabManager.setCloseGuard(currentTab, tab -> {
                 if (!dirty) {
                     return true;
                 }

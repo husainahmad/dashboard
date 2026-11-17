@@ -1,5 +1,6 @@
 package com.harmoni.menu.dashboard.layout.util;
 
+import com.harmoni.menu.dashboard.exception.BusinessForbiddenException;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.vaadin.flow.component.ClickEvent;
@@ -181,8 +182,24 @@ public final class UiUtil {
      * @param retry   action run when the user clicks Retry
      */
     public static void errorWithRetry(String message, Runnable retry) {
+        errorWithRetry(message, null, retry);
+    }
+
+    /**
+     * Error toast with a Retry button, unless the failure is a permission
+     * denial. A forbidden request cannot succeed by retrying, and the shell
+     * already shows the permission message, so no retry prompt is added.
+     *
+     * @param message text shown in the toast
+     * @param error   the failure that triggered the toast, may be {@code null}
+     * @param retry   action run when the user clicks Retry
+     */
+    public static void errorWithRetry(String message, Throwable error, Runnable retry) {
+        if (error instanceof BusinessForbiddenException) {
+            return;
+        }
         Notification notification = new Notification();
-        notification.setPosition(Notification.Position.BOTTOM_CENTER);
+        notification.setPosition(Notification.Position.BOTTOM_END);
         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
         notification.setDuration(8000);
         Span text = new Span(message);
@@ -219,7 +236,7 @@ public final class UiUtil {
      */
     private static void toast(String message, NotificationVariant variant, int duration) {
         Notification notification = new Notification(message, duration);
-        notification.setPosition(Notification.Position.BOTTOM_CENTER);
+        notification.setPosition(Notification.Position.BOTTOM_END);
         notification.addThemeVariants(variant);
         notification.getElement().getStyle()
                 .set("--vaadin-notification-card-padding", "var(--lumo-space-s) var(--lumo-space-m)")

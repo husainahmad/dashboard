@@ -38,7 +38,7 @@ public class RestClientLoginService extends RestClientService {
     public Mono<JwtDto> login(LoginDto loginDto) {
         String url = authProperties.getUrl().getLogin();
         log.debug("Sending login request username={} url={}", loginDto.getUsername(), url);
-        return post(url, Mono.just(loginDto), LoginDto.class, JwtDto.class);
+        return postPublic(url, Mono.just(loginDto), LoginDto.class, JwtDto.class);
     }
 
     /**
@@ -51,7 +51,7 @@ public class RestClientLoginService extends RestClientService {
     public Mono<RestAPIResponse> getUser(String username, String token) {
         String url = String.format(menuProperties.getUrl().getUsers().getByName(), username);
         log.debug("Sending get-user request username={} url={} hasToken={}", username, url, ObjectUtils.isNotEmpty(token));
-        return get(url, token);
+        return getWithoutLogout(url, token);
     }
 
 }

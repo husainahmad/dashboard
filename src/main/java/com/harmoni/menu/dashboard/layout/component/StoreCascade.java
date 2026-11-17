@@ -4,6 +4,7 @@ import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.ChainDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
+import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
@@ -105,20 +106,31 @@ public class StoreCascade implements Serializable {
                     if (ObjectUtils.isEmpty(result)) {
                         return;
                     }
-                    brandBox.setItems(result);
-                    selectDefaultBrand(result);
+                    ScopeService.ScopeSnapshot scope = scope();
+                    List<BrandDto> allowed = scope == null ? result : scope.filterBrands(result);
+                    if (ObjectUtils.isEmpty(allowed)) {
+                        return;
+                    }
+                    brandBox.setItems(allowed);
+                    brandBox.setEnabled(scope == null ? allowed.size() > 1
+                            : scope.canSelectBrand(allowed.size()));
+                    selectDefaultBrand(allowed, scope);
                 }),
                 error -> UiUtil.safeAccess(ui(), () ->
                         UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_BRAND_LOAD_FAILED),
                                 this::loadBrands)));
     }
 
-    private void selectDefaultBrand(List<BrandDto> brands) {
+    private void selectDefaultBrand(List<BrandDto> brands, ScopeService.ScopeSnapshot scope) {
         BrandDto match = findBy(brands, BrandDto::getId, defaults.brandId());
+        if (match == null && scope != null) {
+            match = scope.defaultBrand(brands);
+        }
+        if (match == null && selectFirstWhenMissing) {
+            match = brands.getFirst();
+        }
         if (match != null) {
             brandBox.setValue(match);
-        } else if (selectFirstWhenMissing) {
-            brandBox.setValue(brands.getFirst());
         }
     }
 
@@ -133,8 +145,14 @@ public class StoreCascade implements Serializable {
                     if (ObjectUtils.isEmpty(result)) {
                         return;
                     }
-                    chainBox.setItems(result);
-                    selectDefaultChain(result);
+                    ScopeService.ScopeSnapshot scope = scope();
+                    List<ChainDto> allowed = scope == null ? result : scope.filterChains(result);
+                    if (ObjectUtils.isEmpty(allowed)) {
+                        return;
+                    }
+                    chainBox.setItems(allowed);
+                    chainBox.setEnabled(scope == null || (!scope.isChainLocked() && allowed.size() > 1));
+                    selectDefaultChain(allowed, scope);
                 }),
                 error -> UiUtil.safeAccess(ui(), () ->
                         UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_CHAIN_LOAD_FAILED),
@@ -142,12 +160,16 @@ public class StoreCascade implements Serializable {
                 brand.getId());
     }
 
-    private void selectDefaultChain(List<ChainDto> chains) {
+    private void selectDefaultChain(List<ChainDto> chains, ScopeService.ScopeSnapshot scope) {
         ChainDto match = findBy(chains, ChainDto::getId, defaults.chainId());
+        if (match == null && scope != null) {
+            match = scope.defaultChain(chains);
+        }
+        if (match == null && selectFirstWhenMissing) {
+            match = chains.getFirst();
+        }
         if (match != null) {
             chainBox.setValue(match);
-        } else if (selectFirstWhenMissing) {
-            chainBox.setValue(chains.getFirst());
         }
     }
 
@@ -160,8 +182,12 @@ public class StoreCascade implements Serializable {
         }
         organizationService.getAllStoreAsync(
                 result -> UiUtil.safeAccess(ui(), () -> {
-                    storeBox.setItems(ObjectUtil.extractDataList(result, StoreDto.class));
-                    selectDefaultStore();
+                    ScopeService.ScopeSnapshot scope = scope();
+                    List<StoreDto> stores = ObjectUtil.extractDataList(result, StoreDto.class);
+                    List<StoreDto> allowed = scope == null ? stores : scope.filterStores(stores);
+                    storeBox.setItems(allowed);
+                    storeBox.setEnabled(scope == null || (!scope.isStoreLocked() && allowed.size() > 1));
+                    selectDefaultStore(allowed, scope);
                 }),
                 error -> UiUtil.safeAccess(ui(), () ->
                         UiUtil.errorWithRetry(Messages.get(Messages.Keys.NOTIFICATION_STORE_LOAD_FAILED),
@@ -169,18 +195,26 @@ public class StoreCascade implements Serializable {
                 chain.getId(), 1, PAGE_SIZE, "");
     }
 
-    private void selectDefaultStore() {
+    private void selectDefaultStore(List<StoreDto> stores, ScopeService.ScopeSnapshot scope) {
         Integer storeId = defaults.storeId();
-        if (storeId == null) {
-            if (selectFirstWhenMissing) {
-                storeBox.getListDataView().getItems().findFirst().ifPresent(storeBox::setValue);
-            }
-            return;
-        }
-        storeBox.getListDataView().getItems()
+        StoreDto match = stores.stream()
                 .filter(store -> Objects.equals(store.getId(), storeId))
                 .findFirst()
-                .ifPresent(storeBox::setValue);
+                .orElse(null);
+        if (match == null && scope != null) {
+            match = scope.defaultStore(stores);
+        }
+        if (match == null && selectFirstWhenMissing) {
+            match = stores.isEmpty() ? null : stores.getFirst();
+        }
+        if (match != null) {
+            storeBox.setValue(match);
+        }
+    }
+
+    private static ScopeService.ScopeSnapshot scope() {
+        ScopeService service = ScopeService.current();
+        return service == null ? null : service.snapshot();
     }
 
     private void resetDownstream() {

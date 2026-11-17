@@ -8,7 +8,6 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationServic
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
@@ -62,7 +61,6 @@ public class OrganizationDetail extends VerticalLayout {
         add(subtitle(node));
         add(sectionTitle());
         add(settings(node));
-        add(footerNote());
     }
 
     private HorizontalLayout header(OrganizationNode node) {
@@ -247,13 +245,6 @@ public class OrganizationDetail extends VerticalLayout {
                 Messages.get("organization.source.chain"),
                 null, null));
         return rows;
-    }
-
-    private Div footerNote() {
-        Div note = new Div();
-        note.addClassName("org-detail-note");
-        note.setText(Messages.get("organization.detail.note"));
-        return note;
     }
 
     private void toggleStore(OrganizationNode node, java.util.function.BiConsumer<StoreDto, String> setter,

@@ -22,6 +22,10 @@ public class CustomerDto {
 
     private Long id;
 
+    /** The brand the customer belongs to. */
+
+    private Integer brandId;
+
     /** The customer display name. */
 
     private String name;

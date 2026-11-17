@@ -239,13 +239,13 @@ public class DashboardView extends VerticalLayout {
                     applySettlement(settlement);
                     checkDone();
                 }),
-                error -> onLoadError("settlement", error), start, end);
+                error -> onLoadError("settlement", error), start, end, java.util.List.of());
         reportService.getTopProductsAsync(
                 products -> UiUtil.safeAccess(ui, () -> {
                     applyTopProducts(products);
                     checkDone();
                 }),
-                error -> onLoadError("top-products", error), start, end, TOP_MENU_LIMIT);
+                error -> onLoadError("top-products", error), start, end, TOP_MENU_LIMIT, java.util.List.of());
     }
 
     /**

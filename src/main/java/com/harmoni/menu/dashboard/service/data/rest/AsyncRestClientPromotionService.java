@@ -33,12 +33,13 @@ public class AsyncRestClientPromotionService extends AsyncRestClientBase impleme
      * @param status        optional lifecycle state filter
      * @param promotionType optional mechanism filter
      * @param search        optional keyword matched against code and name
+     * @param brandId       optional brand filter
      */
     public void getPromotionsAsync(AsyncRestCallback<Map<String, Object>> callback,
                                    AsyncRestCallback<Throwable> errorCallback,
                                    int page, int size, String status,
-                                   String promotionType, String search) {
-        makeAsyncRequest(buildPromotionUri(page, size, status, promotionType, search),
+                                   String promotionType, String search, Integer brandId) {
+        makeAsyncRequest(buildPromotionUri(page, size, status, promotionType, search, brandId),
                 new TypeReference<>() {
                 }, callback, errorCallback);
     }
@@ -52,11 +53,14 @@ public class AsyncRestClientPromotionService extends AsyncRestClientBase impleme
      * @param status        optional lifecycle state filter
      * @param promotionType optional mechanism filter
      * @param search        optional keyword matched against code and name
+     * @param brandId       optional brand filter
      * @return the fully formatted query URI
      */
-    String buildPromotionUri(int page, int size, String status, String promotionType, String search) {
+    String buildPromotionUri(int page, int size, String status, String promotionType,
+                             String search, Integer brandId) {
         return String.format(menuProperties.getUrl().getPromotions().getQuery(),
-                page, size, orEmpty(status), orEmpty(promotionType), orEmpty(search));
+                page, size, orEmpty(status), orEmpty(promotionType), orEmpty(search),
+                brandId == null ? "" : brandId);
     }
 
     private static String orEmpty(String value) {

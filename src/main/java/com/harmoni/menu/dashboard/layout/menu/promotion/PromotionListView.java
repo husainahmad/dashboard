@@ -68,6 +68,7 @@ public class PromotionListView extends AbstractListView {
     private final ComboBox<PromotionStatus> statusFilter = new ComboBox<>();
     private final ComboBox<PromotionType> typeFilter = new ComboBox<>();
     private final Span count = new Span();
+    private boolean layoutBuilt;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
@@ -76,6 +77,10 @@ public class PromotionListView extends AbstractListView {
                 BroadcastMessage.PROMOTION_UPDATED_SUCCESS,
                 BroadcastMessage.PROMOTION_STATUS_UPDATED_SUCCESS,
                 BroadcastMessage.PROMOTION_DELETE_SUCCESS), this::fetchPromotions);
+        if (layoutBuilt) {
+            return;
+        }
+        layoutBuilt = true;
         buildLayout();
     }
 
@@ -86,6 +91,10 @@ public class PromotionListView extends AbstractListView {
 
         configureSearch();
         configureFilters();
+        configureBrandFilter(() -> {
+            currentPage = 1;
+            fetchPromotions();
+        });
         configureGrid();
 
         H3 title = new H3(Messages.get("promotion.list.title"));
@@ -102,7 +111,7 @@ public class PromotionListView extends AbstractListView {
         add(header, content, getPaginationFooter());
         setFlexGrow(1, content);
 
-        fetchPromotions();
+        loadBrands(asyncRestClientOrganizationService, accessService, this::fetchPromotions);
     }
 
     private void configureGrid() {
@@ -254,7 +263,7 @@ public class PromotionListView extends AbstractListView {
         Button addButton = UiUtil.addButton(Messages.get("action.newPromotion"), event -> {
             openForm(null, FormAction.CREATE);
         });
-        HorizontalLayout toolbar = new HorizontalLayout(statusFilter, typeFilter, filterText, addButton);
+        HorizontalLayout toolbar = new HorizontalLayout(brandFilter, statusFilter, typeFilter, filterText, addButton);
         toolbar.addClassName(Css.TOOLBAR);
         toolbar.setWidthFull();
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
@@ -269,7 +278,7 @@ public class PromotionListView extends AbstractListView {
         TabManager tabManager = new TabManager(tabSheet);
         if (formAction == FormAction.CREATE || ObjectUtils.isEmpty(promotion.getId())) {
             String label = Messages.get("tab.promotionNew");
-            tabManager.addOrSelect(label, tab -> new PromotionFormWithPreview(
+            tabManager.addOrSelect("promotion:new", label, VaadinIcon.PLUS_CIRCLE, tab -> new PromotionFormWithPreview(
                     restClientPromotionService, asyncRestClientMenuService,
                     asyncRestClientOrganizationService,
                     PromotionEditorContext.builder()
@@ -290,7 +299,7 @@ public class PromotionListView extends AbstractListView {
                 String label = ObjectUtils.isEmpty(detail.getName())
                         ? Messages.get("tab.promotionEdit")
                         : Messages.get(Messages.Keys.ACTION_EDIT_NAME, detail.getName());
-                manager.addOrSelect(label, tab -> new PromotionFormWithPreview(
+                manager.addOrSelect("promotion:" + promotion.getId(), label, VaadinIcon.TAGS, tab -> new PromotionFormWithPreview(
                         restClientPromotionService, asyncRestClientMenuService,
                         asyncRestClientOrganizationService,
                         PromotionEditorContext.builder()
@@ -312,7 +321,7 @@ public class PromotionListView extends AbstractListView {
         String label = ObjectUtils.isEmpty(promotion.getName())
                 ? Messages.get("tab.promotionStatus")
                 : Messages.get("tab.promotionStatusNamed", promotion.getName());
-        tabManager.addOrSelect(label, tab -> new PromotionFormWithPreview(
+        tabManager.addOrSelect("promotion-status:" + promotion.getId(), label, VaadinIcon.CHECK_CIRCLE, tab -> new PromotionFormWithPreview(
                 restClientPromotionService, asyncRestClientMenuService, asyncRestClientOrganizationService,
                 PromotionEditorContext.builder()
                         .tabManager(tabManager)
@@ -351,7 +360,8 @@ public class PromotionListView extends AbstractListView {
                     currentPage, PAGE_SIZE,
                     status == null ? null : status.name(),
                     type == null ? null : type.name(),
-                    normalizeSearch(filterText.getValue()));
+                    normalizeSearch(filterText.getValue()),
+                    brandFilter.getValue() == null ? null : brandFilter.getValue().getId());
         });
     }
 

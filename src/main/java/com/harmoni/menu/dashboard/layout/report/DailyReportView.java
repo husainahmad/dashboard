@@ -9,8 +9,6 @@ import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -25,12 +23,8 @@ import java.util.List;
  * newest first, which keeps the grid sortable and paginated by the standard
  * {@code Grid} behaviour instead of nesting a grid inside every row.</p>
  */
-@Route(value = DailyReportView.ROUTE, layout = com.harmoni.menu.dashboard.layout.MainLayout.class)
-@PageTitle("Daily sales | POSHarmoni")
 public class DailyReportView extends AbstractReportView {
 
-    /** Route the daily sales report is reachable at. */
-    public static final String ROUTE = "report/daily";
 
     private static final int SKELETON_ROWS = 10;
 
@@ -101,7 +95,7 @@ public class DailyReportView extends AbstractReportView {
             onReportLoaded();
             grid.setItems(flatten(result));
         }), error -> UiUtil.safeAccess(ui, () -> onReportFailed(error)),
-                range.startDateTime(), range.endDateTime());
+                range.startDateTime(), range.endDateTime(), storeIds);
     }
 
     /**

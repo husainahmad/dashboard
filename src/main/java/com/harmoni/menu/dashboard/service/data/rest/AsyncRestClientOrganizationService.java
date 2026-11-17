@@ -5,6 +5,8 @@ import com.harmoni.menu.dashboard.configuration.MenuProperties;
 import com.harmoni.menu.dashboard.dto.*;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -195,6 +197,29 @@ public class AsyncRestClientOrganizationService extends AsyncRestClientBase {
     public void getAllUserByChainAsync(AsyncRestCallback<Map<String, Object>> callback,
                                        AsyncRestCallback<Throwable> errorCallback, Integer chainId, int page, int size, String search) {
         String uri = String.format(menuProperties.getUrl().getUsers().getChainPage(), chainId, page, size, search);
+        makeAsyncRequest(uri, new TypeReference<>() {
+        }, callback, errorCallback);
+    }
+
+    /**
+     * Asynchronously retrieves a page of users across the stores in scope.
+     *
+     * @param callback      success callback with the page payload
+     * @param errorCallback optional error callback for handling failures
+     * @param storeIds      comma-separated store ids in the caller's scope
+     * @param page          1-based page number
+     * @param size          page size
+     * @param search        the search term to filter users
+     * @param roleId        optional role filter
+     * @param scopeType     optional scope filter
+     */
+    public void getUsersPageAsync(AsyncRestCallback<Map<String, Object>> callback,
+                                  AsyncRestCallback<Throwable> errorCallback, String storeIds,
+                                  int page, int size, String search, String roleId, String scopeType) {
+        String encodedSearch = URLEncoder.encode(search == null ? "" : search, StandardCharsets.UTF_8);
+        String uri = String.format(menuProperties.getUrl().getUsers().getPage(),
+                storeIds, page, size, encodedSearch,
+                roleId == null ? "" : roleId, scopeType == null ? "" : scopeType);
         makeAsyncRequest(uri, new TypeReference<>() {
         }, callback, errorCallback);
     }

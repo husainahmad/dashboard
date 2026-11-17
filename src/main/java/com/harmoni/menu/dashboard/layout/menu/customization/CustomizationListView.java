@@ -15,6 +15,7 @@ import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
@@ -23,6 +24,7 @@ import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
@@ -322,7 +324,8 @@ public class CustomizationListView extends AbstractListView implements Broadcast
             return;
         }
         TabManager tabManager = new TabManager(tabSheet);
-        tabManager.addOrSelect(Messages.get("tab.customizationNew"), tab -> {
+        tabManager.addOrSelect("customization:new", Messages.get("tab.customizationNew"),
+                VaadinIcon.PLUS_CIRCLE, tab -> {
             CustomizationForm form = new CustomizationForm(restClientMenuService, tabManager, tab,
                     currentBrandId(), null);
             form.restructureButton(FormAction.CREATE);
@@ -345,7 +348,9 @@ public class CustomizationListView extends AbstractListView implements Broadcast
                         TabManager tabManager = new TabManager(tabSheet);
                         String tabLabel = customization.getName() == null || customization.getName().isBlank()
                                 ? Messages.get("tab.customizationEdit") : Messages.get(Messages.Keys.ACTION_EDIT_NAME, customization.getName());
-                        tabManager.addOrSelect(tabLabel, tab -> {
+                        String tabKey = customization.getId() == null
+                                ? "customization:edit" : "customization:" + customization.getId();
+                        tabManager.addOrSelect(tabKey, tabLabel, VaadinIcon.COG, tab -> {
                             CustomizationForm form = new CustomizationForm(restClientMenuService, tabManager, tab,
                                     currentBrandId(), customization);
                             form.restructureButton(FormAction.EDIT);
@@ -444,18 +449,24 @@ public class CustomizationListView extends AbstractListView implements Broadcast
         }
         brandDtos = ObjectUtil.convertObjectToObject(response.getData(), new TypeReference<>() {
         });
+        ScopeService.ScopeSnapshot scope = scope();
+        if (scope != null) {
+            brandDtos = scope.filterBrands(brandDtos);
+        }
         if (brandDtos.isEmpty() || ui == null) {
             return;
         }
         UiUtil.safeAccess(ui, () -> {
             BrandDto previous = brandDtoComboBox.getValue();
             brandDtoComboBox.setItems(brandDtos);
+            brandDtoComboBox.setEnabled(scope == null ? brandDtos.size() > 1
+                    : scope.canSelectBrand(brandDtos.size()));
             brandDtoComboBox.setValue(previous == null
-                    ? brandDtos.getFirst()
+                    ? defaultBrand()
                     : brandDtos.stream()
                             .filter(brand -> Objects.equals(previous.getId(), brand.getId()))
                             .findFirst()
-                            .orElse(brandDtos.getFirst()));
+                            .orElse(defaultBrand()));
             fetchTiersForBrand(brandDtoComboBox.getValue().getId());
             fetchCustomizations();
         });
@@ -500,6 +511,13 @@ public class CustomizationListView extends AbstractListView implements Broadcast
         if (brandDtos.isEmpty()) {
             return null;
         }
+        ScopeService.ScopeSnapshot scope = scope();
+        if (scope != null) {
+            BrandDto scoped = scope.defaultBrand(brandDtos);
+            if (scoped != null) {
+                return scoped;
+            }
+        }
         Integer brandId = sessionBrandId();
         if (brandId != null) {
             BrandDto match = brandDtos.stream()
@@ -511,6 +529,11 @@ public class CustomizationListView extends AbstractListView implements Broadcast
             }
         }
         return brandDtos.getFirst();
+    }
+
+    private static ScopeService.ScopeSnapshot scope() {
+        ScopeService service = ScopeService.current();
+        return service == null ? null : service.snapshot();
     }
 
     private Integer sessionBrandId() {

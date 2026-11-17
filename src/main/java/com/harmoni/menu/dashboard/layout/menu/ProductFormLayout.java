@@ -1,6 +1,5 @@
 package com.harmoni.menu.dashboard.layout.menu;
 
-import com.harmoni.menu.dashboard.layout.component.DialogClosing;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
@@ -75,16 +74,12 @@ public class ProductFormLayout extends FormLayout  {
     }
 
     /**
-     * Opens an error {@link DialogClosing} dialog on the UI thread.
+     * Shows an error toast on the UI thread.
      *
      * @param message the error text to show
      */
-    public void showErrorDialog(String message) {
-        DialogClosing dialog = new DialogClosing(message);
-        UiUtil.safeAccess(ui, ()-> {
-            add(dialog);
-            dialog.open();
-        });
+    public void showError(String message) {
+        UiUtil.safeAccess(ui, () -> UiUtil.error(message));
     }
 
     @Override

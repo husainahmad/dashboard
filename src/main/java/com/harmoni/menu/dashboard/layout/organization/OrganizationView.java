@@ -11,6 +11,7 @@ import com.harmoni.menu.dashboard.layout.organization.dialog.ChainDialog;
 import com.harmoni.menu.dashboard.layout.organization.dialog.StoreDialog;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
+import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -115,13 +116,23 @@ public class OrganizationView extends VerticalLayout {
         if (treeDto == null || treeDto.getBrands() == null) {
             return;
         }
+        ScopeService.ScopeSnapshot scope = scope();
         for (OrganizationTreeDto.BrandNode brand : treeDto.getBrands()) {
+            if (scope != null && !scope.canAccessBrand(brand.getId())) {
+                continue;
+            }
             OrganizationNode brandNode = OrganizationNode.of(brand);
             if (brand.getChains() != null) {
                 for (OrganizationTreeDto.ChainNode chain : brand.getChains()) {
+                    if (scope != null && !scope.canAccessChain(chain.getId(), brand.getId())) {
+                        continue;
+                    }
                     OrganizationNode chainNode = OrganizationNode.of(chain, brandNode);
                     if (chain.getStores() != null) {
                         for (OrganizationTreeDto.StoreNode store : chain.getStores()) {
+                            if (scope != null && !scope.canAccessStore(store.getId(), chain.getId())) {
+                                continue;
+                            }
                             chainNode.addChild(OrganizationNode.of(store, chainNode));
                         }
                     }
@@ -392,5 +403,10 @@ public class OrganizationView extends VerticalLayout {
         }
         List<ChainDto> chains = chainDtos();
         return chains.isEmpty() ? null : chains.getFirst();
+    }
+
+    private static ScopeService.ScopeSnapshot scope() {
+        ScopeService service = ScopeService.current();
+        return service == null ? null : service.snapshot();
     }
 }

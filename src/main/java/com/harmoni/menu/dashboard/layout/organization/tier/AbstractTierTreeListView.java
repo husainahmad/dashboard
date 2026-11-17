@@ -16,6 +16,7 @@ import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationServic
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.HasValue;
@@ -150,7 +151,11 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
                     TabManager tabManager = new TabManager(tabSheet);
                     String tabLabel = action == FormAction.EDIT && ObjectUtils.isNotEmpty(tierDto.getName())
                             ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, tierDto.getName()) : newTierLabel();
-                    tabManager.addOrSelect(tabLabel, tab -> openForm(restClientOrganizationService,
+                    String tabKey = tierDto.getId() == null
+                            ? "tier:new:" + getClass().getSimpleName()
+                            : "tier:" + getClass().getSimpleName() + ":" + tierDto.getId();
+                    VaadinIcon tabIcon = tierDto.getId() == null ? VaadinIcon.PLUS_CIRCLE : VaadinIcon.LEVEL_UP;
+                    tabManager.addOrSelect(tabKey, tabLabel, tabIcon, tab -> openForm(restClientOrganizationService,
                             asyncRestClientOrganizationService, tabManager, tab, action, tierDto, brands));
                 }));
     }

@@ -17,6 +17,7 @@ import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -144,7 +145,9 @@ public class TierPriceListView extends AbstractListView {
                     TabManager tabManager = new TabManager(tabSheet);
                     String tabLabel = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(tierDto.getName())
                             ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, tierDto.getName()) : Messages.get("action.newTierPrice");
-                    tabManager.addOrSelect(tabLabel, tab -> new TierPriceForm(restClientOrganizationService,
+                    String tabKey = tierDto.getId() == null ? "tierPrice:new" : "tierPrice:" + tierDto.getId();
+                    VaadinIcon tabIcon = tierDto.getId() == null ? VaadinIcon.PLUS_CIRCLE : VaadinIcon.DOLLAR;
+                    tabManager.addOrSelect(tabKey, tabLabel, tabIcon, tab -> new TierPriceForm(restClientOrganizationService,
                             asyncRestClientOrganizationService, tabManager, tab, formAction, tierDto, brands));
                 }));
     }

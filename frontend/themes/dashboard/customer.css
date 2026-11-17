@@ -11,9 +11,18 @@
     min-height: 100%;
 }
 
-.customer-toolbar {
+.list-view .customer-toolbar {
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+}
+
+.list-view .customer-toolbar vaadin-combo-box {
+    flex: 0 0 240px;
+}
+
+.list-view .customer-toolbar vaadin-text-field {
+    flex: 1 1 0;
+    width: auto;
 }
 
 .customer-body {
@@ -219,11 +228,6 @@
     letter-spacing: 0.04em;
 }
 
-.customer-reveal-button {
-    flex: 0 0 auto;
-    font-size: var(--lumo-font-size-s);
-}
-
 .customer-info-list {
     margin-top: var(--lumo-space-s);
 }
@@ -251,13 +255,4 @@
     font-weight: 600;
     color: var(--app-text);
     overflow-wrap: anywhere;
-}
-
-.customer-detail-note {
-    margin-top: var(--lumo-space-m);
-    padding: var(--lumo-space-s) var(--lumo-space-m);
-    border-radius: var(--lumo-border-radius-m);
-    background: var(--lumo-contrast-5pct);
-    font-size: var(--lumo-font-size-xs);
-    color: var(--app-text-muted);
 }

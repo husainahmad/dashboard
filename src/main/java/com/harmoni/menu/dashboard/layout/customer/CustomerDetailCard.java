@@ -2,8 +2,6 @@ package com.harmoni.menu.dashboard.layout.customer;
 
 import com.harmoni.menu.dashboard.dto.CustomerDto;
 import com.harmoni.menu.dashboard.util.Messages;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -19,8 +17,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Right-hand card of the Customer page: the selected customer's profile with
- * phone and email masked until the operator reveals them.
+ * Right-hand card of the Customer page: the selected customer's profile,
+ * including the phone number and email.
  */
 public class CustomerDetailCard extends VerticalLayout {
 
@@ -30,7 +28,6 @@ public class CustomerDetailCard extends VerticalLayout {
     private final VerticalLayout content = new VerticalLayout();
 
     private CustomerDto customer;
-    private boolean revealed;
 
     public CustomerDetailCard() {
         addClassName("customer-detail-card");
@@ -54,7 +51,6 @@ public class CustomerDetailCard extends VerticalLayout {
      */
     public void show(CustomerDto customer) {
         this.customer = customer;
-        this.revealed = false;
         if (customer == null) {
             removeAll();
             buildEmptyState();
@@ -68,7 +64,7 @@ public class CustomerDetailCard extends VerticalLayout {
 
     private void render() {
         content.removeAll();
-        content.add(header(), info(), footerNote());
+        content.add(header(), info());
         content.setVisible(true);
         removeAll();
         add(content);
@@ -111,18 +107,7 @@ public class CustomerDetailCard extends VerticalLayout {
         titleBlock.setPadding(false);
         titleBlock.setSpacing(false);
 
-        Button reveal = new Button(revealed
-                ? Messages.get("customer.detail.hide")
-                : Messages.get("customer.detail.show"),
-                event -> {
-                    revealed = !revealed;
-                    render();
-                });
-        reveal.setIcon(revealed ? VaadinIcon.EYE_SLASH.create() : VaadinIcon.EYE.create());
-        reveal.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
-        reveal.addClassName("customer-reveal-button");
-
-        HorizontalLayout header = new HorizontalLayout(avatar, titleBlock, reveal);
+        HorizontalLayout header = new HorizontalLayout(avatar, titleBlock);
         header.addClassName("customer-detail-header");
         header.setWidthFull();
         header.setAlignItems(Alignment.CENTER);
@@ -144,13 +129,6 @@ public class CustomerDetailCard extends VerticalLayout {
         return info;
     }
 
-    private Span footerNote() {
-        Span note = new Span(Messages.get("customer.detail.maskedHint"));
-        note.addClassName("customer-detail-note");
-        note.setVisible(!revealed);
-        return note;
-    }
-
     private Div infoRow(String label, String value) {
         Span name = new Span(label);
         name.addClassName("customer-info-label");
@@ -167,14 +145,14 @@ public class CustomerDetailCard extends VerticalLayout {
         if (ObjectUtils.isEmpty(customer.getPhone())) {
             return Messages.get("customer.detail.notSet");
         }
-        return revealed ? customer.getPhone() : CustomerMask.phone(customer.getPhone());
+        return customer.getPhone();
     }
 
     private String email() {
         if (ObjectUtils.isEmpty(customer.getEmail())) {
             return Messages.get("customer.detail.notSet");
         }
-        return revealed ? customer.getEmail() : CustomerMask.email(customer.getEmail());
+        return customer.getEmail();
     }
 
     private static String formatDate(Date date) {

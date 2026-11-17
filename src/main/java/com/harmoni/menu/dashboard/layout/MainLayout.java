@@ -3,17 +3,17 @@ package com.harmoni.menu.dashboard.layout;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
 import com.harmoni.menu.dashboard.component.Broadcaster;
+import com.harmoni.menu.dashboard.configuration.RbacProperties;
 import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
-import com.harmoni.menu.dashboard.layout.component.ErrorBanner;
-import com.harmoni.menu.dashboard.layout.component.ErrorDetail;
-import com.harmoni.menu.dashboard.layout.component.ErrorDetailsDialog;
 import com.harmoni.menu.dashboard.layout.navigation.SideNavMenu;
+import com.harmoni.menu.dashboard.layout.security.AccessDeniedView;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
 import com.harmoni.menu.dashboard.layout.util.LanguageSelector;
 import com.harmoni.menu.dashboard.layout.util.ThemeUtil;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
-import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -32,13 +32,13 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
@@ -46,8 +46,9 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * Root application shell hosting the header (logo, palette switcher, theme
  * toggle and user menu) plus the side-navigation drawer. Guards every route by
  * forwarding unauthenticated users to the login screen and surfaces broadcast
- * error notifications as dialogs.
+ * error notifications as toasts.
  */
+@Slf4j
 public class MainLayout extends AppLayout implements BroadcastMessageService, BeforeEnterObserver {
 
     Registration broadcasterRegistration;
@@ -56,20 +57,23 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
     public static final String TITLE = "POSHarmoni";
 
     private final AccessService accessService;
+    private final AuthorizationService authorizationService;
+    private final RbacProperties rbacProperties;
 
     private final Icon moonIcon = new Icon(VaadinIcon.MOON);
     private final Icon sunIcon = new Icon(VaadinIcon.SUN_O);
     private Button themeToggle;
-    private final ErrorBanner errorBanner;
 
     /**
      * Creates the app shell, building the header and drawer navigation.
      *
      * @param accessService resolves the logged-in user for the header menu
      */
-    public MainLayout(AccessService accessService) {
+    public MainLayout(AccessService accessService, AuthorizationService authorizationService,
+                      RbacProperties rbacProperties) {
         this.accessService = accessService;
-        this.errorBanner = new ErrorBanner(this::openErrorDetails);
+        this.authorizationService = authorizationService;
+        this.rbacProperties = rbacProperties;
         createHeader();
         createDrawer();
     }
@@ -98,13 +102,7 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         navbar.setFlexGrow(1, logo);
         navbar.addClassName("app-navbar");
 
-        VerticalLayout navbarStack = new VerticalLayout(navbar, errorBanner);
-        navbarStack.setPadding(false);
-        navbarStack.setSpacing(false);
-        navbarStack.setWidthFull();
-        navbarStack.addClassName("app-navbar-stack");
-
-        addToNavbar(navbarStack);
+        addToNavbar(navbar);
     }
 
     /**
@@ -218,7 +216,7 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
      * Creates the side navigation drawer with the main menu items.
      */
     private void createDrawer() {
-        addToDrawer(new SideNavMenu());
+        addToDrawer(new SideNavMenu(authorizationService, rbacProperties));
     }
 
     @Override
@@ -235,9 +233,10 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
     }
 
     /**
-     * Accepts a broadcast message, parses it, and shows an error dialog if the
-     * message indicates a bad request or process failure. If the message
-     * indicates an unauthorized access, it navigates to the login view.
+     * Accepts a broadcast message and routes it: validation failures stay a
+     * short toast, unauthorized responses return to login. Server failures are
+     * reported by the caller that made the request, so they are not surfaced
+     * again here.
      *
      * @param message the broadcast message as a JSON string
      */
@@ -248,29 +247,23 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
                 handleBroadcastError(broadcastMessage);
             }
         } catch (JsonProcessingException e) {
-            access(() -> errorBanner.show(ErrorDetail.raw(
-                    Messages.get("error.banner.messageUnknown"), e.getMessage())));
+            log.warn("Could not parse broadcast message", e);
         }
     }
 
     /**
      * Routes a failed request by severity. Validation failures stay a short
-     * toast; unexpected server failures raise the persistent banner with an
-     * optional details view. Unauthorized responses still return to login.
+     * toast; unauthorized responses still return to login.
      *
      * @param broadcastMessage the broadcast message to process
      */
     private void handleBroadcastError(BroadcastMessage broadcastMessage) {
-        RestAPIResponse response = toResponse(broadcastMessage.getData());
         if (BroadcastMessage.BAD_REQUEST_FAILED.equals(broadcastMessage.getType())) {
             access(() -> UiUtil.error(Messages.get("error.toast.badRequest")));
             return;
         }
-        if (BroadcastMessage.PROCESS_FAILED.equals(broadcastMessage.getType())) {
-            String summary = response == null
-                    ? Messages.get("error.banner.messageUnknown")
-                    : Messages.get("error.banner.message");
-            access(() -> errorBanner.show(ErrorDetail.from(summary, response)));
+        if (BroadcastMessage.FORBIDDEN.equals(broadcastMessage.getType())) {
+            access(() -> UiUtil.error(Messages.get("error.toast.forbidden")));
             return;
         }
         if (BroadcastMessage.UN_AUTHORIZED.equals(broadcastMessage.getType())) {
@@ -281,31 +274,9 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         }
     }
 
-    /**
-     * Opens the technical detail for a banner failure.
-     *
-     * @param detail the failure to show
-     */
-    private void openErrorDetails(ErrorDetail detail) {
-        getUI().ifPresent(ui -> ui.access(() -> new ErrorDetailsDialog(detail).open()));
-    }
-
     private void access(Runnable action) {
         getUI().ifPresent(ui -> ui.access(action::run));
     }
-
-    private RestAPIResponse toResponse(Object data) {
-        if (data == null) {
-            return null;
-        }
-        try {
-            return ObjectUtil.convertValueToObject(data, RestAPIResponse.class);
-        } catch (RuntimeException exception) {
-            return null;
-        }
-    }
-
-
 
     /**
      * Forwards to the login screen when no JWT token is present in the session.
@@ -317,6 +288,12 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         String token = VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);
         if (ObjectUtils.isEmpty(token)) {
             beforeEnterEvent.forwardTo(LoginView.class);
+            return;
+        }
+        Class<?> target = beforeEnterEvent.getNavigationTarget();
+        RequiresPermission required = target.getAnnotation(RequiresPermission.class);
+        if (required != null && !authorizationService.hasAnyPermission(required.value())) {
+            beforeEnterEvent.forwardTo(AccessDeniedView.class);
         }
     }
 }

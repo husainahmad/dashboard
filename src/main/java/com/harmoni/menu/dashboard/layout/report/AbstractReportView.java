@@ -1,6 +1,5 @@
 package com.harmoni.menu.dashboard.layout.report;
 
-import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
@@ -17,19 +16,14 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 
 /**
  * Shared shell for the five order service reports.
  *
- * <p>All of them take the same {@code start}/{@code end} range, and all of them
- * are scoped to the signed-in store by the API gateway, so each view only has to
- * describe its own content and how to request it. This class owns the title, the
- * {@link ReportRangeBar}, the loading bar and the error handling, and calls
- * {@link #loadReport(DateRange)} whenever a range is applied.</p>
- *
- * <p>Subclasses build their body from {@link #createContent()} rather than their
- * constructor, because Vaadin instantiates the view before the layout is built
- * and any field initialisers must already have run by then.</p>
+ * <p>The page owns the Brand/Chain/Store and date-range filter and pushes it to
+ * each report through {@link #applyFilter(DateRange, List)}. A report builds its
+ * body once, then reloads whenever the filter changes.</p>
  */
 @Slf4j
 public abstract class AbstractReportView extends VerticalLayout {
@@ -41,25 +35,27 @@ public abstract class AbstractReportView extends VerticalLayout {
 
     private final LoadingBar loadingBar = new LoadingBar();
 
-    private final ReportRangeBar rangeBar;
-
     private final VerticalLayout content = new VerticalLayout();
+
+    /** The range currently applied to this report. */
+    protected DateRange range;
+
+    /** Store ids the report is scoped to; empty means the signed-in user's store. */
+    protected List<Integer> storeIds = List.of();
 
     private boolean rendered;
 
     private boolean loading;
 
     /**
-     * Creates the report shell, wiring the range bar to {@link #load(DateRange)}.
+     * Creates the report shell.
      */
     protected AbstractReportView() {
-        this.rangeBar = new ReportRangeBar(this::load);
         setPadding(false);
         setSizeFull();
+        setSpacing(false);
         addClassName(Css.LIST_VIEW);
         add(loadingBar);
-        add(createHeader());
-        add(rangeBar);
         content.setPadding(false);
         content.setWidthFull();
         add(content);
@@ -67,8 +63,7 @@ public abstract class AbstractReportView extends VerticalLayout {
     }
 
     /**
-     * Renders the report body and loads the initial range. Guarded so that
-     * re-attaching the same view does not stack a second copy of the layout.
+     * Renders the report body and loads it with the filter already applied, if any.
      *
      * @param attachEvent the attach event
      */
@@ -83,11 +78,27 @@ public abstract class AbstractReportView extends VerticalLayout {
         }
         rendered = true;
         content.add(createContent());
-        load(rangeBar.getRange());
+        if (range != null) {
+            load(range);
+        }
     }
 
     /**
-     * Returns the report title shown above the range bar.
+     * Applies the page filter and reloads the report when it is already rendered.
+     *
+     * @param range    the selected date range
+     * @param storeIds the store ids in scope, empty for the user's store
+     */
+    public void applyFilter(DateRange range, List<Integer> storeIds) {
+        this.range = range;
+        this.storeIds = storeIds == null ? List.of() : List.copyOf(storeIds);
+        if (rendered) {
+            load(range);
+        }
+    }
+
+    /**
+     * Returns the report title, used for logging.
      *
      * @return the report title
      */
@@ -171,7 +182,7 @@ public abstract class AbstractReportView extends VerticalLayout {
 
     /**
      * Handles a failed report request by logging it and offering a retry that
-     * reuses the currently selected range.
+     * reuses the currently applied filter.
      *
      * @param error the failure
      */
@@ -184,10 +195,12 @@ public abstract class AbstractReportView extends VerticalLayout {
     }
 
     /**
-     * Re-runs the report for the range currently shown in the range bar.
+     * Re-runs the report for the filter currently applied.
      */
     private void reload() {
-        load(rangeBarRange());
+        if (range != null) {
+            load(range);
+        }
     }
 
     /**
@@ -197,31 +210,13 @@ public abstract class AbstractReportView extends VerticalLayout {
      * @param range the date range to report on
      */
     private void load(DateRange range) {
-        if (loading || !range.isValid()) {
+        if (loading || range == null || !range.isValid()) {
             return;
         }
         loading = true;
         loadingBar.start();
         showLoading();
         loadReport(range);
-    }
-
-    /**
-     * Returns the range currently selected in the view's range bar.
-     *
-     * @return the selected range
-     */
-    private DateRange rangeBarRange() {
-        return rangeBar.getRange();
-    }
-
-    /**
-     * Builds the report title and its explanatory caption.
-     *
-     * @return the header layout
-     */
-    private VerticalLayout createHeader() {
-        return new PageHeader(getTitle(), getDescription());
     }
 
     /**

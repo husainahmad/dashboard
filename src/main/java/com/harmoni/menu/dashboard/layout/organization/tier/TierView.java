@@ -7,6 +7,7 @@ import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
+import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
@@ -119,10 +120,15 @@ public class TierView extends VerticalLayout {
     private void loadBrands() {
         asyncRestClientOrganizationService.getAllBrandAsync(result ->
                 UiUtil.safeAccess(getUI().orElse(null), () -> {
-                    brands = result == null ? new ArrayList<>() : result;
+                    ScopeService scopeService = ScopeService.current();
+                    ScopeService.ScopeSnapshot scope = scopeService == null ? null : scopeService.snapshot();
+                    List<BrandDto> allowed = scope == null ? result : scope.filterBrands(result);
+                    brands = allowed == null ? new ArrayList<>() : allowed;
                     brandBox.setItems(brands);
+                    brandBox.setEnabled(scope == null ? brands.size() > 1
+                            : scope.canSelectBrand(brands.size()));
                     if (!brands.isEmpty()) {
-                        brandBox.setValue(brands.getFirst());
+                        brandBox.setValue(scope == null ? brands.getFirst() : scope.defaultBrand(brands));
                         loadTiers();
                     }
                 }), error -> UiUtil.safeAccess(getUI().orElse(null),
@@ -161,15 +167,26 @@ public class TierView extends VerticalLayout {
         if (tree == null || tree.getBrands() == null) {
             return;
         }
+        ScopeService scopeService = ScopeService.current();
+        ScopeService.ScopeSnapshot scope = scopeService == null ? null : scopeService.snapshot();
         for (OrganizationTreeDto.BrandNode brand : tree.getBrands()) {
+            if (scope != null && !scope.canAccessBrand(brand.getId())) {
+                continue;
+            }
             if (brand.getChains() == null) {
                 continue;
             }
             for (OrganizationTreeDto.ChainNode chain : brand.getChains()) {
+                if (scope != null && !scope.canAccessChain(chain.getId(), brand.getId())) {
+                    continue;
+                }
                 if (chain.getStores() == null) {
                     continue;
                 }
                 for (OrganizationTreeDto.StoreNode store : chain.getStores()) {
+                    if (scope != null && !scope.canAccessStore(store.getId(), chain.getId())) {
+                        continue;
+                    }
                     countTier(store.getTierPriceId(), store.getName());
                     countTier(store.getTierMenuId(), store.getName());
                     countTier(store.getTierServiceId(), store.getName());

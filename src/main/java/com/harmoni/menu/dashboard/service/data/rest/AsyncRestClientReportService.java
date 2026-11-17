@@ -13,6 +13,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Reactive client for the order service's reporting endpoints.
@@ -67,8 +68,8 @@ public class AsyncRestClientReportService extends AsyncRestClientBase {
      */
     public void getSettlementAsync(AsyncRestCallback<SettlementReportDto> callback,
                                    AsyncRestCallback<Throwable> errorCallback,
-                                   LocalDateTime start, LocalDateTime end) {
-        makeAsyncRequest(buildReportUri(reportProperties.getUrl().getSettlement(), start, end, null),
+                                   LocalDateTime start, LocalDateTime end, List<Integer> storeIds) {
+        makeAsyncRequest(buildReportUri(reportProperties.getUrl().getSettlement(), start, end, null, storeIds),
                 new TypeReference<SettlementReportDto>() {
                 }, callback, errorCallback);
     }
@@ -84,9 +85,9 @@ public class AsyncRestClientReportService extends AsyncRestClientBase {
      */
     public void getTopProductsAsync(AsyncRestCallback<List<TopProductReportDto>> callback,
                                     AsyncRestCallback<Throwable> errorCallback,
-                                    LocalDateTime start, LocalDateTime end, int limit) {
+                                    LocalDateTime start, LocalDateTime end, int limit, List<Integer> storeIds) {
         makeAsyncRequest(buildReportUri(reportProperties.getUrl().getTopProducts(), start, end,
-                        limit > 0 ? limit : DEFAULT_TOP_PRODUCT_LIMIT),
+                        limit > 0 ? limit : DEFAULT_TOP_PRODUCT_LIMIT, storeIds),
                 new TypeReference<List<TopProductReportDto>>() {
                 }, callback, errorCallback);
     }
@@ -101,8 +102,8 @@ public class AsyncRestClientReportService extends AsyncRestClientBase {
      */
     public void getDailyAsync(AsyncRestCallback<List<DailyReportDto>> callback,
                               AsyncRestCallback<Throwable> errorCallback,
-                              LocalDateTime start, LocalDateTime end) {
-        makeAsyncRequest(buildReportUri(reportProperties.getUrl().getDaily(), start, end, null),
+                              LocalDateTime start, LocalDateTime end, List<Integer> storeIds) {
+        makeAsyncRequest(buildReportUri(reportProperties.getUrl().getDaily(), start, end, null, storeIds),
                 new TypeReference<List<DailyReportDto>>() {
                 }, callback, errorCallback);
     }
@@ -117,8 +118,8 @@ public class AsyncRestClientReportService extends AsyncRestClientBase {
      */
     public void getSalesAsync(AsyncRestCallback<List<ProductSalesReportDto>> callback,
                               AsyncRestCallback<Throwable> errorCallback,
-                              LocalDateTime start, LocalDateTime end) {
-        makeAsyncRequest(buildReportUri(reportProperties.getUrl().getSales(), start, end, null),
+                              LocalDateTime start, LocalDateTime end, List<Integer> storeIds) {
+        makeAsyncRequest(buildReportUri(reportProperties.getUrl().getSales(), start, end, null, storeIds),
                 new TypeReference<List<ProductSalesReportDto>>() {
                 }, callback, errorCallback);
     }
@@ -133,8 +134,8 @@ public class AsyncRestClientReportService extends AsyncRestClientBase {
      */
     public void getOrderVolumeAsync(AsyncRestCallback<OrderVolumeReportDto> callback,
                                     AsyncRestCallback<Throwable> errorCallback,
-                                    LocalDateTime start, LocalDateTime end) {
-        makeAsyncRequest(buildReportUri(reportProperties.getUrl().getOrderVolume(), start, end, null),
+                                    LocalDateTime start, LocalDateTime end, List<Integer> storeIds) {
+        makeAsyncRequest(buildReportUri(reportProperties.getUrl().getOrderVolume(), start, end, null, storeIds),
                 new TypeReference<OrderVolumeReportDto>() {
                 }, callback, errorCallback);
     }
@@ -148,12 +149,18 @@ public class AsyncRestClientReportService extends AsyncRestClientBase {
      * @param limit   maximum rows, or {@code null} to leave the service default
      * @return the fully built report URI
      */
-    String buildReportUri(String baseUrl, LocalDateTime start, LocalDateTime end, Integer limit) {
+    String buildReportUri(String baseUrl, LocalDateTime start, LocalDateTime end, Integer limit,
+                          List<Integer> storeIds) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
                 .queryParam("start", RANGE_FORMAT.format(start))
                 .queryParam("end", RANGE_FORMAT.format(end));
         if (limit != null) {
             builder.queryParam("limit", limit);
+        }
+        if (storeIds != null && !storeIds.isEmpty()) {
+            builder.queryParam("storeIds", storeIds.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(",")));
         }
         return builder.toUriString();
     }

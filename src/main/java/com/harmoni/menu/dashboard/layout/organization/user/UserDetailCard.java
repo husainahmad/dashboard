@@ -17,6 +17,7 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -33,6 +34,8 @@ public class UserDetailCard extends VerticalLayout {
 
     private Consumer<UserDto> editListener;
     private Consumer<UserDto> deleteListener;
+    private boolean canEdit = true;
+    private boolean canDelete = true;
 
     public UserDetailCard() {
         addClassName("user-detail-card");
@@ -57,6 +60,18 @@ public class UserDetailCard extends VerticalLayout {
      * @param storeName the display name of the user's store, may be null
      */
     public void show(UserDto user, String storeName) {
+        show(user, storeName, null);
+    }
+
+    /**
+     * Renders the given user with the roles resolved from the authentication
+     * service, or the empty state when {@code user} is null.
+     *
+     * @param user      the selected user
+     * @param storeName the display name of the user's store, may be null
+     * @param roleNames the roles assigned to the user, may be null
+     */
+    public void show(UserDto user, String storeName, List<String> roleNames) {
         removeAll();
         if (user == null) {
             buildEmptyState();
@@ -66,7 +81,7 @@ public class UserDetailCard extends VerticalLayout {
             return;
         }
         content.removeAll();
-        content.add(header(user, storeName), info(user, storeName), actions(user));
+        content.add(header(user, storeName, roleNames), info(user, storeName, roleNames), actions(user));
         content.setVisible(true);
         add(content);
         setFlexGrow(1, content);
@@ -78,6 +93,14 @@ public class UserDetailCard extends VerticalLayout {
 
     public void setDeleteListener(Consumer<UserDto> listener) {
         this.deleteListener = listener;
+    }
+
+    public void setCanEdit(boolean canEdit) {
+        this.canEdit = canEdit;
+    }
+
+    public void setCanDelete(boolean canDelete) {
+        this.canDelete = canDelete;
     }
 
     private void buildEmptyState() {
@@ -101,7 +124,7 @@ public class UserDetailCard extends VerticalLayout {
         empty.add(icon, title, hint);
     }
 
-    private HorizontalLayout header(UserDto user, String storeName) {
+    private HorizontalLayout header(UserDto user, String storeName, List<String> roleNames) {
         Div avatar = new Div();
         avatar.addClassName("user-detail-avatar");
         avatar.addClassName(UserRoles.cssClass(user.getAuthId()));
@@ -110,11 +133,19 @@ public class UserDetailCard extends VerticalLayout {
         H2 name = new H2(ObjectUtils.isNotEmpty(user.getUsername()) ? user.getUsername() : "-");
         name.addClassName("user-detail-name");
 
-        Span role = new Span(UserRoles.label(user.getAuthId()));
-        role.addClassName("user-role-badge");
-        role.addClassName(UserRoles.cssClass(user.getAuthId()));
-
-        HorizontalLayout titleRow = new HorizontalLayout(name, role);
+        HorizontalLayout titleRow = new HorizontalLayout(name);
+        if (roleNames == null || roleNames.isEmpty()) {
+            Span role = new Span(UserRoles.label(user.getAuthId()));
+            role.addClassName("user-role-badge");
+            role.addClassName(UserRoles.cssClass(user.getAuthId()));
+            titleRow.add(role);
+        } else {
+            for (String roleName : roleNames) {
+                Span role = new Span(roleName);
+                role.addClassName("user-role-badge");
+                titleRow.add(role);
+            }
+        }
         titleRow.setAlignItems(Alignment.CENTER);
         titleRow.setSpacing(true);
 
@@ -135,7 +166,7 @@ public class UserDetailCard extends VerticalLayout {
         return header;
     }
 
-    private VerticalLayout info(UserDto user, String storeName) {
+    private VerticalLayout info(UserDto user, String storeName, List<String> roleNames) {
         VerticalLayout info = new VerticalLayout();
         info.addClassName("user-info-list");
         info.setPadding(false);
@@ -143,7 +174,9 @@ public class UserDetailCard extends VerticalLayout {
 
         info.add(infoRow(Messages.get("user.detail.store"),
                 ObjectUtils.isNotEmpty(storeName) ? storeName : Messages.get("user.detail.notSet")));
-        info.add(infoRow(Messages.get("user.detail.role"), UserRoles.label(user.getAuthId())));
+        String roleText = roleNames == null || roleNames.isEmpty()
+                ? UserRoles.label(user.getAuthId()) : String.join(", ", roleNames);
+        info.add(infoRow(Messages.get("user.detail.role"), roleText));
         info.add(infoRow(Messages.get("user.detail.created"), formatDate(user.getCreatedAt())));
         info.add(infoRow(Messages.get("user.detail.updated"), formatDate(user.getUpdatedAt())));
         return info;
@@ -166,12 +199,14 @@ public class UserDetailCard extends VerticalLayout {
                 event -> editListener.accept(user));
         edit.setIcon(VaadinIcon.PENCIL.create());
         edit.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        edit.setVisible(canEdit);
 
         Button delete = new Button(Messages.get(Messages.Keys.ACTION_DELETE),
                 event -> deleteListener.accept(user));
         delete.setIcon(VaadinIcon.TRASH.create());
         delete.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         delete.addClassName("user-delete-button");
+        delete.setVisible(canDelete);
 
         HorizontalLayout actions = new HorizontalLayout(delete, edit);
         actions.addClassName("user-action-bar");

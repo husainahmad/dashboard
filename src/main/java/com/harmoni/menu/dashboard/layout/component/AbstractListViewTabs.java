@@ -3,6 +3,9 @@ package com.harmoni.menu.dashboard.layout.component;
 import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.TabSheet;
@@ -48,6 +51,15 @@ public abstract class AbstractListViewTabs extends VerticalLayout {
      */
     protected abstract AbstractListView createListView();
 
+    /**
+     * Optional decorative icon shown before the browse tab caption.
+     *
+     * @return the icon, or {@code null} for a text-only tab
+     */
+    protected VaadinIcon tabIcon() {
+        return null;
+    }
+
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
@@ -62,9 +74,7 @@ public abstract class AbstractListViewTabs extends VerticalLayout {
         AbstractListView listView = createListView();
 
         TabSheet tabSheet = new TabSheet();
-        Tab browseTab = new Tab();
-        browseTab.setLabel(Messages.get(tabLabelKey()));
-        tabSheet.add(browseTab, listView);
+        tabSheet.add(buildBrowseTab(), listView);
         tabSheet.setSizeFull();
 
         add(PageHeader.of(pageTitleKey(), pageDescriptionKey()));
@@ -73,5 +83,17 @@ public abstract class AbstractListViewTabs extends VerticalLayout {
         setFlexGrow(1, tabSheet);
         setPadding(false);
         setSizeFull();
+    }
+
+    private Tab buildBrowseTab() {
+        String label = Messages.get(tabLabelKey());
+        VaadinIcon icon = tabIcon();
+        if (icon == null) {
+            return new Tab(label);
+        }
+        Icon leading = new Icon(icon);
+        leading.setSize("16px");
+        leading.addClassName("tab-icon");
+        return new Tab(leading, new Span(label));
     }
 }

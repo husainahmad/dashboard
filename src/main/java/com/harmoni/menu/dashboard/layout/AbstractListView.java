@@ -9,6 +9,7 @@ import com.harmoni.menu.dashboard.layout.component.PaginationBar;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -119,6 +120,7 @@ public abstract class AbstractListView extends VerticalLayout {
      * search icon and lazy value-change mode.
      */
     protected void configureSearchFilter() {
+        filterText.setLabel(Messages.get(Messages.Keys.LABEL_SEARCH));
         filterText.setPlaceholder(Messages.get("placeholder.filterByName"));
         filterText.setClearButtonVisible(true);
         filterText.setPrefixComponent(VaadinIcon.SEARCH.create());
@@ -192,14 +194,19 @@ public abstract class AbstractListView extends VerticalLayout {
     protected void loadBrands(AsyncRestClientOrganizationService orgService,
                               AccessService access, Runnable afterLoad) {
         orgService.getAllBrandAsync(result -> UiUtil.safeAccess(ui, () -> {
-            if (result == null || result.isEmpty()) {
-                log.warn("Brand reload returned no brands; keeping current selection");
+            ScopeService scopeService = ScopeService.current();
+            ScopeService.ScopeSnapshot scope = scopeService == null ? null : scopeService.snapshot();
+            List<BrandDto> allowed = scope == null ? result : scope.filterBrands(result);
+            if (allowed == null || allowed.isEmpty()) {
+                log.warn("No accessible brands for the signed-in user; keeping current selection");
                 afterLoad.run();
                 return;
             }
             Integer keepId = brandFilter.getValue() != null ? brandFilter.getValue().getId() : null;
-            brandOptions = result;
+            brandOptions = new ArrayList<>(allowed);
             brandFilter.setItems(brandOptions);
+            brandFilter.setEnabled(scope == null ? brandOptions.size() > 1
+                    : scope.canSelectBrand(brandOptions.size()));
             BrandDto keep = null;
             if (keepId != null) {
                 keep = brandOptions.stream()
@@ -207,7 +214,8 @@ public abstract class AbstractListView extends VerticalLayout {
                         .findFirst()
                         .orElse(null);
             }
-            BrandDto selected = keep != null ? keep : brandOptions.getFirst();
+            BrandDto selected = keep != null ? keep
+                    : scope == null ? brandOptions.getFirst() : scope.defaultBrand(brandOptions);
             brandFilter.setValue(selected);
             afterLoad.run();
         }), error -> UiUtil.safeAccess(ui, () ->

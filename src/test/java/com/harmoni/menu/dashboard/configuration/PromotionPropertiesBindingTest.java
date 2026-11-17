@@ -44,6 +44,7 @@ class PromotionPropertiesBindingTest {
         assertTrue(query.contains("status=%s"), query);
         assertTrue(query.contains("promotionType=%s"), query);
         assertTrue(query.contains("search=%s"), query);
+        assertTrue(query.contains("brandId=%s"), query);
     }
 
     @Test
@@ -61,8 +62,8 @@ class PromotionPropertiesBindingTest {
 
         assertEquals(MENU_BASE + "/api/v1/promotion/42",
                 String.format("%s/%d", promotions.getPromotion(), 42L));
-        assertEquals(MENU_BASE + "/api/v1/promotion?page=1&size=15&status=ACTIVE&promotionType=&search=happy",
-                String.format(promotions.getQuery(), 1, 15, "ACTIVE", "", "happy"));
+        assertEquals(MENU_BASE + "/api/v1/promotion?page=1&size=15&status=ACTIVE&promotionType=&search=happy&brandId=7",
+                String.format(promotions.getQuery(), 1, 15, "ACTIVE", "", "happy", 7));
         assertEquals(MENU_BASE + "/api/v1/promotion/code/HAPPY10",
                 promotions.getByCode().formatted("HAPPY10"));
         assertEquals(MENU_BASE + "/api/v1/promotion/42/status?status=PAUSED",

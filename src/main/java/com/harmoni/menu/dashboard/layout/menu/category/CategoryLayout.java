@@ -29,6 +29,7 @@ public class CategoryLayout extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        removeAll();
         addClassName(Css.LIST_VIEW);
         add(new CategoryView(asyncRestClientMenuService,
                 asyncRestClientOrganizationService, restClientMenuService, accessService));

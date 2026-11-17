@@ -24,11 +24,11 @@ public interface ProductFormDelegate {
     void showNotification(String message);
 
     /**
-     * Shows a modal error dialog to the user.
+     * Shows an error toast to the user.
      *
      * @param message the error text to display
      */
-    void showErrorDialog(String message);
+    void showError(String message);
 
     /**
      * Returns the id of the product currently being edited, if it has been

@@ -18,6 +18,7 @@ import com.harmoni.menu.dashboard.layout.enums.PromotionType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientPromotionService;
@@ -199,6 +200,7 @@ public class PromotionForm extends FormLayout {
 
     /** The scope the field held before the store picker opened, restored if it is cancelled. */
     private PromotionScopeType scopeBeforeStoreDialog;
+    private boolean fieldsReadOnly;
 
     private final transient TabManager tabManager;
     private final Tab currentTab;
@@ -1153,9 +1155,18 @@ public class PromotionForm extends FormLayout {
      * @param brands the brands the backend returned
      */
     private void applyBrands(List<BrandDto> brands) {
+        ScopeService.ScopeSnapshot scope = scope();
+        List<BrandDto> allowed = scope == null ? brands : scope.filterBrands(brands);
         Long wanted = firstNonNull(selectedBrandId(), pendingBrandId);
         pendingBrandId = null;
-        brandSelect.setItems(brands == null ? List.of() : brands);
+        brandSelect.setItems(allowed == null ? List.of() : allowed);
+        brandSelect.setEnabled(!fieldsReadOnly && (scope == null
+                ? brandSelect.getListDataView().getItems().count() > 1
+                : scope.canSelectBrand(brandSelect.getListDataView().getItems().count())));
+        if (wanted == null && scope != null) {
+            BrandDto defaultBrand = scope.defaultBrand(allowed);
+            wanted = defaultBrand == null ? null : idOf(defaultBrand.getId());
+        }
         if (!selectBrand(wanted)) {
             selectFirstBrand();
         }
@@ -1206,9 +1217,17 @@ public class PromotionForm extends FormLayout {
      * @param chains the chains of the chosen brand
      */
     private void applyChains(List<ChainDto> chains) {
+        ScopeService.ScopeSnapshot scope = scope();
+        List<ChainDto> allowed = scope == null ? chains : scope.filterChains(chains);
         Long wanted = firstNonNull(selectedChainId(), pendingChainId);
         pendingChainId = null;
-        chainSelect.setItems(chains == null ? List.of() : chains);
+        chainSelect.setItems(allowed == null ? List.of() : allowed);
+        chainSelect.setEnabled(!fieldsReadOnly && (scope == null || !scope.isChainLocked())
+                && chainSelect.getListDataView().getItems().count() > 1);
+        if (wanted == null && scope != null) {
+            ChainDto defaultChain = scope.defaultChain(allowed);
+            wanted = defaultChain == null ? null : idOf(defaultChain.getId());
+        }
         if (!selectChain(wanted)) {
             selectFirstChain();
         }
@@ -1260,7 +1279,11 @@ public class PromotionForm extends FormLayout {
      * @param stores the stores of the chosen chain
      */
     private void applyStores(List<StoreDto> stores) {
-        storeSelect.setItems(stores == null ? List.of() : stores);
+        ScopeService.ScopeSnapshot scope = scope();
+        List<StoreDto> allowed = scope == null ? stores : scope.filterStores(stores);
+        storeSelect.setItems(allowed == null ? List.of() : allowed);
+        storeSelect.setEnabled(!fieldsReadOnly && (scope == null || !scope.isStoreLocked())
+                && storeSelect.getListDataView().getItems().count() > 1);
         restorePendingStores();
         firePreviewUpdate();
     }
@@ -2061,6 +2084,7 @@ public class PromotionForm extends FormLayout {
      * @param readOnly whether to make the fields read-only
      */
     public void setFieldsReadOnly(boolean readOnly) {
+        fieldsReadOnly = readOnly;
         nameField.setReadOnly(readOnly);
         codeField.setReadOnly(readOnly);
         descriptionField.setReadOnly(readOnly);
@@ -2076,9 +2100,14 @@ public class PromotionForm extends FormLayout {
         endTimePicker.setEnabled(!readOnly);
         applyToSelect.setEnabled(!readOnly);
         scopeSelect.setEnabled(!readOnly);
-        brandSelect.setEnabled(!readOnly);
-        chainSelect.setEnabled(!readOnly);
-        storeSelect.setEnabled(!readOnly);
+        ScopeService.ScopeSnapshot scope = scope();
+        brandSelect.setEnabled(!readOnly && (scope == null
+                ? brandSelect.getListDataView().getItems().count() > 1
+                : scope.canSelectBrand(brandSelect.getListDataView().getItems().count())));
+        chainSelect.setEnabled(!readOnly && (scope == null || !scope.isChainLocked())
+                && chainSelect.getListDataView().getItems().count() > 1);
+        storeSelect.setEnabled(!readOnly && (scope == null || !scope.isStoreLocked())
+                && storeSelect.getListDataView().getItems().count() > 1);
         targetSelectButton.setEnabled(!readOnly);
         activeCheckbox.setReadOnly(readOnly);
     }
@@ -2104,6 +2133,7 @@ public class PromotionForm extends FormLayout {
             promotion.setRules(promotionDto.getRules());
         }
 
+        promotion.setBrandId(targetBrandId());
         promotion.setName(nameField.getValue());
         promotion.setCode(codeField.getValue());
         promotion.setDescription(descriptionField.getValue());
@@ -2254,5 +2284,10 @@ public class PromotionForm extends FormLayout {
      */
     private void closeTab() {
         tabManager.closeAndSelectFirst(currentTab);
+    }
+
+    private static ScopeService.ScopeSnapshot scope() {
+        ScopeService service = ScopeService.current();
+        return service == null ? null : service.snapshot();
     }
 }

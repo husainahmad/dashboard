@@ -1,13 +1,21 @@
 package com.harmoni.menu.dashboard.layout.organization.user;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.harmoni.menu.dashboard.dto.OrganizationTreeDto;
+import com.harmoni.menu.dashboard.dto.RoleDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.util.Css;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
+import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
+import com.harmoni.menu.dashboard.service.data.rest.RestClientRbacService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.vaadin.flow.component.AttachEvent;
@@ -28,6 +36,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Unified Users page: a searchable list of the chain's users on the left and
@@ -39,7 +49,9 @@ public class UserView extends VerticalLayout {
 
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
+    private final RestClientRbacService restClientRbacService;
     private final AccessService accessService;
+    private final AuthorizationService authorizationService;
 
     private final UserListCard listCard = new UserListCard();
     private final UserDetailCard detailCard = new UserDetailCard();
@@ -49,6 +61,8 @@ public class UserView extends VerticalLayout {
 
     private final List<StoreDto> stores = new ArrayList<>();
     private final Map<Integer, String> storeNames = new HashMap<>();
+    private final List<RoleDto> roles = new ArrayList<>();
+    private final Map<Long, List<String>> roleNamesByUser = new HashMap<>();
 
     private List<UserDto> pageUsers = new ArrayList<>();
     private UserDto selectedUser;
@@ -60,10 +74,14 @@ public class UserView extends VerticalLayout {
 
     public UserView(AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                     RestClientOrganizationService restClientOrganizationService,
-                    AccessService accessService) {
+                    RestClientRbacService restClientRbacService,
+                    AccessService accessService,
+                    AuthorizationService authorizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
+        this.restClientRbacService = restClientRbacService;
         this.accessService = accessService;
+        this.authorizationService = authorizationService;
 
         addClassName("user-view");
         setSizeFull();
@@ -72,6 +90,7 @@ public class UserView extends VerticalLayout {
 
         PageHeader header = PageHeader.of("page.user.title", "page.user.description");
 
+        search.setLabel(Messages.get(Messages.Keys.LABEL_SEARCH));
         search.setPlaceholder(Messages.get("user.search.placeholder"));
         search.setClearButtonVisible(true);
         search.setPrefixComponent(VaadinIcon.SEARCH.create());
@@ -119,6 +138,8 @@ public class UserView extends VerticalLayout {
 
         detailCard.setEditListener(this::openDialog);
         detailCard.setDeleteListener(this::confirmDelete);
+        detailCard.setCanEdit(authorizationService.hasPermission(Permissions.USER_WRITE));
+        detailCard.setCanDelete(authorizationService.hasPermission(Permissions.USER_DELETE));
     }
 
     @Override
@@ -129,45 +150,89 @@ public class UserView extends VerticalLayout {
             Shortcuts.addShortcutListener(this, search::focus, Key.SLASH);
         }
         loadStores();
-        fetchUsers();
+        loadRoles();
+    }
+
+    private void loadRoles() {
+        if (!authorizationService.hasPermission(Permissions.RBAC_READ)) {
+            return;
+        }
+        restClientRbacService.getRoles().subscribe(
+                response -> UiUtil.safeAccess(getUI().orElse(null), () -> {
+                    roles.clear();
+                    if (response != null && response.getData() != null) {
+                        roles.addAll(ObjectUtil.convertObjectToObject(
+                                response.getData(), new TypeReference<List<RoleDto>>() { }));
+                    }
+                }),
+                error -> UiUtil.safeAccess(getUI().orElse(null),
+                        () -> UiUtil.error(Messages.get("rbac.role.loadFailed"))));
     }
 
     private void loadStores() {
-        Integer chainId = accessService.getChainId();
-        if (chainId == null) {
-            return;
-        }
-        asyncRestClientOrganizationService.getAllStoreAsync(
-                result -> UiUtil.safeAccess(getUI().orElse(null), () -> {
-                    stores.clear();
-                    storeNames.clear();
-                    Object data = result == null ? null : result.get("data");
-                    if (data instanceof List<?> rows) {
-                        for (Object row : rows) {
-                            StoreDto store = ObjectUtil.convertValueToObject(row, StoreDto.class);
-                            if (store != null) {
-                                stores.add(store);
-                                storeNames.put(store.getId(), store.getName());
+        asyncRestClientOrganizationService.getOrganizationTreeAsync(
+                tree -> UiUtil.safeAccess(getUI().orElse(null), () -> {
+                    List<StoreDto> loaded = new ArrayList<>();
+                    if (tree != null && tree.getBrands() != null) {
+                        for (OrganizationTreeDto.BrandNode brand : tree.getBrands()) {
+                            if (brand.getChains() == null) {
+                                continue;
+                            }
+                            for (OrganizationTreeDto.ChainNode chain : brand.getChains()) {
+                                if (chain.getStores() == null) {
+                                    continue;
+                                }
+                                for (OrganizationTreeDto.StoreNode store : chain.getStores()) {
+                                    StoreDto dto = new StoreDto();
+                                    dto.setId(store.getId());
+                                    dto.setName(store.getName());
+                                    dto.setChainId(store.getChainId());
+                                    loaded.add(dto);
+                                }
                             }
                         }
+                    }
+                    ScopeService.ScopeSnapshot scope = scope();
+                    List<StoreDto> allowed = scope == null ? loaded : scope.filterStores(loaded);
+                    stores.clear();
+                    storeNames.clear();
+                    for (StoreDto store : allowed) {
+                        stores.add(store);
+                        storeNames.put(store.getId(), store.getName());
                     }
                     listCard.setUsers(pageUsers, storeNames);
                     if (selectedUser != null) {
                         detailCard.show(selectedUser, storeName(selectedUser));
                     }
-                    addButton.setEnabled(true);
+                    addButton.setEnabled(authorizationService.hasPermission(Permissions.USER_WRITE));
+                    fetchUsers();
                 }),
-                error -> UiUtil.safeAccess(getUI().orElse(null), () -> addButton.setEnabled(true)),
-                chainId, 1, 500, "");
+                error -> UiUtil.safeAccess(getUI().orElse(null), () -> {
+                    addButton.setEnabled(authorizationService.hasPermission(Permissions.USER_WRITE));
+                    fetchUsers();
+                }));
     }
 
     private void fetchUsers() {
-        Integer chainId = accessService.getChainId();
-        if (chainId == null) {
+        List<Integer> storeIds = stores.stream()
+                .map(StoreDto::getId)
+                .filter(Objects::nonNull)
+                .toList();
+        if (storeIds.isEmpty()) {
+            Integer storeId = accessService.getStoreId();
+            if (storeId != null) {
+                storeIds = List.of(storeId);
+            }
+        }
+        if (storeIds.isEmpty()) {
+            listCard.setLoading(false);
             return;
         }
+        String storeIdsParam = storeIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
         listCard.setLoading(true);
-        asyncRestClientOrganizationService.getAllUserByChainAsync(
+        asyncRestClientOrganizationService.getUsersPageAsync(
                 result -> UiUtil.safeAccess(getUI().orElse(null), () -> {
                     listCard.setLoading(false);
                     pageUsers = new ArrayList<>();
@@ -199,7 +264,7 @@ public class UserView extends VerticalLayout {
                     listCard.setLoading(false);
                     UiUtil.errorWithRetry(Messages.get("notification.user.loadFailed"), this::fetchUsers);
                 }),
-                chainId, currentPage, PAGE_SIZE, search.getValue());
+                storeIdsParam, currentPage, PAGE_SIZE, search.getValue(), null, null);
     }
 
     private UserDto findSelected() {
@@ -221,7 +286,36 @@ public class UserView extends VerticalLayout {
     private void selectUser(UserDto user) {
         selectedUser = user;
         listCard.select(user);
-        detailCard.show(user, storeName(user));
+        if (user == null) {
+            detailCard.show(null, null, List.of());
+            return;
+        }
+        List<String> cached = user.getAuthUserId() == null ? null : roleNamesByUser.get(user.getAuthUserId());
+        if (cached != null) {
+            detailCard.show(user, storeName(user), cached);
+            return;
+        }
+        detailCard.show(user, storeName(user), List.of());
+        if (user.getAuthUserId() != null) {
+            restClientRbacService.getUserRoles(user.getAuthUserId()).subscribe(
+                    response -> UiUtil.safeAccess(getUI().orElse(null), () -> {
+                        List<String> names = parseRoles(response).stream()
+                                .map(RoleDto::getName)
+                                .toList();
+                        roleNamesByUser.put(user.getAuthUserId(), names);
+                        if (selectedUser == user) {
+                            detailCard.show(user, storeName(user), names);
+                        }
+                    }),
+                    error -> { });
+        }
+    }
+
+    private List<RoleDto> parseRoles(RestAPIResponse response) {
+        if (response == null || response.getData() == null) {
+            return List.of();
+        }
+        return ObjectUtil.convertObjectToObject(response.getData(), new TypeReference<List<RoleDto>>() { });
     }
 
     private String storeName(UserDto user) {
@@ -229,11 +323,32 @@ public class UserView extends VerticalLayout {
     }
 
     private void openDialog(UserDto user) {
-        new UserDialog(restClientOrganizationService, stores, user, () -> {
+        if (!authorizationService.hasPermission(Permissions.USER_WRITE)) {
+            return;
+        }
+        if (user == null || user.getAuthUserId() == null) {
+            showDialog(user);
+            return;
+        }
+        restClientRbacService.getUserRoles(user.getAuthUserId()).subscribe(
+                response -> UiUtil.safeAccess(getUI().orElse(null), () -> {
+                    Set<Long> roleIds = parseRoles(response).stream()
+                            .map(RoleDto::getId)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet());
+                    user.setRoleIds(roleIds);
+                    showDialog(user);
+                }),
+                error -> UiUtil.safeAccess(getUI().orElse(null), () -> showDialog(user)));
+    }
+
+    private void showDialog(UserDto user) {
+        new UserDialog(restClientOrganizationService, stores, roles, user, () -> {
             pendingSelectId = user == null ? null : user.getId();
             if (user == null) {
                 currentPage = 1;
             }
+            roleNamesByUser.clear();
             fetchUsers();
         }).open();
     }
@@ -263,5 +378,10 @@ public class UserView extends VerticalLayout {
         } catch (NumberFormatException exception) {
             return 0;
         }
+    }
+
+    private static ScopeService.ScopeSnapshot scope() {
+        ScopeService service = ScopeService.current();
+        return service == null ? null : service.snapshot();
     }
 }

@@ -54,7 +54,7 @@ class AsyncRestClientReportServiceTest {
 
     @Test
     void buildReportUri_appendsIsoLocalDateTimeRange() {
-        String uri = client.buildReportUri(urls.getSettlement(), START, END, null);
+        String uri = client.buildReportUri(urls.getSettlement(), START, END, null, List.of());
 
         assertTrue(uri.startsWith(BASE_URL + "/settlement"), uri);
         assertTrue(uri.contains("start=2026-08-17T00:00:00"), uri);
@@ -63,17 +63,17 @@ class AsyncRestClientReportServiceTest {
 
     @Test
     void buildReportUri_omitsLimitWhenNotCapped() {
-        assertFalse(client.buildReportUri(urls.getDaily(), START, END, null).contains("limit="));
+        assertFalse(client.buildReportUri(urls.getDaily(), START, END, null, List.of()).contains("limit="));
     }
 
     @Test
     void buildReportUri_addsLimitWhenCapped() {
-        assertTrue(client.buildReportUri(urls.getTopProducts(), START, END, 25).contains("limit=25"));
+        assertTrue(client.buildReportUri(urls.getTopProducts(), START, END, 25, List.of()).contains("limit=25"));
     }
 
     @Test
     void buildReportUri_neverSendsAZoneOffset() {
-        String uri = client.buildReportUri(urls.getSales(), START, END, null);
+        String uri = client.buildReportUri(urls.getSales(), START, END, null, List.of());
 
         assertFalse(uri.contains("%3A"), uri);
         assertFalse(uri.contains("Z&"), uri);

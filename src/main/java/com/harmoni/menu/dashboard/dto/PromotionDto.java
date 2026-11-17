@@ -42,6 +42,10 @@ public class PromotionDto {
 
     private Long id;
 
+    /** The brand that owns the promotion. */
+
+    private Integer brandId;
+
     /** The unique short code an order references to claim the discount. */
 
     private String code;

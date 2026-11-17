@@ -1,14 +1,15 @@
 package com.harmoni.menu.dashboard.layout.organization.user;
 
+import com.harmoni.menu.dashboard.dto.RoleDto;
 import com.harmoni.menu.dashboard.dto.StoreDto;
 import com.harmoni.menu.dashboard.dto.UserDto;
-import com.harmoni.menu.dashboard.layout.enums.RoleType;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.EmailField;
@@ -16,6 +17,9 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Modal dialog for creating and editing a dashboard user. Create collects the
@@ -26,6 +30,7 @@ public class UserDialog extends Dialog {
 
     private final RestClientOrganizationService restClientOrganizationService;
     private final List<StoreDto> stores;
+    private final List<RoleDto> roles;
     private final UserDto editingUser;
     private final Runnable onSaved;
 
@@ -33,12 +38,13 @@ public class UserDialog extends Dialog {
     private final EmailField emailField = new EmailField(Messages.get("label.email"));
     private final PasswordField passwordField = new PasswordField(Messages.get("label.password"));
     private final ComboBox<StoreDto> storeBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_STORE));
-    private final ComboBox<RoleType> roleBox = new ComboBox<>(Messages.get("label.auth"));
+    private final MultiSelectComboBox<RoleDto> roleBox = new MultiSelectComboBox<>(Messages.get("label.auth"));
 
     public UserDialog(RestClientOrganizationService restClientOrganizationService,
-                      List<StoreDto> stores, UserDto editingUser, Runnable onSaved) {
+                      List<StoreDto> stores, List<RoleDto> roles, UserDto editingUser, Runnable onSaved) {
         this.restClientOrganizationService = restClientOrganizationService;
         this.stores = stores;
+        this.roles = roles == null ? List.of() : roles;
         this.editingUser = editingUser;
         this.onSaved = onSaved;
 
@@ -83,10 +89,10 @@ public class UserDialog extends Dialog {
             storeBox.setValue(stores.getFirst());
         }
 
-        roleBox.setItems(RoleType.values());
-        roleBox.setItemLabelGenerator(role -> UserRoles.label(role.getId()));
-        roleBox.setValue(RoleType.USER);
+        roleBox.setItems(roles);
+        roleBox.setItemLabelGenerator(RoleDto::getName);
         roleBox.setWidthFull();
+        roleBox.setVisible(!roles.isEmpty());
     }
 
     private FormLayout form() {
@@ -114,7 +120,10 @@ public class UserDialog extends Dialog {
                 .findFirst()
                 .ifPresent(storeBox::setValue);
 
-        roleBox.setValue(UserRoles.roleOf(user.getAuthId()));
+        Set<Long> roleIds = user.getRoleIds() == null ? Set.of() : user.getRoleIds();
+        roleBox.setValue(roles.stream()
+                .filter(role -> roleIds.contains(role.getId()))
+                .collect(Collectors.toSet()));
     }
 
     private void save() {
@@ -126,7 +135,12 @@ public class UserDialog extends Dialog {
         dto.setEmail(emailField.getValue() == null ? "" : emailField.getValue().trim());
         dto.setPassword(passwordField.getValue());
         dto.setStoreId(storeBox.getValue() == null ? null : storeBox.getValue().getId());
-        dto.setAuthId(roleBox.getValue() == null ? null : roleBox.getValue().getId());
+        Set<Long> roleIds = roleBox.getValue().stream()
+                .map(RoleDto::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        dto.setRoleIds(roleIds);
+        dto.setAuthId(firstRoleId(roleIds));
         if (editingUser == null) {
             restClientOrganizationService.createUser(dto).subscribe(
                     response -> success("user.created"),
@@ -163,7 +177,7 @@ public class UserDialog extends Dialog {
             storeBox.setErrorMessage(Messages.get("validation.store.required"));
             valid = false;
         }
-        if (roleBox.getValue() == null) {
+        if (roleBox.isVisible() && (roleBox.getValue() == null || roleBox.getValue().isEmpty())) {
             roleBox.setInvalid(true);
             roleBox.setErrorMessage(Messages.get("validation.user.roleRequired"));
             valid = false;
@@ -171,10 +185,23 @@ public class UserDialog extends Dialog {
         return valid;
     }
 
+    private Integer firstRoleId(Set<Long> roleIds) {
+        if (roleIds == null || roleIds.isEmpty()) {
+            return null;
+        }
+        return roleIds.stream()
+                .filter(Objects::nonNull)
+                .findFirst()
+                .map(Long::intValue)
+                .orElse(null);
+    }
+
     private UserDto copyOf(UserDto source) {
         UserDto dto = new UserDto();
         dto.setId(source.getId());
         dto.setAuthId(source.getAuthId());
+        dto.setAuthUserId(source.getAuthUserId());
+        dto.setRoleIds(source.getRoleIds());
         dto.setUsername(source.getUsername());
         dto.setEmail(source.getEmail());
         dto.setStoreId(source.getStoreId());

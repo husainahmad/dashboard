@@ -947,7 +947,9 @@ public class TableListView extends AbstractListView implements BroadcastMessageS
         TabManager tabManager = new TabManager(tabSheet);
         String tabLabel = formAction == FormAction.EDIT && ObjectUtils.isNotEmpty(tableDto.getName())
                 ? Messages.get(Messages.Keys.ACTION_EDIT_NAME, tableDto.getName()) : Messages.get(Messages.Keys.ACTION_NEW_TABLE);
-        tabManager.addOrSelect(tabLabel, tab ->
+        String tabKey = tableDto.getId() == null ? "table:new" : "table:" + tableDto.getId();
+        VaadinIcon tabIcon = tableDto.getId() == null ? VaadinIcon.PLUS_CIRCLE : VaadinIcon.TABLE;
+        tabManager.addOrSelect(tabKey, tabLabel, tabIcon, tab ->
                 new TableForm(tabManager, tab, formAction, prepareDto(tableDto),
                         restClientSettingService, asyncRestClientOrganizationService,
                         asyncRestClientSettingService, accessService));
