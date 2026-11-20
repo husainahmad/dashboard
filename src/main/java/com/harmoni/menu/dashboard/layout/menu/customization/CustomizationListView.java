@@ -12,9 +12,11 @@ import com.harmoni.menu.dashboard.event.customization.CustomizationDeleteEventLi
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.layout.enums.CustomizationItemType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.ActionPermissions;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
@@ -37,7 +39,6 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
@@ -63,7 +64,6 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * itself on insert, update and delete broadcasts.
  * </p>
  */
-@RequiredArgsConstructor
 @Slf4j
 public class CustomizationListView extends AbstractListView implements BroadcastMessageService {
 
@@ -72,6 +72,8 @@ public class CustomizationListView extends AbstractListView implements Broadcast
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
     private final AccessService accessService;
+    private final boolean canEdit;
+    private final boolean canDelete;
 
     private final TreeGrid<CustomizationTreeItem> customizationGrid = new TreeGrid<>(CustomizationTreeItem.class);
     private final TreeData<CustomizationTreeItem> treeData = new TreeData<>();
@@ -88,6 +90,17 @@ public class CustomizationListView extends AbstractListView implements Broadcast
     private TreeDataProvider<CustomizationTreeItem> treeDataProvider;
     private final Map<Integer, String> tierIdToName = new HashMap<>();
     private boolean layoutBuilt;
+
+    public CustomizationListView(AsyncRestClientMenuService asyncRestClientMenuService,
+                                  RestClientMenuService restClientMenuService,
+                                  AccessService accessService,
+                                  AuthorizationService authorizationService) {
+        this.asyncRestClientMenuService = asyncRestClientMenuService;
+        this.restClientMenuService = restClientMenuService;
+        this.accessService = accessService;
+        this.canEdit = ActionPermissions.canEditCatalog(authorizationService);
+        this.canDelete = ActionPermissions.canDeleteCatalog(authorizationService);
+    }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
@@ -210,10 +223,14 @@ public class CustomizationListView extends AbstractListView implements Broadcast
         if (!CustomizationItemType.CUSTOMIZATION.equals(item.getType())) {
             return new HorizontalLayout(new Span());
         }
-        Button editButton = UiUtil.editButton(Messages.get(Messages.Keys.ACTION_EDIT), event -> onEditCustomization(item));
-        Button deleteButton = UiUtil.deleteButton(
-                event -> new CustomizationDeleteEventListener(item.getCustomizationDto(), restClientMenuService).onComponentEvent(event));
-        HorizontalLayout actions = new HorizontalLayout(editButton, deleteButton);
+        HorizontalLayout actions = new HorizontalLayout();
+        if (canEdit) {
+            actions.add(UiUtil.editButton(Messages.get(Messages.Keys.ACTION_EDIT), event -> onEditCustomization(item)));
+        }
+        if (canDelete) {
+            actions.add(UiUtil.deleteButton(
+                    event -> new CustomizationDeleteEventListener(item.getCustomizationDto(), restClientMenuService).onComponentEvent(event)));
+        }
         actions.setSpacing(false);
         return actions;
     }
@@ -266,6 +283,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
      */
     public HorizontalLayout getToolbarComponent() {
         Button addButton = UiUtil.addButton(Messages.get("action.newCustomization"), this::onAddCustomizationListener);
+        addButton.setVisible(canEdit);
         HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, tierDtoComboBox, filterText, addButton);
         toolbar.addClassName(Css.TOOLBAR);
         toolbar.setWidthFull();
@@ -320,7 +338,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
     }
 
     private void onAddCustomizationListener(ClickEvent<Button> event) {
-        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+        if (!canEdit || !(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
         TabManager tabManager = new TabManager(tabSheet);
@@ -334,7 +352,7 @@ public class CustomizationListView extends AbstractListView implements Broadcast
     }
 
     private void onEditCustomization(CustomizationTreeItem item) {
-        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+        if (!canEdit || !(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
         restClientMenuService.getCustomizationById(item.getCustomizationId())

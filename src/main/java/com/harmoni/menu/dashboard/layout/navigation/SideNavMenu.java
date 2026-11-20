@@ -8,13 +8,14 @@ import com.harmoni.menu.dashboard.layout.organization.OrganizationLayout;
 import com.harmoni.menu.dashboard.layout.organization.tier.TierLayout;
 import com.harmoni.menu.dashboard.layout.organization.store.kitchen.KitchenLayout;
 import com.harmoni.menu.dashboard.layout.security.EmployeeRoleLayout;
+import com.harmoni.menu.dashboard.layout.setting.device.DeviceLayout;
 import com.harmoni.menu.dashboard.layout.setting.service.ServiceLayout;
 import com.harmoni.menu.dashboard.layout.setting.table.TableLayout;
 import com.harmoni.menu.dashboard.layout.menu.category.CategoryLayout;
 import com.harmoni.menu.dashboard.layout.menu.promotion.PromotionLayout;
 import com.harmoni.menu.dashboard.layout.report.ReportLayout;
 import com.harmoni.menu.dashboard.configuration.RbacProperties;
-import com.harmoni.menu.dashboard.layout.util.Permissions;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
 import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.util.Messages;
 import com.harmoni.menu.dashboard.layout.util.Css;
@@ -22,6 +23,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import lombok.extern.slf4j.Slf4j;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.sidenav.SideNav;
@@ -35,6 +37,7 @@ import java.util.List;
  * administration sections into collapsible entries that navigate to their
  * respective routes. Items the signed-in user cannot access are hidden.
  */
+@Slf4j
 public class SideNavMenu extends Div {
 
     private final AuthorizationService authorizationService;
@@ -52,32 +55,32 @@ public class SideNavMenu extends Div {
         this.addClassName("side-nav-sample");
 
         SideNav sideNavOverview = group("nav.overview");
-        sideNavOverview.addItem(new SideNavItem(Messages.get("nav.dashboard"), DashboardView.class, VaadinIcon.HOME.create()));
+        addIfPermitted(sideNavOverview, "nav.dashboard", DashboardView.class, VaadinIcon.HOME.create());
 
         SideNav sideNavCatalog = group("nav.catalog");
-        addIfPermitted(sideNavCatalog, "nav.category", CategoryLayout.class, VaadinIcon.TAGS.create(), Permissions.MENU_VIEW);
-        addIfPermitted(sideNavCatalog, "nav.customization", CustomizationLayout.class, VaadinIcon.SLIDERS.create(), Permissions.MENU_VIEW);
-        addIfPermitted(sideNavCatalog, "nav.product", ProductLayout.class, VaadinIcon.COFFEE.create(), Permissions.MENU_VIEW);
-        addIfPermitted(sideNavCatalog, "nav.promotion", PromotionLayout.class, VaadinIcon.MONEY_EXCHANGE.create(), Permissions.MENU_VIEW);
-        sideNavCatalog.addItem(placeholderItem(Messages.get("nav.inventoryStock"), VaadinIcon.CUBES.create()));
+        addIfPermitted(sideNavCatalog, "nav.category", CategoryLayout.class, VaadinIcon.TAGS.create());
+        addIfPermitted(sideNavCatalog, "nav.customization", CustomizationLayout.class, VaadinIcon.SLIDERS.create());
+        addIfPermitted(sideNavCatalog, "nav.product", ProductLayout.class, VaadinIcon.COFFEE.create());
+        addIfPermitted(sideNavCatalog, "nav.promotion", PromotionLayout.class, VaadinIcon.MONEY_EXCHANGE.create());
 
         SideNav sideNavCustomers = group("nav.customers");
-        addIfPermitted(sideNavCustomers, "nav.customerList", CustomerLayout.class, VaadinIcon.USERS.create(), Permissions.CUSTOMER_READ);
+        addIfPermitted(sideNavCustomers, "nav.customerList", CustomerLayout.class, VaadinIcon.USERS.create());
 
         SideNav sideNavOperations = group("nav.operations");
-        addIfPermitted(sideNavOperations, "nav.kitchen", KitchenLayout.class, VaadinIcon.PRINT.create(), Permissions.OPERATION_READ);
-        addIfPermitted(sideNavOperations, "nav.table", TableLayout.class, VaadinIcon.TABLE.create(), Permissions.TABLE_VIEW);
-        addIfPermitted(sideNavOperations, "nav.service", ServiceLayout.class, VaadinIcon.COG.create(), Permissions.TERMINAL_VIEW);
+        addIfPermitted(sideNavOperations, "nav.kitchen", KitchenLayout.class, VaadinIcon.PRINT.create());
+        addIfPermitted(sideNavOperations, "nav.table", TableLayout.class, VaadinIcon.TABLE.create());
+        addIfPermitted(sideNavOperations, "nav.service", ServiceLayout.class, VaadinIcon.COG.create());
+        addIfPermitted(sideNavOperations, "nav.devices", DeviceLayout.class, VaadinIcon.DESKTOP.create());
 
         SideNav sideNavReport = new SideNav();
-        addIfPermitted(sideNavReport, "nav.report", ReportLayout.class, VaadinIcon.CHART_GRID.create(), Permissions.REPORT_VIEW);
+        addIfPermitted(sideNavReport, "nav.report", ReportLayout.class, VaadinIcon.CHART_GRID.create());
 
         SideNav sideNavAdministration = group("nav.administration");
-        addIfPermitted(sideNavAdministration, "nav.organization", OrganizationLayout.class, VaadinIcon.SITEMAP.create(), Permissions.ORGANIZATION_READ);
-        addIfPermitted(sideNavAdministration, "nav.tier", TierLayout.class, VaadinIcon.GRID_BEVEL.create(), Permissions.ORGANIZATION_READ);
+        addIfPermitted(sideNavAdministration, "nav.organization", OrganizationLayout.class, VaadinIcon.SITEMAP.create());
+        addIfPermitted(sideNavAdministration, "nav.tier", TierLayout.class, VaadinIcon.GRID_BEVEL.create());
         if (rbacProperties.isEnabled()) {
             addIfPermitted(sideNavAdministration, "nav.employee", EmployeeRoleLayout.class,
-                    VaadinIcon.USERS.create(), Permissions.EMPLOYEE_VIEW);
+                    VaadinIcon.USERS.create());
         }
 
         List<SideNav> groups = new ArrayList<>();
@@ -120,24 +123,28 @@ public class SideNavMenu extends Div {
     }
 
     private void addIfPermitted(SideNav sideNav, String labelKey, Class<? extends Component> view,
-                                Icon icon, String permission) {
-        if (authorizationService.hasPermission(permission)) {
+                                Icon icon) {
+        if (hasAccess(authorizationService, view)) {
             sideNav.addItem(new SideNavItem(Messages.get(labelKey), view, icon));
         }
     }
 
     /**
-     * Builds a disabled navigation item for a section that is not implemented
-     * yet, so the group shows its intended shape without offering a dead link.
+     * Whether the navigation target may be shown. The route annotation is the
+     * single source of truth, so the menu cannot drift from the route guard.
      *
-     * @param label the item caption
-     * @param icon  the icon shown before the caption
-     * @return the disabled item
+     * @param authorizationService the signed-in user's authorities
+     * @param view                 the navigation target
+     * @return {@code true} when the target declares a permission the user holds
      */
-    private static SideNavItem placeholderItem(String label, Icon icon) {
-        SideNavItem item = new SideNavItem(label);
-        item.setPrefixComponent(icon);
-        item.setEnabled(false);
-        return item;
+    static boolean hasAccess(AuthorizationService authorizationService,
+                             Class<? extends Component> view) {
+        RequiresPermission required = view.getAnnotation(RequiresPermission.class);
+        if (required == null) {
+            log.warn("Navigation target {} has no @RequiresPermission; hiding it", view.getName());
+            return false;
+        }
+        return authorizationService.hasAnyPermission(required.value());
     }
+
 }

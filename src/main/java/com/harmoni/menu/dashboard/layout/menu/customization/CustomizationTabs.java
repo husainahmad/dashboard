@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.layout.menu.customization;
 import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -25,6 +26,7 @@ public class CustomizationTabs extends AbstractListViewTabs {
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
     private final AccessService accessService;
+    private final AuthorizationService authorizationService;
 
     @Override
     protected String tabLabelKey() {
@@ -48,6 +50,6 @@ public class CustomizationTabs extends AbstractListViewTabs {
 
     @Override
     protected AbstractListView createListView() {
-        return new CustomizationListView(asyncRestClientMenuService, restClientMenuService, accessService);
+        return new CustomizationListView(asyncRestClientMenuService, restClientMenuService, accessService, authorizationService);
     }
 }

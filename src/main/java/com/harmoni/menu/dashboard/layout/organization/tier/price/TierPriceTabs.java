@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.layout.organization.tier.price;
 import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -20,6 +21,7 @@ public class TierPriceTabs extends AbstractListViewTabs {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
+    private final AuthorizationService authorizationService;
 
     @Override
     protected String tabLabelKey() {
@@ -38,6 +40,6 @@ public class TierPriceTabs extends AbstractListViewTabs {
 
     @Override
     protected AbstractListView createListView() {
-        return new TierPriceListView(asyncRestClientOrganizationService, restClientOrganizationService, accessService);
+        return new TierPriceListView(asyncRestClientOrganizationService, restClientOrganizationService, accessService, authorizationService);
     }
 }

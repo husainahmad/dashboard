@@ -193,6 +193,23 @@ public class RestClientMenuService extends RestClientService implements Serializ
     }
 
     /**
+     * Inserts or updates one SKU price without forcing callers to build the
+     * transport DTO themselves.
+     *
+     * @param skuId  the SKU whose price changes
+     * @param tierId the price tier
+     * @param price  the new price
+     * @return a {@link Mono} with the server response
+     */
+    public Mono<RestAPIResponse> updateSkuTierPrice(Integer skuId, Integer tierId, Double price) {
+        SkuTierPriceDto dto = new SkuTierPriceDto();
+        dto.setSkuId(skuId);
+        dto.setTierId(tierId);
+        dto.setPrice(price);
+        return updateSkuTierPrice(dto);
+    }
+
+    /**
      * Deletes a category.
      *
      * @param categoryDto the category to delete

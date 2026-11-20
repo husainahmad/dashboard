@@ -45,6 +45,10 @@ public class BroadcastMessage {
     public static final String FLOOR_UPDATED_SUCCESS = "FLOOR_UPDATED_SUCCESS";
     public static final String FLOOR_DELETED_SUCCESS = "FLOOR_DELETED_SUCCESS";
 
+    public static final String DEVICE_INSERT_SUCCESS = "DEVICE_INSERT_SUCCESS";
+    public static final String DEVICE_UPDATED_SUCCESS = "DEVICE_UPDATED_SUCCESS";
+    public static final String DEVICE_DELETED_SUCCESS = "DEVICE_DELETED_SUCCESS";
+
     private String type;
     private Object data;
 }

@@ -2,7 +2,7 @@ package com.harmoni.menu.dashboard.layout.security;
 
 import com.harmoni.menu.dashboard.dto.PermissionDto;
 import com.harmoni.menu.dashboard.dto.RoleDto;
-import com.harmoni.menu.dashboard.layout.util.Permissions;
+import com.harmoni.menu.dashboard.layout.util.ActionPermissions;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientRbacService;
@@ -39,6 +39,7 @@ public class RoleEditorPanel extends VerticalLayout {
     private final List<PermissionDto> permissions;
     private final AuthorizationService authorizationService;
     private final Runnable onChanged;
+    private final boolean canWrite;
 
     private final TextField nameField = new TextField(Messages.get("role.name"));
     private final TextArea descriptionField = new TextArea(Messages.get("role.description"));
@@ -54,6 +55,7 @@ public class RoleEditorPanel extends VerticalLayout {
         this.permissions = permissions == null ? List.of() : permissions;
         this.authorizationService = authorizationService;
         this.onChanged = onChanged;
+        this.canWrite = ActionPermissions.canManageRbac(authorizationService);
 
         addClassName("role-editor");
         setPadding(false);
@@ -107,9 +109,6 @@ public class RoleEditorPanel extends VerticalLayout {
 
             text.add(scope, hint);
         }
-
-        boolean canWrite = authorizationService.hasAnyPermission(
-                Permissions.RBAC_MANAGE, Permissions.RBAC_WRITE);
 
         Button duplicate = new Button(Messages.get("role.duplicate"), event -> duplicate());
         duplicate.addThemeVariants(ButtonVariant.LUMO_TERTIARY);

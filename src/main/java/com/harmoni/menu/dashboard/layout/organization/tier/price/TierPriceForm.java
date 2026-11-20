@@ -8,7 +8,6 @@ import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.router.Route;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -18,7 +17,6 @@ import java.util.List;
  * {@link TabManager} tab. Adds the brand and name fields, binds them, and
  * uses the brands preloaded by the list view.
  */
-@Route("tier-price-form")
 @Slf4j
 public class TierPriceForm extends TierForm {
 

@@ -9,8 +9,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 public abstract class TierPanel extends VerticalLayout {
 
     private Runnable dirtyListener;
+    private final boolean readOnly;
 
-    protected TierPanel() {
+    protected TierPanel(boolean readOnly) {
+        this.readOnly = readOnly;
         addClassName("tier-panel");
         setPadding(false);
         setSpacing(true);
@@ -28,9 +30,18 @@ public abstract class TierPanel extends VerticalLayout {
 
     /** Marks the panel as having unsaved changes. */
     protected void markDirty() {
-        if (dirtyListener != null) {
+        if (dirtyListener != null && !readOnly) {
             dirtyListener.run();
         }
+    }
+
+    /**
+     * Whether the panel is rendered without editing controls.
+     *
+     * @return {@code true} when the user may only view this panel
+     */
+    protected boolean isReadOnly() {
+        return readOnly;
     }
 
     /** Persists the panel's current state. */

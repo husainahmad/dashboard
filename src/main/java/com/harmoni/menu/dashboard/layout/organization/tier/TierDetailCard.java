@@ -30,6 +30,7 @@ public class TierDetailCard extends VerticalLayout {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final Runnable onSaved;
+    private final boolean canEdit;
 
     private final Button saveButton = new Button(Messages.get("tier.saveChanges"));
     private final Button discardButton = new Button(Messages.get("tier.discard"));
@@ -44,12 +45,13 @@ public class TierDetailCard extends VerticalLayout {
                           RestClientMenuService restClientMenuService,
                           AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                           RestClientOrganizationService restClientOrganizationService,
-                          Runnable onSaved) {
+                          Runnable onSaved, boolean canEdit) {
         this.asyncRestClientMenuService = asyncRestClientMenuService;
         this.restClientMenuService = restClientMenuService;
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
         this.onSaved = onSaved;
+        this.canEdit = canEdit;
 
         addClassName("tier-detail-card");
         setPadding(false);
@@ -103,7 +105,9 @@ public class TierDetailCard extends VerticalLayout {
         activePanel.setDirtyListener(() -> setDirty(true));
         add(activePanel);
         setFlexGrow(1, activePanel);
-        add(actionBar);
+        if (canEdit) {
+            add(actionBar);
+        }
     }
 
     private HorizontalLayout header(TierRow row, Map<Integer, List<String>> storeNamesByTier) {
@@ -148,16 +152,19 @@ public class TierDetailCard extends VerticalLayout {
         TierTypeDto type = tier.getType() == null ? TierTypeDto.PRICE : tier.getType();
         return switch (type) {
             case SERVICE -> new TierServicePanel(asyncRestClientOrganizationService,
-                    restClientOrganizationService, tier, this::handleSaved);
+                    restClientOrganizationService, tier, this::handleSaved, canEdit);
             case MENU -> new TierMenuPanel(asyncRestClientMenuService,
                     asyncRestClientOrganizationService, restClientOrganizationService, tier,
-                    this::handleSaved);
+                    this::handleSaved, canEdit);
             default -> new TierPricePanel(asyncRestClientMenuService, restClientMenuService,
-                    tier, this::handleSaved);
+                    tier, this::handleSaved, canEdit);
         };
     }
 
     private void setDirty(boolean dirty) {
+        if (!canEdit) {
+            return;
+        }
         saveButton.setEnabled(dirty);
         dirtyLabel.setVisible(dirty);
     }

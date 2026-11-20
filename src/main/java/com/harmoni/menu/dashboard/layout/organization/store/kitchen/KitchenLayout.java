@@ -1,6 +1,8 @@
 package com.harmoni.menu.dashboard.layout.organization.store.kitchen;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.service.AccessService;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
  * Main route for kitchen printer management under Store Management.
  */
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.OPERATION_READ)
 @Route(value = "kitchen", layout = MainLayout.class)
 @PageTitle("Kitchen Printer | POSHarmoni")
 public class KitchenLayout extends VerticalLayout {

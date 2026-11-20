@@ -1,6 +1,8 @@
 package com.harmoni.menu.dashboard.layout.setting.table;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientSettingService;
@@ -18,6 +20,7 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * {@link AccessService} used to scope tables to the current store.
  */
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.TABLE_VIEW)
 @Route(value = "table", layout = MainLayout.class)
 @PageTitle("Table | POSHarmoni")
 public class TableLayout extends VerticalLayout {

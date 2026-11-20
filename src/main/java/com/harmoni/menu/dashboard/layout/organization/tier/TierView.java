@@ -5,8 +5,10 @@ import com.harmoni.menu.dashboard.dto.OrganizationTreeDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.dto.TierTypeDto;
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.layout.util.ActionPermissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
@@ -37,6 +39,7 @@ public class TierView extends VerticalLayout {
     private final RestClientOrganizationService restClientOrganizationService;
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
+    private final boolean canEdit;
 
     private final ComboBox<BrandDto> brandBox = new ComboBox<>(Messages.get("tier.brand"));
     private final RadioButtonGroup<TierTypeDto> typeGroup = new RadioButtonGroup<>();
@@ -51,13 +54,16 @@ public class TierView extends VerticalLayout {
     public TierView(AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                     RestClientOrganizationService restClientOrganizationService,
                     AsyncRestClientMenuService asyncRestClientMenuService,
-                    RestClientMenuService restClientMenuService) {
+                    RestClientMenuService restClientMenuService,
+                    AuthorizationService authorizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
         this.asyncRestClientMenuService = asyncRestClientMenuService;
         this.restClientMenuService = restClientMenuService;
+        this.canEdit = ActionPermissions.canEditOrganization(authorizationService);
         this.detailCard = new TierDetailCard(asyncRestClientMenuService, restClientMenuService,
-                asyncRestClientOrganizationService, restClientOrganizationService, this::loadTiers);
+                asyncRestClientOrganizationService, restClientOrganizationService, this::loadTiers,
+                canEdit);
 
         addClassName("tier-view");
         setSizeFull();
@@ -86,6 +92,7 @@ public class TierView extends VerticalLayout {
 
         Button addTier = new Button(Messages.get("tier.add"), event -> openTierDialog());
         addTier.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        addTier.setVisible(canEdit);
 
         HorizontalLayout filters = new HorizontalLayout(brandBox, typeGroup);
         filters.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -229,6 +236,9 @@ public class TierView extends VerticalLayout {
     }
 
     private void openTierDialog() {
+        if (!canEdit) {
+            return;
+        }
         new TierDialog(restClientOrganizationService, brands, brandBox.getValue(),
                 typeGroup.getValue(), this::loadTiers).open();
     }

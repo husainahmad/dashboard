@@ -1,7 +1,10 @@
 package com.harmoni.menu.dashboard.layout.organization.tier.menu;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -17,6 +20,7 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * Hosts the {@link TierMenuTabs} component inside the {@link MainLayout} shell.
  */
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.ORGANIZATION_READ)
 @Route(value = "tier-menu", layout = MainLayout.class)
 @PageTitle("Tier Menu | POSHarmoni")
 public class TierMenuLayout extends VerticalLayout {
@@ -25,13 +29,14 @@ public class TierMenuLayout extends VerticalLayout {
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final AccessService accessService;
     private final RestClientOrganizationService restClientOrganizationService;
+    private final AuthorizationService authorizationService;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         addClassName(Css.LIST_VIEW);
         add(new TierMenuTabs(asyncRestClientOrganizationService, asyncRestClientMenuService,
-                accessService, restClientOrganizationService));
+                accessService, restClientOrganizationService, authorizationService));
         setSizeFull();
     }
 }

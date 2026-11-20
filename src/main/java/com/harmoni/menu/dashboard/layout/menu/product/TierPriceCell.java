@@ -1,6 +1,5 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
-import com.harmoni.menu.dashboard.dto.SkuTierPriceDto;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
@@ -30,6 +29,7 @@ final class TierPriceCell extends NumberField {
     private final Integer tierId;
     private final transient RestClientMenuService restClientMenuService;
     private final transient UI ui;
+    private final boolean editable;
 
     private Double committed;
     private boolean saving;
@@ -40,13 +40,15 @@ final class TierPriceCell extends NumberField {
      * @param service         client used to persist the price
      * @param ui              the owning UI, used to marshal async callbacks
      * @param typingFields    fields that suppress list shortcuts while focused
+     * @param editable        whether this user may change the price
      */
     TierPriceCell(ProductTreeItem productTreeItem, Integer tierId, RestClientMenuService service,
-                  UI ui, Set<Component> typingFields) {
+                  UI ui, Set<Component> typingFields, boolean editable) {
         this.productTreeItem = productTreeItem;
         this.tierId = tierId;
         this.restClientMenuService = service;
         this.ui = ui;
+        this.editable = editable;
 
         addClassName("money-field");
         setValueChangeMode(ValueChangeMode.ON_CHANGE);
@@ -59,6 +61,10 @@ final class TierPriceCell extends NumberField {
         committed = currentPrice();
         if (committed != null) {
             setValue(committed);
+        }
+        if (!editable) {
+            setReadOnly(true);
+            return;
         }
         wireDirtyTracking();
         addValueChangeListener(this::onValueChange);
@@ -86,7 +92,7 @@ final class TierPriceCell extends NumberField {
     }
 
     private void onValueChange(ValueChangeEvent<Double> event) {
-        if (saving) {
+        if (!editable || saving) {
             return;
         }
         Double next = event.getValue();
@@ -115,11 +121,7 @@ final class TierPriceCell extends NumberField {
         removeClassName(Css.PRICE_DIRTY);
         committed = next;
 
-        SkuTierPriceDto dto = new SkuTierPriceDto();
-        dto.setSkuId(productTreeItem.getSkuId());
-        dto.setTierId(tierId);
-        dto.setPrice(next);
-        restClientMenuService.updateSkuTierPrice(dto)
+        restClientMenuService.updateSkuTierPrice(productTreeItem.getSkuId(), tierId, next)
                 .doOnError(error -> UiUtil.safeAccess(ui, () -> onSaveError(previous)))
                 .subscribe(response -> UiUtil.safeAccess(ui, this::onSaved));
     }

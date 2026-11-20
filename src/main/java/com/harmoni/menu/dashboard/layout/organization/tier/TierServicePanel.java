@@ -44,7 +44,8 @@ public class TierServicePanel extends TierPanel {
 
     public TierServicePanel(AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                             RestClientOrganizationService restClientOrganizationService,
-                            TierDto tier, Runnable onSaved) {
+                            TierDto tier, Runnable onSaved, boolean readOnly) {
+        super(readOnly);
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
         this.tier = tier;
@@ -115,10 +116,13 @@ public class TierServicePanel extends TierPanel {
                 Checkbox checkbox = new Checkbox(subService.getName());
                 checkbox.setValue(values.getOrDefault(subService.getId(), false));
                 checkbox.addClassName("tier-service-checkbox");
-                checkbox.addValueChangeListener(event -> {
-                    values.put(subService.getId(), event.getValue());
-                    markDirty();
-                });
+                checkbox.setReadOnly(isReadOnly());
+                if (!isReadOnly()) {
+                    checkbox.addValueChangeListener(event -> {
+                        values.put(subService.getId(), event.getValue());
+                        markDirty();
+                    });
+                }
                 add(checkbox);
             }
         }
@@ -152,6 +156,9 @@ public class TierServicePanel extends TierPanel {
 
     @Override
     public void save() {
+        if (isReadOnly()) {
+            return;
+        }
         List<TierSubServiceDto> payload = new ArrayList<>();
         for (Map.Entry<Integer, Boolean> entry : values.entrySet()) {
             SubServiceDto ref = new SubServiceDto();

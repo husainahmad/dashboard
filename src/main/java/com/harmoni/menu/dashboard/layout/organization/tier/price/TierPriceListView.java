@@ -7,10 +7,12 @@ import com.harmoni.menu.dashboard.event.tier.TierDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.ActionPermissions;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -22,7 +24,6 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
@@ -34,7 +35,6 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * user's brand. Refreshes on TIER BROADCAST insert/update/delete and opens a
  * {@link TierPriceForm} tab for add/edit.
  */
-@RequiredArgsConstructor
 @Slf4j
 public class TierPriceListView extends AbstractListView {
 
@@ -42,9 +42,22 @@ public class TierPriceListView extends AbstractListView {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
+    private final boolean canEdit;
+    private final boolean canDelete;
 
     private final LoadingBar loadingBar = new LoadingBar();
     private final GridSkeleton gridSkeleton = new GridSkeleton(8);
+
+    public TierPriceListView(AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+                             RestClientOrganizationService restClientOrganizationService,
+                             AccessService accessService,
+                             AuthorizationService authorizationService) {
+        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
+        this.restClientOrganizationService = restClientOrganizationService;
+        this.accessService = accessService;
+        this.canEdit = ActionPermissions.canEditOrganization(authorizationService);
+        this.canDelete = ActionPermissions.canDeleteOrganization(authorizationService);
+    }
 
     /**
      * Renders the grid and loads the price tiers for the current user's brand.
@@ -117,8 +130,12 @@ public class TierPriceListView extends AbstractListView {
      */
     private Component applyButton(TierDto tierDto) {
         HorizontalLayout layout = new HorizontalLayout();
-        layout.add(applyEditButton(tierDto));
-        layout.add(applyDeleteButton(tierDto));
+        if (canEdit) {
+            layout.add(applyEditButton(tierDto));
+        }
+        if (canDelete) {
+            layout.add(applyDeleteButton(tierDto));
+        }
         return layout;
     }
 
@@ -132,6 +149,9 @@ public class TierPriceListView extends AbstractListView {
      * @param formAction whether the tab is in create or edit mode
      */
     private void editTier(TierDto tierDto, FormAction formAction) {
+        if (!canEdit) {
+            return;
+        }
         if (tierDto.getBrandId() == null) {
             tierDto.setBrandId(selectedBrandId(accessService));
         }
@@ -161,9 +181,14 @@ public class TierPriceListView extends AbstractListView {
         configureSearchFilter();
 
         Button addChainButton = UiUtil.addButton(Messages.get("action.newTier"), event -> addTier());
+        addChainButton.setVisible(canEdit);
         configureBrandFilter(this::fetchTier);
         HorizontalLayout toolbar = new HorizontalLayout(brandFilter, filterText, addChainButton);
-        registerNewShortcut(this::addTier);
+        registerNewShortcut(() -> {
+            if (canEdit) {
+                addTier();
+            }
+        });
         toolbar.addClassName(Css.TOOLBAR);
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
         return toolbar;
@@ -175,6 +200,9 @@ public class TierPriceListView extends AbstractListView {
      * {@code PRICE}.
      */
     private void addTier() {
+        if (!canEdit) {
+            return;
+        }
         tierDtoGrid.asSingleSelect().clear();
         TierDto tierDto = new TierDto();
         tierDto.setType(TierTypeDto.PRICE);

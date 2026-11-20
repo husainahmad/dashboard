@@ -44,7 +44,8 @@ public class TierMenuPanel extends TierPanel {
     public TierMenuPanel(AsyncRestClientMenuService asyncRestClientMenuService,
                          AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                          RestClientOrganizationService restClientOrganizationService,
-                         TierDto tier, Runnable onSaved) {
+                         TierDto tier, Runnable onSaved, boolean readOnly) {
+        super(readOnly);
         this.asyncRestClientMenuService = asyncRestClientMenuService;
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
@@ -104,10 +105,13 @@ public class TierMenuPanel extends TierPanel {
             Checkbox checkbox = new Checkbox(category.getName());
             checkbox.setValue(values.getOrDefault(category.getId(), false));
             checkbox.addClassName("tier-menu-checkbox");
-            checkbox.addValueChangeListener(event -> {
-                values.put(category.getId(), event.getValue());
-                markDirty();
-            });
+            checkbox.setReadOnly(isReadOnly());
+            if (!isReadOnly()) {
+                checkbox.addValueChangeListener(event -> {
+                    values.put(category.getId(), event.getValue());
+                    markDirty();
+                });
+            }
             add(checkbox);
         }
 
@@ -140,6 +144,9 @@ public class TierMenuPanel extends TierPanel {
 
     @Override
     public void save() {
+        if (isReadOnly()) {
+            return;
+        }
         List<TierMenuDto> payload = new ArrayList<>();
         for (Map.Entry<Integer, Boolean> entry : values.entrySet()) {
             CategoryDto ref = new CategoryDto();

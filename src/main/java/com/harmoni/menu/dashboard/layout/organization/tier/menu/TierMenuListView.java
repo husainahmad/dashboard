@@ -10,6 +10,7 @@ import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientBase.AsyncRestCallback;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
@@ -48,8 +49,9 @@ public class TierMenuListView extends AbstractTierTreeListView<TierMenuTreeItem>
     public TierMenuListView(AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                             AsyncRestClientMenuService asyncRestClientMenuService,
                             AccessService accessService,
-                            RestClientOrganizationService restClientOrganizationService) {
-        super(asyncRestClientOrganizationService, accessService, restClientOrganizationService);
+                            RestClientOrganizationService restClientOrganizationService,
+                            AuthorizationService authorizationService) {
+        super(asyncRestClientOrganizationService, accessService, restClientOrganizationService, authorizationService);
         this.asyncRestClientMenuService = asyncRestClientMenuService;
     }
 
@@ -130,6 +132,7 @@ public class TierMenuListView extends AbstractTierTreeListView<TierMenuTreeItem>
         configureSearchFilter();
 
         Button addTierServiceButton = UiUtil.addButton(Messages.get("action.newTierMenu"), event -> addTier());
+        addTierServiceButton.setVisible(canEdit);
 
         configureBrandFilter(() -> {
             if (brandFilter.getValue().getId() != null) {
@@ -140,11 +143,18 @@ public class TierMenuListView extends AbstractTierTreeListView<TierMenuTreeItem>
         HorizontalLayout toolbar = new HorizontalLayout(brandFilter, filterText, addTierServiceButton);
         toolbar.addClassName(Css.TOOLBAR);
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
-        registerNewShortcut(this::addTier);
+        registerNewShortcut(() -> {
+            if (canEdit) {
+                addTier();
+            }
+        });
         return toolbar;
     }
 
     private void addTier() {
+        if (!canEdit) {
+            return;
+        }
         TierDto tierDto = new TierDto();
         tierDto.setType(TierTypeDto.MENU);
         editTier(tierDto, FormAction.CREATE);

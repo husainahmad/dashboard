@@ -3,9 +3,11 @@ package com.harmoni.menu.dashboard.layout.menu.category;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.layout.util.ActionPermissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
@@ -36,6 +38,8 @@ public class CategoryView extends VerticalLayout {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
     private final AccessService accessService;
+    private final boolean canEdit;
+    private final boolean canDelete;
 
     private final ComboBox<BrandDto> brandBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_BRAND));
     private final CategoryListCard listCard = new CategoryListCard();
@@ -52,11 +56,14 @@ public class CategoryView extends VerticalLayout {
     public CategoryView(AsyncRestClientMenuService asyncRestClientMenuService,
                         AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                         RestClientMenuService restClientMenuService,
-                        AccessService accessService) {
+                        AccessService accessService,
+                        AuthorizationService authorizationService) {
         this.asyncRestClientMenuService = asyncRestClientMenuService;
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientMenuService = restClientMenuService;
         this.accessService = accessService;
+        this.canEdit = ActionPermissions.canEditCatalog(authorizationService);
+        this.canDelete = ActionPermissions.canDeleteCatalog(authorizationService);
 
         addClassName("category-view");
         setSizeFull();
@@ -77,6 +84,7 @@ public class CategoryView extends VerticalLayout {
         addButton.setIcon(VaadinIcon.PLUS.create());
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addButton.setEnabled(false);
+        addButton.setVisible(canEdit);
 
         HorizontalLayout toolbar = new HorizontalLayout(brandBox, addButton);
         toolbar.addClassName(Css.TOOLBAR);
@@ -94,6 +102,8 @@ public class CategoryView extends VerticalLayout {
         setFlexGrow(1, body);
 
         listCard.setSelectionListener(this::selectCategory);
+        detailCard.setCanEdit(canEdit);
+        detailCard.setCanDelete(canDelete);
         detailCard.setEditListener(this::openDialog);
         detailCard.setDeleteListener(this::confirmDelete);
     }
@@ -120,7 +130,7 @@ public class CategoryView extends VerticalLayout {
                     brandBox.setItems(brands);
                     brandBox.setEnabled(scope == null ? brands.size() > 1
                             : scope.canSelectBrand(brands.size()));
-                    addButton.setEnabled(!brands.isEmpty());
+                    addButton.setEnabled(canEdit && !brands.isEmpty());
                     BrandDto selected = preferredBrand();
                     if (selected != null) {
                         brandBox.setValue(selected);
@@ -228,6 +238,9 @@ public class CategoryView extends VerticalLayout {
     }
 
     private void openDialog(CategoryDto category) {
+        if (!canEdit) {
+            return;
+        }
         new CategoryDialog(restClientMenuService, brands, brandBox.getValue(), category, () -> {
             pendingSelectId = category == null ? null : category.getId();
             fetchCategories();
@@ -235,6 +248,9 @@ public class CategoryView extends VerticalLayout {
     }
 
     private void confirmDelete(CategoryDto category) {
+        if (!canDelete) {
+            return;
+        }
         ConfirmDialog dialog = new ConfirmDialog();
         dialog.setHeader(Messages.get(Messages.Keys.DIALOG_CONFIRM_TITLE));
         dialog.setText(Messages.get("dialog.confirmDeleteCategory",

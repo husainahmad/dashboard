@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.layout.organization.tier.menu;
 import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -22,6 +23,7 @@ public class TierMenuTabs extends AbstractListViewTabs {
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final AccessService accessService;
     private final RestClientOrganizationService restClientOrganizationService;
+    private final AuthorizationService authorizationService;
 
     @Override
     protected String tabLabelKey() {
@@ -41,6 +43,6 @@ public class TierMenuTabs extends AbstractListViewTabs {
     @Override
     protected AbstractListView createListView() {
         return new TierMenuListView(asyncRestClientOrganizationService, asyncRestClientMenuService,
-                accessService, restClientOrganizationService);
+                accessService, restClientOrganizationService, authorizationService);
     }
 }

@@ -1,8 +1,11 @@
 package com.harmoni.menu.dashboard.layout.menu.promotion;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientPromotionService;
@@ -17,6 +20,7 @@ import lombok.RequiredArgsConstructor;
  * Main route for the promotion administration page.
  */
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.MENU_VIEW)
 @Route(value = "promotion", layout = MainLayout.class)
 @PageTitle("Promotions | POSHarmoni")
 public class PromotionLayout extends VerticalLayout {
@@ -26,13 +30,14 @@ public class PromotionLayout extends VerticalLayout {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientPromotionService restClientPromotionService;
     private final AccessService accessService;
+    private final AuthorizationService authorizationService;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         addClassName(Css.LIST_VIEW);
         add(new PromotionTabs(asyncRestClientPromotionService, asyncRestClientMenuService,
-                asyncRestClientOrganizationService, restClientPromotionService, accessService));
+                asyncRestClientOrganizationService, restClientPromotionService, accessService, authorizationService));
         setSizeFull();
     }
 }

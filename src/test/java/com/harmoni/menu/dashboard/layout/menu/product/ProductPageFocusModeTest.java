@@ -1,6 +1,7 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.vaadin.flow.component.Component;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.Mockito.mock;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -130,7 +132,7 @@ class ProductPageFocusModeTest {
      * no session, the same limitation {@code ProductFormWithPreviewTest} works around.</p>
      */
     private static ProductLayout shell() {
-        ProductLayout page = new ProductLayout(null, null);
+        ProductLayout page = new ProductLayout(null, null, mock(AuthorizationService.class));
         renderPage(page);
         return page;
     }

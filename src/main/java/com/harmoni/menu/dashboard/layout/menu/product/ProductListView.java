@@ -12,6 +12,7 @@ import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.ScopeService;
@@ -33,9 +34,6 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.treegrid.ExpandEvent;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.TreeData;
-import com.vaadin.flow.router.PreserveOnRefresh;
-import com.vaadin.flow.spring.annotation.UIScope;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
@@ -48,6 +46,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import com.vaadin.flow.component.ItemLabelGenerator;
+import com.harmoni.menu.dashboard.layout.util.ActionPermissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
 
 /**
@@ -59,10 +58,6 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * supplied by the hosting {@link ProductLayout} view and refreshes the tree from
  * the menu service.
  */
-@RequiredArgsConstructor
-@UIScope
-@PreserveOnRefresh
-@org.springframework.stereotype.Component
 @Slf4j
 public class ProductListView extends AbstractListView implements BroadcastMessageService {
 
@@ -70,6 +65,9 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
+    private final boolean canEdit;
+    private final boolean canDelete;
+    private final boolean canEditPrice;
 
     ComboBox<TierDto> tierDtoComboBox = new ComboBox<>();
     ComboBox<BrandDto> brandDtoComboBox = new ComboBox<>();
@@ -83,6 +81,16 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
     private final GridSkeleton gridSkeleton = new GridSkeleton(PAGE_SIZE);
 
     transient ProductTreeItem expandTreeItem;
+
+    public ProductListView(AsyncRestClientMenuService asyncRestClientMenuService,
+                           RestClientMenuService restClientMenuService,
+                           AuthorizationService authorizationService) {
+        this.asyncRestClientMenuService = asyncRestClientMenuService;
+        this.restClientMenuService = restClientMenuService;
+        this.canEdit = ActionPermissions.canEditCatalog(authorizationService);
+        this.canDelete = ActionPermissions.canDeleteCatalog(authorizationService);
+        this.canEditPrice = ActionPermissions.canEditPrice(authorizationService);
+    }
 
     /** Session key that stores the last used product filters. */
     static final String PRODUCT_FILTERS_KEY = "product-list-filters";
@@ -155,14 +163,18 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
      * @return a horizontal layout containing the buttons, or null if the item is not a product
      */
     private HorizontalLayout applyButton(ProductTreeItem productTreeItem) {
-        if (productTreeItem.getProductItemType().equals(ProductItemType.PRODUCT)) {
-            HorizontalLayout horizontalLayout = new HorizontalLayout();
+        if (!ProductItemType.PRODUCT.equals(productTreeItem.getProductItemType())) {
+            return new HorizontalLayout();
+        }
+        HorizontalLayout horizontalLayout = new HorizontalLayout();
+        if (canEdit) {
             horizontalLayout.add(UiUtil.editButton(event -> editProduct(productTreeItem)));
+        }
+        if (canDelete) {
             horizontalLayout.add(UiUtil.deleteButton(
                     new ProductDeleteEventListener(restClientMenuService, productTreeItem)));
-            return horizontalLayout;
         }
-        return new HorizontalLayout();
+        return horizontalLayout;
     }
 
     /**
@@ -295,7 +307,7 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         if (!isSkuRow(productTreeItem)) {
             return new Span();
         }
-        return new TierPriceCell(productTreeItem, tierId, restClientMenuService, ui, typingFields);
+        return new TierPriceCell(productTreeItem, tierId, restClientMenuService, ui, typingFields, canEditPrice);
     }
 
     /**
@@ -355,12 +367,17 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
         configureFilter(tierDtoComboBox, tierDtos, Messages.Keys.LABEL_TIER, TierDto::getName,
                 this::fetchProducts);
         Button addProduct = UiUtil.addButton(Messages.get(Messages.Keys.ACTION_NEW_PRODUCT), this::onAddProductListener);
+        addProduct.setVisible(canEdit);
         Button shortcutsHelpButton = new Button(new Icon(VaadinIcon.QUESTION_CIRCLE_O));
         shortcutsHelpButton.setTooltipText(Messages.get(Messages.Keys.UI_KEYS_TITLE));
         shortcutsHelpButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
         shortcutsHelpButton.addClickListener(event -> UiUtil.shortcutsHelpDialog().open());
 
-        UiUtil.registerListShortcuts(this, typingFields, filterText, () -> onAddProductListener(null));
+        UiUtil.registerListShortcuts(this, typingFields, filterText, () -> {
+            if (canEdit) {
+                onAddProductListener(null);
+            }
+        });
 
         HorizontalLayout toolbar = new HorizontalLayout(brandDtoComboBox, categoryDtoComboBox,
                 tierDtoComboBox, filterText, addProduct, shortcutsHelpButton);
@@ -462,6 +479,9 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
      * @param productTreeItem the product being edited, or {@code null} for a new one
      */
     private void openEditor(String title, ProductTreeItem productTreeItem) {
+        if (!canEdit) {
+            return;
+        }
         productDtoGrid.asSingleSelect().clear();
         if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;

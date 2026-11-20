@@ -4,7 +4,9 @@ import com.harmoni.menu.dashboard.dto.report.SettlementReportDto;
 import com.harmoni.menu.dashboard.dto.report.TopProductReportDto;
 import com.harmoni.menu.dashboard.layout.component.KpiCard;
 import com.harmoni.menu.dashboard.layout.component.OrderTypeFilter;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientReportService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -54,6 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Slf4j
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.DASHBOARD_VIEW)
 @Route(value = "", layout = MainLayout.class)
 @PageTitle("Dashboard | POSHarmoni")
 public class DashboardView extends VerticalLayout {

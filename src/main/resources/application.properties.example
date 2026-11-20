@@ -74,6 +74,10 @@ menu.url.kitchen.routings=${menu.url}/api/v1/stores/%d/kitchen-routings
 menu.url.kitchen.routingCategories=${menu.url}/api/v1/stores/%d/kitchen-routings/categories
 menu.url.kitchen.routingProducts=${menu.url}/api/v1/stores/%d/kitchen-routings/products
 
+# Store devices
+menu.url.devices.list=${menu.url}/api/v1/stores/%d/devices
+menu.url.devices.byId=${menu.url}/api/v1/devices/%d
+
 customer.url.customers=${customer.url}/api/v1/customers
 customer.url.customersById=${customer.url.customers}/%d
 

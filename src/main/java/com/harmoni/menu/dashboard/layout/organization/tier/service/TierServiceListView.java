@@ -9,6 +9,7 @@ import com.harmoni.menu.dashboard.layout.organization.tier.AbstractTierTreeListV
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientBase.AsyncRestCallback;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -43,8 +44,9 @@ public class TierServiceListView extends AbstractTierTreeListView<TierServiceTre
 
     public TierServiceListView(AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                                AccessService accessService,
-                               RestClientOrganizationService restClientOrganizationService) {
-        super(asyncRestClientOrganizationService, accessService, restClientOrganizationService);
+                               RestClientOrganizationService restClientOrganizationService,
+                               AuthorizationService authorizationService) {
+        super(asyncRestClientOrganizationService, accessService, restClientOrganizationService, authorizationService);
     }
 
     @Override
@@ -122,14 +124,22 @@ public class TierServiceListView extends AbstractTierTreeListView<TierServiceTre
         configureSearchFilter();
 
         Button addTierServiceButton = UiUtil.addButton(Messages.get("action.newTierService"), event -> addTier());
+        addTierServiceButton.setVisible(canEdit);
 
         HorizontalLayout toolbar = new HorizontalLayout(filterText, addTierServiceButton);
         toolbar.addClassName(Css.TOOLBAR);
-        registerNewShortcut(this::addTier);
+        registerNewShortcut(() -> {
+            if (canEdit) {
+                addTier();
+            }
+        });
         return toolbar;
     }
 
     private void addTier() {
+        if (!canEdit) {
+            return;
+        }
         TierDto tierDto = new TierDto();
         tierDto.setType(TierTypeDto.SERVICE);
         editTier(tierDto, FormAction.CREATE);

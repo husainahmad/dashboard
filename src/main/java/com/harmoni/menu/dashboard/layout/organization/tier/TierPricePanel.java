@@ -1,8 +1,8 @@
 package com.harmoni.menu.dashboard.layout.organization.tier;
 
 import com.harmoni.menu.dashboard.dto.ProductDto;
-import com.harmoni.menu.dashboard.dto.SkuDto;
 import com.harmoni.menu.dashboard.dto.SkuTierPriceDto;
+import com.harmoni.menu.dashboard.dto.SkuDto;
 import com.harmoni.menu.dashboard.dto.TierDto;
 import com.harmoni.menu.dashboard.layout.component.PaginationBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -50,6 +50,7 @@ public class TierPricePanel extends TierPanel {
 
     private final TextField search = new TextField();
     private final NumberField markup = new NumberField();
+    private final Button applyMarkup = new Button(Messages.get("tier.price.applyMarkup"));
     private final Grid<TierSkuRow> grid = new Grid<>();
     private final List<TierSkuRow> rows = new ArrayList<>();
     private final Map<Integer, TierSkuRow> changedRows = new LinkedHashMap<>();
@@ -64,7 +65,8 @@ public class TierPricePanel extends TierPanel {
 
     public TierPricePanel(AsyncRestClientMenuService asyncRestClientMenuService,
                           RestClientMenuService restClientMenuService,
-                          TierDto tier, Runnable onSaved) {
+                          TierDto tier, Runnable onSaved, boolean readOnly) {
+        super(readOnly);
         this.asyncRestClientMenuService = asyncRestClientMenuService;
         this.restClientMenuService = restClientMenuService;
         this.tier = tier;
@@ -106,11 +108,11 @@ public class TierPricePanel extends TierPanel {
     }
 
     private HorizontalLayout toolbar() {
-        Button apply = new Button(Messages.get("tier.price.applyMarkup"), event -> applyMarkup());
-        apply.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        applyMarkup.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        applyMarkup.addClickListener(event -> applyMarkup());
 
         HorizontalLayout markupRow = new HorizontalLayout(
-                new Span(Messages.get("tier.price.bulkMarkup")), markup, apply);
+                new Span(Messages.get("tier.price.bulkMarkup")), markup, applyMarkup);
         markupRow.setAlignItems(FlexComponent.Alignment.CENTER);
         markupRow.setSpacing(true);
 
@@ -120,6 +122,10 @@ public class TierPricePanel extends TierPanel {
         toolbar.setAlignItems(FlexComponent.Alignment.CENTER);
         toolbar.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         toolbar.setFlexGrow(1, search);
+        if (isReadOnly()) {
+            markup.setVisible(false);
+            applyMarkup.setVisible(false);
+        }
         return toolbar;
     }
 
@@ -142,6 +148,10 @@ public class TierPricePanel extends TierPanel {
         field.setMin(0);
         field.setStep(500);
         field.setValue(row.getTierPrice());
+        if (isReadOnly()) {
+            field.setReadOnly(true);
+            return field;
+        }
         field.addValueChangeListener(event -> {
             row.setTierPrice(event.getValue());
             if (row.isChanged()) {
@@ -233,6 +243,9 @@ public class TierPricePanel extends TierPanel {
     }
 
     private void applyMarkup() {
+        if (isReadOnly()) {
+            return;
+        }
         Double percent = markup.getValue();
         if (percent == null) {
             return;
@@ -253,16 +266,16 @@ public class TierPricePanel extends TierPanel {
 
     @Override
     public void save() {
+        if (isReadOnly()) {
+            return;
+        }
         List<Mono<?>> saves = new ArrayList<>();
         for (TierSkuRow row : changedRows.values()) {
             if (row.getTierPrice() == null) {
                 continue;
             }
-            SkuTierPriceDto dto = new SkuTierPriceDto();
-            dto.setSkuId(row.getSkuId());
-            dto.setTierId(tier.getId());
-            dto.setPrice(row.getTierPrice());
-            saves.add(restClientMenuService.updateSkuTierPrice(dto));
+            saves.add(restClientMenuService.updateSkuTierPrice(
+                    row.getSkuId(), tier.getId(), row.getTierPrice()));
         }
         if (saves.isEmpty()) {
             UiUtil.success(Messages.get("tier.price.noChanges"));

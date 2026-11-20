@@ -3,6 +3,7 @@ package com.harmoni.menu.dashboard.layout.menu.promotion;
 import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientPromotionService;
@@ -25,6 +26,7 @@ public class PromotionTabs extends AbstractListViewTabs {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientPromotionService restClientPromotionService;
     private final AccessService accessService;
+    private final AuthorizationService authorizationService;
 
     @Override
     protected String tabLabelKey() {
@@ -49,6 +51,6 @@ public class PromotionTabs extends AbstractListViewTabs {
     @Override
     protected AbstractListView createListView() {
         return new PromotionListView(asyncRestClientPromotionService, asyncRestClientMenuService,
-                asyncRestClientOrganizationService, restClientPromotionService, accessService);
+                asyncRestClientOrganizationService, restClientPromotionService, accessService, authorizationService);
     }
 }

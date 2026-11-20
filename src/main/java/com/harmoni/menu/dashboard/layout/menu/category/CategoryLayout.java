@@ -1,8 +1,11 @@
 package com.harmoni.menu.dashboard.layout.menu.category;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
@@ -17,6 +20,7 @@ import lombok.RequiredArgsConstructor;
  * {@link CategoryView} inside the {@link MainLayout} shell.
  */
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.MENU_VIEW)
 @Route(value = "category", layout = MainLayout.class)
 @PageTitle("Categories | POSHarmoni")
 public class CategoryLayout extends VerticalLayout {
@@ -25,6 +29,7 @@ public class CategoryLayout extends VerticalLayout {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientMenuService restClientMenuService;
     private final AccessService accessService;
+    private final AuthorizationService authorizationService;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
@@ -32,7 +37,7 @@ public class CategoryLayout extends VerticalLayout {
         removeAll();
         addClassName(Css.LIST_VIEW);
         add(new CategoryView(asyncRestClientMenuService,
-                asyncRestClientOrganizationService, restClientMenuService, accessService));
+                asyncRestClientOrganizationService, restClientMenuService, accessService, authorizationService));
         setSizeFull();
     }
 }

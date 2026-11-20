@@ -53,7 +53,7 @@ class MessagesLocaleTest {
     void bothBundlesDefineTheNavigationKeys() {
         assertBothBundlesDefine(
                 "nav.overview", "nav.dashboard", "nav.organization", "nav.catalog", "nav.customers",
-                "nav.customerList", "nav.inventory", "nav.inventoryStock", "nav.report",
+                "nav.customerList", "nav.report",
                 "nav.administration", "nav.settings",
                 "nav.report.settlement", "nav.report.topProducts", "nav.report.daily",
                 "nav.report.sales", "nav.report.orderVolume");
@@ -75,6 +75,19 @@ class MessagesLocaleTest {
                 "report.orderVolume.offPeak", "report.orderVolume.split", "report.orderVolume.share",
                 "report.orderVolume.empty",
                 "notification.report.loadFailed");
+    }
+
+    @Test
+    void bothBundlesDefineTheDeviceKeys() {
+        assertBothBundlesDefine(
+                "nav.devices", "page.device.title", "page.device.description",
+                "grid.header.device", "grid.header.deviceAddress", "device.empty",
+                "label.deviceName", "label.deviceAddress", "label.deviceType", "label.deviceMode",
+                "device.config.tableField", "device.config.table",
+                "validation.device.addressRequired", "validation.device.tableRequired",
+                "notification.device.created", "notification.device.updated",
+                "notification.device.deleted", "notification.device.saveFailed",
+                "notification.device.deleteFailed", "notification.device.loadFailed");
     }
 
     @Test

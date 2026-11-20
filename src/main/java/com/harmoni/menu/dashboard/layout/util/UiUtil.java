@@ -2,7 +2,6 @@ package com.harmoni.menu.dashboard.layout.util;
 
 import com.harmoni.menu.dashboard.exception.BusinessForbiddenException;
 import com.harmoni.menu.dashboard.util.Messages;
-import com.harmoni.menu.dashboard.layout.util.Css;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
@@ -115,20 +114,6 @@ public final class UiUtil {
             button.addThemeVariants(ButtonVariant.LUMO_ERROR);
         }
         button.setTooltipText(tooltip);
-        return button;
-    }
-
-    /**
-     * Creates an inline "view" button used to open the read-only detail page of
-     * a record.
-     *
-     * @param tooltip  tooltip shown on hover
-     * @param listener the click listener wired to the button
-     * @return the configured button
-     */
-    public static Button viewButton(String tooltip, ComponentEventListener<ClickEvent<Button>> listener) {
-        Button button = buildIconButton(VaadinIcon.EYE, tooltip, false);
-        button.addClickListener(listener);
         return button;
     }
 

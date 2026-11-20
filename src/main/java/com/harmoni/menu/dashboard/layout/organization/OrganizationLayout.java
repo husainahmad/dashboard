@@ -1,6 +1,8 @@
 package com.harmoni.menu.dashboard.layout.organization;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
  * Route ({@code /organization}) for the unified Brand / Chain / Store page.
  */
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.ORGANIZATION_READ)
 @Route(value = "organization", layout = MainLayout.class)
 @PageTitle("Organisasi | POSHarmoni")
 public class OrganizationLayout extends VerticalLayout {

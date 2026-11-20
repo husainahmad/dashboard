@@ -2,6 +2,7 @@ package com.harmoni.menu.dashboard.layout.security;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
+import com.harmoni.menu.dashboard.layout.util.ActionPermissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.service.AccessService;
@@ -70,12 +71,13 @@ public class EmployeeRoleLayout extends VerticalLayout implements HasDynamicTitl
         action.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         action.setIcon(VaadinIcon.PLUS.create());
 
+        boolean canManageRbac = ActionPermissions.canManageRbac(authorizationService);
         Runnable refreshAction = () -> {
             boolean employees = tabSheet.getSelectedTab() == employeesTab;
             action.setText(Messages.get(employees ? "employee.add" : "role.add"));
             action.setVisible(employees
                     ? authorizationService.hasPermission(Permissions.EMPLOYEE_EDIT)
-                    : authorizationService.hasAnyPermission(Permissions.RBAC_MANAGE, Permissions.RBAC_WRITE));
+                    : canManageRbac);
         };
         action.addClickListener(event -> {
             if (tabSheet.getSelectedTab() == employeesTab) {

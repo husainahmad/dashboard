@@ -8,7 +8,6 @@ import com.harmoni.menu.dashboard.layout.organization.tier.TierForm;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.router.Route;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,7 +19,6 @@ import java.util.List;
  * buttons from the shared {@link TierForm} layout.
  */
 @Getter
-@Route("tier-menu-form")
 @Slf4j
 public class TierMenuForm extends TierForm {
 

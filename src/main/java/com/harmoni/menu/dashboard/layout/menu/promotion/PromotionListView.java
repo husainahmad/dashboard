@@ -8,10 +8,12 @@ import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.enums.PromotionStatus;
 import com.harmoni.menu.dashboard.layout.enums.PromotionType;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
+import com.harmoni.menu.dashboard.layout.util.ActionPermissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientPromotionService;
@@ -32,7 +34,6 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 
@@ -48,7 +49,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * the code, name, type, status, schedule and priority scannable in one row while
  * the editor still opens in a tab.
  */
-@RequiredArgsConstructor
 @Slf4j
 public class PromotionListView extends AbstractListView {
 
@@ -60,6 +60,8 @@ public class PromotionListView extends AbstractListView {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientPromotionService restClientPromotionService;
     private final AccessService accessService;
+    private final boolean canEdit;
+    private final boolean canDelete;
 
     private final Grid<PromotionDto> promotionGrid = new Grid<>(PromotionDto.class);
     private final GridSkeleton gridSkeleton = new GridSkeleton(PAGE_SIZE);
@@ -69,6 +71,21 @@ public class PromotionListView extends AbstractListView {
     private final ComboBox<PromotionType> typeFilter = new ComboBox<>();
     private final Span count = new Span();
     private boolean layoutBuilt;
+
+    public PromotionListView(AsyncRestClientPromotionService asyncRestClientPromotionService,
+                             AsyncRestClientMenuService asyncRestClientMenuService,
+                             AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+                             RestClientPromotionService restClientPromotionService,
+                             AccessService accessService,
+                             AuthorizationService authorizationService) {
+        this.asyncRestClientPromotionService = asyncRestClientPromotionService;
+        this.asyncRestClientMenuService = asyncRestClientMenuService;
+        this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
+        this.restClientPromotionService = restClientPromotionService;
+        this.accessService = accessService;
+        this.canEdit = ActionPermissions.canEditCatalog(authorizationService);
+        this.canDelete = ActionPermissions.canDeleteCatalog(authorizationService);
+    }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
@@ -176,15 +193,20 @@ public class PromotionListView extends AbstractListView {
     }
 
     private Component applyActionButtons(PromotionDto promotion) {
-        Button editButton = UiUtil.editButton(Messages.get(Messages.Keys.ACTION_EDIT),
-                event -> openForm(promotion, FormAction.EDIT));
-        Button statusButton = new Button(VaadinIcon.PLAY.create());
-        statusButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
-        statusButton.getElement().setAttribute("title", Messages.get("action.applyStatus"));
-        statusButton.addClickListener(event -> openStatusTransition(promotion));
-        Button deleteButton = UiUtil.deleteButton(
-                new PromotionDeleteEventListener(promotion, restClientPromotionService));
-        HorizontalLayout actions = new HorizontalLayout(editButton, statusButton, deleteButton);
+        HorizontalLayout actions = new HorizontalLayout();
+        if (canEdit) {
+            actions.add(UiUtil.editButton(Messages.get(Messages.Keys.ACTION_EDIT),
+                    event -> openForm(promotion, FormAction.EDIT)));
+            Button statusButton = new Button(VaadinIcon.PLAY.create());
+            statusButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE, ButtonVariant.LUMO_ICON);
+            statusButton.getElement().setAttribute("title", Messages.get("action.applyStatus"));
+            statusButton.addClickListener(event -> openStatusTransition(promotion));
+            actions.add(statusButton);
+        }
+        if (canDelete) {
+            actions.add(UiUtil.deleteButton(
+                    new PromotionDeleteEventListener(promotion, restClientPromotionService)));
+        }
         actions.setSpacing(false);
         return actions;
     }
@@ -263,16 +285,21 @@ public class PromotionListView extends AbstractListView {
         Button addButton = UiUtil.addButton(Messages.get("action.newPromotion"), event -> {
             openForm(null, FormAction.CREATE);
         });
+        addButton.setVisible(canEdit);
         HorizontalLayout toolbar = new HorizontalLayout(brandFilter, statusFilter, typeFilter, filterText, addButton);
         toolbar.addClassName(Css.TOOLBAR);
         toolbar.setWidthFull();
         toolbar.setAlignItems(FlexComponent.Alignment.BASELINE);
-        registerNewShortcut(() -> openForm(null, FormAction.CREATE));
+        registerNewShortcut(() -> {
+            if (canEdit) {
+                openForm(null, FormAction.CREATE);
+            }
+        });
         return toolbar;
     }
 
     private void openForm(PromotionDto promotion, FormAction formAction) {
-        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+        if (!canEdit || !(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
         TabManager tabManager = new TabManager(tabSheet);
@@ -314,7 +341,7 @@ public class PromotionListView extends AbstractListView {
     }
 
     private void openStatusTransition(PromotionDto promotion) {
-        if (!(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
+        if (!canEdit || !(this.getParent().orElseThrow() instanceof TabSheet tabSheet)) {
             return;
         }
         TabManager tabManager = new TabManager(tabSheet);

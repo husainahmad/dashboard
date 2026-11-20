@@ -1,6 +1,8 @@
 package com.harmoni.menu.dashboard.layout.customer;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientCustomerService;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
  * {@link CustomerView} inside the {@link MainLayout} shell.
  */
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.CUSTOMER_READ)
 @Route(value = "customers", layout = MainLayout.class)
 @PageTitle("Customers | POSHarmoni")
 public class CustomerLayout extends VerticalLayout {

@@ -48,7 +48,6 @@ public class Messages implements ApplicationContextAware {
         public static final String ACTION_NEW_SERVICE = "action.newService";
         public static final String ACTION_NEW_STORE = "action.newStore";
         public static final String ACTION_NEW_TABLE = "action.newTable";
-        public static final String ACTION_NEW_USER = "action.newUser";
         public static final String ACTION_SAVE = "action.save";
         public static final String ACTION_SIGNING_IN = "action.signingIn";
         public static final String ACTION_UPDATE = "action.update";
@@ -124,14 +123,14 @@ public class Messages implements ApplicationContextAware {
         public static final String PAGE_STORE_TITLE = "page.store.title";
         public static final String PAGE_TABLE_DESCRIPTION = "page.table.description";
         public static final String PAGE_TABLE_TITLE = "page.table.title";
+        public static final String PAGE_DEVICE_TITLE = "page.device.title";
+        public static final String PAGE_DEVICE_DESCRIPTION = "page.device.description";
         public static final String PAGE_TIER_MENU_DESCRIPTION = "page.tierMenu.description";
         public static final String PAGE_TIER_MENU_TITLE = "page.tierMenu.title";
         public static final String PAGE_TIER_PRICE_DESCRIPTION = "page.tierPrice.description";
         public static final String PAGE_TIER_PRICE_TITLE = "page.tierPrice.title";
         public static final String PAGE_TIER_SERVICE_DESCRIPTION = "page.tierService.description";
         public static final String PAGE_TIER_SERVICE_TITLE = "page.tierService.title";
-        public static final String PAGE_USER_DESCRIPTION = "page.user.description";
-        public static final String PAGE_USER_TITLE = "page.user.title";
         public static final String PLACEHOLDER_SELECT_BRAND = "placeholder.selectBrand";
         public static final String PLACEHOLDER_SELECT_CHAIN = "placeholder.selectChain";
         public static final String PREVIEW_NOT_SET = "preview.notSet";

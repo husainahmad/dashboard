@@ -1,9 +1,12 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.component.FocusModeToggle;
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.util.Css;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -25,12 +28,14 @@ import lombok.RequiredArgsConstructor;
  * as siblings of the sheet so the editor can take the full height.
  */
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.MENU_VIEW)
 @Route(value = "product", layout = MainLayout.class)
 @PageTitle("Products | POSHarmoni")
 public class ProductLayout extends VerticalLayout {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
+    private final AuthorizationService authorizationService;
 
     @Getter
     private transient FocusModeToggle focusModeToggle;
@@ -51,7 +56,7 @@ public class ProductLayout extends VerticalLayout {
         addClassNames(Css.LIST_VIEW, Css.PAGE);
 
         ProductListView productListView = new ProductListView(asyncRestClientMenuService,
-                restClientMenuService);
+                restClientMenuService, authorizationService);
         TabSheet tabSheet = new TabSheet();
         Icon listIcon = new Icon(VaadinIcon.PACKAGE);
         listIcon.setSize("16px");

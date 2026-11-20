@@ -854,3 +854,17 @@ vaadin-tab[selected] .table-tab-icon {
             6px;
     }
 }
+
+
+/* ============================================================
+   DEVICES
+   ============================================================ */
+
+.device-config-hint {
+
+    color:
+        var(--app-text-muted);
+
+    font-size:
+        var(--lumo-font-size-s);
+}

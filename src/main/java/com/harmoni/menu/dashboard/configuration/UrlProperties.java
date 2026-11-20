@@ -41,4 +41,5 @@ public class UrlProperties implements Serializable {
     private transient UserProperties users;
     private transient PromotionProperties promotions;
     private transient KitchenProperties kitchen;
+    private transient DeviceProperties devices;
 }

@@ -17,7 +17,6 @@ import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
-import com.harmoni.menu.dashboard.service.data.rest.RestAPIResponse;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientRbacService;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -38,7 +37,6 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +54,7 @@ public class EmployeeListView extends VerticalLayout {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final AccessService accessService;
     private final AuthorizationService authorizationService;
+    private final boolean canEdit;
 
     private final Grid<EmployeeDto> grid = new Grid<>(EmployeeDto.class, false);
     private final TextField search = new TextField();
@@ -87,6 +86,7 @@ public class EmployeeListView extends VerticalLayout {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.accessService = accessService;
         this.authorizationService = authorizationService;
+        this.canEdit = authorizationService.hasPermission(Permissions.EMPLOYEE_EDIT);
 
         setSizeFull();
         setPadding(false);
@@ -214,7 +214,7 @@ public class EmployeeListView extends VerticalLayout {
     private HorizontalLayout actionCell(EmployeeDto employee) {
         Button edit = new Button(Messages.get("employee.edit"), event -> openDialog(employee));
         edit.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        edit.setVisible(authorizationService.hasPermission(Permissions.EMPLOYEE_EDIT));
+        edit.setVisible(canEdit);
         HorizontalLayout actions = new HorizontalLayout(edit);
         actions.setSpacing(false);
         return actions;
@@ -427,7 +427,7 @@ public class EmployeeListView extends VerticalLayout {
     }
 
     private void openDialog(EmployeeDto employee) {
-        if (!authorizationService.hasPermission(Permissions.EMPLOYEE_EDIT)) {
+        if (!canEdit) {
             return;
         }
         new EmployeeDialog(restClientOrganizationService, assignableRoles(), brands, chains, stores,

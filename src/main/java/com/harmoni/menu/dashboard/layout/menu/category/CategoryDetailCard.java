@@ -32,6 +32,8 @@ public class CategoryDetailCard extends VerticalLayout {
 
     private Consumer<CategoryDto> editListener;
     private Consumer<CategoryDto> deleteListener;
+    private boolean canEdit;
+    private boolean canDelete;
 
     public CategoryDetailCard() {
         addClassName("category-detail-card");
@@ -76,6 +78,24 @@ public class CategoryDetailCard extends VerticalLayout {
 
     public void setDeleteListener(Consumer<CategoryDto> listener) {
         this.deleteListener = listener;
+    }
+
+    /**
+     * Sets whether the edit action is offered.
+     *
+     * @param canEdit {@code true} when the user may edit categories
+     */
+    public void setCanEdit(boolean canEdit) {
+        this.canEdit = canEdit;
+    }
+
+    /**
+     * Sets whether the delete action is offered.
+     *
+     * @param canDelete {@code true} when the user may delete categories
+     */
+    public void setCanDelete(boolean canDelete) {
+        this.canDelete = canDelete;
     }
 
     private void buildEmptyState() {
@@ -168,7 +188,13 @@ public class CategoryDetailCard extends VerticalLayout {
         delete.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         delete.addClassName("category-delete-button");
 
-        HorizontalLayout actions = new HorizontalLayout(delete, edit);
+        HorizontalLayout actions = new HorizontalLayout();
+        if (canDelete) {
+            actions.add(delete);
+        }
+        if (canEdit) {
+            actions.add(edit);
+        }
         actions.addClassName("category-action-bar");
         actions.setWidthFull();
         actions.setAlignItems(Alignment.CENTER);

@@ -6,10 +6,12 @@ import com.harmoni.menu.dashboard.layout.AbstractListView;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.organization.FormAction;
 import com.harmoni.menu.dashboard.layout.organization.tier.service.TreeLevel;
+import com.harmoni.menu.dashboard.layout.util.ActionPermissions;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientBase.AsyncRestCallback;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -47,6 +49,8 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
     protected final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     protected final AccessService accessService;
     protected final RestClientOrganizationService restClientOrganizationService;
+    protected final boolean canEdit;
+    protected final boolean canDelete;
 
     protected final LoadingBar loadingBar = new LoadingBar();
     protected final GridSkeleton gridSkeleton = new GridSkeleton(8);
@@ -58,10 +62,13 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
 
     protected AbstractTierTreeListView(AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                                        AccessService accessService,
-                                       RestClientOrganizationService restClientOrganizationService) {
+                                       RestClientOrganizationService restClientOrganizationService,
+                                       AuthorizationService authorizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.accessService = accessService;
         this.restClientOrganizationService = restClientOrganizationService;
+        this.canEdit = ActionPermissions.canEditOrganization(authorizationService);
+        this.canDelete = ActionPermissions.canDeleteOrganization(authorizationService);
     }
 
     protected abstract TreeGrid<T> treeGrid();
@@ -138,6 +145,9 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
      * @param action  whether the tab is in create or edit mode
      */
     protected void editTier(TierDto tierDto, FormAction action) {
+        if (!canEdit) {
+            return;
+        }
         if (tierDto.getBrandId() == null) {
             tierDto.setBrandId(brandDto.getId());
         }
@@ -192,8 +202,11 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
         cell.setSpacing(false);
         Span status = new Span();
         applySavedStatus(item, status);
-        final boolean[] rollingBack = {false};
-        checkbox.addValueChangeListener(event -> onCheckboxChanged(item, checkbox, status, rollingBack, event));
+        checkbox.setReadOnly(!canEdit);
+        if (canEdit) {
+            final boolean[] rollingBack = {false};
+            checkbox.addValueChangeListener(event -> onCheckboxChanged(item, checkbox, status, rollingBack, event));
+        }
         checkBoxes.put(item.getId(), checkbox);
         cell.add(checkbox, status);
         return cell;
@@ -301,13 +314,17 @@ public abstract class AbstractTierTreeListView<T extends TierTreeItem> extends A
     }
 
     protected Component applyButton(T item) {
-        if (item.getTreeLevel().equals(TreeLevel.ROOT)) {
-            HorizontalLayout layout = new HorizontalLayout();
-            layout.add(applyButtonEdit(item));
-            layout.add(applyButtonDelete(item));
-            return layout;
+        if (!TreeLevel.ROOT.equals(item.getTreeLevel()) || (!canEdit && !canDelete)) {
+            return null;
         }
-        return null;
+        HorizontalLayout layout = new HorizontalLayout();
+        if (canEdit) {
+            layout.add(applyButtonEdit(item));
+        }
+        if (canDelete) {
+            layout.add(applyButtonDelete(item));
+        }
+        return layout;
     }
 
     /** Creates the delete button for the given tier item and stores it in the

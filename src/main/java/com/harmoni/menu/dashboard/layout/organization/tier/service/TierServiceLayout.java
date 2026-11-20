@@ -1,7 +1,10 @@
 package com.harmoni.menu.dashboard.layout.organization.tier.service;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.vaadin.flow.component.AttachEvent;
@@ -17,6 +20,7 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * {@link MainLayout} shell.
  */
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.ORGANIZATION_READ)
 @Route(value = "tier-service", layout = MainLayout.class)
 @PageTitle("Tier Service | POSHarmoni")
 public class TierServiceLayout extends VerticalLayout {
@@ -24,12 +28,13 @@ public class TierServiceLayout extends VerticalLayout {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
+    private final AuthorizationService authorizationService;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         addClassName(Css.LIST_VIEW);
-        add(new TierServiceTabs(asyncRestClientOrganizationService, restClientOrganizationService, accessService));
+        add(new TierServiceTabs(asyncRestClientOrganizationService, restClientOrganizationService, accessService, authorizationService));
         setSizeFull();
     }
 }

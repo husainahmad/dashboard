@@ -1,7 +1,10 @@
 package com.harmoni.menu.dashboard.layout.organization.tier.price;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
 import com.vaadin.flow.component.AttachEvent;
@@ -16,6 +19,7 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * Hosts the {@link TierPriceTabs} component inside the {@link MainLayout} shell.
  */
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.ORGANIZATION_READ)
 @Route(value = "tier-price", layout = MainLayout.class)
 @PageTitle("Tier Price | POSHarmoni")
 public class TierPriceLayout extends VerticalLayout {
@@ -23,12 +27,13 @@ public class TierPriceLayout extends VerticalLayout {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final AccessService accessService;
+    private final AuthorizationService authorizationService;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         addClassName(Css.LIST_VIEW);
-        add(new TierPriceTabs(asyncRestClientOrganizationService, restClientOrganizationService, accessService));
+        add(new TierPriceTabs(asyncRestClientOrganizationService, restClientOrganizationService, accessService, authorizationService));
         setSizeFull();
     }
 }

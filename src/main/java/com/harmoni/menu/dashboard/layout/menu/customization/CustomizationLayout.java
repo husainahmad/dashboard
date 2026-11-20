@@ -1,7 +1,10 @@
 package com.harmoni.menu.dashboard.layout.menu.customization;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
+import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.service.AccessService;
+import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientMenuService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientMenuService;
 import com.vaadin.flow.component.AttachEvent;
@@ -22,6 +25,7 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * </p>
  */
 @RequiredArgsConstructor
+@RequiresPermission(Permissions.MENU_VIEW)
 @Route(value = "customization", layout = MainLayout.class)
 @PageTitle("Customization | POSHarmoni")
 public class CustomizationLayout extends VerticalLayout {
@@ -29,12 +33,13 @@ public class CustomizationLayout extends VerticalLayout {
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
     private final AccessService accessService;
+    private final AuthorizationService authorizationService;
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         addClassName(Css.LIST_VIEW);
-        add(new CustomizationTabs(asyncRestClientMenuService, restClientMenuService, accessService));
+        add(new CustomizationTabs(asyncRestClientMenuService, restClientMenuService, accessService, authorizationService));
         setSizeFull();
     }
 }
