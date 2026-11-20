@@ -71,6 +71,7 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
     private final Span floorValue = new Span();
     private final Checkbox activeField = new Checkbox(Messages.get("label.activeAtCashier"));
     private final List<Button> shapeButtons = new ArrayList<>();
+    private final transient TableFilterBar filterBar;
 
     private final List<FloorDto> floors = new ArrayList<>();
     private final List<TableDto> tables = new ArrayList<>();
@@ -85,11 +86,13 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
     public FloorPlanView(AsyncRestClientSettingService asyncRestClientSettingService,
                          RestClientSettingService restClientSettingService,
                          AccessService accessService,
-                         AsyncRestClientOrganizationService asyncRestClientOrganizationService) {
+                         AsyncRestClientOrganizationService asyncRestClientOrganizationService,
+                         TableFilterBar filterBar) {
         this.asyncRestClientSettingService = asyncRestClientSettingService;
         this.restClientSettingService = restClientSettingService;
         this.accessService = accessService;
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
+        this.filterBar = filterBar;
     }
 
     @Override
@@ -100,7 +103,8 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
         }
         rendered = true;
         buildLayout();
-        loadFloors();
+        filterBar.addSelectionListener(this::syncFromFilter);
+        syncFromFilter();
     }
 
     private void buildLayout() {
@@ -127,6 +131,19 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
 
         footerNote.addClassName("floor-plan-footer");
         add(footerNote);
+    }
+
+    /**
+     * Mirrors the shared filter selection: the store's floors and the selected
+     * floor drive the tabs and the canvas.
+     */
+    private void syncFromFilter() {
+        floors.clear();
+        floors.addAll(filterBar.getFloors());
+        selectedFloor = filterBar.getSelectedFloor();
+        clearSelection();
+        renderFloorTabs();
+        loadTables();
     }
 
     private HorizontalLayout buildTopBar() {
@@ -307,29 +324,6 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
         };
     }
 
-    private void loadFloors() {
-        Integer storeId = sessionStoreId();
-        if (storeId == null) {
-            return;
-        }
-        asyncRestClientSettingService.getAllFloorsByStore(
-                result -> UiUtil.safeAccess(getUI().orElse(null), () -> {
-                    floors.clear();
-                    if (result != null) {
-                        floors.addAll(result);
-                    }
-                    FloorDto keep = selectedFloor;
-                    selectedFloor = floors.stream()
-                            .filter(floor -> keep != null && Objects.equals(floor.getId(), keep.getId()))
-                            .findFirst()
-                            .orElse(floors.isEmpty() ? null : floors.getFirst());
-                    renderFloorTabs();
-                    loadTables();
-                }),
-                error -> UiUtil.safeAccess(getUI().orElse(null), () ->
-                        UiUtil.errorWithRetry(Messages.get("notification.floor.loadFailed"), this::loadFloors)),
-                storeId);
-    }
 
     private void renderFloorTabs() {
         floorTabs.removeAll();
@@ -352,13 +346,10 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
     }
 
     private void selectFloor(FloorDto floor) {
-        if (floor == null || Objects.equals(selectedFloor, floor)) {
+        if (floor == null) {
             return;
         }
-        selectedFloor = floor;
-        clearSelection();
-        renderFloorTabs();
-        loadTables();
+        filterBar.selectFloor(floor);
     }
 
     private void loadTables() {
@@ -546,7 +537,7 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
             return;
         }
         TableDto table = new TableDto();
-        table.setStoreId(sessionStoreId());
+        table.setStoreId(selectedStoreId());
         table.setFloorId(selectedFloor.getId());
         table.setName(nextTableName());
         table.setCapacity(2);
@@ -580,7 +571,7 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
             return;
         }
         TableDto copy = new TableDto();
-        copy.setStoreId(sessionStoreId());
+        copy.setStoreId(selectedStoreId());
         copy.setFloorId(selectedFloor == null ? selectedTable.getFloorId() : selectedFloor.getId());
         copy.setName(nextCopyName(selectedTable.getName()));
         copy.setCapacity(selectedTable.getCapacity());
@@ -630,18 +621,18 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
     }
 
     private void addFloor() {
-        StoreDto store = sessionStore();
+        StoreDto store = filterBar.getSelectedStore();
         if (store == null || store.getId() == null) {
             UiUtil.error(Messages.get("validation.floor.storeRequired"));
             return;
         }
         new FloorFormDialog(new FloorDto(), store, restClientSettingService,
-                asyncRestClientOrganizationService, accessService, this::loadFloors).open();
+                asyncRestClientOrganizationService, accessService, filterBar::reloadFloors).open();
     }
 
     /**
      * Opens the floor dialog for the selected floor. The store is fixed by the
-     * current session, matching the list tab.
+     * shared filter.
      */
     private void editSelectedFloor() {
         FloorDto target = currentFloor();
@@ -650,9 +641,13 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
             return;
         }
         try {
-            StoreDto store = sessionStore();
+            StoreDto store = filterBar.getSelectedStore();
+            if (store == null || store.getId() == null) {
+                UiUtil.error(Messages.get("validation.floor.storeRequired"));
+                return;
+            }
             new FloorFormDialog(target, store, restClientSettingService,
-                    asyncRestClientOrganizationService, accessService, this::loadFloors).open();
+                    asyncRestClientOrganizationService, accessService, filterBar::reloadFloors).open();
         } catch (RuntimeException e) {
             log.error("Could not open the floor editor for floor {}", target.getId(), e);
             UiUtil.error(Messages.get("notification.floor.saveFailed"));
@@ -693,7 +688,7 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
                     UiUtil.safeAccess(getUI().orElse(null), () -> {
                         UiUtil.success(Messages.get("notification.floor.deleted"));
                         selectedFloor = null;
-                        loadFloors();
+                        filterBar.reloadFloors();
                     });
                 }, error -> UiUtil.safeAccess(getUI().orElse(null), () ->
                         UiUtil.error(Messages.get("notification.floor.deleteHasTables")))));
@@ -827,13 +822,8 @@ public class FloorPlanView extends VerticalLayout implements BroadcastMessageSer
         };
     }
 
-    private StoreDto sessionStore() {
-        return accessService.getUserDetail() == null
-                ? null : accessService.getUserDetail().getStoreDto();
-    }
-
-    private Integer sessionStoreId() {
-        StoreDto store = sessionStore();
+    private Integer selectedStoreId() {
+        StoreDto store = filterBar.getSelectedStore();
         return store == null ? null : store.getId();
     }
 }

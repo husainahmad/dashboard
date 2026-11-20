@@ -9,7 +9,6 @@ import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
-import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.ScopeService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
@@ -50,7 +49,6 @@ public class UserView extends VerticalLayout {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final RestClientRbacService restClientRbacService;
-    private final AccessService accessService;
     private final AuthorizationService authorizationService;
 
     private final UserListCard listCard = new UserListCard();
@@ -71,16 +69,15 @@ public class UserView extends VerticalLayout {
     private int totalPages;
     private int totalUsers;
     private boolean loaded;
+    private boolean dataLoaded;
 
     public UserView(AsyncRestClientOrganizationService asyncRestClientOrganizationService,
                     RestClientOrganizationService restClientOrganizationService,
                     RestClientRbacService restClientRbacService,
-                    AccessService accessService,
                     AuthorizationService authorizationService) {
         this.asyncRestClientOrganizationService = asyncRestClientOrganizationService;
         this.restClientOrganizationService = restClientOrganizationService;
         this.restClientRbacService = restClientRbacService;
-        this.accessService = accessService;
         this.authorizationService = authorizationService;
 
         addClassName("user-view");
@@ -149,8 +146,13 @@ public class UserView extends VerticalLayout {
             loaded = true;
             Shortcuts.addShortcutListener(this, search::focus, Key.SLASH);
         }
-        loadStores();
-        loadRoles();
+        // The organisation tree and the role list are stable for the session;
+        // reloading them on every attach made the page feel slow for no gain.
+        if (!dataLoaded) {
+            dataLoaded = true;
+            loadStores();
+            loadRoles();
+        }
     }
 
     private void loadRoles() {
@@ -208,6 +210,7 @@ public class UserView extends VerticalLayout {
                     fetchUsers();
                 }),
                 error -> UiUtil.safeAccess(getUI().orElse(null), () -> {
+                    dataLoaded = false;
                     addButton.setEnabled(authorizationService.hasPermission(Permissions.USER_WRITE));
                     fetchUsers();
                 }));
@@ -218,16 +221,11 @@ public class UserView extends VerticalLayout {
                 .map(StoreDto::getId)
                 .filter(Objects::nonNull)
                 .toList();
-        if (storeIds.isEmpty()) {
-            Integer storeId = accessService.getStoreId();
-            if (storeId != null) {
-                storeIds = List.of(storeId);
-            }
-        }
-        if (storeIds.isEmpty()) {
-            listCard.setLoading(false);
-            return;
-        }
+        // An empty selection is intentional: the menu service expands the
+        // caller's own scope (chain/brand/store), so a chain operator still
+        // sees every store of the chain even when the organisation tree could
+        // not be loaded. Falling back to the login store here would hide the
+        // rest of the chain.
         String storeIdsParam = storeIds.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));

@@ -309,3 +309,13 @@
 .user-delete-button:hover {
     background: var(--lumo-error-color-10pct);
 }
+
+@keyframes user-dialog-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.user-dialog-saving vaadin-icon {
+    animation: user-dialog-spin 1s linear infinite;
+}

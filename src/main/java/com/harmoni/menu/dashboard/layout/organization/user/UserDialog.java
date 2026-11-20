@@ -12,6 +12,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -39,6 +40,9 @@ public class UserDialog extends Dialog {
     private final PasswordField passwordField = new PasswordField(Messages.get("label.password"));
     private final ComboBox<StoreDto> storeBox = new ComboBox<>(Messages.get(Messages.Keys.LABEL_STORE));
     private final MultiSelectComboBox<RoleDto> roleBox = new MultiSelectComboBox<>(Messages.get("label.auth"));
+    private final Button cancelButton = new Button();
+    private final Button saveButton = new Button();
+    private boolean saving;
 
     public UserDialog(RestClientOrganizationService restClientOrganizationService,
                       List<StoreDto> stores, List<RoleDto> roles, UserDto editingUser, Runnable onSaved) {
@@ -55,12 +59,16 @@ public class UserDialog extends Dialog {
         configureFields();
         add(form());
 
-        Button cancel = new Button(Messages.get(Messages.Keys.ACTION_CANCEL), event -> close());
+        Button cancel = cancelButton;
+        cancel.setText(Messages.get(Messages.Keys.ACTION_CANCEL));
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        cancel.addClickListener(event -> close());
 
-        Button save = new Button(Messages.get(editingUser == null
-                ? "user.dialog.create" : "user.dialog.update"), event -> save());
+        Button save = saveButton;
+        save.setText(Messages.get(editingUser == null
+                ? "user.dialog.create" : "user.dialog.update"));
         save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        save.addClickListener(event -> save());
         getFooter().add(cancel, save);
 
         if (editingUser != null) {
@@ -127,7 +135,7 @@ public class UserDialog extends Dialog {
     }
 
     private void save() {
-        if (!valid()) {
+        if (saving || !valid()) {
             return;
         }
         UserDto dto = editingUser == null ? new UserDto() : copyOf(editingUser);
@@ -141,6 +149,7 @@ public class UserDialog extends Dialog {
                 .collect(Collectors.toSet());
         dto.setRoleIds(roleIds);
         dto.setAuthId(firstRoleId(roleIds));
+        setSaving(true);
         if (editingUser == null) {
             restClientOrganizationService.createUser(dto).subscribe(
                     response -> success("user.created"),
@@ -150,6 +159,29 @@ public class UserDialog extends Dialog {
         restClientOrganizationService.updateUser(dto).subscribe(
                 response -> success("user.updated"),
                 error -> failure("user.saveFailed"));
+    }
+
+    /**
+     * Toggles the busy state of the dialog while the save request is in flight:
+     * both footer buttons are disabled and the primary button shows a spinning
+     * icon with a "Saving…" caption, so a slow backend cannot be mistaken for a
+     * dead button and the form cannot be submitted twice.
+     *
+     * @param saving whether a save request is currently running
+     */
+    private void setSaving(boolean saving) {
+        this.saving = saving;
+        saveButton.setEnabled(!saving);
+        cancelButton.setEnabled(!saving);
+        saveButton.setText(Messages.get(saving ? "user.dialog.saving"
+                : editingUser == null ? "user.dialog.create" : "user.dialog.update"));
+        if (saving) {
+            saveButton.setIcon(VaadinIcon.SPINNER.create());
+            saveButton.addClassName("user-dialog-saving");
+        } else {
+            saveButton.setIcon(null);
+            saveButton.removeClassName("user-dialog-saving");
+        }
     }
 
     private boolean valid() {
@@ -210,6 +242,7 @@ public class UserDialog extends Dialog {
 
     private void success(String messageKey) {
         UiUtil.safeAccess(getUI().orElse(null), () -> {
+            setSaving(false);
             UiUtil.success(Messages.get(messageKey));
             close();
             if (onSaved != null) {
@@ -219,7 +252,9 @@ public class UserDialog extends Dialog {
     }
 
     private void failure(String messageKey) {
-        UiUtil.safeAccess(getUI().orElse(null),
-                () -> UiUtil.error(Messages.get(messageKey)));
+        UiUtil.safeAccess(getUI().orElse(null), () -> {
+            setSaving(false);
+            UiUtil.error(Messages.get(messageKey));
+        });
     }
 }

@@ -19,7 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Tab sheet for the table setting, hosting the floor plan and the table list.
  * The plan is the first tab because arranging tables is the page's primary
- * job; the list tab carries its own two-row toolbar. Delegates data access to
+ * job. A single overview card row and brand → chain → store → floor filter sit
+ * above the tab sheet and are shared by both tabs. Delegates data access to
  * the async client and persistence to the blocking
  * {@link RestClientSettingService}.
  */
@@ -31,26 +32,31 @@ public class TableTabs extends VerticalLayout {
     private final RestClientSettingService restClientSettingService;
     private final AccessService accessService;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
+    private boolean rendered;
 
     /**
-     * Renders the tab sheet with a single "All Tables" tab and the list's
-     * toolbar above it.
+     * Renders the page header and a single toolbar above the plan and list
+     * tabs, matching the other list pages. Both tabs always show the same
+     * brand, chain, store and floor.
      */
     private void renderTabSheet() {
         TabSheet tabSheet = new TabSheet();
         tabSheet.addClassName("table-tabs");
 
+        TableFilterBar filterBar = new TableFilterBar(
+                asyncRestClientOrganizationService, asyncRestClientSettingService, accessService);
+
         Tab planTab = tab(Messages.get("tab.floorPlan"), VaadinIcon.GRID.create());
         FloorPlanView floorPlanView = new FloorPlanView(
                 asyncRestClientSettingService, restClientSettingService, accessService,
-                asyncRestClientOrganizationService);
+                asyncRestClientOrganizationService, filterBar);
         tabSheet.add(planTab, floorPlanView);
 
         Tab browseTab = tab(Messages.get("tab.tableList"), VaadinIcon.TABLE.create());
         TableListView tableListView = new TableListView(
                 asyncRestClientSettingService, restClientSettingService, accessService,
-                asyncRestClientOrganizationService);
-        VerticalLayout listPanel = new VerticalLayout(tableListView.getToolbarComponent(), tableListView);
+                asyncRestClientOrganizationService, filterBar);
+        VerticalLayout listPanel = new VerticalLayout(tableListView.getFloorActionsComponent(), tableListView);
         listPanel.addClassName("table-list-panel");
         listPanel.setPadding(false);
         listPanel.setSpacing(true);
@@ -62,11 +68,14 @@ public class TableTabs extends VerticalLayout {
         tabSheet.addClassName("table-workspace");
 
         add(PageHeader.of(Messages.Keys.PAGE_TABLE_TITLE, Messages.Keys.PAGE_TABLE_DESCRIPTION));
+        add(tableListView.getToolbarComponent());
         add(tabSheet);
         setFlexGrow(1, tabSheet);
         setPadding(false);
         setSpacing(true);
         setSizeFull();
+
+        filterBar.load();
     }
 
     /**
@@ -87,6 +96,10 @@ public class TableTabs extends VerticalLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        if (rendered) {
+            return;
+        }
+        rendered = true;
         renderTabSheet();
     }
 }

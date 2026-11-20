@@ -2,7 +2,6 @@ package com.harmoni.menu.dashboard.layout.organization.user;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
 import com.harmoni.menu.dashboard.layout.util.Css;
-import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.AuthorizationService;
 import com.harmoni.menu.dashboard.service.data.rest.AsyncRestClientOrganizationService;
 import com.harmoni.menu.dashboard.service.data.rest.RestClientOrganizationService;
@@ -28,7 +27,6 @@ public class UserLayout extends VerticalLayout implements BeforeEnterObserver {
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
     private final RestClientOrganizationService restClientOrganizationService;
     private final RestClientRbacService restClientRbacService;
-    private final AccessService accessService;
     private final AuthorizationService authorizationService;
 
     @Override
@@ -41,7 +39,7 @@ public class UserLayout extends VerticalLayout implements BeforeEnterObserver {
         super.onAttach(attachEvent);
         addClassName(Css.LIST_VIEW);
         add(new UserView(asyncRestClientOrganizationService, restClientOrganizationService,
-                restClientRbacService, accessService, authorizationService));
+                restClientRbacService, authorizationService));
         setSizeFull();
     }
 }

@@ -28,30 +28,6 @@
         var(--lumo-space-s);
 }
 
-.table-toolbar-row {
-
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: var(--lumo-space-s);
-}
-
-.table-toolbar-row vaadin-combo-box {
-
-    min-width: 180px;
-}
-
-.table-toolbar-actions {
-
-    border-top:
-        1px solid var(--lumo-contrast-10pct);
-
-    padding-top:
-        var(--lumo-space-s);
-}
-
-
 /* ============================================================
    SUMMARY
    ============================================================ */
@@ -340,30 +316,8 @@ vaadin-tab[selected] .table-tab-icon {
 
 
 /* ============================================================
-   RESPONSIVE
+   SUMMARY CARDS (shared with the report views)
    ============================================================ */
-
-/* ============================================================
-   TOOLBAR STACK & OVERVIEW CARDS
-   ============================================================ */
-
-.table-toolbar-stack {
-
-    gap:
-        var(--lumo-space-s) var(--lumo-space-m);
-}
-
-.table-stats {
-
-    display:
-        grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
-    gap:
-        var(--lumo-space-s) var(--lumo-space-m);
-}
 
 .stat-card {
 
@@ -871,31 +825,7 @@ vaadin-tab[selected] .table-tab-icon {
    RESPONSIVE
    ============================================================ */
 
-@media (max-width: 1100px) {
-
-    .table-stats {
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-}
-
 @media (max-width: 900px) {
-
-    .table-toolbar-row vaadin-combo-box {
-
-        flex:
-            1 1 100%;
-    }
-
-    .table-toolbar-actions {
-
-        justify-content:
-            flex-start;
-
-        flex-wrap:
-            wrap;
-    }
 
     .table-form {
 
@@ -911,18 +841,6 @@ vaadin-tab[selected] .table-tab-icon {
 }
 
 @media (max-width: 600px) {
-
-    .table-stats {
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
-    .table-stats .stat-card {
-
-        padding:
-            var(--lumo-space-xs) var(--lumo-space-s);
-    }
 
     .stat-icon {
 
