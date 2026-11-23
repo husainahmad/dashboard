@@ -81,6 +81,9 @@ menu.url.devices.byId=${menu.url}/api/v1/devices/%d
 customer.url.customers=${customer.url}/api/v1/customers
 customer.url.customersById=${customer.url.customers}/%d
 
+# Customer growth and AI endpoints (through the gateway)
+growth.url=http://localhost:8080
+
 # The date range is appended by the client, so these are plain resource paths.
 report.url.settlement=${report.url}/api/v1/reports/settlement
 report.url.topProducts=${report.url}/api/v1/reports/top-products

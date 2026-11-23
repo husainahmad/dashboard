@@ -14,13 +14,6 @@ import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.charts.Chart;
-import com.vaadin.flow.component.charts.model.ChartType;
-import com.vaadin.flow.component.charts.model.Configuration;
-import com.vaadin.flow.component.charts.model.ListSeries;
-import com.vaadin.flow.component.charts.model.PlotOptionsBar;
-import com.vaadin.flow.component.charts.model.Stacking;
-import com.vaadin.flow.component.charts.model.style.SolidColor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -364,7 +357,7 @@ public class DashboardView extends VerticalLayout {
     }
 
     /**
-     * Renders the payment-method split as a stacked bar chart plus a legend.
+     * Renders the payment-method split as a stacked bar plus a legend.
      *
      * @param breakdown the per-method totals, may be {@code null}
      */
@@ -382,23 +375,8 @@ public class DashboardView extends VerticalLayout {
             return;
         }
 
-        Chart chart = new Chart(ChartType.BAR);
-        Configuration conf = chart.getConfiguration();
-        conf.setTitle("");
-        conf.getChart().setBackgroundColor(new SolidColor("transparent"));
-        conf.getChart().setSpacing(new Number[]{0, 0, 0, 0});
-        conf.getChart().setAnimation(false);
-        conf.getLegend().setEnabled(false);
-        conf.getxAxis().setVisible(false);
-        conf.getyAxis().setVisible(false);
-        conf.getyAxis().setCategories("");
-
-        PlotOptionsBar plot = new PlotOptionsBar();
-        plot.setStacking(Stacking.NORMAL);
-        plot.setBorderRadius(6);
-        plot.setPointPadding(0);
-        plot.setGroupPadding(0);
-        conf.setPlotOptions(plot);
+        Div bar = new Div();
+        bar.addClassName("payment-bar");
 
         HorizontalLayout legend = new HorizontalLayout();
         legend.addClassName("payment-legend");
@@ -411,15 +389,21 @@ public class DashboardView extends VerticalLayout {
             BigDecimal value = entry.getValue() == null ? BigDecimal.ZERO : entry.getValue();
             int percent = value.multiply(BigDecimal.valueOf(100))
                     .divide(total, 0, RoundingMode.HALF_UP).intValue();
-            ListSeries series = new ListSeries(paymentLabel(entry.getKey()), percent);
-            conf.addSeries(series);
-            legend.add(legendItem(paymentLabel(entry.getKey()), percent, colorAt(index)));
+            String label = paymentLabel(entry.getKey());
+
+            Div segment = new Div();
+            segment.addClassName("payment-segment");
+            segment.getStyle().set("flex-grow", value.toPlainString());
+            segment.getStyle().set("flex-basis", "0");
+            segment.getStyle().set("background-color", colorAt(index));
+            segment.getElement().setAttribute("title", label + " " + percent + "%");
+            bar.add(segment);
+
+            legend.add(legendItem(label, percent, colorAt(index)));
             index++;
         }
 
-        chart.setHeight("28px");
-        chart.setWidthFull();
-        paymentBody.add(chart, legend);
+        paymentBody.add(bar, legend);
     }
 
     private static HorizontalLayout legendItem(String label, int percent, String color) {

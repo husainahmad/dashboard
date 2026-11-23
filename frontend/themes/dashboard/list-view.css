@@ -674,3 +674,17 @@ vaadin-combo-box::part(input-field):hover {
     color: var(--app-text-secondary);
     font-size: var(--lumo-font-size-s);
 }
+
+/* ============================================================
+   CUSTOMER GROWTH — result panels
+   ============================================================ */
+
+.growth-result {
+    width: 100%;
+    padding: var(--lumo-space-m);
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--lumo-border-radius-l);
+    box-shadow: var(--app-shadow);
+    white-space: pre-wrap;
+}

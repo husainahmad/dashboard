@@ -13,7 +13,7 @@ the auth, menu, customer and order services.
 | Language | Java 21 |
 | Framework | Spring Boot 3.2.4 |
 | UI | Vaadin 24.6.5 (Flow, server-side components, React/Vite frontend) |
-| Charts | Vaadin Charts (dashboard bar and payment-split charts) |
+| Charts | CSS bars and stacks (no commercial Vaadin components) |
 | HTTP client | Spring WebFlux `WebClient` (blocking and async clients) |
 | JSON | Jackson 2.18.8 (pinned) |
 | Build | Maven (`./mvnw` or `mvn`), GraalVM native plugin |
@@ -31,7 +31,7 @@ com.harmoni.menu.dashboard
 ├── layout
 │   ├── MainLayout              # app shell: header, drawer, route guard, toasts
 │   ├── LoginView               # /login
-│   ├── DashboardView           # / (KPIs, charts)
+│   ├── DashboardView           # / (KPIs, panels)
 │   ├── AbstractListView        # shared grid/search/brand/pagination base
 │   ├── navigation/SideNavMenu  # permission-aware navigation
 │   ├── organization            # brand / chain / store / user / tier
@@ -83,6 +83,11 @@ com.harmoni.menu.dashboard
 | `/product` | `ProductLayout` | Products, SKUs, images, customizations |
 | `/promotion` | `PromotionLayout` | Promotions, rules, targets, scopes, schedules |
 | `/customers` | `CustomerLayout` | Customer list and detail |
+| `/loyalty` | `LoyaltyLayout` | Loyalty balance, tier, point history and redemption |
+| `/campaigns` | `CampaignsLayout` | Campaigns, voucher issuing and redemption |
+| `/customer-analytics` | `CustomerAnalyticsLayout` | Sales totals, customer metrics and insights |
+| `/ai-sales-assistant` | `AiSalesAssistantLayout` | AI ordering assistant chat |
+| `/recommendations` | `RecommendationsLayout` | AI recommendations |
 | `/kitchen` | `KitchenLayout` | Kitchen stations, printers, routing |
 | `/table` | `TableLayout` | Floors and tables |
 | `/service` | `ServiceLayout` | Services and sub-services |

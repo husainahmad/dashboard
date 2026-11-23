@@ -30,13 +30,6 @@
 			<artifactId>vaadin-spring-boot-starter</artifactId>
 		</dependency>
 
-		<!-- Vaadin Charts: dashboard bar and payment-split charts. -->
-		<dependency>
-			<groupId>com.vaadin</groupId>
-			<artifactId>vaadin-charts-flow</artifactId>
-			<version>${vaadin.version}</version>
-		</dependency>
-
 		<!-- Jackson (force latest to fix Vaadin error) -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>

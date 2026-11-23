@@ -2,6 +2,11 @@ package com.harmoni.menu.dashboard.layout.navigation;
 
 import com.harmoni.menu.dashboard.layout.DashboardView;
 import com.harmoni.menu.dashboard.layout.customer.CustomerLayout;
+import com.harmoni.menu.dashboard.layout.crm.AiSalesAssistantLayout;
+import com.harmoni.menu.dashboard.layout.crm.CampaignsLayout;
+import com.harmoni.menu.dashboard.layout.crm.CustomerAnalyticsLayout;
+import com.harmoni.menu.dashboard.layout.crm.LoyaltyLayout;
+import com.harmoni.menu.dashboard.layout.crm.RecommendationsLayout;
 import com.harmoni.menu.dashboard.layout.menu.customization.CustomizationLayout;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductLayout;
 import com.harmoni.menu.dashboard.layout.organization.OrganizationLayout;
@@ -63,8 +68,14 @@ public class SideNavMenu extends Div {
         addIfPermitted(sideNavCatalog, "nav.product", ProductLayout.class, VaadinIcon.COFFEE.create());
         addIfPermitted(sideNavCatalog, "nav.promotion", PromotionLayout.class, VaadinIcon.MONEY_EXCHANGE.create());
 
-        SideNav sideNavCustomers = group("nav.customers");
-        addIfPermitted(sideNavCustomers, "nav.customerList", CustomerLayout.class, VaadinIcon.USERS.create());
+        SideNav sideNavCustomerGrowth = group("nav.customerGrowth");
+        addIfPermitted(sideNavCustomerGrowth, "nav.customerList", CustomerLayout.class, VaadinIcon.USERS.create());
+        addIfPermitted(sideNavCustomerGrowth, "nav.loyalty", LoyaltyLayout.class, VaadinIcon.GIFT.create());
+        addIfPermitted(sideNavCustomerGrowth, "nav.campaigns", CampaignsLayout.class, VaadinIcon.MEGAPHONE.create());
+        addIfPermitted(sideNavCustomerGrowth, "nav.aiSalesAssistant", AiSalesAssistantLayout.class, VaadinIcon.MAGIC.create());
+        addIfPermitted(sideNavCustomerGrowth, "nav.recommendations", RecommendationsLayout.class, VaadinIcon.STAR.create());
+        addIfPermitted(sideNavCustomerGrowth, "nav.customerAnalytics", CustomerAnalyticsLayout.class,
+                VaadinIcon.BAR_CHART.create());
 
         SideNav sideNavOperations = group("nav.operations");
         addIfPermitted(sideNavOperations, "nav.kitchen", KitchenLayout.class, VaadinIcon.PRINT.create());
@@ -87,7 +98,7 @@ public class SideNavMenu extends Div {
         groups.add(sideNavOverview);
         groups.add(sideNavAdministration);
         groups.add(sideNavCatalog);
-        groups.add(sideNavCustomers);
+        groups.add(sideNavCustomerGrowth);
         groups.add(sideNavOperations);
         groups.add(sideNavReport);
 
@@ -104,7 +115,7 @@ public class SideNavMenu extends Div {
         sideNavOverview.setExpanded(true);
         sideNavAdministration.setExpanded(false);
         sideNavCatalog.setExpanded(true);
-        sideNavCustomers.setExpanded(false);
+        sideNavCustomerGrowth.setExpanded(false);
         sideNavOperations.setExpanded(false);
 
         Scroller scroller = new Scroller(new Div(navWrapper));

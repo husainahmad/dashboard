@@ -6,7 +6,6 @@
     "@polymer/polymer": "3.5.2",
     "@remix-run/router": "^1.23.3",
     "@vaadin/bundles": "24.6.4",
-    "@vaadin/charts": "24.6.4",
     "@vaadin/common-frontend": "0.0.19",
     "@vaadin/hilla-file-router": "24.6.5",
     "@vaadin/hilla-frontend": "24.6.5",
@@ -68,7 +67,6 @@
     "dependencies": {
       "@polymer/polymer": "3.5.2",
       "@vaadin/bundles": "24.6.4",
-      "@vaadin/charts": "24.6.4",
       "@vaadin/common-frontend": "0.0.19",
       "@vaadin/hilla-file-router": "24.6.5",
       "@vaadin/hilla-frontend": "24.6.5",
@@ -123,7 +121,7 @@
       "workbox-core": "7.3.0",
       "workbox-precaching": "7.3.0"
     },
-    "hash": "615610ab8125a2d75c3305853a26efc0485ca2d6c5a5e759b316ed71ba782fba"
+    "hash": "21b0f566400429a989a0337fd9c456330817aa5af833bb5e0c9cb680747e0bbb"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -153,7 +151,6 @@
     "@vaadin/hilla-lit-form": "$@vaadin/hilla-lit-form",
     "@vaadin/hilla-react-form": "$@vaadin/hilla-react-form",
     "@vaadin/hilla-react-signals": "$@vaadin/hilla-react-signals",
-    "cropperjs": "$cropperjs",
-    "@vaadin/charts": "$@vaadin/charts"
+    "cropperjs": "$cropperjs"
   }
 }
