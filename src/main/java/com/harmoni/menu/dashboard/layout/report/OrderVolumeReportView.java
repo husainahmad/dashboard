@@ -37,6 +37,8 @@ public class OrderVolumeReportView extends AbstractReportView {
 
     private final HorizontalLayout shareBar = new HorizontalLayout();
 
+    private OrderVolumeReportDto latestReport;
+
     /**
      * Creates the order volume report view.
      *
@@ -100,6 +102,7 @@ public class OrderVolumeReportView extends AbstractReportView {
      * @param report the order volume totals, may be {@code null}
      */
     private void render(OrderVolumeReportDto report) {
+        latestReport = report;
         int total = report == null ? 0 : value(report.getTotalOrders());
         int peak = report == null ? 0 : value(report.getPeakTimeOrders());
         int offPeak = report == null ? 0 : value(report.getNonPeakTimeOrders());
@@ -109,6 +112,17 @@ public class OrderVolumeReportView extends AbstractReportView {
         peakCard.setValue(peak);
         offPeakCard.setValue(offPeak);
         renderSplit(peak, offPeak, total);
+    }
+
+    @Override
+    protected String reportContext() {
+        if (latestReport == null) {
+            return Messages.get("ai.context.noReportData") + "\n";
+        }
+        return Messages.get("report.orderVolume.total") + ": " + value(latestReport.getTotalOrders()) + "\n"
+                + Messages.get("report.orderVolume.peak") + ": " + value(latestReport.getPeakTimeOrders()) + "\n"
+                + Messages.get("report.orderVolume.offPeak") + ": "
+                + value(latestReport.getNonPeakTimeOrders()) + "\n";
     }
 
     /**

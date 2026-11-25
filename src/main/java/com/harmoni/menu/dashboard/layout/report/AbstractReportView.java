@@ -1,5 +1,8 @@
 package com.harmoni.menu.dashboard.layout.report;
 
+import com.harmoni.menu.dashboard.layout.ai.AiContextProvider;
+import com.harmoni.menu.dashboard.layout.ai.AiPageContext;
+import com.harmoni.menu.dashboard.layout.ai.AiTools;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.LoadingBar;
@@ -26,7 +29,7 @@ import java.util.List;
  * body once, then reloads whenever the filter changes.</p>
  */
 @Slf4j
-public abstract class AbstractReportView extends VerticalLayout {
+public abstract class AbstractReportView extends VerticalLayout implements AiContextProvider {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
@@ -95,6 +98,32 @@ public abstract class AbstractReportView extends VerticalLayout {
         if (rendered) {
             load(range);
         }
+    }
+
+    @Override
+    public AiPageContext aiPageContext() {
+        StringBuilder summary = new StringBuilder();
+        summary.append(Messages.get("ai.context.description")).append(": ")
+                .append(getDescription()).append('\n');
+        if (range != null) {
+            summary.append(Messages.get("ai.context.dateRange")).append(": ")
+                    .append(DATE_FORMAT.format(range.start())).append(" - ")
+                    .append(DATE_FORMAT.format(range.end())).append('\n');
+        }
+        summary.append(Messages.get("ai.context.storeScope")).append(": ")
+                .append(storeIds.isEmpty()
+                        ? Messages.get("ai.context.currentStore")
+                        : String.join(", ", storeIds.stream().map(String::valueOf).toList()))
+                .append('\n');
+        String detail = reportContext();
+        if (detail != null && !detail.isBlank()) {
+            summary.append(detail);
+        }
+        return new AiPageContext(getTitle(), summary.toString(), AiTools.SALES_REPORT);
+    }
+
+    protected String reportContext() {
+        return "";
     }
 
     /**

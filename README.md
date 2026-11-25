@@ -83,11 +83,6 @@ com.harmoni.menu.dashboard
 | `/product` | `ProductLayout` | Products, SKUs, images, customizations |
 | `/promotion` | `PromotionLayout` | Promotions, rules, targets, scopes, schedules |
 | `/customers` | `CustomerLayout` | Customer list and detail |
-| `/loyalty` | `LoyaltyLayout` | Loyalty balance, tier, point history and redemption |
-| `/campaigns` | `CampaignsLayout` | Campaigns, voucher issuing and redemption |
-| `/customer-analytics` | `CustomerAnalyticsLayout` | Sales totals, customer metrics and insights |
-| `/ai-sales-assistant` | `AiSalesAssistantLayout` | AI ordering assistant chat |
-| `/recommendations` | `RecommendationsLayout` | AI recommendations |
 | `/kitchen` | `KitchenLayout` | Kitchen stations, printers, routing |
 | `/table` | `TableLayout` | Floors and tables |
 | `/service` | `ServiceLayout` | Services and sub-services |

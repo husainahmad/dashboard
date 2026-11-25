@@ -88,4 +88,16 @@ public class KpiCard extends VerticalLayout {
     public void setCaption(String text) {
         setCaption(text, Trend.NONE);
     }
+
+    public String getPrefix() {
+        return prefixLabel.isVisible() ? prefixLabel.getText() : "";
+    }
+
+    public String getValue() {
+        return valueLabel.getText();
+    }
+
+    public String getCaption() {
+        return captionLabel.getText();
+    }
 }

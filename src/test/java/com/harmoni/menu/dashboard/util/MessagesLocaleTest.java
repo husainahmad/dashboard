@@ -91,6 +91,47 @@ class MessagesLocaleTest {
     }
 
     @Test
+    void bothBundlesDefineTheDashboardKeys() {
+        assertBothBundlesDefine(
+                "dashboard.kpi.sales", "dashboard.kpi.transactions", "dashboard.kpi.peakOrders",
+                "dashboard.kpi.refunds", "dashboard.caption.peakShare", "dashboard.summary.netSales",
+                "dashboard.summary.discounts", "dashboard.summary.tax", "dashboard.summary.daily",
+                "dashboard.summary.dailyValue", "dashboard.summary.category",
+                "dashboard.summary.orderVolume", "dashboard.summary.volumeValue",
+                "dashboard.summary.recentOrders", "dashboard.summary.promotions",
+                "dashboard.panel.daily", "dashboard.panel.category", "dashboard.panel.recentOrders",
+                "dashboard.panel.orderVolume", "dashboard.panel.promotions",
+                "dashboard.daily.empty", "dashboard.daily.net", "dashboard.daily.quantity",
+                "dashboard.daily.topProduct", "dashboard.category.empty", "dashboard.category.other",
+                "dashboard.volume.empty", "dashboard.volume.total", "dashboard.volume.peak",
+                "dashboard.volume.offPeak", "dashboard.orders.empty", "dashboard.order.table",
+                "dashboard.order.items", "dashboard.order.noMeta", "dashboard.order.status.pending",
+                "dashboard.order.status.confirmed", "dashboard.order.status.paid",
+                "dashboard.order.status.void", "dashboard.order.status.unknown",
+                "dashboard.promo.empty", "dashboard.promo.noEnd", "dashboard.promo.ends",
+                "dashboard.attention.refunds", "dashboard.attention.discounts",
+                "dashboard.attention.pendingOrders", "dashboard.attention.expiringPromotions");
+    }
+
+    @Test
+    void bothBundlesDefineTheDashboardAiKeys() {
+        assertBothBundlesDefine(
+                "dashboard.ai.button", "dashboard.ai.title", "dashboard.ai.hint",
+                "dashboard.ai.question", "dashboard.ai.placeholder", "dashboard.ai.ask",
+                "dashboard.ai.required", "dashboard.ai.thinking", "dashboard.ai.empty",
+                "dashboard.ai.errorTitle", "dashboard.ai.error", "dashboard.ai.errorUnavailable",
+                "dashboard.ai.errorAuth", "dashboard.ai.retry", "dashboard.ai.noDashboard",
+                "dashboard.ai.context", "dashboard.ai.hintForPage", "dashboard.ai.thinkingForPage",
+                "dashboard.ai.noPageData", "dashboard.ai.unknownPage",
+                "ai.context.brand", "ai.context.categories", "ai.context.category", "ai.context.selected",
+                "ai.context.none", "ai.context.search", "ai.context.description", "ai.context.totalCustomers",
+                "ai.context.currentPage", "ai.context.customerId", "ai.context.tier",
+                "ai.context.productsOnPage", "ai.context.totalPages", "ai.context.status", "ai.context.type",
+                "ai.context.all", "ai.context.promotionsOnPage", "ai.context.dateRange",
+                "ai.context.storeScope", "ai.context.currentStore", "ai.context.noReportData");
+    }
+
+    @Test
     void customerListItemIsDistinctFromItsGroupLabel() {
         // "Customers" group containing a "Customers" item reads as a bug.
         assertNotEquals(

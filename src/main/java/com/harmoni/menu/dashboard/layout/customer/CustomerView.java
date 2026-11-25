@@ -3,6 +3,9 @@ package com.harmoni.menu.dashboard.layout.customer;
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CustomerDto;
 import com.harmoni.menu.dashboard.dto.CustomerPageDto;
+import com.harmoni.menu.dashboard.layout.ai.AiContextProvider;
+import com.harmoni.menu.dashboard.layout.ai.AiPageContext;
+import com.harmoni.menu.dashboard.layout.ai.AiTools;
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.util.Css;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -31,7 +34,7 @@ import java.util.Objects;
  * customers on the left, and the selected customer's profile on the right.
  * Customer records are created at the POS, so the page is read-only.
  */
-public class CustomerView extends VerticalLayout {
+public class CustomerView extends VerticalLayout implements AiContextProvider {
 
     private static final int PAGE_SIZE = 10;
 
@@ -116,6 +119,30 @@ public class CustomerView extends VerticalLayout {
                 fetchCustomers();
             }
         });
+    }
+
+    @Override
+    public AiPageContext aiPageContext() {
+        StringBuilder summary = new StringBuilder();
+        BrandDto brand = brandBox.getValue();
+        summary.append(Messages.get("ai.context.brand")).append(": ")
+                .append(brand == null || brand.getName() == null
+                        ? Messages.get("ai.context.none") : brand.getName()).append('\n');
+        summary.append(Messages.get("ai.context.totalCustomers")).append(": ")
+                .append(totalCustomers).append('\n');
+        summary.append(Messages.get("ai.context.currentPage")).append(": ")
+                .append(currentPage).append('\n');
+        if (search.getValue() != null && !search.getValue().isBlank()) {
+            summary.append(Messages.get("ai.context.search")).append(": ")
+                    .append(search.getValue()).append('\n');
+        }
+        summary.append(Messages.get("ai.context.selected")).append(": ")
+                .append(selectedCustomer == null || selectedCustomer.getId() == null
+                        ? Messages.get("ai.context.none")
+                        : Messages.get("ai.context.customerId", selectedCustomer.getId()))
+                .append('\n');
+        return new AiPageContext(Messages.get("page.customer.title"), summary.toString(),
+                AiTools.SEARCH_CUSTOMERS);
     }
 
     @Override

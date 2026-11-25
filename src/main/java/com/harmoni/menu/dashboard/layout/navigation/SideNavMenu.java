@@ -2,11 +2,6 @@ package com.harmoni.menu.dashboard.layout.navigation;
 
 import com.harmoni.menu.dashboard.layout.DashboardView;
 import com.harmoni.menu.dashboard.layout.customer.CustomerLayout;
-import com.harmoni.menu.dashboard.layout.crm.AiSalesAssistantLayout;
-import com.harmoni.menu.dashboard.layout.crm.CampaignsLayout;
-import com.harmoni.menu.dashboard.layout.crm.CustomerAnalyticsLayout;
-import com.harmoni.menu.dashboard.layout.crm.LoyaltyLayout;
-import com.harmoni.menu.dashboard.layout.crm.RecommendationsLayout;
 import com.harmoni.menu.dashboard.layout.menu.customization.CustomizationLayout;
 import com.harmoni.menu.dashboard.layout.menu.product.ProductLayout;
 import com.harmoni.menu.dashboard.layout.organization.OrganizationLayout;
@@ -70,12 +65,6 @@ public class SideNavMenu extends Div {
 
         SideNav sideNavCustomerGrowth = group("nav.customerGrowth");
         addIfPermitted(sideNavCustomerGrowth, "nav.customerList", CustomerLayout.class, VaadinIcon.USERS.create());
-        addIfPermitted(sideNavCustomerGrowth, "nav.loyalty", LoyaltyLayout.class, VaadinIcon.GIFT.create());
-        addIfPermitted(sideNavCustomerGrowth, "nav.campaigns", CampaignsLayout.class, VaadinIcon.MEGAPHONE.create());
-        addIfPermitted(sideNavCustomerGrowth, "nav.aiSalesAssistant", AiSalesAssistantLayout.class, VaadinIcon.MAGIC.create());
-        addIfPermitted(sideNavCustomerGrowth, "nav.recommendations", RecommendationsLayout.class, VaadinIcon.STAR.create());
-        addIfPermitted(sideNavCustomerGrowth, "nav.customerAnalytics", CustomerAnalyticsLayout.class,
-                VaadinIcon.BAR_CHART.create());
 
         SideNav sideNavOperations = group("nav.operations");
         addIfPermitted(sideNavOperations, "nav.kitchen", KitchenLayout.class, VaadinIcon.PRINT.create());

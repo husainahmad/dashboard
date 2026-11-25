@@ -1,6 +1,8 @@
 package com.harmoni.menu.dashboard.layout.report;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.ai.AiContextProvider;
+import com.harmoni.menu.dashboard.layout.ai.AiPageContext;
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
 import com.harmoni.menu.dashboard.layout.util.Css;
@@ -29,7 +31,7 @@ import java.util.List;
 @Route(value = "report", layout = MainLayout.class)
 @PageTitle("Report | POSHarmoni")
 @RequiresPermission(Permissions.REPORT_VIEW)
-public class ReportLayout extends VerticalLayout {
+public class ReportLayout extends VerticalLayout implements AiContextProvider {
 
     private final AsyncRestClientReportService reportService;
     private final AsyncRestClientOrganizationService organizationService;
@@ -37,6 +39,7 @@ public class ReportLayout extends VerticalLayout {
 
     private final List<AbstractReportView> views = new ArrayList<>();
 
+    private AbstractReportView activeView;
     private boolean built;
 
     @Override
@@ -64,6 +67,13 @@ public class ReportLayout extends VerticalLayout {
         tabSheet.add(new Tab(Messages.get("nav.report.sales")), sales);
         tabSheet.add(new Tab(Messages.get("nav.report.orderVolume")), orderVolume);
         tabSheet.setSizeFull();
+        activeView = settlement;
+        tabSheet.addSelectedChangeListener(event -> {
+            int index = tabSheet.getSelectedIndex();
+            if (index >= 0 && index < views.size()) {
+                activeView = views.get(index);
+            }
+        });
 
         ReportFilterBar filterBar = new ReportFilterBar(this::applyFilter);
 
@@ -84,5 +94,10 @@ public class ReportLayout extends VerticalLayout {
 
     private void applyFilter(DateRange range, List<Integer> storeIds) {
         views.forEach(view -> view.applyFilter(range, storeIds));
+    }
+
+    @Override
+    public AiPageContext aiPageContext() {
+        return activeView == null ? null : activeView.aiPageContext();
     }
 }

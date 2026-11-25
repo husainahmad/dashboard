@@ -9,7 +9,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Per-product sales for a date range, grouped by category in the table so a
@@ -28,6 +28,8 @@ public class SalesReportView extends AbstractReportView {
     private final Grid<ProductSalesReportDto> grid = new Grid<>(ProductSalesReportDto.class, false);
 
     private final GridSkeleton skeleton = new GridSkeleton(SKELETON_ROWS);
+
+    private List<ProductSalesReportDto> latestRows = List.of();
 
     /**
      * Creates the sales by product report view.
@@ -93,8 +95,22 @@ public class SalesReportView extends AbstractReportView {
     protected void loadReport(DateRange range) {
         reportService.getSalesAsync(result -> UiUtil.safeAccess(ui, () -> {
             onReportLoaded();
-            grid.setItems(result == null ? new ArrayList<>() : result);
+            latestRows = result == null ? List.of() : result;
+            grid.setItems(latestRows);
         }), error -> UiUtil.safeAccess(ui, () -> onReportFailed(error)),
                 range.startDateTime(), range.endDateTime(), storeIds);
+    }
+
+    @Override
+    protected String reportContext() {
+        if (latestRows.isEmpty()) {
+            return Messages.get("ai.context.noReportData") + "\n";
+        }
+        return latestRows.stream().limit(5)
+                .map(row -> row.getProductName() + " (" + row.getCategoryName() + "): "
+                        + (row.getQuantity() == null ? 0 : row.getQuantity()) + " / "
+                        + TopProductReportView.money(row.getNetSales()))
+                .reduce((left, right) -> left + "\n" + right)
+                .orElse(Messages.get("ai.context.noReportData")) + "\n";
     }
 }

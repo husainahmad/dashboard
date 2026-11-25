@@ -91,6 +91,10 @@ report.url.daily=${report.url}/api/v1/reports/daily
 report.url.sales=${report.url}/api/v1/reports/sales
 report.url.orderVolume=${report.url}/api/v1/reports/order-volume
 
+# The order service's paged list is used by the dashboard's recent-orders panel.
+order.url=http://localhost:8080
+order.url.page=${order.url}/api/v1/order/page
+
 setting.url.service=${menu.url}/api/v1/service
 setting.url.table=${menu.url}/api/v1/table
 setting.url.tableByStore=${setting.url.table}/store/%d

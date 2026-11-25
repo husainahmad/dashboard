@@ -1,6 +1,8 @@
 package com.harmoni.menu.dashboard.layout.menu.product;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.ai.AiContextProvider;
+import com.harmoni.menu.dashboard.layout.ai.AiPageContext;
 import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
 import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.component.FocusModeToggle;
@@ -31,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 @RequiresPermission(Permissions.MENU_VIEW)
 @Route(value = "product", layout = MainLayout.class)
 @PageTitle("Products | POSHarmoni")
-public class ProductLayout extends VerticalLayout {
+public class ProductLayout extends VerticalLayout implements AiContextProvider {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final RestClientMenuService restClientMenuService;
@@ -40,6 +42,7 @@ public class ProductLayout extends VerticalLayout {
     @Getter
     private transient FocusModeToggle focusModeToggle;
 
+    private ProductListView productListView;
     private boolean built;
 
     @Override
@@ -55,7 +58,7 @@ public class ProductLayout extends VerticalLayout {
     void renderPage() {
         addClassNames(Css.LIST_VIEW, Css.PAGE);
 
-        ProductListView productListView = new ProductListView(asyncRestClientMenuService,
+        productListView = new ProductListView(asyncRestClientMenuService,
                 restClientMenuService, authorizationService);
         TabSheet tabSheet = new TabSheet();
         Icon listIcon = new Icon(VaadinIcon.PACKAGE);
@@ -73,5 +76,10 @@ public class ProductLayout extends VerticalLayout {
 
         focusModeToggle = new FocusModeToggle(this);
         add(focusModeToggle);
+    }
+
+    @Override
+    public AiPageContext aiPageContext() {
+        return productListView == null ? null : productListView.aiPageContext();
     }
 }

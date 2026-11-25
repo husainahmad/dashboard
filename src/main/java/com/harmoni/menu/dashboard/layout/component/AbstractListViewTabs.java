@@ -21,7 +21,12 @@ import com.vaadin.flow.component.tabs.TabSheet;
  */
 public abstract class AbstractListViewTabs extends VerticalLayout {
 
+    private AbstractListView listView;
     private boolean rendered;
+
+    protected AbstractListView currentListView() {
+        return listView;
+    }
 
     /**
      * Message key for the browse tab caption.
@@ -71,7 +76,7 @@ public abstract class AbstractListViewTabs extends VerticalLayout {
     }
 
     private void renderTabSheet() {
-        AbstractListView listView = createListView();
+        listView = createListView();
 
         TabSheet tabSheet = new TabSheet();
         tabSheet.add(buildBrowseTab(), listView);

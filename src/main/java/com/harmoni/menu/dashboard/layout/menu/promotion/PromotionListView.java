@@ -1,9 +1,13 @@
 package com.harmoni.menu.dashboard.layout.menu.promotion;
 
 import com.harmoni.menu.dashboard.component.BroadcastMessage;
+import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.PromotionDto;
 import com.harmoni.menu.dashboard.event.promotion.PromotionDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.ai.AiContextProvider;
+import com.harmoni.menu.dashboard.layout.ai.AiPageContext;
+import com.harmoni.menu.dashboard.layout.ai.AiTools;
 import com.harmoni.menu.dashboard.layout.component.TabManager;
 import com.harmoni.menu.dashboard.layout.enums.PromotionStatus;
 import com.harmoni.menu.dashboard.layout.enums.PromotionType;
@@ -50,7 +54,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * the editor still opens in a tab.
  */
 @Slf4j
-public class PromotionListView extends AbstractListView {
+public class PromotionListView extends AbstractListView implements AiContextProvider {
 
     private static final int PAGE_SIZE = 15;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy");
@@ -70,6 +74,7 @@ public class PromotionListView extends AbstractListView {
     private final ComboBox<PromotionStatus> statusFilter = new ComboBox<>();
     private final ComboBox<PromotionType> typeFilter = new ComboBox<>();
     private final Span count = new Span();
+    private int visiblePromotions;
     private boolean layoutBuilt;
 
     public PromotionListView(AsyncRestClientPromotionService asyncRestClientPromotionService,
@@ -85,6 +90,33 @@ public class PromotionListView extends AbstractListView {
         this.accessService = accessService;
         this.canEdit = ActionPermissions.canEditCatalog(authorizationService);
         this.canDelete = ActionPermissions.canDeleteCatalog(authorizationService);
+    }
+
+    @Override
+    public AiPageContext aiPageContext() {
+        StringBuilder summary = new StringBuilder();
+        BrandDto brand = brandFilter.getValue();
+        PromotionStatus status = statusFilter.getValue();
+        PromotionType type = typeFilter.getValue();
+        summary.append(Messages.get("ai.context.brand")).append(": ")
+                .append(brand == null || brand.getName() == null
+                        ? Messages.get("ai.context.none") : brand.getName()).append('\n');
+        summary.append(Messages.get("ai.context.status")).append(": ")
+                .append(status == null ? Messages.get("ai.context.all") : status.getLabel()).append('\n');
+        summary.append(Messages.get("ai.context.type")).append(": ")
+                .append(type == null ? Messages.get("ai.context.all") : type.getLabel()).append('\n');
+        if (filterText.getValue() != null && !filterText.getValue().isBlank()) {
+            summary.append(Messages.get("ai.context.search")).append(": ")
+                    .append(filterText.getValue()).append('\n');
+        }
+        summary.append(Messages.get("ai.context.promotionsOnPage")).append(": ")
+                .append(visiblePromotions).append('\n');
+        summary.append(Messages.get("ai.context.currentPage")).append(": ")
+                .append(currentPage).append('\n');
+        summary.append(Messages.get("ai.context.totalPages")).append(": ")
+                .append(totalPages).append('\n');
+        return new AiPageContext(Messages.get("page.promotion.title"), summary.toString(),
+                AiTools.LIST_PROMOTIONS);
     }
 
     @Override
@@ -405,6 +437,7 @@ public class PromotionListView extends AbstractListView {
             totalPages = 0;
         }
         promotionGrid.setItems(promotions);
+        visiblePromotions = promotions.size();
         count.setText(total <= 0 ? "" : String.valueOf(total));
         count.setVisible(total > 0);
         updatePagination();

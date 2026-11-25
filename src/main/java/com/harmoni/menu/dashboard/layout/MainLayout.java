@@ -6,6 +6,9 @@ import com.harmoni.menu.dashboard.component.Broadcaster;
 import com.harmoni.menu.dashboard.configuration.RbacProperties;
 import com.harmoni.menu.dashboard.dto.UserDto;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
+import com.harmoni.menu.dashboard.layout.ai.AiContextProvider;
+import com.harmoni.menu.dashboard.layout.ai.AiPageContext;
+import com.harmoni.menu.dashboard.layout.component.DashboardAiPanel;
 import com.harmoni.menu.dashboard.layout.navigation.SideNavMenu;
 import com.harmoni.menu.dashboard.layout.security.AccessDeniedView;
 import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
@@ -14,6 +17,7 @@ import com.harmoni.menu.dashboard.layout.util.ThemeUtil;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.AuthorizationService;
+import com.harmoni.menu.dashboard.service.data.rest.GrowthRestClientService;
 import com.harmoni.menu.dashboard.util.ObjectUtil;
 import com.harmoni.menu.dashboard.util.VaadinSessionUtil;
 import com.harmoni.menu.dashboard.util.Messages;
@@ -34,8 +38,12 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.contextmenu.MenuItem;
+import com.vaadin.flow.component.HasElement;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.theme.lumo.Lumo;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +57,8 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * error notifications as toasts.
  */
 @Slf4j
-public class MainLayout extends AppLayout implements BroadcastMessageService, BeforeEnterObserver {
+public class MainLayout extends AppLayout
+        implements BroadcastMessageService, BeforeEnterObserver, AfterNavigationObserver {
 
     Registration broadcasterRegistration;
 
@@ -59,6 +68,8 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
     private final AccessService accessService;
     private final AuthorizationService authorizationService;
     private final RbacProperties rbacProperties;
+    private final DashboardAiPanel dashboardAiPanel;
+    private final Div contentShell = new Div();
 
     private final Icon moonIcon = new Icon(VaadinIcon.MOON);
     private final Icon sunIcon = new Icon(VaadinIcon.SUN_O);
@@ -70,12 +81,18 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
      * @param accessService resolves the logged-in user for the header menu
      */
     public MainLayout(AccessService accessService, AuthorizationService authorizationService,
-                      RbacProperties rbacProperties) {
+                      RbacProperties rbacProperties, GrowthRestClientService growthRestClientService) {
         this.accessService = accessService;
         this.authorizationService = authorizationService;
         this.rbacProperties = rbacProperties;
+        this.dashboardAiPanel = new DashboardAiPanel(growthRestClientService, this::currentAiContext);
+        contentShell.addClassName("dashboard-ai-shell");
+        contentShell.setSizeFull();
+        super.setContent(contentShell);
+        setPrimarySection(Section.DRAWER);
         createHeader();
         createDrawer();
+        dashboardAiPanel.attachTo(this);
     }
 
     /**
@@ -88,8 +105,8 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
 
         H2 logo = createLogo();
 
-        HorizontalLayout actions = new HorizontalLayout(createPaletteMenu(), LanguageSelector.create(),
-                createThemeToggle(), createUserMenu());
+        HorizontalLayout actions = new HorizontalLayout(createDashboardAiButton(), createPaletteMenu(),
+                LanguageSelector.create(), createThemeToggle(), createUserMenu());
         actions.setSpacing(true);
         actions.setPadding(false);
         actions.setAlignItems(FlexComponent.Alignment.CENTER);
@@ -116,6 +133,42 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
         H2 logo = new H2(badge, new Span(TITLE));
         logo.addClassName("app-logo");
         return logo;
+    }
+
+    /**
+     * Creates the global toolbar button that opens the right-side assistant
+     * drawer.
+     *
+     * @return the assistant button
+     */
+    private Button createDashboardAiButton() {
+        Button button = new Button(Messages.get("dashboard.ai.button"),
+                VaadinIcon.SPARK_LINE.create(), event -> dashboardAiPanel.toggle());
+        button.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        button.addClassName("app-ai-button");
+        return button;
+    }
+
+    private AiPageContext currentAiContext() {
+        Component content = getContent();
+        if (content instanceof AiContextProvider provider) {
+            return provider.aiPageContext();
+        }
+        String title = pageTitle(content);
+        return new AiPageContext(title, Messages.get("dashboard.ai.noPageData", title), "");
+    }
+
+    private static String pageTitle(Component content) {
+        if (content == null) {
+            return Messages.get("dashboard.ai.unknownPage");
+        }
+        PageTitle pageTitle = content.getClass().getAnnotation(PageTitle.class);
+        if (pageTitle == null || pageTitle.value().isBlank()) {
+            return content.getClass().getSimpleName();
+        }
+        String title = pageTitle.value();
+        int separator = title.indexOf('|');
+        return separator > 0 ? title.substring(0, separator).trim() : title.trim();
     }
 
     /**
@@ -220,6 +273,28 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
     }
 
     @Override
+    public void showRouterLayoutContent(HasElement content) {
+        if (content == null) {
+            contentShell.removeAll();
+            contentShell.add(dashboardAiPanel);
+            return;
+        }
+        Component component = content.getElement().getComponent().orElseThrow(
+                () -> new IllegalArgumentException("Content must be a Component"));
+        component.getElement().setAttribute("content", "");
+        contentShell.removeAll();
+        contentShell.add(component, dashboardAiPanel);
+    }
+
+    @Override
+    public Component getContent() {
+        return contentShell.getChildren()
+                .filter(component -> component.getElement().hasAttribute("content"))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
     protected void onAttach(AttachEvent attachEvent) {
         ThemeUtil.applySavedTheme(attachEvent.getUI(),
                 dark -> themeToggle.setIcon(dark ? sunIcon : moonIcon));
@@ -283,6 +358,11 @@ public class MainLayout extends AppLayout implements BroadcastMessageService, Be
      *
      * @param beforeEnterEvent the navigation event carrying the target route
      */
+    @Override
+    public void afterNavigation(AfterNavigationEvent afterNavigationEvent) {
+        dashboardAiPanel.onPageContextChanged(currentAiContext());
+    }
+
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
         String token = VaadinSessionUtil.getAttribute(VaadinSessionUtil.JWT_TOKEN, String.class);

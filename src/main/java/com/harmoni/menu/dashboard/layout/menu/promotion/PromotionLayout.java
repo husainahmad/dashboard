@@ -1,6 +1,8 @@
 package com.harmoni.menu.dashboard.layout.menu.promotion;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.ai.AiContextProvider;
+import com.harmoni.menu.dashboard.layout.ai.AiPageContext;
 import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
 import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
@@ -23,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RequiresPermission(Permissions.MENU_VIEW)
 @Route(value = "promotion", layout = MainLayout.class)
 @PageTitle("Promotions | POSHarmoni")
-public class PromotionLayout extends VerticalLayout {
+public class PromotionLayout extends VerticalLayout implements AiContextProvider {
 
     private final AsyncRestClientPromotionService asyncRestClientPromotionService;
     private final AsyncRestClientMenuService asyncRestClientMenuService;
@@ -32,12 +34,20 @@ public class PromotionLayout extends VerticalLayout {
     private final AccessService accessService;
     private final AuthorizationService authorizationService;
 
+    private PromotionTabs currentTabs;
+
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         addClassName(Css.LIST_VIEW);
-        add(new PromotionTabs(asyncRestClientPromotionService, asyncRestClientMenuService,
-                asyncRestClientOrganizationService, restClientPromotionService, accessService, authorizationService));
+        currentTabs = new PromotionTabs(asyncRestClientPromotionService, asyncRestClientMenuService,
+                asyncRestClientOrganizationService, restClientPromotionService, accessService, authorizationService);
+        add(currentTabs);
         setSizeFull();
+    }
+
+    @Override
+    public AiPageContext aiPageContext() {
+        return currentTabs == null ? null : currentTabs.aiPageContext();
     }
 }

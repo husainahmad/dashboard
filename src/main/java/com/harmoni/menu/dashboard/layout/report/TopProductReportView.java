@@ -10,7 +10,7 @@ import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Best selling products for a date range, ranked by revenue.
@@ -29,6 +29,8 @@ public class TopProductReportView extends AbstractReportView {
     private final Grid<TopProductReportDto> grid = new Grid<>(TopProductReportDto.class, false);
 
     private final GridSkeleton skeleton = new GridSkeleton(SKELETON_ROWS);
+
+    private List<TopProductReportDto> latestRows = List.of();
 
     /**
      * Creates the top products report view.
@@ -82,9 +84,23 @@ public class TopProductReportView extends AbstractReportView {
     protected void loadReport(DateRange range) {
         reportService.getTopProductsAsync(result -> UiUtil.safeAccess(ui, () -> {
             onReportLoaded();
-            grid.setItems(result == null ? new ArrayList<>() : result);
+            latestRows = result == null ? List.of() : result;
+            grid.setItems(latestRows);
         }), error -> UiUtil.safeAccess(ui, () -> onReportFailed(error)),
                 range.startDateTime(), range.endDateTime(), 0, storeIds);
+    }
+
+    @Override
+    protected String reportContext() {
+        if (latestRows.isEmpty()) {
+            return Messages.get("ai.context.noReportData") + "\n";
+        }
+        return latestRows.stream().limit(5)
+                .map(row -> row.getProductName() + ": "
+                        + (row.getQuantitySold() == null ? 0 : row.getQuantitySold()) + " / "
+                        + money(row.getTotalSales()))
+                .reduce((left, right) -> left + "\n" + right)
+                .orElse(Messages.get("ai.context.noReportData")) + "\n";
     }
 
     /**

@@ -9,6 +9,9 @@ import com.harmoni.menu.dashboard.dto.*;
 import com.harmoni.menu.dashboard.event.BroadcastMessageService;
 import com.harmoni.menu.dashboard.event.product.ProductDeleteEventListener;
 import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.ai.AiContextProvider;
+import com.harmoni.menu.dashboard.layout.ai.AiPageContext;
+import com.harmoni.menu.dashboard.layout.ai.AiTools;
 import com.harmoni.menu.dashboard.layout.enums.ProductItemType;
 import com.harmoni.menu.dashboard.layout.util.GridSkeleton;
 import com.harmoni.menu.dashboard.layout.util.UiUtil;
@@ -59,7 +62,7 @@ import com.harmoni.menu.dashboard.layout.util.Css;
  * the menu service.
  */
 @Slf4j
-public class ProductListView extends AbstractListView implements BroadcastMessageService {
+public class ProductListView extends AbstractListView implements BroadcastMessageService, AiContextProvider {
 
     TreeGrid<ProductTreeItem> productDtoGrid = new TreeGrid<>(ProductTreeItem.class);
 
@@ -428,6 +431,35 @@ public class ProductListView extends AbstractListView implements BroadcastMessag
      */
     private HorizontalLayout getContent() {
         return gridSlot(productDtoGrid, gridSkeleton);
+    }
+
+    @Override
+    public AiPageContext aiPageContext() {
+        StringBuilder summary = new StringBuilder();
+        BrandDto brand = brandDtoComboBox.getValue();
+        CategoryDto category = categoryDtoComboBox.getValue();
+        TierDto tier = tierDtoComboBox.getValue();
+        summary.append(Messages.get("ai.context.brand")).append(": ")
+                .append(brand == null || brand.getName() == null
+                        ? Messages.get("ai.context.none") : brand.getName()).append('\n');
+        summary.append(Messages.get("ai.context.category")).append(": ")
+                .append(category == null || category.getName() == null
+                        ? Messages.get("ai.context.none") : category.getName()).append('\n');
+        summary.append(Messages.get("ai.context.tier")).append(": ")
+                .append(tier == null || tier.getName() == null
+                        ? Messages.get("ai.context.none") : tier.getName()).append('\n');
+        if (filterText.getValue() != null && !filterText.getValue().isBlank()) {
+            summary.append(Messages.get("ai.context.search")).append(": ")
+                    .append(filterText.getValue()).append('\n');
+        }
+        summary.append(Messages.get("ai.context.productsOnPage")).append(": ")
+                .append(productDtoGrid.getTreeData().getRootItems().size()).append('\n');
+        summary.append(Messages.get("ai.context.currentPage")).append(": ")
+                .append(currentPage).append('\n');
+        summary.append(Messages.get("ai.context.totalPages")).append(": ")
+                .append(totalPages).append('\n');
+        return new AiPageContext(Messages.get("page.product.title"), summary.toString(),
+                AiTools.SEARCH_PRODUCTS);
     }
 
     @Override

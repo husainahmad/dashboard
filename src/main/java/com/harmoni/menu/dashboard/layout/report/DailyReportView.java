@@ -34,6 +34,8 @@ public class DailyReportView extends AbstractReportView {
 
     private final GridSkeleton skeleton = new GridSkeleton(SKELETON_ROWS);
 
+    private List<DailyRow> latestRows = List.of();
+
     /**
      * Creates the daily sales report view.
      *
@@ -93,9 +95,22 @@ public class DailyReportView extends AbstractReportView {
     protected void loadReport(DateRange range) {
         reportService.getDailyAsync(result -> UiUtil.safeAccess(ui, () -> {
             onReportLoaded();
-            grid.setItems(flatten(result));
+            latestRows = flatten(result);
+            grid.setItems(latestRows);
         }), error -> UiUtil.safeAccess(ui, () -> onReportFailed(error)),
                 range.startDateTime(), range.endDateTime(), storeIds);
+    }
+
+    @Override
+    protected String reportContext() {
+        if (latestRows.isEmpty()) {
+            return Messages.get("ai.context.noReportData") + "\n";
+        }
+        return latestRows.stream().limit(5)
+                .map(row -> row.productName() + ": " + (row.quantity() == null ? 0 : row.quantity())
+                        + " / " + TopProductReportView.money(row.netSales()))
+                .reduce((left, right) -> left + "\n" + right)
+                .orElse(Messages.get("ai.context.noReportData")) + "\n";
     }
 
     /**

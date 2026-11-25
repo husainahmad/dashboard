@@ -1,6 +1,8 @@
 package com.harmoni.menu.dashboard.layout.menu.promotion;
 
 import com.harmoni.menu.dashboard.layout.AbstractListView;
+import com.harmoni.menu.dashboard.layout.ai.AiContextProvider;
+import com.harmoni.menu.dashboard.layout.ai.AiPageContext;
 import com.harmoni.menu.dashboard.layout.component.AbstractListViewTabs;
 import com.harmoni.menu.dashboard.service.AccessService;
 import com.harmoni.menu.dashboard.service.AuthorizationService;
@@ -19,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @RequiredArgsConstructor
 @Slf4j
-public class PromotionTabs extends AbstractListViewTabs {
+public class PromotionTabs extends AbstractListViewTabs implements AiContextProvider {
 
     private final AsyncRestClientPromotionService asyncRestClientPromotionService;
     private final AsyncRestClientMenuService asyncRestClientMenuService;
@@ -52,5 +54,10 @@ public class PromotionTabs extends AbstractListViewTabs {
     protected AbstractListView createListView() {
         return new PromotionListView(asyncRestClientPromotionService, asyncRestClientMenuService,
                 asyncRestClientOrganizationService, restClientPromotionService, accessService, authorizationService);
+    }
+
+    @Override
+    public AiPageContext aiPageContext() {
+        return currentListView() instanceof AiContextProvider provider ? provider.aiPageContext() : null;
     }
 }

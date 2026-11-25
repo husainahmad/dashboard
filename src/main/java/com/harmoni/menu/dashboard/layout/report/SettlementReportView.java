@@ -50,6 +50,8 @@ public class SettlementReportView extends AbstractReportView {
 
     private final Span breakdownEmpty = new Span(Messages.get("report.settlement.noPayments"));
 
+    private SettlementReportDto latestReport;
+
     /**
      * Creates the settlement report view.
      *
@@ -112,6 +114,7 @@ public class SettlementReportView extends AbstractReportView {
      * @param report the settlement totals, may be {@code null}
      */
     private void render(SettlementReportDto report) {
+        latestReport = report;
         if (report == null) {
             resetCards();
             return;
@@ -130,6 +133,7 @@ public class SettlementReportView extends AbstractReportView {
      * Zeroes every card, used when the service answers with an empty payload.
      */
     private void resetCards() {
+        latestReport = null;
         ordersCard.setValue(0);
         ordersCard.setWarn(false);
         grossCard.setValue(money(BigDecimal.ZERO));
@@ -139,6 +143,19 @@ public class SettlementReportView extends AbstractReportView {
         refundCard.setValue(money(BigDecimal.ZERO));
         breakdown.removeAll();
         breakdownEmpty.setVisible(true);
+    }
+
+    @Override
+    protected String reportContext() {
+        if (latestReport == null) {
+            return Messages.get("ai.context.noReportData") + "\n";
+        }
+        return Messages.get("report.settlement.orders") + ": " + latestReport.getTotalOrders() + "\n"
+                + Messages.get("report.settlement.gross") + ": " + UiUtil.rupiah(latestReport.getTotalSales()) + "\n"
+                + Messages.get("report.settlement.net") + ": " + UiUtil.rupiah(latestReport.getTotalNetSales()) + "\n"
+                + Messages.get("report.settlement.discount") + ": " + UiUtil.rupiah(latestReport.getTotalDiscounts()) + "\n"
+                + Messages.get("report.settlement.tax") + ": " + UiUtil.rupiah(latestReport.getTotalTax()) + "\n"
+                + Messages.get("report.settlement.refunds") + ": " + UiUtil.rupiah(latestReport.getTotalRefunds()) + "\n";
     }
 
     /**

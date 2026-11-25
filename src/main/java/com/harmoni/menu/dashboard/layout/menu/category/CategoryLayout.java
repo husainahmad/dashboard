@@ -1,6 +1,8 @@
 package com.harmoni.menu.dashboard.layout.menu.category;
 
 import com.harmoni.menu.dashboard.layout.MainLayout;
+import com.harmoni.menu.dashboard.layout.ai.AiContextProvider;
+import com.harmoni.menu.dashboard.layout.ai.AiPageContext;
 import com.harmoni.menu.dashboard.layout.security.RequiresPermission;
 import com.harmoni.menu.dashboard.layout.util.Permissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
@@ -23,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @RequiresPermission(Permissions.MENU_VIEW)
 @Route(value = "category", layout = MainLayout.class)
 @PageTitle("Categories | POSHarmoni")
-public class CategoryLayout extends VerticalLayout {
+public class CategoryLayout extends VerticalLayout implements AiContextProvider {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
@@ -31,13 +33,21 @@ public class CategoryLayout extends VerticalLayout {
     private final AccessService accessService;
     private final AuthorizationService authorizationService;
 
+    private CategoryView currentView;
+
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
         removeAll();
         addClassName(Css.LIST_VIEW);
-        add(new CategoryView(asyncRestClientMenuService,
-                asyncRestClientOrganizationService, restClientMenuService, accessService, authorizationService));
+        currentView = new CategoryView(asyncRestClientMenuService,
+                asyncRestClientOrganizationService, restClientMenuService, accessService, authorizationService);
+        add(currentView);
         setSizeFull();
+    }
+
+    @Override
+    public AiPageContext aiPageContext() {
+        return currentView == null ? null : currentView.aiPageContext();
     }
 }

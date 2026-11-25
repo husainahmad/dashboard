@@ -2,6 +2,9 @@ package com.harmoni.menu.dashboard.layout.menu.category;
 
 import com.harmoni.menu.dashboard.dto.BrandDto;
 import com.harmoni.menu.dashboard.dto.CategoryDto;
+import com.harmoni.menu.dashboard.layout.ai.AiContextProvider;
+import com.harmoni.menu.dashboard.layout.ai.AiPageContext;
+import com.harmoni.menu.dashboard.layout.ai.AiTools;
 import com.harmoni.menu.dashboard.layout.component.PageHeader;
 import com.harmoni.menu.dashboard.layout.util.ActionPermissions;
 import com.harmoni.menu.dashboard.layout.util.Css;
@@ -32,7 +35,7 @@ import java.util.Objects;
  * the selected category's details on the right, with create/edit in a modal
  * dialog.
  */
-public class CategoryView extends VerticalLayout {
+public class CategoryView extends VerticalLayout implements AiContextProvider {
 
     private final AsyncRestClientMenuService asyncRestClientMenuService;
     private final AsyncRestClientOrganizationService asyncRestClientOrganizationService;
@@ -106,6 +109,39 @@ public class CategoryView extends VerticalLayout {
         detailCard.setCanDelete(canDelete);
         detailCard.setEditListener(this::openDialog);
         detailCard.setDeleteListener(this::confirmDelete);
+    }
+
+    @Override
+    public AiPageContext aiPageContext() {
+        StringBuilder summary = new StringBuilder();
+        BrandDto brand = brandBox.getValue();
+        summary.append(Messages.get("ai.context.brand")).append(": ")
+                .append(brand == null || brand.getName() == null
+                        ? Messages.get("ai.context.none") : brand.getName()).append('\n');
+        summary.append(Messages.get("ai.context.categories")).append(": ")
+                .append(categories.size()).append('\n');
+        String search = listCard.getSearchTerm();
+        if (search != null && !search.isBlank()) {
+            summary.append(Messages.get("ai.context.search")).append(": ").append(search).append('\n');
+        }
+        if (selectedCategory == null) {
+            summary.append(Messages.get("ai.context.selected")).append(": ")
+                    .append(Messages.get("ai.context.none")).append('\n');
+        } else {
+            summary.append(Messages.get("ai.context.selected")).append(": ")
+                    .append(selectedCategory.getName() == null
+                            ? Messages.get("ai.context.none") : selectedCategory.getName()).append('\n');
+            if (selectedCategory.getDescription() != null && !selectedCategory.getDescription().isBlank()) {
+                summary.append(Messages.get("ai.context.description")).append(": ")
+                        .append(selectedCategory.getDescription()).append('\n');
+            }
+            String selectedBrand = brandName(selectedCategory);
+            summary.append(Messages.get("ai.context.brand")).append(": ")
+                    .append(selectedBrand == null || selectedBrand.isBlank()
+                            ? Messages.get("ai.context.none") : selectedBrand).append('\n');
+        }
+        return new AiPageContext(Messages.get("page.category.title"), summary.toString(),
+                AiTools.SEARCH_CATEGORIES);
     }
 
     @Override

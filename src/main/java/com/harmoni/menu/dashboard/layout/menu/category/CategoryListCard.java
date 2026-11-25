@@ -116,6 +116,10 @@ public class CategoryListCard extends VerticalLayout {
         this.selectionListener = listener;
     }
 
+    public String getSearchTerm() {
+        return search.getValue();
+    }
+
     private void applyFilter() {
         String term = search.getValue() == null ? "" : search.getValue().trim().toLowerCase();
         List<CategoryDto> filtered = categories.stream()
